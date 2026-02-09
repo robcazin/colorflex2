@@ -7,7 +7,7 @@ We use Git **locally** so you can restore any file or the whole project to a pre
 ## When to commit
 
 - **When you're pleased with the state of things** — e.g. after a fix is done and tested, or before a risky change.
-- The assistant may **suggest a commit** when it seems like a good moment (e.g. after finishing a feature or fix). It will propose a clear commit message; you can run the commands yourself or ask it to run them.
+- The assistant will **suggest a commit** when it seems like a good moment (e.g. after finishing a feature or fix), with a clear message describing what the commit is for. You can run the commands yourself or ask it to run them.
 - **Commit message** should state what the commit is for (e.g. "Header menus restored", "Collection grid fix", "Deploy script: add --nodelete to all push commands").
 
 ---
