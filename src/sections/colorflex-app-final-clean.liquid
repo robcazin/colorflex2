@@ -1,0 +1,144 @@
+<!-- Font imports -->
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Island+Moments&family=Special+Elite&display=swap" rel="stylesheet">
+
+<!-- Ensure IM Fell English font loads and overrides -->
+<style>
+#collectionHeader {
+    font-family: 'IM Fell English', serif !important;
+    font-size: 1.2rem !important;
+    font-weight: normal !important;
+    text-transform: uppercase !important;
+    color: white !important;
+}
+
+/* Fallback for when font loads */
+@font-face {
+    font-family: 'IM Fell English';
+    font-style: normal;
+    font-weight: 400;
+    src: url('https://fonts.gstatic.com/s/imfellenglish/v15/Ktk7ALSLclQ8po5LY2hvEIjEVN2Y5H9RLyTu.woff2') format('woff2');
+}
+
+/* SIMPLIFIED BUTTON STYLING - Under pattern preview */
+#printButton, #saveToListButton {
+  position: relative !important;
+  z-index: 150 !important;
+  pointer-events: auto !important;
+  cursor: pointer !important;
+}
+</style>
+
+<div class="colorflex-section" {{ section.shopify_attributes }}>
+  <div style="background: #1a202c; color: white; padding: 0.5rem; border-radius: 8px; margin: 0.25rem 0;">
+    
+    <!-- Hidden main title -->
+    <h2 style="display: none;">{{ section.settings.title }}</h2>
+    
+    <!-- ColorFlex App -->
+    <div id="mainContainer" style="position: relative; min-height: 70vh;">
+      
+      <div style="display: grid; grid-template-columns: 1fr 280px 1fr; gap: 2rem; max-width: 1500px; margin: 0 auto; margin-left: 160px; padding: 0 1rem; position: relative; z-index: 1;">
+        
+        <!-- MOVED: Curated Colors Section - Compact Version -->
+        <div style="grid-column: 1 / -1; margin-bottom: 0;">
+          <section id="curatedColorsSection" style="width: 100%; padding: 0.125rem 0 0 0; text-align: center;">
+            <div id="curatedColorsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 1300px; margin: 0 auto; min-height: 30px;"></div>
+          </section>
+        </div>
+        
+        <!-- Pattern Preview -->
+        <div style="text-align: center; margin-top: -22px;">
+          <h3 style="margin-bottom: 0.5rem; font-size: 2.4rem; font-family: 'Island Moments', cursive !important;">Pattern Preview</h3>
+          <div id="preview" style="width: 450px; height: 450px; background: #434341; margin: 0 auto;"></div>
+          <h3 id="patternName" style="margin: 0.5rem .5rem; font-size: 1.4rem; font-family: 'Special Elite', monospace !important;">Pattern Name</h3>
+          <div style="display: flex; justify-content: center; gap: 1rem; margin-top: 1rem; position: relative; z-index: 150;">
+            <button id="printButton" class="py-4" aria-label="Print Pattern" data-tooltip="Click to print this pattern" style="padding: 0.5rem 1rem; font-size: 0.9rem; background: transparent; border: 2px solid #d4af37; border-radius: 4px; color: #d4af37; position: relative; z-index: 150; pointer-events: auto !important; display: flex; align-items: center; gap: 0.5rem; font-family: 'Special Elite', monospace;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6,9 6,2 18,2 18,9"></polyline>
+                <path d="m6,18 h4"></path>
+                <path d="m10,18 h4"></path>
+                <rect x="3" y="14" width="18" height="4"></rect>
+                <path d="m14,18 h4"></path>
+              </svg>
+              Print Pattern
+            </button>
+            <button id="saveToListButton" class="py-4" aria-label="Save to List" data-tooltip="Save this pattern to your custom list" onclick="alert('Save to List functionality will be implemented soon! This will allow you to create custom lists and save patterns for later use.')" style="padding: 0.5rem 1rem; font-size: 0.9rem; background: transparent; border: 2px solid #d4af37; border-radius: 4px; color: #d4af37; position: relative; z-index: 150; pointer-events: auto !important; display: flex; align-items: center; gap: 0.5rem; font-family: 'Special Elite', monospace;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4h2a2 0 0 1 2 2v14a2 0 0 1-2 2H6a2 0 0 1-2-2V6a2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                <path d="M12 11h4"></path>
+                <path d="M12 16h4"></path>
+                <path d="M8 11h.01"></path>
+                <path d="M8 16h.01"></path>
+              </svg>
+              Save to my list
+            </button>
+          </div>
+        </div>
+        
+        <!-- Color Controls -->
+        <div id="colorControls" style="display: flex; flex-direction: column; width: 100%; margin-left: -1rem;">
+          <h3 style="text-align: center; color: #d4af37; margin-bottom: -0.3rem; font-size: 1.5rem; font-family: 'Special Elite', monospace !important;">Color Layers</h3>
+          <div id="layerInputsContainer" style="width: 100%; min-width: 280px;"></div>
+        </div>
+        
+        <!-- Room Mockup -->
+        <div style="text-align: center; margin-top: -15px;">
+          <h3 style="margin-bottom: 0.5rem; font-size: 1.8rem; font-family: 'Island Moments', cursive !important;">Room Mockup Preview</h3>
+          <div id="roomMockup" style="width: 550px; height: 400px; background: #434341; margin: 0 auto;"></div>
+          
+          <div id="scaleControls" style="margin-top: 0.75rem;">
+            <button data-multiplier="1" onclick="setPatternScale(1)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">Normal</button>
+            <button data-multiplier="0.5" onclick="setPatternScale(0.5)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">2X</button>
+            <button data-multiplier="0.25" onclick="setPatternScale(0.25)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">3X</button>
+            <button data-multiplier="0.125" onclick="setPatternScale(0.125)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">4X</button>
+          </div>
+          <div style="text-align: center;">
+            <h3 style="margin-top: 1.9rem; font-size: 2rem; font-family: 'Island Moments', cursive !important;">Matching Coordinates</h3>
+            <div id="coordinatesContainer" style="margin-top: 3rem; min-height: 100px; max-width: 550px; margin-left: auto; margin-right: auto;"></div>
+          </div>
+        </div>
+        
+      </div>
+      
+      <!-- Left Sidebar - Fixed Position -->
+      <div id="leftSidebar" style="position: fixed; left: 0; top: 120px; width: 140px; background: #2d3748; padding: 0.75rem; z-index: 25; border-radius: 0 8px 8px 0; overflow-y: auto; max-height: calc(100vh - 140px); scrollbar-width: none; -ms-overflow-style: none;">
+        <h6 id="collectionHeader" style="color: white; font-size: 0.85rem; margin-bottom: 0.5rem; font-family: 'IM Fell English', serif;">Collection Name</h6>
+        <div id="collectionThumbnails" style="display: flex; flex-direction: column; gap: 0.5rem;"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="{{ 'CFM.js' | asset_url }}"></script>
+
+<script>
+// Simple, clean initialization without performance-killing overrides
+window.addEventListener('load', function() {
+  console.log('🎨 ColorFlex starting...');
+  
+  if (typeof window.startApp === 'function') {
+    console.log('✅ Starting ColorFlex app');
+    window.startApp();
+  }
+});
+</script>
+
+{% schema %}
+{
+  "name": "ColorFlex App",
+  "settings": [
+    {
+      "type": "text", 
+      "id": "title",
+      "label": "Section Title",
+      "default": "ColorFlex Pattern Customizer"
+    }
+  ],
+  "presets": [
+    {
+      "name": "ColorFlex App"
+    }
+  ]
+}
+{% endschema %}

@@ -1,0 +1,12 @@
+<div class="page-width">
+  <h1>{{ 'customer.login_page.title' | t }}</h1>
+  {% form 'customer_login' %}
+    {{ form.errors | default_errors }}
+    <input type="email" name="customer[email]" placeholder="Email">
+    <input type="password" name="customer[password]" placeholder="Password">
+    <button type="submit">{{ 'customer.login_page.sign_in' | t }}</button>
+  {% endform %}
+</div>
+{% schema %}
+{ "name": "Login", "tag": "section", "settings": [] }
+{% endschema %}

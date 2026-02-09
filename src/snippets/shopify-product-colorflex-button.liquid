@@ -1,0 +1,229 @@
+<!-- ColorFlex Button Integration for Shopify Product Pages -->
+
+<div class="product__colorlex-button" style="margin: 1rem 0; text-align: left;">
+  <button id="openColorFlexBtn" style="
+    background: rgba(116, 88, 35, 1);
+    color: white;
+    padding: .5rem 2rem;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-family: 'Special Elite', monospace;
+    cursor: pointer;
+    transition: background 0.3s;
+    width: 100%;
+    text-align: center;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+  ">
+      Customize
+    <img src="https://so-animation.com/colorflex/img/camelion-sm-clear.png"
+         alt="ColorFlex"
+         style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255, 171, 46, 0.7);">
+    with ColorFlex
+  </button>
+</div>
+
+<script>
+document.getElementById('openColorFlexBtn').addEventListener('click', function() {
+  console.log('🎨 Launching ColorFlex...');
+  
+  // Gather product information
+  const productData = {
+    productType: '{{ product.type }}',
+    productCollection: '{{ collection.handle }}',
+    productTags: '{{ product.tags | join: "," }}',
+    productTitle: '{{ product.title }}'
+  };
+  
+  console.log('📊 Product info:', productData);
+  
+  // First try to get collection from metafields (with error handling)
+  const metaCollection = '{{ product.metafields.color_flex.collection.value | default: "" }}';
+  const metaPattern = '{{ product.metafields.color_flex.pattern.value | default: "" }}';
+  
+  // Debug: Check the raw metafield object (with error handling)
+  const metaCollectionRaw = '{{ product.metafields.color_flex.collection | default: "" }}';
+  const metaCollectionType = '{{ product.metafields.color_flex.collection.type | default: "" }}';
+  
+  console.log('🔍 METAFIELD DEBUG:', 'collection="' + metaCollection + '"', 'pattern="' + metaPattern + '"');
+  console.log('🔍 RAW METAFIELD:', metaCollectionRaw);
+  console.log('🔍 METAFIELD TYPE:', metaCollectionType);
+
+  // Debug quantity field
+  console.log('🔍 QUANTITY DEBUG:', 'quantity input value:', document.querySelector('input[name="quantity"]')?.value);
+
+  // CRITICAL: Check for collection-specific clothing tags FIRST (before any other logic)
+  const tagsLower = productData.productTags.toLowerCase();
+  let colorFlexCollection = metaCollection || 'botanicals'; // fallback
+
+  // Check for specific clothing collection tags - SEPARATE from other logic
+  if (tagsLower.includes('bombay clothing')) {
+    colorFlexCollection = 'bombay.clo-1';
+    console.log('✅ Detected via tag: Bombay Clothing → bombay.clo-1');
+  } else if (tagsLower.includes('traditions clothing')) {
+    colorFlexCollection = 'traditions.clo-1';
+    console.log('✅ Detected via tag: Traditions Clothing → traditions.clo-1');
+  } else if (tagsLower.includes('folksie clothing')) {
+    colorFlexCollection = 'folksie.clo-1';
+    console.log('✅ Detected via tag: Folksie Clothing → folksie.clo-1');
+  } else if (tagsLower.includes('geometry clothing')) {
+    colorFlexCollection = 'geometry.clo-1';
+    console.log('✅ Detected via tag: Geometry Clothing → geometry.clo-1');
+  } else if (tagsLower.includes('ikats clothing')) {
+    colorFlexCollection = 'ikats.clo-1';
+    console.log('✅ Detected via tag: Ikats Clothing → ikats.clo-1');
+  } else if (tagsLower.includes('botanicals clothing')) {
+    colorFlexCollection = 'botanicals.clo-1';
+    console.log('✅ Detected via tag: Botanicals Clothing → botanicals.clo-1');
+  }
+
+  // Only use other detection methods if no clothing tag was found
+  if (!colorFlexCollection.includes('.clo-')) {
+    if (!metaCollection && window.getColorFlexCollectionEnhanced) {
+      colorFlexCollection = window.getColorFlexCollectionEnhanced(productData);
+    } else if (window.getColorFlexCollection) {
+      colorFlexCollection = window.getColorFlexCollection(productData.productTitle);
+    } else {
+    // Fallback mapping if script didn't load
+    console.warn('⚠️ Pattern mapping script not loaded, using fallback');
+    const title = productData.productTitle.toLowerCase();
+    
+    // Critical pattern mappings for immediate fix
+    if (title.includes('etawah') || title.includes('delhi') || title.includes('mumbai') || 
+        title.includes('pune') || title.includes('calcutta') || title.includes('bangalore') ||
+        title.includes('morena') || title.includes('arcot') || title.includes('darjeeling')) {
+      colorFlexCollection = 'bombay';
+    } else if (title.includes('farmhouse') || productData.productCollection === 'farmhouse') {
+      colorFlexCollection = 'farmhouse';
+    } else if (title.includes('coordinate') || title.includes('plaid') || title.includes('check')) {
+      colorFlexCollection = 'coordinates';
+    } else if (title.includes('keswick') || title.includes('lyme regis') || title.includes('maidstone') || 
+               title.includes('yarmouth') || title.includes('penzance') || title.includes('crowborough') ||
+               title.includes('cottage') || title.includes('english')) {
+      colorFlexCollection = 'farmhouse';  // Map english-cottage patterns to farmhouse for CFM.js compatibility
+    } else if (title.includes('abundance')) {
+      colorFlexCollection = 'abundance';
+    } else if (title.includes('tradition')) {
+      colorFlexCollection = 'traditions';
+    } else if (title.includes('coverlet')) {
+      colorFlexCollection = 'coverlets';
+    } else if (title.includes('geometry') || title.includes('geometric')) {
+      colorFlexCollection = 'geometry';
+    } else if (title.includes('silk') || title.includes('road')) {
+      colorFlexCollection = 'silk-road';
+    } else if (title.includes('orleans')) {
+      colorFlexCollection = 'new-orleans';
+    } else if (title.includes('folk')) {
+      colorFlexCollection = 'folksie';
+    } else if (title.includes('torquay') || title.includes('harwich') || title.includes('marseille') ||
+               title.includes('osaka') || title.includes('valencia') || title.includes('ancient')) {
+      colorFlexCollection = 'ancient-tiles';
+    } else if (title.includes('dished') || title.includes('slate') || title.includes('sage') ||
+               title.includes('terra cotta')) {
+      colorFlexCollection = 'dished-up';
+    } else if (title.includes('galleria') || title.includes('gallery') || title.includes('artistic')) {
+      colorFlexCollection = 'galleria';
+    } else if (title.includes('page') || title.includes('document') || title.includes('manuscript') ||
+               title.includes('parchment') || title.includes('scroll')) {
+      colorFlexCollection = 'pages';
+    }
+    // Default to botanicals for all other cases
+    }
+  }
+
+  console.log(`🎯 Mapped "${productData.productTitle}" → collection: "${colorFlexCollection}"`);
+
+  // Extract pattern name from product title for better URL
+  const patternName = productData.productTitle
+    .replace(/\s*(wallpaper|wall\s*paper|furniture\s*fabric)\s*/gi, '')
+    .trim();
+
+  // Determine which ColorFlex page to use based on product type
+  const isFurnitureProduct = productData.productTitle.toLowerCase().includes('furniture');
+  const baseUrl = isFurnitureProduct ? '/pages/colorflex-furniture' : '/pages/colorflex';
+  console.log(`🪑 Product type: ${isFurnitureProduct ? 'FURNITURE' : 'WALLPAPER'} → ${baseUrl}`);
+  const params = new URLSearchParams({
+    variant_id: '{{ product.selected_or_first_available_variant.id }}',
+    collection: colorFlexCollection, // Now uses the correct collection!
+    pattern: patternName,
+    product_title: '{{ product.title | url_param_escape }}',
+    source: 'product_page'
+  });
+  
+  const fullUrl = `${baseUrl}?${params.toString()}`;
+  console.log('🔗 Opening URL:', fullUrl);
+  console.log(`✅ Fixed: Pattern "${patternName}" will now open with collection "${colorFlexCollection}" instead of default "botanicals"`);
+  
+  // Open ColorFlex window - reuse same window if it exists
+  console.log('🪟 Opening ColorFlex in same window (ColorFlexApp)');
+  const colorFlexWindow = window.open(
+    fullUrl,
+    'ColorFlexApp',
+    'width=1920,height=1080,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no'
+  );
+  
+  if (colorFlexWindow) {
+    colorFlexWindow.focus();
+    console.log('✅ ColorFlex window opened successfully');
+    
+    // Listen for messages from the ColorFlex window
+    window.addEventListener('message', function(event) {
+      if (event.source === colorFlexWindow) {
+        console.log('📨 Message from ColorFlex:', event.data);
+        
+        // Handle different message types
+        if (event.data.type === 'cart_add_success') {
+          console.log('🛒 Item added to cart successfully');
+          
+          // Close the ColorFlex window if requested
+          if (event.data.closeWindow) {
+            colorFlexWindow.close();
+          }
+          
+          // Refresh the current page's cart
+          if (typeof window.updateCartCount === 'function') {
+            window.updateCartCount();
+          }
+          
+          // Show success notification
+          if (typeof window.showNotification === 'function') {
+            window.showNotification('Custom wallpaper added to cart!', 'success');
+          }
+        }
+      }
+    });
+    
+  } else {
+    console.warn('⚠️ Popup blocked, trying fallback...');
+    
+    // Fallback: open in same window
+    if (confirm('Pop-up was blocked. Open ColorFlex in this window instead?')) {
+      window.location.href = fullUrl;
+    }
+  }
+});
+</script>
+
+<!-- Debug information (remove in production) -->
+<script>
+// Debug: Show what collection would be selected for this product
+document.addEventListener('DOMContentLoaded', function() {
+  if (window.getColorFlexCollection) {
+    const detectedCollection = window.getColorFlexCollection('{{ product.title }}');
+    console.log('🐛 DEBUG: Product "{{ product.title }}" → Collection "' + detectedCollection + '"');
+    
+    // Verify specific cases
+    if ('{{ product.title }}'.toLowerCase().includes('etawah')) {
+      console.log('🐛 ETAWAH TEST: Should map to "bombay", got "' + detectedCollection + '"');
+      if (detectedCollection !== 'bombay') {
+        console.error('❌ MAPPING ERROR: Etawah should be in bombay collection!');
+      } else {
+        console.log('✅ MAPPING SUCCESS: Etawah correctly mapped to bombay');
+      }
+    }
+  }
+});
+</script>

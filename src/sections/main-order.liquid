@@ -1,0 +1,9 @@
+<div class="page-width">
+  <h1>{{ 'customer.order.title' | t: name: order.name }}</h1>
+  {% for line_item in order.line_items %}
+    <div>{{ line_item.title }} &times; {{ line_item.quantity }}</div>
+  {% endfor %}
+</div>
+{% schema %}
+{ "name": "Order", "tag": "section", "settings": [] }
+{% endschema %}

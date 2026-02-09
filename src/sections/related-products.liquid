@@ -1,0 +1,15 @@
+<div class="page-width">
+  <h2>{{ section.settings.heading | default: 'Related products' }}</h2>
+  <div class="product-grid">
+    {% for product in recommendations.products %}
+      {% render 'card-product', card_product: product %}
+    {% endfor %}
+  </div>
+</div>
+{% schema %}
+{
+  "name": "Related products",
+  "tag": "section",
+  "settings": [{ "type": "text", "id": "heading", "label": "Heading" }]
+}
+{% endschema %}

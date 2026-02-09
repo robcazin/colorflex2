@@ -1,0 +1,29 @@
+# Dependencies
+node_modules/
+
+# Local backups (separate from Git history)
+backups/
+
+# Theme pulls from Shopify (temporary; re-pull anytime)
+theme-pull/
+theme-pull-*/
+
+# Secrets and local config
+.env
+*.env
+!*.env.example
+config/shopify.json
+
+# OS and editors
+.DS_Store
+*.swp
+*.swo
+*~
+
+# Logs and temp
+*.log
+tmp/
+
+# Optional: uncomment if you don't want to track built/minified assets
+# src/assets/*.min.js
+# src/assets/*.min.css

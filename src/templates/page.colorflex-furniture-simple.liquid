@@ -1,0 +1,463 @@
+{% layout none %}
+<!-- ColorFlex Furniture Simple Mode -->
+<!-- Created: January 11, 2026 -->
+<!-- Updated: January 18, 2026 - Larger mockup 800x600, canvas fills container -->
+
+<!-- Font imports -->
+<link href="https://fonts.googleapis.com/css2?family=Island+Moments&family=Special+Elite&display=swap" rel="stylesheet">
+
+<!-- Hide Saffron Cottage logo and force background -->
+<style>
+  /* Force page background to prevent white flash */
+  html, body {
+    background: #1a202c !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .header-wrapper, .header__heading-logo, .header-logo, header .logo, .site-header__logo {
+    display: none !important;
+  }
+
+  /* Collection header styling matches standard furniture page */
+
+  /* Sidebar scrolling */
+  #patternThumbnailsSidebar {
+    max-height: 690px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Layer thumbnail styling */
+  .layer-thumbnail-container {
+    display: inline-block;
+    text-align: center;
+    margin: 0 0.5rem;
+  }
+
+  .layer-thumbnail-img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    background: #2d3748;
+    border: 2px solid #4a5568;
+    border-radius: 4px;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .layer-label {
+    font-family: 'Special Elite', monospace;
+    font-size: 0.75rem;
+    color: #a0aec0;
+    margin-bottom: 0.25rem;
+  }
+
+  .layer-color-input {
+    width: 100px;
+    padding: 0.35rem;
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    border-radius: 4px;
+    color: white;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  .layer-color-input:focus {
+    outline: none;
+    border-color: #8b4513;
+  }
+
+  /* Furniture Simple Mode: Pattern preview 450x450, Mockup 800x600 (original spec) */
+  #preview {
+    width: 450px !important;
+    height: 450px !important;
+  }
+  #preview canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  #roomMockup {
+    width: 800px !important;
+    height: 600px !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+  }
+  #roomMockup canvas,
+  #roomMockup img {
+    width: 100% !important;
+    height: 100% !important;
+    object-fit: contain !important;
+    display: block !important;
+  }
+</style>
+
+<!-- Mode Detection Script - Must load BEFORE ColorFlex -->
+<script>
+  window.COLORFLEX_MODE = 'FURNITURE';
+  window.FURNITURE_DEFAULT_COLLECTION = 'geometry.fur-1';
+  
+  // ✅ FIX: Define COLORFLEX_SIMPLE_MODE as read-only directly (don't assign first)
+  // This prevents "Cannot assign to read only property" errors
+  if (!window.COLORFLEX_SIMPLE_MODE) {
+    Object.defineProperty(window, 'COLORFLEX_SIMPLE_MODE', {
+      value: true,
+      writable: false,
+      configurable: false
+    });
+  }
+
+  // Initialize furniture defaults for multi-scale system
+  window.FURNITURE_DEFAULT_TYPE = 'Sofa-Capitol';
+  window.FURNITURE_DEFAULT_SCALE = '1.0';
+
+  console.log('🪑 ColorFlex Furniture Simple Mode (multi-scale enabled)');
+  console.log('🔧 TEMPLATE VERSION: 2026-01-17-v5 | SIMPLE_MODE =', window.COLORFLEX_SIMPLE_MODE);
+</script>
+
+<!-- Collections Modal -->
+<div id="collectionsModal" style="
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+">
+  <div style="
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    border: 3px solid #8b4513;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 900px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    color: white;
+  ">
+    <!-- Close button -->
+    <button id="closeCollectionsModal" style="
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      border: 2px solid #8b4513;
+      color: #8b4513;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      transition: all 0.3s ease;
+    " onmouseover="this.style.background='rgba(139, 69, 19, 0.2)'" onmouseout="this.style.background='transparent'">
+      ×
+    </button>
+
+    <h2 style="
+      color: #8b4513;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      font-family: 'Island Moments', cursive;
+      text-align: center;
+    ">Select a Furniture Collection</h2>
+
+    <!-- Collections Grid -->
+    <div id="collectionsGrid" style="
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    ">
+      <!-- Collections will be populated here by JavaScript -->
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const modal = document.getElementById('collectionsModal');
+  const closeBtn = document.getElementById('closeCollectionsModal');
+
+  // Function to open collections modal
+  window.openCollectionsModal = function(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Get collections from window.collectionsData or fallback to appState (set by CFM.js)
+    const collections = window.collectionsData || window.appState?.collections || [];
+
+    if (collections.length === 0) {
+      console.warn('No collections data available yet. Please wait for ColorFlex to initialize.');
+      modal.style.display = 'flex';
+      const collectionsGrid = document.getElementById('collectionsGrid');
+      collectionsGrid.innerHTML = '<div style="text-align: center; padding: 2rem; color: #a0aec0;">Loading collections...</div>';
+
+      setTimeout(() => {
+        const retryCollections = window.collectionsData || window.appState?.collections || [];
+        if (retryCollections.length > 0) {
+          window.openCollectionsModal();
+        }
+      }, 500);
+      return;
+    }
+
+    // Clear existing grid
+    const collectionsGrid = document.getElementById('collectionsGrid');
+    collectionsGrid.innerHTML = '';
+
+    // Sort collections alphabetically by name
+    const sortedCollections = [...collections].sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+
+    // Populate collections grid
+    sortedCollections.forEach(collection => {
+      const collectionCard = document.createElement('div');
+      collectionCard.style.cssText = `
+        background: #2d3748;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        position: relative;
+      `;
+
+      // Check if collection has ColorFlex patterns
+      const hasColorFlexPatterns = collection.patterns && collection.patterns.some(p =>
+        p.layers && Array.isArray(p.layers) && p.layers.length > 0
+      );
+
+      // Build the card HTML
+      let cardHTML = '';
+
+      // Add chameleon icon for ColorFlex-enabled collections
+      if (hasColorFlexPatterns) {
+        cardHTML += `
+          <div style="
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #8b4513;
+            background: rgba(139, 69, 19, 0.1);
+          ">
+            <img
+              src="https://so-animation.com/colorflex/img/camelion-sm-r.jpg"
+              style="width: 100%; height: 100%; object-fit: cover;"
+              alt="ColorFlex Enabled"
+            >
+          </div>
+        `;
+      }
+
+      cardHTML += `
+        <h3 style="
+          font-family: 'IM Fell English', serif;
+          font-size: 1.2rem;
+          color: white;
+          margin: 0 0 0.5rem 0;
+          text-transform: uppercase;
+          ${hasColorFlexPatterns ? 'padding-right: 40px;' : ''}
+        ">${collection.displayName || collection.name}</h3>
+        <div style="
+          font-size: 0.85rem;
+          color: #a0aec0;
+        ">${collection.patterns ? collection.patterns.length : 0} patterns</div>
+        ${hasColorFlexPatterns ? `
+          <div style="
+            font-size: 0.75rem;
+            color: #8b4513;
+            margin-top: 0.5rem;
+            font-weight: bold;
+          ">🎨 ColorFlex Enabled</div>
+        ` : ''}
+      `;
+
+      collectionCard.innerHTML = cardHTML;
+
+      // Hover effects
+      collectionCard.addEventListener('mouseenter', function() {
+        this.style.borderColor = '#8b4513';
+        this.style.background = '#3d4758';
+        this.style.transform = 'translateY(-4px)';
+        this.style.boxShadow = '0 8px 16px rgba(139, 69, 19, 0.2)';
+      });
+
+      collectionCard.addEventListener('mouseleave', function() {
+        this.style.borderColor = 'transparent';
+        this.style.background = '#2d3748';
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = 'none';
+      });
+
+      // Click to select collection
+      collectionCard.addEventListener('click', function() {
+        const collectionName = collection.name;
+
+        function trySwitchCollection(retryCount) {
+          if (window.switchCollection) {
+            console.log('✅ Calling window.switchCollection for:', collectionName);
+            window.switchCollection(collectionName);
+            closeCollectionsModal();
+          } else if (retryCount > 0) {
+            console.log('⏳ switchCollection not available yet, retrying... (attempts left: ' + retryCount + ')');
+            setTimeout(function() {
+              trySwitchCollection(retryCount - 1);
+            }, 200);
+          } else {
+            console.error('❌ switchCollection function not available after retries');
+            alert('ColorFlex is still loading. Please wait a moment and try again.');
+          }
+        }
+
+        trySwitchCollection(5);
+      });
+
+      collectionsGrid.appendChild(collectionCard);
+    });
+
+    // Show modal
+    modal.style.display = 'flex';
+  };
+
+  // Function to close modal
+  function closeCollectionsModal() {
+    modal.style.display = 'none';
+  }
+
+  // Event listeners
+  closeBtn.addEventListener('click', closeCollectionsModal);
+
+  // Close on background click
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeCollectionsModal();
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      closeCollectionsModal();
+    }
+  });
+})();
+</script>
+
+<!-- Asset URLs -->
+<script>
+window.ColorFlexAssets = {
+  colorsUrl: "{{ 'colors.json' | asset_url }}",
+  collectionsUrl: "{{ 'collections.json' | asset_url }}",
+  furnitureConfigUrl: "{{ 'furniture-config.json' | asset_url }}",
+  mockupsUrl: "{{ 'mockups.json' | asset_url }}"
+};
+</script>
+
+<!-- Main Layout -->
+<div id="colorflexMainContainer" style="background:#1a202c; color:white; padding:1rem; min-height:100vh;">
+
+  <!-- Extraordinary Color Header -->
+  <div style="text-align:center; margin-bottom:1rem;">
+    <h1 style="font-family:'Island Moments',cursive; font-size:3.5rem; margin:0; line-height:1;">
+      <a href="/pages/extraordinary-color" style="text-decoration:none; transition:opacity 0.3s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+        <span style="color:rgba(255,255,255,0.75);">Extraordinary </span><span style="color:#ff0000;">C</span><span style="color:#ff8800;">o</span><span style="color:#ffff00;">l</span><span style="color:#00ff00;">o</span><span style="color:#0088ff;">r</span>
+      </a>
+    </h1>
+  </div>
+
+  <!-- Top Section: Sidebar | Pattern Preview | Mockup Preview -->
+  <div style="display:grid; grid-template-columns:260px 450px 1fr; gap:1.5rem; margin-bottom:1.5rem; align-items:start;">
+
+    <!-- Left Sidebar: Collection + Pattern Thumbnails -->
+    <div>
+      <!-- Collection Selector - Match standard furniture page style -->
+      <div id="collectionHeaderContainer" style="width:100%; background:#2d3748; padding:0.75rem 0.75rem 0.5rem 0.75rem; border-radius:6px; text-align:center; cursor:pointer; transition:background 0.3s ease; margin-bottom:1rem;" 
+           onmouseenter="this.style.background='#3d4758'"
+           onmouseleave="this.style.background='#2d3748'"
+           onclick="window.openCollectionsModal(event); return false;">
+        <h6 id="collectionHeader" style="background:transparent; margin:0 0 0.25rem 0; font-family:'IM Fell English',serif !important; font-size:1.1rem !important; color:white !important; font-weight:normal !important; text-transform:uppercase !important;">BOTANICALS</h6>
+        <div style="font-family:'Special Elite',monospace !important; font-size:0.8rem; color:#8b4513 !important; text-transform:uppercase; letter-spacing:0.5px;">
+          Collection ▼
+        </div>
+      </div>
+
+      <!-- Pattern Thumbnails (Vertical Scrolling) -->
+      <div id="patternThumbnailsSidebar"></div>
+    </div>
+
+    <!-- Center: Pattern Preview -->
+    <div style="text-align:center;">
+      <h3 style="font-family:'Island Moments',cursive; font-size:1.5rem; margin-bottom:0.5rem; font-style:italic;">Pattern Preview</h3>
+      <div id="preview" style="width:450px; height:450px; background:#434341; margin:0 auto; border:3px solid #d4af37; border-radius:8px;"></div>
+      <h3 id="patternName" style="font-family:'Special Elite',monospace; font-size:1.3rem; margin:0.75rem 0; color:#d4af37;">Pattern Name</h3>
+      <div id="patternRepeats" style="font-size:0.9rem; color:#a0aec0; margin-bottom:0.75rem;">Pattern Repeats 24x24</div>
+      <div style="display:flex; gap:0.75rem; justify-content:center;">
+        <button id="saveToListButton" style="padding:0.6rem 1.2rem; background:#d4af37; color:#1a202c; border:none; border-radius:4px; font-size:0.9rem; font-weight:bold; cursor:pointer;">Save to My Designs</button>
+        <button id="buyItNowButton" style="padding:0.6rem 1.2rem; background:transparent; border:2px solid #8b4513; color:#8b4513; border-radius:4px; font-size:0.9rem; font-weight:bold; cursor:pointer;">Select Material</button>
+      </div>
+    </div>
+
+    <!-- Right: Mockup Preview -->
+    <div style="text-align:center;">
+      <h3 style="font-family:'Island Moments',cursive; font-size:1.5rem; margin-bottom:0.5rem; font-style:italic;">Mockup Preview</h3>
+
+      <div id="roomMockup" style="width:800px; height:600px; background:#434341; margin:0 auto; border:3px solid #d4af37; border-radius:8px;"></div>
+
+      <!-- Controls BELOW mockup - all on one line -->
+      <div style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-top:0.75rem;">
+        <!-- Scale Controls -->
+        <div id="scaleControls" style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-size:0.85rem; font-weight:600; text-transform:uppercase;">Scale:</span>
+          <button onclick="window.decrementFurnitureScale(event); return false;" type="button" style="padding:0.4rem 0.8rem; background:#e2e8f0; color:#2d3748; border:none; border-radius:4px; font-size:0.85rem; cursor:pointer; font-weight:bold;">−</button>
+          <span id="furnitureScaleDisplay" style="font-size:0.9rem; font-weight:600; min-width:50px; text-align:center;">1.0X</span>
+          <button onclick="window.incrementFurnitureScale(event); return false;" type="button" style="padding:0.4rem 0.8rem; background:#e2e8f0; color:#2d3748; border:none; border-radius:4px; font-size:0.85rem; cursor:pointer; font-weight:bold;">+</button>
+        </div>
+        <!-- Furniture Selector -->
+        <div id="furnitureSelector" style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-size:0.85rem; font-weight:600; text-transform:uppercase;">Furniture:</span>
+          <button onclick="window.setFurnitureType('Sofa-Capitol', event); return false;" type="button" data-furniture-type="Sofa-Capitol" class="furniture-button" style="padding:0.4rem 1rem; background:#8b4513; color:white; border:none; border-radius:4px; font-size:0.85rem; cursor:pointer;">Capitol Sofa</button>
+          <button onclick="window.setFurnitureType('Sofa-Kite', event); return false;" type="button" data-furniture-type="Sofa-Kite" class="furniture-button" style="padding:0.4rem 1rem; background:#e2e8f0; color:#2d3748; border:none; border-radius:4px; font-size:0.85rem; cursor:pointer;">Kite Sofa</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Section: Layer Thumbnails with Color Inputs -->
+  <div style="background:#2d3748; padding:1.5rem; border-radius:12px; max-width:1800px; margin:0 auto; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+    <h3 style="font-family:'Island Moments',cursive; font-size:1.8rem; margin:0 0 1rem 0; text-align:center; color:#d4af37;">Pattern Layer Thumbnail Images</h3>
+    <div id="layerThumbnailsContainer" style="text-align:center; white-space:nowrap; overflow-x:auto; overflow-y:hidden;"></div>
+  </div>
+
+  <!-- Hidden DOM elements required by CFM.js (not used in simple mode but must exist) -->
+  <div id="collectionThumbnails" style="display:none !important; visibility:hidden !important; height:0 !important; overflow:hidden !important;"></div>
+  <div id="layerInputsContainer" style="display:none;"></div>
+  <div id="curatedColorsContainer" style="display:none;"></div>
+  <div id="coordinatesContainer" style="display:none;"></div>
+
+</div>
+
+<!-- Load ColorFlex -->
+{{ 'color-flex-core.min.css' | asset_url | stylesheet_tag }}
+{{ 'color-flex-furniture-simple.min.js' | asset_url | script_tag }}
+
+<!-- Load Simple Mode CSS - MUST load AFTER core CSS -->
+{{ 'colorflex-simple-mode.css' | asset_url | stylesheet_tag }}

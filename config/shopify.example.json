@@ -1,0 +1,14 @@
+{
+  "production": {
+    "store": "your-production-store.myshopify.com",
+    "theme_id": "123456789",
+    "description": "Production ColorFlex store",
+    "airtable_base": "your-airtable-base-id"
+  },
+  "test": {
+    "store": "colorflex-test.myshopify.com", 
+    "theme_id": "987654321",
+    "description": "Development/testing store",
+    "airtable_base": "your-airtable-base-id"
+  }
+}

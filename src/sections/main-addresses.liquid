@@ -1,0 +1,12 @@
+<div class="page-width">
+  <h1>{{ 'customer.addresses.title' | t }}</h1>
+  {% paginate customer.addresses by 5 %}
+    {% for address in customer.addresses %}
+      <div>{{ address | format_address }}</div>
+    {% endfor %}
+    {{ paginate | default_pagination }}
+  {% endpaginate %}
+</div>
+{% schema %}
+{ "name": "Addresses", "tag": "section", "settings": [] }
+{% endschema %}

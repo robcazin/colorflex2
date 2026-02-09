@@ -1,0 +1,40 @@
+<article class="page-width">
+  <h1>{{ article.title }}</h1>
+  <div>{{ article.content }}</div>
+</article>
+{% schema %}
+{
+  "name": "Article",
+  "tag": "section",
+  "settings": [],
+  "blocks": [
+    {
+      "type": "featured_image",
+      "name": "Featured image",
+      "settings": [
+        { "type": "select", "id": "image_height", "label": "Image height", "options": [{ "value": "small", "label": "Small" }, { "value": "medium", "label": "Medium" }, { "value": "large", "label": "Large" }], "default": "large" }
+      ]
+    },
+    {
+      "type": "title",
+      "name": "Title",
+      "settings": [
+        { "type": "checkbox", "id": "blog_show_date", "label": "Show date", "default": true },
+        { "type": "checkbox", "id": "blog_show_author", "label": "Show author", "default": false }
+      ]
+    },
+    {
+      "type": "share",
+      "name": "Share",
+      "settings": [
+        { "type": "text", "id": "share_label", "label": "Share label", "default": "Share" }
+      ]
+    },
+    {
+      "type": "content",
+      "name": "Content",
+      "settings": []
+    }
+  ]
+}
+{% endschema %}

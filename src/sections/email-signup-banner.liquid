@@ -1,0 +1,48 @@
+<div class="page-width">
+  {% form 'customer', id: 'ContactPassword' %}
+    <input type="hidden" name="contact[tags]" value="prospect, password page">
+    <label for="password">{{ 'general.password_page.login_form_password_label' | t }}</label>
+    <input type="password" name="contact[password]" id="password" placeholder="{{ 'general.password_page.login_form_password_placeholder' | t }}">
+    <button type="submit">{{ 'general.password_page.login_form_submit' | t }}</button>
+  {% endform %}
+</div>
+{% schema %}
+{
+  "name": "Email signup banner",
+  "tag": "section",
+  "settings": [
+    { "type": "checkbox", "id": "show_background_image", "label": "Show background image", "default": false },
+    { "type": "range", "id": "image_overlay_opacity", "min": 0, "max": 100, "step": 5, "unit": "%", "label": "Image overlay opacity", "default": 0 },
+    { "type": "select", "id": "image_height", "label": "Image height", "options": [{ "value": "small", "label": "Small" }, { "value": "medium", "label": "Medium" }, { "value": "large", "label": "Large" }], "default": "medium" },
+    { "type": "select", "id": "desktop_content_position", "label": "Desktop content position", "options": [{ "value": "top-left", "label": "Top left" }, { "value": "middle-center", "label": "Middle center" }], "default": "middle-center" },
+    { "type": "select", "id": "desktop_content_alignment", "label": "Desktop content alignment", "options": [{ "value": "left", "label": "Left" }, { "value": "center", "label": "Center" }, { "value": "right", "label": "Right" }], "default": "center" },
+    { "type": "checkbox", "id": "show_text_box", "label": "Show text box", "default": true },
+    { "type": "color_scheme", "id": "color_scheme", "label": "Color scheme", "default": "scheme-1" },
+    { "type": "select", "id": "mobile_content_alignment", "label": "Mobile content alignment", "options": [{ "value": "left", "label": "Left" }, { "value": "center", "label": "Center" }, { "value": "right", "label": "Right" }], "default": "center" },
+    { "type": "checkbox", "id": "show_text_below", "label": "Show text below", "default": true }
+  ],
+  "blocks": [
+    {
+      "type": "heading",
+      "name": "Heading",
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading", "default": "Opening soon" },
+        { "type": "select", "id": "heading_size", "label": "Heading size", "options": [{ "value": "h1", "label": "H1" }, { "value": "h2", "label": "H2" }], "default": "h1" }
+      ]
+    },
+    {
+      "type": "paragraph",
+      "name": "Paragraph",
+      "settings": [
+        { "type": "richtext", "id": "text", "label": "Text", "default": "<p>Be the first to know when we launch.</p>" },
+        { "type": "select", "id": "text_style", "label": "Text style", "options": [{ "value": "body", "label": "Body" }, { "value": "subtitle", "label": "Subtitle" }], "default": "body" }
+      ]
+    },
+    {
+      "type": "email_form",
+      "name": "Email form",
+      "settings": []
+    }
+  ]
+}
+{% endschema %}

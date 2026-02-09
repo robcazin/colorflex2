@@ -1,0 +1,22 @@
+/* Critical styles for initial page load - inline these in <head> */
+.colorFlex-customizer { 
+  position: relative; 
+  width: 100%; 
+  font-family: "IM Fell English", serif; 
+}
+.color-flex-loading { 
+  text-align: center; 
+  padding: 2rem; 
+  background: #434341; 
+  color: #f0e6d2; 
+}
+.loading-spinner { 
+  width: 30px; 
+  height: 30px; 
+  border: 3px solid rgba(240,230,210,0.3); 
+  border-left: 3px solid #f3e6d4; 
+  border-radius: 50%; 
+  animation: spin 1s linear infinite; 
+  margin: 0 auto 1rem; 
+}
+@keyframes spin { to { transform: rotate(360deg); } }

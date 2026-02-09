@@ -1,0 +1,1354 @@
+<!-- ColorFlex Page Template -->
+<!-- Font imports -->
+{% # theme-check-disable RemoteAsset %}
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Island+Moments&family=Special+Elite&display=swap" rel="stylesheet">
+{% # theme-check-enable RemoteAsset %}
+
+<!-- All styling now handled by built CSS: color-flex-core.min.css -->
+
+<!-- Reduce top spacing for ColorFlex page only -->
+<style>
+  /* Only target the main container, nothing else */
+  #mainContainer {
+    margin-top: -24px;
+  }
+</style>
+
+<!-- Simple Back Button using browser history -->
+<div id="backButton" style="
+  position: fixed;
+  top: 80px;
+  left: 20px;
+  z-index: 1000;
+  background: rgba(26, 32, 44, 0.9);
+  border: 2px solid #d4af37;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  color: #d4af37;
+  transition: all 0.3s ease;
+" onclick="window.history.back()" title="Go Back">
+  ←
+</div>
+
+<script>
+  // Add hover effect to back button
+  document.getElementById('backButton').addEventListener('mouseenter', function() {
+    this.style.transform = 'scale(1.1)';
+    this.style.background = 'rgba(212, 175, 55, 0.2)';
+  });
+
+  document.getElementById('backButton').addEventListener('mouseleave', function() {
+    this.style.transform = 'scale(1)';
+    this.style.background = 'rgba(26, 32, 44, 0.9)';
+  });
+</script>
+
+<!-- First-Time Visitor Welcome Modal -->
+<div id="welcomeModal" style="
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+">
+  <div style="
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    border: 3px solid #d4af37;
+    border-radius: 16px;
+    padding: 2.5rem;
+    max-width: 580px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    color: white;
+  ">
+    <!-- Close button -->
+    <button id="closeWelcomeModal" style="
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      border: 2px solid #d4af37;
+      color: #d4af37;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      transition: all 0.3s ease;
+    " onmouseover="this.style.background='rgba(212, 175, 55, 0.2)'" onmouseout="this.style.background='transparent'">
+      ×
+    </button>
+
+    <h2 style="
+      color: #d4af37;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      font-family: 'Island Moments', cursive;
+      text-align: center;
+    ">Welcome to ColorFlex!</h2>
+
+    <div style="font-size: 1rem; line-height: 1.6; color: #e2e8f0; margin-bottom: 2rem;">
+      <p style="margin-bottom: 1rem;">
+        <strong style="color: #d4af37;">✨ Customize Your Perfect Pattern</strong><br>
+        Choose from our beautiful collections, then personalize every color to match your space perfectly.
+      </p>
+
+      <p style="margin-bottom: 1rem;">
+        <strong style="color: #d4af37;">🎨 Quick Start Guide:</strong>
+      </p>
+
+      <ul style="margin: 0 0 1rem 1.5rem; padding: 0; list-style: none;">
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">1.</span> Click the <strong>Collection</strong> header to switch collections
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">2.</span> Browse <strong>Patterns</strong> using thumbnails on the left
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">3.</span> Click <strong>Color Layers</strong> to customize each element
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">4.</span> Adjust <strong>Scale</strong> and <strong>Room Mockup</strong> to visualize
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">5.</span> <strong>Save to My Designs</strong> or select your material!
+        </li>
+      </ul>
+
+      <p style="margin-bottom: 0; color: #cbd5e0; font-size: 0.9rem; font-style: italic;">
+        💡 Tip: Use "My Designs" to view and edit all your saved patterns anytime.
+      </p>
+    </div>
+
+    <button id="startCustomizing" style="
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      background: linear-gradient(135deg, #d4af37 0%, #c69a2d 100%);
+      border: none;
+      border-radius: 8px;
+      color: #1a202c;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(212, 175, 55, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(212, 175, 55, 0.3)'">
+      Start Customizing →
+    </button>
+
+    <div style="text-align: center; margin-top: 1rem;">
+      <label style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; color: #a0aec0;">
+        <input type="checkbox" id="dontShowAgain" style="cursor: pointer;">
+        Don't show this again
+      </label>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const modal = document.getElementById('welcomeModal');
+  const closeBtn = document.getElementById('closeWelcomeModal');
+  const startBtn = document.getElementById('startCustomizing');
+  const dontShowCheckbox = document.getElementById('dontShowAgain');
+
+  // Check if user has seen the welcome before
+  const hasSeenWelcome = localStorage.getItem('colorflexWelcomeSeen');
+
+  // Show modal only if first visit
+  if (!hasSeenWelcome) {
+    modal.style.display = 'flex';
+  }
+
+  // Close modal function
+  function closeModal() {
+    modal.style.display = 'none';
+
+    // Save preference if checkbox is checked
+    if (dontShowCheckbox.checked) {
+      localStorage.setItem('colorflexWelcomeSeen', 'true');
+    }
+  }
+
+  // Event listeners
+  closeBtn.addEventListener('click', closeModal);
+  startBtn.addEventListener('click', closeModal);
+
+  // Close on background click
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      closeModal();
+    }
+  });
+})();
+</script>
+
+<!-- Collections Selection Modal -->
+<div id="collectionsModal" style="
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10001;
+  align-items: center;
+  justify-content: center;
+">
+  <div style="
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    border: 3px solid #d4af37;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 900px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    color: white;
+  ">
+    <!-- Close button -->
+    <button id="closeCollectionsModal" style="
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      border: 2px solid #d4af37;
+      color: #d4af37;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      transition: all 0.3s ease;
+    " onmouseover="this.style.background='rgba(212, 175, 55, 0.2)'" onmouseout="this.style.background='transparent'">
+      ×
+    </button>
+
+    <h2 style="
+      color: #d4af37;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      font-family: 'Island Moments', cursive;
+      text-align: center;
+    ">Select a Collection</h2>
+
+    <!-- Collections Grid -->
+    <div id="collectionsGrid" style="
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    ">
+      <!-- Collections will be populated here by JavaScript -->
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const modal = document.getElementById('collectionsModal');
+  const closeBtn = document.getElementById('closeCollectionsModal');
+  const collectionsGrid = document.getElementById('collectionsGrid');
+
+  // Function to open collections modal
+  window.openCollectionsModal = function() {
+    // Get collections from window.collectionsData or fallback to appState (set by CFM.js)
+    const collections = window.collectionsData || window.appState?.collections || [];
+
+    if (collections.length === 0) {
+      console.warn('No collections data available yet. Please wait for ColorFlex to initialize.');
+      // Show modal with loading message
+      modal.style.display = 'flex';
+      collectionsGrid.innerHTML = '<div style="text-align: center; padding: 2rem; color: #a0aec0;">Loading collections...</div>';
+
+      // Retry after a short delay
+      setTimeout(() => {
+        const retryCollections = window.collectionsData || window.appState?.collections || [];
+        if (retryCollections.length > 0) {
+          window.openCollectionsModal();
+        }
+      }, 500);
+      return;
+    }
+
+    // Clear existing grid
+    collectionsGrid.innerHTML = '';
+
+    // Filter out furniture and clothing collections (only show wallpaper collections)
+    const wallpaperCollections = collections.filter(c =>
+      c.name && !c.name.includes('.fur-') && !c.name.includes('-clo') && !c.name.includes('.clo-')
+    );
+
+    // Sort collections alphabetically by name
+    const sortedCollections = [...wallpaperCollections].sort((a, b) =>
+      a.name.localeCompare(b.name)
+    );
+
+    // Populate collections grid
+    sortedCollections.forEach(collection => {
+      const collectionCard = document.createElement('div');
+      collectionCard.style.cssText = `
+        background: #2d3748;
+        border: 2px solid transparent;
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        position: relative;
+      `;
+
+      // Check if collection has ColorFlex patterns (patterns with layers)
+      const hasColorFlexPatterns = collection.patterns && collection.patterns.some(p =>
+        p.layers && Array.isArray(p.layers) && p.layers.length > 0
+      );
+
+      // Build the card HTML
+      let cardHTML = '';
+
+      // Add chameleon icon for ColorFlex-enabled collections
+      if (hasColorFlexPatterns) {
+        cardHTML += `
+          <div style="
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #d4af37;
+            background: rgba(212, 175, 55, 0.1);
+          ">
+            <img
+              src="https://so-animation.com/colorflex/img/camelion-sm-r.jpg"
+              style="width: 100%; height: 100%; object-fit: cover;"
+              alt="ColorFlex Enabled"
+            >
+          </div>
+        `;
+      }
+
+      cardHTML += `
+        <h3 style="
+          font-family: 'IM Fell English', serif;
+          font-size: 1.2rem;
+          color: white;
+          margin: 0 0 0.5rem 0;
+          text-transform: uppercase;
+          ${hasColorFlexPatterns ? 'padding-right: 40px;' : ''}
+        ">${collection.name}</h3>
+        <div style="
+          font-size: 0.85rem;
+          color: #a0aec0;
+        ">${collection.patterns ? collection.patterns.length : 0} patterns</div>
+        ${hasColorFlexPatterns ? `
+          <div style="
+            font-size: 0.75rem;
+            color: #d4af37;
+            margin-top: 0.5rem;
+            font-weight: bold;
+          ">🎨 ColorFlex Enabled</div>
+        ` : ''}
+      `;
+
+      collectionCard.innerHTML = cardHTML;
+
+      // Hover effects
+      collectionCard.addEventListener('mouseenter', function() {
+        this.style.borderColor = '#d4af37';
+        this.style.background = '#3d4758';
+        this.style.transform = 'translateY(-4px)';
+        this.style.boxShadow = '0 8px 16px rgba(212, 175, 55, 0.2)';
+      });
+
+      collectionCard.addEventListener('mouseleave', function() {
+        this.style.borderColor = 'transparent';
+        this.style.background = '#2d3748';
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = 'none';
+      });
+
+      // Click to select collection
+      collectionCard.addEventListener('click', function() {
+        const collectionName = collection.name;
+
+        // Try to call switchCollection, with retry if not available yet
+        function trySwitchCollection(retryCount) {
+          if (window.switchCollection) {
+            console.log('✅ Calling window.switchCollection for:', collectionName);
+            window.switchCollection(collectionName);
+            closeCollectionsModal();
+          } else if (retryCount > 0) {
+            console.log('⏳ switchCollection not available yet, retrying... (attempts left: ' + retryCount + ')');
+            setTimeout(function() {
+              trySwitchCollection(retryCount - 1);
+            }, 200);
+          } else {
+            console.error('❌ switchCollection function not available after retries');
+            alert('ColorFlex is still loading. Please wait a moment and try again.');
+          }
+        }
+
+        trySwitchCollection(5); // Try up to 5 times with 200ms delays (1 second total)
+      });
+
+      collectionsGrid.appendChild(collectionCard);
+    });
+
+    // Show modal
+    modal.style.display = 'flex';
+  };
+
+  // Function to close modal
+  function closeCollectionsModal() {
+    modal.style.display = 'none';
+  }
+
+  // Event listeners
+  closeBtn.addEventListener('click', closeCollectionsModal);
+
+  // Close on background click
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeCollectionsModal();
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      closeCollectionsModal();
+    }
+  });
+})();
+</script>
+
+<div class="colorflex-section">
+  <div style="background: #1a202c; color: white; padding: 0.45rem; border-radius: 8px; margin: 0.225rem 0;">
+
+    <!-- Hidden main title -->
+    <h2 style="display: none;">{{ page.title }}</h2>
+
+    <!-- ColorFlex App -->
+    <div id="mainContainer" style="position: relative; min-height: 70vh;">
+
+      <div style="display: grid; grid-template-columns: 1fr 280px 1fr; gap: 1.8rem; max-width: 1500px; margin: 0 auto; margin-left: 160px; padding: 0 0.9rem; position: relative; z-index: 1;">
+
+        <!-- MOVED: Curated Colors Section - Compact Version -->
+        <div style="grid-column: 1 / -1; margin-bottom: 0;">
+          <section id="curatedColorsSection" style="width: 100%; padding: 0.1125rem 0 0 0; text-align: center;">
+            <div id="curatedColorsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 5.4px; max-width: 1300px; margin: 0 auto -13.5px auto; min-height: 27px;"></div>
+          </section>
+        </div>
+
+        <!-- Pattern Preview -->
+        <div style="text-align: center; margin-top: -19.8px;">
+          <h3 style="margin-bottom: 1.0rem; font-size: 3rem; font-family: 'Island Moments', cursive !important;">Pattern Preview</h3>
+          <div id="preview" style="max-width: 700px; min-height: 200px; background: #434341; margin: 0 auto; display: flex; justify-content: center; align-items: center;"></div>
+          <h3 id="patternName" style="margin: 0.5rem .5rem; font-size: 1.4rem; font-family: 'Special Elite', monospace !important;">Pattern Name</h3>
+          <!-- Main Action Buttons -->
+          <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.5rem; margin-bottom: 3rem; padding-bottom: 2rem; position: relative; z-index: 150;">
+            <!-- Gold Download Arrow with Dropdown -->
+            <div id="downloadProofContainer" style="position: relative; display: inline-block;">
+              <button id="downloadProofButton" class="py-4" aria-label="Download Proof" data-tooltip="Download pattern proof" style="padding: 0.4rem 0.6rem; font-size: 1rem; background: transparent; color: #d4af37; border: 2px solid #d4af37; border-radius: 50%; position: relative; z-index: 150; pointer-events: auto !important; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;">
+                ▼
+              </button>
+
+              <!-- Dropdown Menu -->
+              <div id="proofDropdownMenu" style="position: absolute; top: 100%; left: 0; background: white; border: 2px solid #d4af37; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; min-width: 200px; display: none;">
+                <button id="standardProofOption" style="width: 100%; padding: 12px 16px; border: none; background: transparent; text-align: left; cursor: pointer; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; transition: background 0.2s ease;">
+                  📄 Standard Proof
+                </button>
+                <button id="infoProofOption" style="width: 100%; padding: 12px 16px; border: none; background: transparent; text-align: left; cursor: pointer; font-size: 0.85rem; transition: background 0.2s ease;">
+                  📋 With Customer Info
+                </button>
+              </div>
+            </div>
+            <button id="printButton" class="py-4" aria-label="Print Pattern" data-tooltip="Click to print this pattern" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: #e2e8f0; border: none; border-radius: 4px; position: relative; z-index: 150; pointer-events: auto !important; display: flex; align-items: center; gap: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6,9 6,2 18,2 18,9"></polyline>
+                <path d="m6,18 h4"></path>
+                <path d="m10,18 h4"></path>
+                <rect x="3" y="14" width="18" height="4"></rect>
+                <path d="m14,18 h4"></path>
+              </svg>
+              Print Pattern
+            </button>
+            <button id="saveToListButton" class="py-4" aria-label="Save to My Designs" data-tooltip="Save this pattern to your custom designs" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: #e2e8f0; border: none; border-radius: 4px; position: relative; z-index: 150; pointer-events: auto !important; display: flex; align-items: center; gap: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                <path d="M12 11h4"></path>
+                <path d="M12 16h4"></path>
+                <path d="M8 11h.01"></path>
+                <path d="M8 16h.01"></path>
+              </svg>
+              Save to My Designs
+            </button>
+            <button id="buyItNowButton" class="py-4" aria-label="Select Your Material" data-tooltip="Save and select material for this pattern" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: transparent; border: 2px solid #4299e1; color: #4299e1; border-radius: 4px; position: relative; z-index: 150; pointer-events: auto !important; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              Select Your Material
+            </button>
+            <!-- Chameleon icon will be added here via CFM.js -->
+          </div>
+        </div>
+        
+        <!-- Color Controls -->
+        <div id="colorControls" style="display: flex; flex-direction: column; width: 100%; margin-left: -1rem;">
+          <h3 id="colorLayersHeading" style="text-align: center; color: #d4af37; font-size: 1.5rem; font-family: 'Special Elite', monospace !important;">Color Layers</h3>
+
+          <!-- Color Lock Toggle -->
+          <div id="colorLockToggle" style="text-align: center; margin: 8px 0 12px 0;">
+            <button id="colorLockBtn" onclick="window.toggleColorLock()" style="
+              background: rgba(110, 110, 110, 0.2);
+              border: 1px solid #d4af37;
+              border-radius: 4px;
+              padding: 5px 14px;
+              cursor: pointer;
+              color: #d4af37;
+              font-size: 0.85rem;
+              transition: all 0.3s ease;
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+            ">
+              <span id="colorLockIcon" style="font-size: 1rem;">🔓</span>
+              <span id="colorLockText">Unlocked</span>
+            </button>
+          </div>
+
+          <div id="layerInputsContainer" style="width: 100%; min-width: 280px;"></div>
+        </div>
+        
+        <!-- Room Mockup -->
+        <div style="text-align: center; margin-top: -15px;">
+          <h3 style="margin-bottom: 0.5rem; font-size: 3rem; font-family: 'Island Moments', cursive !important;">Room Mockup Preview</h3>
+          <div id="roomMockup" style="width: 550px; height: 400px; background: #434341; margin: 0 auto;"></div>
+          
+          <div id="scaleControls" style="margin-top: 0.75rem;">
+            <button data-multiplier="1" onclick="setPatternScale(1)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0 !important; color: #1a202c !important; border: none; border-radius: 4px; font-size: 0.85rem; opacity: 1 !important;">X1</button>
+            <button data-multiplier="0.5" onclick="setPatternScale(0.5)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0 !important; color: #1a202c !important; border: none; border-radius: 4px; font-size: 0.85rem; opacity: 1 !important;">2X</button>
+            <button data-multiplier="0.3333333333333333" onclick="setPatternScale(1/3)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0 !important; color: #1a202c !important; border: none; border-radius: 4px; font-size: 0.85rem; opacity: 1 !important;">3X</button>
+            <button data-multiplier="0.25" onclick="setPatternScale(0.25)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0 !important; color: #1a202c !important; border: none; border-radius: 4px; font-size: 0.85rem; opacity: 1 !important;">4X</button>
+          </div>
+          
+          <p style="margin-top: 0.9rem; font-size: 1.5rem; color: #888888ff; text-align: center; font-style: italic;">Adjust pattern scale - higher numbers show more repetitions</p>
+          <div style="text-align: center;">
+            <h3 style="margin-top: 2.3rem; font-size: 2rem; font-family: 'Island Moments', cursive !important;">Matching Coordinates</h3>
+            <div id="coordinatesContainer" style="margin-top: 3rem; min-height: 100px; max-width: 550px; margin-left: auto; margin-right: auto;"></div>
+          </div>
+          
+        </div>
+        
+      </div>
+      
+      <!-- Collection Header - Fixed Position (Clickable) -->
+      <div id="collectionHeaderContainer" style="position: fixed; left: 0; top: 162px; width: 140px; background: #2d3748; padding: 0.675rem 0.675rem 0.45rem 0.675rem; z-index: 26; border-radius: 8px 8px 0 0; text-align: center; margin-left: 5px; cursor: pointer; transition: background 0.3s ease;"
+           onmouseenter="this.style.background='#3d4758'"
+           onmouseleave="this.style.background='#2d3748'"
+           onclick="window.openCollectionsModal()">
+        <h6 id="collectionHeader" style="background: transparent; margin: 0 0 0.225rem 0; font-family: 'IM Fell English', serif !important; font-size: 0.99rem !important; color: white !important; font-weight: normal !important; text-transform: uppercase !important;">BOMBAY</h6>
+        <div style="font-family: 'Special Elite', monospace !important; font-size: 0.72rem; color: #d4af37 !important; text-transform: uppercase; letter-spacing: 0.45px;">
+          Collection ▼
+        </div>
+      </div>
+
+      <!-- Left Sidebar - Scrollable Thumbnails Only -->
+      <div id="leftSidebar" style="position: fixed; left: 0; top: 144px; width: 140px; background: #2d3748; padding: 0.675rem; z-index: 25; border-radius: 0 0 8px 8px; overflow-y: auto; height: 884px; scrollbar-width: none; -ms-overflow-style: none;">
+        <div id="collectionThumbnails"></div>
+      </div>
+
+      
+    </div>
+    
+    <div id="colorPopup" style="display: none;">
+      <div>
+        <p>🎨 Click a curated color to set this background color.</p>
+        <label><input type="checkbox" id="disablePopup"> Don't show this message again</label>
+        <button id="popupOkButton">OK</button>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+{{ 'color-flex-core.min.css' | asset_url | stylesheet_tag }}
+<!-- ColorFlex Core Application (includes promo code functionality) -->
+<script src="{{ 'color-flex-core.min.js' | asset_url }}" defer></script>
+<!-- Modular Testing Functions -->
+<script src="{{ 'modular-test-functions.js' | asset_url }}" defer></script>
+
+<script>
+// Shopify Customer Authentication Integration
+{% if customer %}
+window.ShopifyCustomer = {
+  id: {{ customer.id | json }},
+  authenticated: true,
+  email: {{ customer.email | json }},
+  first_name: {{ customer.first_name | json }},
+  last_name: {{ customer.last_name | json }}
+};
+console.log('🔐 Shopify customer authenticated:', window.ShopifyCustomer.id);
+console.log('👤 Customer:', window.ShopifyCustomer.first_name, window.ShopifyCustomer.last_name);
+{% else %}
+window.ShopifyCustomer = null;
+console.log('👤 Guest user - patterns will save to localStorage');
+{% endif %}
+
+// Set up asset URLs for ColorFlex to use
+window.ColorFlexAssets = {
+  colorsUrl: "{{ 'colors.json' | asset_url }}",
+  collectionsUrl: "{{ 'collections.json' | asset_url }}",
+  furnitureConfigUrl: "{{ 'furniture-config.json' | asset_url }}",
+  mockupsUrl: "{{ 'mockups.json' | asset_url }}"
+};
+
+// 🎨 CRITICAL FIX: Embed ColorFlex data directly to avoid loading delays
+// This ensures color data is immediately available when accessing via "My Design" link
+window.ColorFlexData = {
+  colors: null, // Will be loaded below
+  collections: null // Will be loaded below
+};
+
+// Try to embed from metafields first, fallback to immediate asset loading
+{% if shop.metafields.colorflex.colors.value %}
+  window.ColorFlexData.colors = {{ shop.metafields.colorflex.colors.value | json }};
+  console.log('🎯 Using embedded colors from metafields:', window.ColorFlexData.colors.length);
+{% else %}
+  console.log('📁 No metafield colors found, will load from assets');
+{% endif %}
+
+{% if shop.metafields.colorflex.collections.value %}
+  window.ColorFlexData.collections = {{ shop.metafields.colorflex.collections.value | json }};
+  console.log('🎯 Using embedded collections from metafields:', window.ColorFlexData.collections.length);
+{% else %}
+  console.log('📁 No metafield collections found, will load from assets');
+{% endif %}
+
+console.log('🎯 Embedded ColorFlex data status:', {
+  colors: window.ColorFlexData?.colors?.length || 'will load from assets',
+  collections: window.ColorFlexData?.collections?.length || 'will load from assets'
+});
+
+// 🚀 IMMEDIATE ASSET LOADING: If metafields aren't available, load assets immediately
+// This prevents the timing issue where "My Design" link bypasses color loading
+(async function() {
+  try {
+    // Load colors immediately if not embedded
+    if (!window.ColorFlexData.colors) {
+      console.log('⚡ Loading colors immediately from assets...');
+      const colorsResponse = await fetch(window.ColorFlexAssets.colorsUrl);
+      if (colorsResponse.ok) {
+        window.ColorFlexData.colors = await colorsResponse.json();
+        console.log('✅ Colors loaded immediately:', window.ColorFlexData.colors.length);
+      }
+    }
+
+    // Load collections immediately if not embedded
+    if (!window.ColorFlexData.collections) {
+      console.log('⚡ Loading collections immediately from assets...');
+      const collectionsResponse = await fetch(window.ColorFlexAssets.collectionsUrl);
+      if (collectionsResponse.ok) {
+        const data = await collectionsResponse.json();
+        window.ColorFlexData.collections = data.collections || data;
+        console.log('✅ Collections loaded immediately:', window.ColorFlexData.collections.length);
+      }
+    }
+
+    console.log('🎨 ColorFlex data ready for immediate use!');
+  } catch (error) {
+    console.warn('⚠️ Failed to load ColorFlex data immediately:', error);
+    console.log('📁 Will fallback to asset loading during app initialization');
+  }
+})();
+
+// Check for pending pattern load from unified modal (cross-page pattern loading)
+function checkForPendingPatternLoad() {
+  const pendingData = sessionStorage.getItem('pendingDirectPatternLoad');
+  if (pendingData) {
+    console.log('🔄 Found pending pattern load data');
+    try {
+      const patternData = JSON.parse(pendingData);
+      console.log('📋 Pending pattern data:', patternData);
+      console.log('🎨 Pattern source:', patternData.source || 'unknown');
+
+      if (patternData.source === 'cart_edit') {
+        console.log('🛒 Cart edit detected - pattern name:', patternData.patternName, 'collection:', patternData.collectionName);
+        console.log('🎨 Custom colors from cart:', patternData.customColors);
+      }
+
+      // Clear the pending data to prevent reprocessing
+      sessionStorage.removeItem('pendingDirectPatternLoad');
+
+      // Wait for ColorFlex to be fully loaded before applying the pattern
+      const applyPendingPattern = () => {
+        if (window.loadSavedPatternToUI && typeof window.loadSavedPatternToUI === 'function') {
+          console.log('✅ ColorFlex loaded, applying pending pattern...');
+          window.loadSavedPatternToUI(patternData);
+        } else {
+          console.log('⏳ ColorFlex not ready yet, waiting...');
+          setTimeout(applyPendingPattern, 500);
+        }
+      };
+
+      // Start checking for ColorFlex availability after a brief delay
+      setTimeout(applyPendingPattern, 1000);
+
+    } catch (error) {
+      console.error('❌ Error processing pending pattern load:', error);
+      sessionStorage.removeItem('pendingDirectPatternLoad'); // Clean up on error
+    }
+  } else {
+    console.log('📋 No pending pattern load data found');
+  }
+}
+
+// Clean initialization - load app once DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🎨 ColorFlex DOM ready');
+  console.log('📁 Asset URLs configured:', window.ColorFlexAssets);
+
+  // Wait for CFM.js to load
+  if (typeof window.startApp === 'function') {
+    console.log('✅ Starting ColorFlex immediately');
+    window.startApp();
+    // Check for pending pattern after app starts
+    setTimeout(checkForPendingPatternLoad, 2000);
+  } else {
+    console.log('⏳ Waiting for CFM.js to load...');
+    // Check every 100ms for startApp to become available
+    const checkInterval = setInterval(function() {
+      if (typeof window.startApp === 'function') {
+        console.log('✅ CFM.js loaded, starting app');
+        clearInterval(checkInterval);
+        window.startApp();
+        // Check for pending pattern after app starts
+        setTimeout(checkForPendingPatternLoad, 2000);
+      }
+    }, 100);
+
+    // Safety timeout after 5 seconds
+    setTimeout(function() {
+      clearInterval(checkInterval);
+      if (typeof window.startApp !== 'function') {
+        console.error('❌ CFM.js failed to load within 5 seconds');
+      }
+    }, 5000);
+  }
+  
+  // Set up download proof dropdown functionality
+  setupDownloadProofDropdown();
+  
+  // Set up save button to use CFM.js function
+  setupSaveButton();
+});
+
+// Setup download proof dropdown functionality
+function setupDownloadProofDropdown() {
+  const downloadButton = document.getElementById('downloadProofButton');
+  const dropdownMenu = document.getElementById('proofDropdownMenu');
+  const standardOption = document.getElementById('standardProofOption');
+  const infoOption = document.getElementById('infoProofOption');
+  
+  if (!downloadButton || !dropdownMenu || !standardOption || !infoOption) {
+    console.warn('⚠️ Download proof dropdown elements not found');
+    return;
+  }
+  
+  console.log('✅ Setting up download proof dropdown functionality');
+  
+  // Add hover effects to dropdown options
+  standardOption.addEventListener('mouseenter', function() {
+    this.style.background = '#f7fafc';
+  });
+  standardOption.addEventListener('mouseleave', function() {
+    this.style.background = 'transparent';
+  });
+  
+  infoOption.addEventListener('mouseenter', function() {
+    this.style.background = '#f7fafc';
+  });
+  infoOption.addEventListener('mouseleave', function() {
+    this.style.background = 'transparent';
+  });
+  
+  // Add hover effects to main button
+  downloadButton.addEventListener('mouseenter', function() {
+    this.style.background = '#5a67d8';
+    this.style.transform = 'translateY(-1px)';
+  });
+  downloadButton.addEventListener('mouseleave', function() {
+    this.style.background = '#667eea';
+    this.style.transform = 'translateY(0)';
+  });
+  
+  // Toggle dropdown on button click
+  downloadButton.addEventListener('click', function(e) {
+    e.stopPropagation();
+    const isVisible = dropdownMenu.style.display === 'block';
+    
+    if (!isVisible) {
+      // Show dropdown and position it smartly
+      dropdownMenu.style.display = 'block';
+      
+      // Force a reflow to get accurate measurements
+      dropdownMenu.offsetHeight;
+      
+      // Calculate positioning to keep dropdown within viewport
+      const buttonRect = downloadButton.getBoundingClientRect();
+      const dropdownRect = dropdownMenu.getBoundingClientRect();
+      const viewportHeight = window.innerHeight;
+      const scrollY = window.scrollY;
+      
+      // Calculate absolute positions
+      const buttonBottomFromTop = buttonRect.bottom;
+      const buttonTopFromTop = buttonRect.top;
+      const dropdownHeight = dropdownRect.height || 100; // fallback height
+      
+      // Check if dropdown would extend below visible viewport
+      const wouldExtendBelow = (buttonBottomFromTop + dropdownHeight) > viewportHeight;
+      const hasSpaceAbove = buttonTopFromTop > dropdownHeight;
+      
+      console.log('📍 Dropdown positioning debug:', {
+        buttonBottom: buttonBottomFromTop,
+        buttonTop: buttonTopFromTop,
+        dropdownHeight: dropdownHeight,
+        viewportHeight: viewportHeight,
+        wouldExtendBelow: wouldExtendBelow,
+        hasSpaceAbove: hasSpaceAbove
+      });
+      
+      if (wouldExtendBelow && hasSpaceAbove) {
+        // Not enough space below, but enough above - position above button
+        dropdownMenu.style.top = 'auto';
+        dropdownMenu.style.bottom = '100%';
+        dropdownMenu.style.marginBottom = '2px';
+        dropdownMenu.style.marginTop = '0';
+        console.log('📍 Positioning dropdown ABOVE button');
+      } else {
+        // Default position below button
+        dropdownMenu.style.top = '100%';
+        dropdownMenu.style.bottom = 'auto';
+        dropdownMenu.style.marginTop = '2px';
+        dropdownMenu.style.marginBottom = '0';
+        console.log('📍 Positioning dropdown BELOW button');
+      }
+    } else {
+      dropdownMenu.style.display = 'none';
+    }
+  });
+  
+  // Handle dropdown option clicks
+  standardOption.addEventListener('click', function(e) {
+    e.stopPropagation();
+    dropdownMenu.style.display = 'none';
+    downloadCurrentPatternProof();
+  });
+  
+  infoOption.addEventListener('click', function(e) {
+    e.stopPropagation();
+    dropdownMenu.style.display = 'none';
+    downloadCurrentPatternProofWithInfo();
+  });
+  
+  // Close dropdown when clicking outside
+  document.addEventListener('click', function() {
+    dropdownMenu.style.display = 'none';
+  });
+}
+
+// Setup save button to use CFM.js function
+function setupSaveButton() {
+  const saveButton = document.getElementById('saveToListButton');
+  
+  if (!saveButton) {
+    console.warn('⚠️ Save button not found');
+    return;
+  }
+  
+  console.log('✅ Setting up save button to use CFM.js function');
+  
+  saveButton.addEventListener('click', function(e) {
+    e.preventDefault();
+    
+    // Use the CFM.js version of saveToMyList
+    if (window.saveToMyList && typeof window.saveToMyList === 'function') {
+      console.log('💾 Calling CFM.js saveToMyList function');
+      window.saveToMyList();
+    } else {
+      console.error('❌ CFM.js saveToMyList function not available');
+      alert('Save function not ready. Please try again in a moment.');
+    }
+  });
+}
+
+// Download current pattern proof functionality - Standard proof
+// ============================================================================
+// PROOF DOWNLOAD FUNCTIONS
+// ============================================================================
+// These functions are now defined in CFM.js and exposed via window object.
+// This allows them to be bundled, minified, and maintained in one place.
+// The actual implementations are in CFM.js lines 11949-12082
+// ============================================================================
+
+// Note: downloadCurrentPatternProof() is available via window.downloadCurrentPatternProof
+// Note: downloadCurrentPatternProofWithInfo() is available via window.downloadCurrentPatternProofWithInfo
+
+// Save to My List functionality is now handled by CFM.js
+// This ensures consistent behavior and proper thumbnail capture
+
+// Show notification function
+function showNotification(message, type = 'info') {
+    // Create notification element
+    const notification = document.createElement('div');
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 1000;
+        padding: 12px 20px;
+        border-radius: 4px;
+        font-family: 'Special Elite', monospace;
+        font-size: 14px;
+        max-width: 300px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        transform: translateX(100%);
+        transition: transform 0.3s ease;
+        ${type === 'success' ? 'background: #4CAF50; color: white;' : ''}
+        ${type === 'error' ? 'background: #f44336; color: white;' : ''}
+        ${type === 'info' ? 'background: #2196F3; color: white;' : ''}
+    `;
+    notification.textContent = message;
+    
+    // Add to page
+    document.body.appendChild(notification);
+    
+    // Animate in
+    setTimeout(() => {
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+    
+    // Remove after 3 seconds
+    setTimeout(() => {
+        notification.style.transform = 'translateX(100%)';
+        setTimeout(() => {
+            document.body.removeChild(notification);
+        }, 300);
+    }, 3000);
+}
+
+// View My List functionality (for future enhancement)
+function viewMyList() {
+    const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+    
+    if (savedPatterns.length === 0) {
+        showNotification('No saved patterns yet!', 'info');
+        return;
+    }
+    
+    console.log('Your saved patterns:', savedPatterns);
+    // Future: Show modal with saved patterns
+    showNotification(`You have ${savedPatterns.length} saved patterns!`, 'info');
+}
+
+// Collection thumbnails auto-scroll functionality
+function setupCollectionAutoScroll() {
+    const sidebar = document.getElementById('leftSidebar');
+    
+    if (!sidebar) {
+        console.log('❌ leftSidebar element not found');
+        return;
+    }
+    
+    console.log('✅ Setting up auto-scroll for sidebar');
+    
+    // Enable smooth scrolling for Magic Mouse
+    sidebar.style.scrollBehavior = 'smooth';
+    
+    // Debug: Check if scrolling is possible
+    setTimeout(() => {
+        const canScroll = sidebar.scrollHeight > sidebar.clientHeight;
+        console.log('📏 Sidebar scroll info:', {
+            scrollHeight: sidebar.scrollHeight,
+            clientHeight: sidebar.clientHeight,
+            canScroll: canScroll
+        });
+    }, 3000);
+    
+    // Simple continuous auto-scroll
+    let isAutoScrolling = false;
+    let scrollDirection = 1;
+    let scrollSpeed = 0.5;
+    
+    function autoScroll() {
+        if (!isAutoScrolling) return;
+        
+        const maxScroll = sidebar.scrollHeight - sidebar.clientHeight;
+        if (maxScroll <= 0) {
+            console.log('❌ Auto-scroll stopped - no scrollable content');
+            return;
+        }
+        
+        const currentScroll = sidebar.scrollTop;
+        const oldScrollTop = sidebar.scrollTop;
+        
+        // Reverse direction at boundaries
+        if (currentScroll >= maxScroll && scrollDirection === 1) {
+            scrollDirection = -1;
+            console.log('🔄 Reversed direction: scrolling up');
+        } else if (currentScroll <= 0 && scrollDirection === -1) {
+            scrollDirection = 1;
+            console.log('🔄 Reversed direction: scrolling down');
+        }
+        
+        sidebar.scrollTop += scrollSpeed * scrollDirection;
+        
+        // Debug: Check if scroll actually changed
+        if (sidebar.scrollTop !== oldScrollTop) {
+            console.log('📜 Scrolled:', {
+                from: oldScrollTop,
+                to: sidebar.scrollTop,
+                direction: scrollDirection === 1 ? 'down' : 'up'
+            });
+        }
+        
+        requestAnimationFrame(autoScroll);
+    }
+    
+    // Start auto-scroll on hover
+    sidebar.addEventListener('mouseenter', () => {
+        console.log('🖱️ Mouse entered sidebar');
+        console.log('📏 Scroll dimensions:', {
+            scrollHeight: sidebar.scrollHeight,
+            clientHeight: sidebar.clientHeight,
+            canScroll: sidebar.scrollHeight > sidebar.clientHeight
+        });
+        if (sidebar.scrollHeight > sidebar.clientHeight) {
+            console.log('✅ Starting auto-scroll');
+            isAutoScrolling = true;
+            autoScroll();
+        } else {
+            console.log('❌ Cannot scroll - not enough content');
+        }
+    });
+    
+    // Stop auto-scroll on mouse leave
+    sidebar.addEventListener('mouseleave', () => {
+        console.log('🖱️ Mouse left sidebar');
+        isAutoScrolling = false;
+    });
+    
+    // Handle Magic Mouse interaction
+    sidebar.addEventListener('wheel', (e) => {
+        isAutoScrolling = false;
+        
+        // Resume auto-scroll after interaction
+        setTimeout(() => {
+            if (sidebar.matches(':hover')) {
+                isAutoScrolling = true;
+                autoScroll();
+            }
+        }, 2000);
+    }, { passive: true });
+}
+
+// Initialize auto-scroll independently of main app
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎨 DOM ready, setting up auto-scroll');
+    // Try immediately
+    setupCollectionAutoScroll();
+    
+    // Also try after elements are populated
+    setTimeout(() => {
+        console.log('🔄 Retry auto-scroll setup after delay');
+        setupCollectionAutoScroll();
+    }, 3000);
+    
+    // Try again after a longer delay
+    setTimeout(() => {
+        console.log('🔄 Final retry auto-scroll setup');
+        setupCollectionAutoScroll();
+    }, 5000);
+});
+
+</script>
+
+<!-- Thumbnail Capture Override Script -->
+<script>
+/**
+ * Standalone Thumbnail Capture Override
+ * Enables thumbnail capture for saved patterns
+ */
+
+console.log('🎯 Thumbnail Capture Override loaded!');
+
+// Wait for DOM to be ready
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🔍 Setting up thumbnail capture override...');
+    
+    // Function to capture pattern thumbnail
+    function capturePatternThumbnail() {
+        try {
+            console.log('📸 Attempting to capture pattern thumbnail...');
+            
+            // Wait a bit to ensure pattern is fully rendered with custom colors
+            return new Promise((resolve) => {
+                // Force pattern re-render before capturing thumbnail
+                console.log('🔄 Triggering pattern re-render before capture...');
+                
+                // Try to trigger pattern update by dispatching events or calling render functions
+                const event = new Event('colorflexUpdate', { bubbles: true });
+                document.dispatchEvent(event);
+                
+                // Also try to trigger any ColorFlex render functions if they exist
+                if (window.renderPattern) {
+                    console.log('🎨 Calling renderPattern()');
+                    window.renderPattern();
+                } else if (window.updatePattern) {
+                    console.log('🎨 Calling updatePattern()');
+                    window.updatePattern();
+                } else if (window.ColorFlex && window.ColorFlex.render) {
+                    console.log('🎨 Calling ColorFlex.render()');
+                    window.ColorFlex.render();
+                }
+                
+                setTimeout(() => {
+                    // First priority: main ColorFlex preview element
+                    let previewElement = document.getElementById('preview');
+                    
+                    if (!previewElement) {
+                        // Fallback selectors if main preview not found
+                        const selectors = [
+                            '#pattern-preview',
+                            '.pattern-preview', 
+                            '#colorflex-preview',
+                            '.colorflex-preview',
+                            '#pattern-display',
+                            '.pattern-display',
+                            '[id*="preview"]',
+                            '[class*="preview"]'
+                        ];
+                        
+                        console.log('🔍 Main #preview not found, trying fallback selectors...');
+                        
+                        for (const selector of selectors) {
+                            previewElement = document.querySelector(selector);
+                            if (previewElement) {
+                                console.log('📸 Found fallback preview element:', selector, previewElement);
+                                break;
+                            }
+                        }
+                    } else {
+                        console.log('📸 Found main preview element: #preview', previewElement);
+                    }
+                    
+                    if (!previewElement) {
+                        console.warn('⚠️ No pattern preview element found for thumbnail capture');
+                        // List all available elements for debugging
+                        console.log('🔍 Available elements with "pattern" in ID/class:');
+                        document.querySelectorAll('[id*="pattern"], [class*="pattern"]').forEach(el => {
+                            console.log('  -', el.tagName, el.id || el.className);
+                        });
+                        console.log('🔍 Available SVG elements:', document.querySelectorAll('svg').length);
+                        console.log('🔍 Available Canvas elements:', document.querySelectorAll('canvas').length);
+                        resolve(null);
+                        return;
+                    }
+                    
+                    // Look for canvas inside the preview element
+                    let canvasElement = previewElement.querySelector('canvas');
+                    
+                    if (!canvasElement && previewElement.tagName === 'CANVAS') {
+                        canvasElement = previewElement;
+                    }
+                    
+                    // Create a canvas to capture the element
+                    const canvas = document.createElement('canvas');
+                    const ctx = canvas.getContext('2d');
+                    
+                    // Set thumbnail size (optimized high resolution with JPEG compression)
+                    canvas.width = 800;
+                    canvas.height = 800;
+                    
+                    if (canvasElement) {
+                        console.log('📸 Capturing from canvas element');
+                        try {
+                            // Draw the canvas content to our thumbnail canvas
+                            ctx.drawImage(canvasElement, 0, 0, 800, 800);
+                        } catch (error) {
+                            console.warn('❌ Failed to capture canvas:', error);
+                            // Fallback to placeholder
+                            ctx.fillStyle = '#e8f4fd';
+                            ctx.fillRect(0, 0, 800, 800);
+                            ctx.fillStyle = '#2c5aa0';
+                            ctx.font = '12px Arial';
+                            ctx.textAlign = 'center';
+                            ctx.fillText('Custom Pattern', 100, 90);
+                            ctx.fillText('Preview', 100, 110);
+                        }
+                    } else {
+                        console.log('📸 No canvas found, creating placeholder thumbnail');
+                        // Create placeholder with pattern info
+                        ctx.fillStyle = '#e8f4fd';
+                        ctx.fillRect(0, 0, 200, 200);
+                        ctx.fillStyle = '#2c5aa0';
+                        ctx.font = '12px Arial';
+                        ctx.textAlign = 'center';
+                        ctx.fillText('Custom Pattern', 100, 90);
+                        ctx.fillText('Preview', 100, 110);
+                    }
+                    
+                    // Convert to base64 data URL
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                    console.log('📸 Captured pattern thumbnail (length:', dataUrl.length, ')');
+                    resolve(dataUrl);
+                }, 1500); // Wait 1.5s for pattern to fully re-render with new colors
+            });
+        } catch (error) {
+            console.error('❌ Failed to capture pattern thumbnail:', error);
+            return null;
+        }
+    }
+    
+    // Enhanced save button interception
+    function interceptSaveButton() {
+        const saveBtn = document.getElementById('saveToMyListBtn');
+        if (saveBtn && !saveBtn._thumbnailIntercepted) {
+            console.log('🎯 Intercepting save button for thumbnail capture...');
+            saveBtn._thumbnailIntercepted = true;
+            
+            const originalClick = saveBtn.onclick;
+            saveBtn.onclick = function(event) {
+                console.log('🎯 Save button clicked - capturing thumbnail first...');
+                
+                // Capture thumbnail immediately when save button is clicked
+                capturePatternThumbnail().then(thumbnail => {
+                    console.log('📸 Thumbnail captured, proceeding with save...');
+                    
+                    // Override localStorage temporarily for this save
+                    const originalSetItem = localStorage.setItem;
+                    localStorage.setItem = function(key, value) {
+                        if (key === 'colorflexSavedPatterns' && thumbnail) {
+                            console.log('🎯 Adding thumbnail to localStorage save...');
+                            const patterns = JSON.parse(value);
+                            const lastPattern = patterns[patterns.length - 1];
+                            if (lastPattern && !lastPattern.thumbnail) {
+                                lastPattern.thumbnail = thumbnail;
+                                value = JSON.stringify(patterns);
+                                console.log('✅ Thumbnail added to pattern:', lastPattern.patternName);
+                            }
+                        }
+                        return originalSetItem.call(this, key, value);
+                    };
+                    
+                    // Call original save function
+                    if (originalClick) {
+                        originalClick.call(this, event);
+                    }
+                    
+                    // Restore original localStorage after a delay
+                    setTimeout(() => {
+                        localStorage.setItem = originalSetItem;
+                    }, 100);
+                    
+                }).catch(error => {
+                    console.error('❌ Error capturing thumbnail:', error);
+                    // Still proceed with save even if thumbnail fails
+                    if (originalClick) {
+                        originalClick.call(this, event);
+                    }
+                });
+                
+                // Prevent default save until thumbnail is captured
+                return false;
+            };
+        }
+    }
+    
+    // Try to intercept save button periodically
+    function setupSaveButtonInterception() {
+        interceptSaveButton();
+        // Keep trying in case the button loads later
+        setTimeout(setupSaveButtonInterception, 2000);
+    }
+    
+    setupSaveButtonInterception();
+    
+    console.log('✅ Thumbnail capture override ready!');
+});
+</script>
+
+<!-- Emergency CSS Override for Scale Controls Visibility -->
+<style>
+#scaleControls button {
+    background: #e2e8f0 !important;
+    color: #1a202c !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    display: inline-block !important;
+    border: 1px solid #cbd5e0 !important;
+    font-weight: 500 !important;
+    cursor: pointer !important;
+    z-index: 999 !important;
+    position: relative !important;
+}
+
+#scaleControls button:hover {
+    background: #d4af37 !important;
+    color: #1a202c !important;
+    transform: scale(1.05) !important;
+}
+
+#scaleControls button.active {
+    background: #d4af37 !important;
+    color: #1a202c !important;
+    font-weight: bold !important;
+}
+
+/* Force override any conflicting styles */
+div#scaleControls button[data-multiplier] {
+    background-color: #e2e8f0 !important;
+    color: #1a202c !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+}
+
+/* Select your material button hover effect */
+#buyItNowButton:hover {
+    background: #4299e1 !important;
+    color: white !important;
+    transform: scale(1.05);
+}
+</style>
+
+<!-- Unified Pattern Modal System (for better modal styling) -->
+<script src="{{ 'unified-pattern-modal.js' | asset_url }}" defer></script>

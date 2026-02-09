@@ -1,0 +1,1466 @@
+{% comment %}
+COMPREHENSIVE CART EDIT MODAL
+Allows editing colors, patterns, and product types directly from cart
+{% endcomment %}
+
+<script>
+/**
+ * COMPREHENSIVE CART EDIT MODAL SYSTEM
+ * Allows editing of ColorFlex items directly from cart
+ */
+
+class ColorFlexCartEditor {
+    constructor() {
+        this.currentCartItem = null;
+        this.currentPattern = null;
+        this.currentColors = [];
+        this.currentProductType = null;
+        this.modal = null;
+        this.init();
+    }
+
+    init() {
+        console.log('🛒 Initializing ColorFlex Cart Editor...');
+        this.createModalHTML();
+        this.setupEventListeners();
+    }
+
+    createModalHTML() {
+        // Create the modal structure
+        const modalHTML = `
+            <div id="colorflexCartEditModal" class="colorflex-cart-modal" style="display: none;">
+                <div class="modal-overlay" style="
+                    position: fixed;
+                    top: 0;
+                    left: 0;
+                    width: 100%;
+                    height: 100%;
+                    background: rgba(0, 0, 0, 0.8);
+                    z-index: 10000;
+                "></div>
+
+                <div class="modal-content" style="
+                    position: fixed;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    background: #2d3748;
+                    border-radius: 12px;
+                    padding: 30px;
+                    width: 90%;
+                    max-width: 900px;
+                    max-height: 90vh;
+                    overflow-y: auto;
+                    z-index: 10001;
+                    color: white;
+                    font-family: 'Special Elite', monospace;
+                ">
+                    <!-- Header -->
+                    <div class="modal-header" style="
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        margin-bottom: 25px;
+                        border-bottom: 2px solid #4a5568;
+                        padding-bottom: 15px;
+                    ">
+                        <h2 style="margin: 0; color: #d4af37; font-size: 24px;">
+                            🎨 Edit Your Custom Pattern
+                        </h2>
+                        <button id="closeCartEditModal" style="
+                            background: transparent;
+                            border: 2px solid #e53e3e;
+                            color: #e53e3e;
+                            padding: 8px 16px;
+                            border-radius: 6px;
+                            cursor: pointer;
+                            font-family: 'Special Elite', monospace;
+                            font-weight: bold;
+                        ">✖ Close</button>
+                    </div>
+
+                    <!-- Main Content Grid -->
+                    <div class="modal-body" style="
+                        display: grid;
+                        grid-template-columns: 1fr 350px;
+                        gap: 30px;
+                        min-height: 400px;
+                    ">
+                        <!-- Left: ColorFlex Editor -->
+                        <div class="editor-section">
+                            <h3 style="color: #d4af37; margin-bottom: 15px;">Pattern & Colors</h3>
+
+                            <!-- Pattern Selector -->
+                            <div class="pattern-selector" style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">
+                                    Choose Pattern:
+                                </label>
+                                <div id="cartModalPatternThumbnails" style="
+                                    display: flex;
+                                    flex-wrap: wrap;
+                                    gap: 10px;
+                                    max-height: 120px;
+                                    overflow-y: auto;
+                                    padding: 10px;
+                                    background: #1a202c;
+                                    border-radius: 8px;
+                                "></div>
+                            </div>
+
+                            <!-- Color Controls -->
+                            <div class="color-controls" style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">
+                                    Customize Colors:
+                                </label>
+                                <div id="cartModalLayerInputs" style="
+                                    background: #1a202c;
+                                    padding: 15px;
+                                    border-radius: 8px;
+                                    min-height: 150px;
+                                "></div>
+                            </div>
+
+                            <!-- Pattern Preview -->
+                            <div class="pattern-preview" style="margin-bottom: 20px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">
+                                    Preview:
+                                </label>
+                                <div id="cartModalPreview" style="
+                                    width: 100%;
+                                    height: 200px;
+                                    background: #1a202c;
+                                    border-radius: 8px;
+                                    display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    border: 2px solid #4a5568;
+                                ">
+                                    <canvas id="cartModalPreviewCanvas" width="300" height="200"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right: Product Options -->
+                        <div class="options-section">
+                            <h3 style="color: #d4af37; margin-bottom: 15px;">Product Options</h3>
+
+                            <!-- Product Type Selector -->
+                            <div class="product-type-selector" style="margin-bottom: 25px;">
+                                <label style="display: block; margin-bottom: 8px; font-weight: bold;">
+                                    Product Type:
+                                </label>
+                                <div id="cartModalProductTypes" style="
+                                    background: #1a202c;
+                                    padding: 15px;
+                                    border-radius: 8px;
+                                ">
+                                    <!-- Product type options will be populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Current Selection Summary -->
+                            <div class="selection-summary" style="
+                                background: #1a202c;
+                                padding: 15px;
+                                border-radius: 8px;
+                                margin-bottom: 25px;
+                                border: 2px solid #4a5568;
+                            ">
+                                <h4 style="margin: 0 0 10px 0; color: #d4af37;">Current Selection:</h4>
+                                <div id="cartModalSummary">
+                                    <!-- Summary will be populated here -->
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="action-buttons" style="
+                                display: flex;
+                                flex-direction: column;
+                                gap: 15px;
+                            ">
+                                <button id="updateCartItemBtn" style="
+                                    background: #d4af37;
+                                    color: #1a202c;
+                                    border: none;
+                                    padding: 15px 20px;
+                                    border-radius: 8px;
+                                    font-family: 'Special Elite', monospace;
+                                    font-weight: bold;
+                                    font-size: 16px;
+                                    cursor: pointer;
+                                    transition: all 0.3s ease;
+                                ">
+                                    💫 Update Cart Item
+                                </button>
+
+                                <button id="cancelCartEditBtn" style="
+                                    background: transparent;
+                                    color: #a0aec0;
+                                    border: 2px solid #4a5568;
+                                    padding: 12px 20px;
+                                    border-radius: 8px;
+                                    font-family: 'Special Elite', monospace;
+                                    cursor: pointer;
+                                ">
+                                    Cancel Changes
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        `;
+
+        document.body.insertAdjacentHTML('beforeend', modalHTML);
+        this.modal = document.getElementById('colorflexCartEditModal');
+    }
+
+    setupEventListeners() {
+        // Close modal events
+        document.getElementById('closeCartEditModal').addEventListener('click', () => this.closeModal());
+        document.getElementById('cancelCartEditBtn').addEventListener('click', () => this.closeModal());
+
+        // Modal overlay click to close
+        this.modal.querySelector('.modal-overlay').addEventListener('click', () => this.closeModal());
+
+        // Update cart button
+        document.getElementById('updateCartItemBtn').addEventListener('click', () => this.updateCartItem());
+
+        // Listen for cart item edit requests
+        document.addEventListener('openCartEdit', (event) => {
+            this.openEditor(event.detail.cartItem, event.detail.itemData);
+        });
+    }
+
+    openEditor(cartItem, itemData) {
+        console.log('🎨 Opening editor for cart item:', itemData);
+
+        // Parse the itemData to extract pattern info and custom colors
+        const options = {
+            cartItem: cartItem,
+            patternName: itemData.patternName || itemData.pattern,
+            collectionName: itemData.collectionName || itemData.collection,
+            savedPattern: {
+                colors: itemData.colors || [],
+                currentScale: itemData.currentScale || itemData.scale || 100,
+                scaleMultiplier: itemData.scaleMultiplier || 1.0
+            },
+            productType: itemData.productType
+        };
+
+        console.log('✅ Parsed options for editor:', options);
+
+        // Call openEditModal with the parsed options
+        this.openEditModal(options);
+    }
+
+    openEditModal(options) {
+        console.log('🎨 Opening cart edit modal for:', options.patternName);
+
+        this.currentCartItem = options.cartItem;
+        this.currentPattern = options.patternName;
+        this.currentCollectionName = options.collectionName;
+        this.currentColors = options.savedPattern?.colors || [];
+        this.currentProductType = this.extractProductType(options.cartItem) || 'wallpaper-peel-stick';
+        this.currentScale = options.savedPattern?.currentScale || 100;
+        this.currentScaleMultiplier = options.savedPattern?.scaleMultiplier || 1.0;
+        this.savedPatternData = options.savedPattern;
+
+        // Show modal
+        this.modal.style.display = 'block';
+        document.body.style.overflow = 'hidden';
+
+        // Initialize editor content
+        this.initializeEditor({
+            patternName: options.patternName,
+            collectionName: options.collectionName,
+            colors: this.currentColors,
+            productType: this.currentProductType,
+            savedPattern: options.savedPattern
+        });
+    }
+
+    extractProductType(cartItem) {
+        // Extract product type from cart item text
+        const detailsText = cartItem.textContent || '';
+
+        if (detailsText.includes('Peel & Stick')) return 'wallpaper-peel-stick';
+        if (detailsText.includes('Traditional')) return 'wallpaper-traditional';
+        if (detailsText.includes('Unpasted')) return 'wallpaper-unpasted';
+        if (detailsText.includes('Grasscloth')) return 'wallpaper-grasscloth';
+        if (detailsText.includes('Textured')) return 'wallpaper-textured';
+        if (detailsText.includes('Cotton')) return 'fabric-cotton';
+        if (detailsText.includes('Linen')) return 'fabric-linen';
+
+        // Default fallback
+        return 'wallpaper-peel-stick';
+    }
+
+    async initializeEditor(itemData) {
+        console.log('🔧 Initializing cart editor with data:', itemData);
+
+        try {
+            // Load collections data if not available
+            if (!window.cartEditorCollections) {
+                await this.loadCollectionsData();
+            }
+
+            // Populate pattern thumbnails
+            this.populatePatternThumbnails(itemData.collectionName);
+
+            // Populate color controls
+            this.populateColorControls(itemData);
+
+            // Populate product type options
+            this.populateProductTypes(itemData.productType);
+
+            // Update summary
+            this.updateSummary();
+
+            // Generate initial preview
+            this.updatePreview();
+
+        } catch (error) {
+            console.error('❌ Error initializing cart editor:', error);
+        }
+    }
+
+    async loadCollectionsData() {
+        try {
+            const response = await fetch('/cdn/shop/files/collections.json');
+            window.cartEditorCollections = await response.json();
+            console.log('✅ Loaded collections data for cart editor');
+        } catch (error) {
+            console.error('❌ Failed to load collections data:', error);
+        }
+    }
+
+    populatePatternThumbnails(collectionName) {
+        const container = document.getElementById('cartModalPatternThumbnails');
+        container.innerHTML = '<div style="text-align: center; color: #a0aec0;">Loading patterns...</div>';
+
+        const collection = window.cartEditorCollections?.collections?.find(c => c.name === collectionName);
+        if (!collection) {
+            console.warn('Collection not found:', collectionName);
+            container.innerHTML = '<div style="text-align: center; color: #e53e3e;">Collection not found</div>';
+            return;
+        }
+
+        container.innerHTML = '';
+
+        // Add collection name header
+        const collectionHeader = document.createElement('div');
+        collectionHeader.style.cssText = `
+            width: 100%;
+            text-align: center;
+            color: #d4af37;
+            font-weight: bold;
+            margin-bottom: 10px;
+            font-size: 14px;
+        `;
+        collectionHeader.textContent = collection.name;
+        container.appendChild(collectionHeader);
+
+        // Create thumbnails container
+        const thumbnailsGrid = document.createElement('div');
+        thumbnailsGrid.style.cssText = `
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: flex-start;
+        `;
+
+        // Filter patterns (exclude standard patterns if they have no layers)
+        const availablePatterns = collection.patterns?.filter(pattern =>
+            pattern.layers && pattern.layers.length > 0
+        ) || [];
+
+        if (availablePatterns.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: #a0aec0;">No customizable patterns in this collection</div>';
+            return;
+        }
+
+        availablePatterns.forEach(pattern => {
+            const thumbnail = document.createElement('div');
+            const isSelected = pattern.name === this.currentPattern;
+
+            thumbnail.style.cssText = `
+                width: 50px;
+                height: 50px;
+                background-image: url('${pattern.thumbnail}');
+                background-size: cover;
+                background-position: center;
+                border: 3px solid ${isSelected ? '#d4af37' : '#4a5568'};
+                border-radius: 6px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                position: relative;
+                overflow: hidden;
+            `;
+
+            // Add selection indicator
+            if (isSelected) {
+                thumbnail.innerHTML = `
+                    <div style="
+                        position: absolute;
+                        top: 2px;
+                        right: 2px;
+                        width: 12px;
+                        height: 12px;
+                        background: #d4af37;
+                        border-radius: 50%;
+                        color: #1a202c;
+                        font-size: 8px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: bold;
+                    ">✓</div>
+                `;
+            }
+
+            thumbnail.title = `${pattern.name}\n${pattern.layers ? pattern.layers.length : 0} customizable layers\nClick to switch pattern`;
+
+            thumbnail.addEventListener('click', () => this.selectPattern(pattern));
+
+            // Hover effects
+            thumbnail.addEventListener('mouseenter', () => {
+                if (!isSelected) {
+                    thumbnail.style.borderColor = '#d4af37';
+                    thumbnail.style.transform = 'scale(1.05)';
+                }
+            });
+
+            thumbnail.addEventListener('mouseleave', () => {
+                if (!isSelected) {
+                    thumbnail.style.borderColor = '#4a5568';
+                    thumbnail.style.transform = 'scale(1)';
+                }
+            });
+
+            thumbnailsGrid.appendChild(thumbnail);
+        });
+
+        container.appendChild(thumbnailsGrid);
+
+        // Add pattern count info
+        const patternInfo = document.createElement('div');
+        patternInfo.style.cssText = `
+            text-align: center;
+            color: #a0aec0;
+            font-size: 12px;
+            margin-top: 8px;
+        `;
+        patternInfo.textContent = `${availablePatterns.length} patterns available`;
+        container.appendChild(patternInfo);
+
+        console.log(`✅ Populated ${availablePatterns.length} pattern thumbnails for ${collection.name}`);
+    }
+
+    async populateColorControls(itemData) {
+        const container = document.getElementById('cartModalLayerInputs');
+        container.innerHTML = '<div style="text-align: center; color: #a0aec0;">Loading color controls...</div>';
+
+        try {
+            // Load colors data if not available
+            if (!window.cartEditorColors) {
+                await this.loadColorsData();
+            }
+
+            // Get pattern data from collections
+            const collection = window.cartEditorCollections?.collections?.find(c => c.name === itemData.collectionName);
+            const pattern = collection?.patterns?.find(p => p.name === itemData.patternName);
+
+            if (!pattern || !pattern.layers || pattern.layers.length === 0) {
+                container.innerHTML = '<div style="text-align: center; color: #a0aec0;">This pattern has no customizable layers.</div>';
+                return;
+            }
+
+            container.innerHTML = '';
+
+            // Create color controls for each layer
+            pattern.layers.forEach((layer, index) => {
+                const savedColor = itemData.colors?.[index]?.color || layer.color;
+                const colorHex = this.lookupColorHex(savedColor);
+
+                const layerControl = document.createElement('div');
+                layerControl.className = 'cart-layer-control';
+                layerControl.style.cssText = `
+                    margin-bottom: 15px;
+                    padding: 12px;
+                    background: #2d3748;
+                    border-radius: 8px;
+                    border: 2px solid #4a5568;
+                `;
+
+                layerControl.innerHTML = `
+                    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+                        <div class="color-swatch" style="
+                            width: 40px;
+                            height: 40px;
+                            background-color: ${colorHex};
+                            border-radius: 50%;
+                            border: 3px solid #4a5568;
+                            cursor: pointer;
+                            transition: all 0.3s ease;
+                        " data-layer="${index}"></div>
+                        <div style="flex: 1;">
+                            <div style="font-weight: bold; color: #d4af37;">${layer.label}</div>
+                            <div style="color: #a0aec0; font-size: 12px;">Current: ${savedColor}</div>
+                        </div>
+                        <button class="change-color-btn" data-layer="${index}" style="
+                            background: #d4af37;
+                            color: #1a202c;
+                            border: none;
+                            padding: 6px 12px;
+                            border-radius: 4px;
+                            font-size: 12px;
+                            font-weight: bold;
+                            cursor: pointer;
+                        ">Change</button>
+                    </div>
+                    <div class="color-picker-container" data-layer="${index}" style="display: none;">
+                        <!-- Color picker will be inserted here -->
+                    </div>
+                `;
+
+                container.appendChild(layerControl);
+
+                // Add click handlers
+                const changeButton = layerControl.querySelector('.change-color-btn');
+                const colorSwatch = layerControl.querySelector('.color-swatch');
+                const pickerContainer = layerControl.querySelector('.color-picker-container');
+
+                changeButton.addEventListener('click', () => {
+                    this.showColorPicker(index, layer, pickerContainer, colorSwatch);
+                });
+
+                colorSwatch.addEventListener('click', () => {
+                    this.showColorPicker(index, layer, pickerContainer, colorSwatch);
+                });
+            });
+
+            console.log(`✅ Created ${pattern.layers.length} color controls for ${pattern.name}`);
+
+        } catch (error) {
+            console.error('❌ Error populating color controls:', error);
+            container.innerHTML = '<div style="text-align: center; color: #e53e3e;">Error loading color controls</div>';
+        }
+    }
+
+    populateProductTypes(currentType) {
+        const container = document.getElementById('cartModalProductTypes');
+        container.innerHTML = '<div style="text-align: center; color: #a0aec0;">Loading product options...</div>';
+
+        const productTypes = [
+            {
+                id: 'wallpaper-peel-stick',
+                name: 'Peel & Stick Wallpaper',
+                price: '$89.99',
+                description: 'Easy application, removable',
+                icon: '📋'
+            },
+            {
+                id: 'wallpaper-traditional',
+                name: 'Traditional Wallpaper',
+                price: '$79.99',
+                description: 'Professional paste application',
+                icon: '🎨'
+            },
+            {
+                id: 'wallpaper-unpasted',
+                name: 'Unpasted Wallpaper',
+                price: '$74.99',
+                description: 'Requires paste, professional finish',
+                icon: '📜'
+            },
+            {
+                id: 'wallpaper-grasscloth',
+                name: 'Grasscloth Wallpaper',
+                price: '$129.99',
+                description: 'Natural fiber, premium texture',
+                icon: '🌾'
+            },
+            {
+                id: 'wallpaper-textured',
+                name: 'Textured Wallpaper',
+                price: '$99.99',
+                description: 'Premium textured finish',
+                icon: '🏺'
+            },
+            {
+                id: 'fabric-cotton',
+                name: 'Cotton Fabric',
+                price: '$69.99',
+                description: 'Soft, breathable cotton',
+                icon: '🧵'
+            },
+            {
+                id: 'fabric-linen',
+                name: 'Linen Fabric',
+                price: '$79.99',
+                description: 'Luxury linen blend',
+                icon: '✨'
+            }
+        ];
+
+        container.innerHTML = '';
+
+        // Add header
+        const header = document.createElement('div');
+        header.style.cssText = `
+            text-align: center;
+            color: #d4af37;
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 14px;
+        `;
+        header.textContent = 'Choose Product Type';
+        container.appendChild(header);
+
+        productTypes.forEach(type => {
+            const isSelected = type.id === currentType;
+            const option = document.createElement('div');
+
+            option.style.cssText = `
+                padding: 15px;
+                border: 3px solid ${isSelected ? '#d4af37' : '#4a5568'};
+                border-radius: 8px;
+                margin-bottom: 10px;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                background: ${isSelected ? 'rgba(212, 175, 55, 0.1)' : '#1a202c'};
+                position: relative;
+            `;
+
+            option.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="
+                        font-size: 24px;
+                        width: 40px;
+                        text-align: center;
+                    ">${type.icon}</div>
+                    <div style="flex: 1;">
+                        <div style="
+                            font-weight: bold;
+                            color: ${isSelected ? '#d4af37' : '#ffffff'};
+                            margin-bottom: 4px;
+                        ">${type.name}</div>
+                        <div style="
+                            color: #a0aec0;
+                            font-size: 12px;
+                        ">${type.description}</div>
+                    </div>
+                    <div style="
+                        color: #d4af37;
+                        font-weight: bold;
+                        font-size: 16px;
+                    ">${type.price}</div>
+                </div>
+                ${isSelected ? `
+                    <div style="
+                        position: absolute;
+                        top: 8px;
+                        right: 8px;
+                        width: 20px;
+                        height: 20px;
+                        background: #d4af37;
+                        border-radius: 50%;
+                        color: #1a202c;
+                        font-size: 12px;
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        font-weight: bold;
+                    ">✓</div>
+                ` : ''}
+            `;
+
+            // Hover effects
+            option.addEventListener('mouseenter', () => {
+                if (!isSelected) {
+                    option.style.borderColor = '#d4af37';
+                    option.style.background = 'rgba(212, 175, 55, 0.05)';
+                }
+            });
+
+            option.addEventListener('mouseleave', () => {
+                if (!isSelected) {
+                    option.style.borderColor = '#4a5568';
+                    option.style.background = '#1a202c';
+                }
+            });
+
+            option.addEventListener('click', () => this.selectProductType(type.id));
+            container.appendChild(option);
+        });
+
+        // Add pricing note
+        const pricingNote = document.createElement('div');
+        pricingNote.style.cssText = `
+            text-align: center;
+            color: #a0aec0;
+            font-size: 11px;
+            margin-top: 10px;
+            font-style: italic;
+        `;
+        pricingNote.textContent = 'Pricing per square foot • Professional printing included';
+        container.appendChild(pricingNote);
+
+        console.log(`✅ Populated ${productTypes.length} product type options`);
+    }
+
+    async selectPattern(pattern) {
+        console.log('🎯 Selected pattern:', pattern.name);
+        this.currentPattern = pattern.name;
+
+        // Update pattern thumbnails selection
+        this.populatePatternThumbnails(this.currentCollectionName);
+
+        // Reset colors to pattern defaults when switching patterns
+        await this.updateColorControlsForPattern(pattern);
+
+        // Update preview
+        this.updatePreview();
+
+        // Update summary
+        this.updateSummary();
+    }
+
+    async updateColorControlsForPattern(pattern) {
+        // Update color controls when pattern changes
+        console.log('🎨 Updating color controls for pattern:', pattern.name);
+
+        // Get the full pattern data from collections
+        const collection = window.cartEditorCollections?.collections?.find(c => c.name === this.currentCollectionName);
+        const fullPattern = collection?.patterns?.find(p => p.name === pattern.name);
+
+        if (!fullPattern) {
+            console.warn('⚠️ Could not find full pattern data for:', pattern.name);
+            return;
+        }
+
+        // Reset current colors to pattern defaults
+        if (fullPattern.layers && fullPattern.layers.length > 0) {
+            this.currentColors = fullPattern.layers.map((layer, index) => ({
+                color: layer.color,
+                label: layer.label,
+                name: layer.color,
+                hex: this.lookupColorHex(layer.color)
+            }));
+        } else {
+            this.currentColors = [];
+        }
+
+        // Re-populate color controls with new pattern data
+        await this.populateColorControls({
+            patternName: pattern.name,
+            collectionName: this.currentCollectionName,
+            colors: this.currentColors
+        });
+
+        console.log(`✅ Updated color controls for ${pattern.name} with ${this.currentColors.length} layers`);
+    }
+
+    selectProductType(typeId) {
+        console.log('📦 Selected product type:', typeId);
+        this.currentProductType = typeId;
+
+        // Update product type selection visual
+        this.populateProductTypes(typeId);
+
+        // Update summary with new pricing
+        this.updateSummary();
+
+        // Update any dependent UI elements
+        this.updateProductTypeDisplay();
+    }
+
+    updateProductTypeDisplay() {
+        // Update any other UI elements that depend on product type
+        const productTypeName = this.getProductTypeName(this.currentProductType);
+        console.log(`✅ Product type updated to: ${productTypeName}`);
+    }
+
+    updatePreview() {
+        // Generate preview using current pattern and colors
+        // This would integrate with existing ColorFlex preview system
+        console.log('🖼️ Updating cart editor preview...');
+
+        const canvas = document.getElementById('cartModalPreviewCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Simple placeholder preview - would be replaced with actual ColorFlex rendering
+        ctx.fillStyle = '#1a202c';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#d4af37';
+        ctx.font = '16px Special Elite';
+        ctx.textAlign = 'center';
+        ctx.fillText(this.currentPattern || 'Pattern Preview', canvas.width / 2, canvas.height / 2);
+    }
+
+    updateSummary() {
+        const summaryContainer = document.getElementById('cartModalSummary');
+        const productType = this.getProductTypeName(this.currentProductType);
+        const productPrice = this.getProductTypePrice(this.currentProductType);
+
+        summaryContainer.innerHTML = `
+            <div style="margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #4a5568;">
+                <div style="color: #d4af37; font-weight: bold; font-size: 14px;">
+                    📋 Current Selection
+                </div>
+            </div>
+            <div style="margin-bottom: 10px; display: flex; justify-content: space-between;">
+                <span style="color: #a0aec0;">Pattern:</span>
+                <span style="font-weight: bold;">${this.currentPattern || 'None selected'}</span>
+            </div>
+            <div style="margin-bottom: 10px; display: flex; justify-content: space-between;">
+                <span style="color: #a0aec0;">Collection:</span>
+                <span style="font-weight: bold;">${this.currentCollectionName || 'Unknown'}</span>
+            </div>
+            <div style="margin-bottom: 10px; display: flex; justify-content: space-between;">
+                <span style="color: #a0aec0;">Product Type:</span>
+                <span style="font-weight: bold;">${productType}</span>
+            </div>
+            <div style="margin-bottom: 10px; display: flex; justify-content: space-between;">
+                <span style="color: #a0aec0;">Custom Colors:</span>
+                <span style="font-weight: bold;">${this.currentColors.length} layers</span>
+            </div>
+            <div style="margin-bottom: 10px; display: flex; justify-content: space-between;">
+                <span style="color: #a0aec0;">Pattern Scale:</span>
+                <span style="font-weight: bold;">${this.getScaleDisplayText(this.currentScale)}</span>
+            </div>
+            <div style="margin-bottom: 15px; display: flex; justify-content: space-between; padding-top: 8px; border-top: 1px solid #4a5568;">
+                <span style="color: #a0aec0;">Price per sq ft:</span>
+                <span style="font-weight: bold; color: #d4af37;">${productPrice}</span>
+            </div>
+            ${this.currentColors.length > 0 ? `
+                <div style="margin-bottom: 8px;">
+                    <div style="color: #d4af37; font-size: 12px; margin-bottom: 6px;">Color Layers:</div>
+                    ${this.currentColors.map((color, index) => `
+                        <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 4px;">
+                            <div style="
+                                width: 16px;
+                                height: 16px;
+                                background-color: ${color.hex || this.lookupColorHex(color.color)};
+                                border-radius: 50%;
+                                border: 1px solid #4a5568;
+                            "></div>
+                            <span style="font-size: 11px; color: #a0aec0;">${color.label || `Layer ${index + 1}`}</span>
+                        </div>
+                    `).join('')}
+                </div>
+            ` : ''}
+        `;
+    }
+
+    getProductTypePrice(typeId) {
+        const productTypes = {
+            'wallpaper-peel-stick': '$89.99',
+            'wallpaper-traditional': '$79.99',
+            'wallpaper-unpasted': '$74.99',
+            'wallpaper-grasscloth': '$129.99',
+            'wallpaper-textured': '$99.99',
+            'fabric-cotton': '$69.99',
+            'fabric-linen': '$79.99'
+        };
+        return productTypes[typeId] || '$89.99';
+    }
+
+    async updateCartItem() {
+        console.log('💫 Updating cart item...');
+
+        // Disable the update button to prevent double-clicking
+        const updateButton = document.getElementById('updateCartItemBtn');
+        const originalText = updateButton.textContent;
+        updateButton.disabled = true;
+        updateButton.textContent = '🔄 Updating...';
+
+        try {
+            // Build updated cart item data
+            const updatedItemData = {
+                pattern: this.currentPattern,
+                collectionName: this.currentCollectionName,
+                colors: this.currentColors,
+                productType: this.currentProductType,
+                productTypeName: this.getProductTypeName(this.currentProductType),
+                productPrice: this.getProductTypePrice(this.currentProductType),
+                currentScale: this.currentScale || 100,
+                scaleMultiplier: this.currentScaleMultiplier || 1.0
+            };
+
+            // Get the cart item key for updating
+            const cartItemKey = this.getCartItemKey();
+            if (!cartItemKey) {
+                throw new Error('Could not find cart item key for updating');
+            }
+
+            // Call Shopify cart API to update the item
+            const updateResult = await this.updateShopifyCartItem(cartItemKey, updatedItemData);
+
+            // Update the cart UI
+            this.updateCartUI(updatedItemData);
+
+            // Update local storage with new pattern data
+            this.updateLocalStoragePattern(updatedItemData);
+
+            // Close modal
+            this.closeModal();
+
+            // Show success message and refresh page to see changes
+            this.showSuccessMessage('Cart item updated successfully! Refreshing cart...');
+
+            // Refresh the page to show updated cart
+            setTimeout(() => {
+                window.location.reload();
+            }, 1500);
+
+        } catch (error) {
+            console.error('❌ Error updating cart item:', error);
+            this.showErrorMessage('Failed to update cart item. Please try again.');
+
+            // Re-enable button
+            updateButton.disabled = false;
+            updateButton.textContent = originalText;
+        }
+    }
+
+    getCartItemKey() {
+        // Extract cart item key from the cart item element
+        if (!this.currentCartItem) {
+            console.warn('⚠️ No current cart item available');
+            return null;
+        }
+
+        // Try multiple approaches to find the cart item key
+
+        // Method 1: Look for data attributes
+        const keyElement = this.currentCartItem.querySelector('[data-cart-item-key], [data-line-item-key], [data-key]');
+        if (keyElement) {
+            const key = keyElement.dataset.cartItemKey || keyElement.dataset.lineItemKey || keyElement.dataset.key;
+            if (key) {
+                console.log('🔑 Found cart item key via data attribute:', key);
+                return key;
+            }
+        }
+
+        // Method 2: Look for form with cart item key
+        const form = this.currentCartItem.querySelector('form[action*="/cart/change"]');
+        if (form) {
+            const keyInput = form.querySelector('input[name="id"], input[name="line"]');
+            if (keyInput && keyInput.value) {
+                console.log('🔑 Found cart item key via form input:', keyInput.value);
+                return keyInput.value;
+            }
+        }
+
+        // Method 3: Look in cart item ID
+        if (this.currentCartItem.id) {
+            const idMatch = this.currentCartItem.id.match(/CartItem-(\d+)/);
+            if (idMatch) {
+                console.log('🔑 Found cart item index via ID:', idMatch[1]);
+                return idMatch[1];
+            }
+        }
+
+        console.warn('⚠️ Could not find cart item key');
+        return null;
+    }
+
+    async updateShopifyCartItem(cartItemKey, itemData) {
+        console.log('🛒 Updating Shopify cart item:', cartItemKey, itemData);
+
+        // Get scale display text
+        function getScaleDisplayText(currentScale) {
+            if (currentScale === 50) return '0.5X REPEAT';
+            if (currentScale === 100) return '1X REPEAT';
+            if (currentScale === 200) return '2X REPEAT';
+            if (currentScale === 300) return '3X REPEAT';
+            if (currentScale === 400) return '4X REPEAT';
+            return 'Normal';
+        }
+
+        // Build the cart update payload
+        const updatePayload = {
+            id: cartItemKey,
+            quantity: 1, // Keep same quantity
+            properties: {
+                'Custom Pattern': itemData.pattern,
+                'Pattern Collection': this.toTitleCase(itemData.collectionName),
+                'Custom Colors': itemData.colors.map(c => this.normalizeColorToSwFormat(c.color)).join(', '),
+                'ColorFlex Source': 'Cart Edit Modal',
+                'Product Type': itemData.productTypeName,
+                'Pattern Scale': getScaleDisplayText(itemData.currentScale),
+                'Thumbnail Key': `cart_thumbnail_${itemData.pattern}_${itemData.collectionName}`
+            }
+        };
+
+        try {
+            // Use Shopify's cart update API
+            const response = await fetch('/cart/change.js', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify(updatePayload)
+            });
+
+            if (!response.ok) {
+                throw new Error(`Cart update failed: ${response.status} ${response.statusText}`);
+            }
+
+            const result = await response.json();
+            console.log('✅ Cart update successful:', result);
+            return result;
+
+        } catch (error) {
+            console.error('❌ Shopify cart update failed:', error);
+
+            // Fallback: Try the alternative cart update endpoint
+            try {
+                console.log('🔄 Trying fallback cart update method...');
+
+                const fallbackResponse = await fetch('/cart/update.js', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        updates: {
+                            [cartItemKey]: 1
+                        },
+                        attributes: updatePayload.properties
+                    })
+                });
+
+                if (fallbackResponse.ok) {
+                    const fallbackResult = await fallbackResponse.json();
+                    console.log('✅ Fallback cart update successful:', fallbackResult);
+                    return fallbackResult;
+                }
+            } catch (fallbackError) {
+                console.error('❌ Fallback cart update also failed:', fallbackError);
+            }
+
+            throw error;
+        }
+    }
+
+    updateLocalStoragePattern(itemData) {
+        // Update localStorage with the new pattern configuration
+        try {
+            // Create updated saved pattern
+            const updatedPattern = {
+                id: `cart-edit-${Date.now()}`,
+                patternName: itemData.pattern,
+                collectionName: itemData.collectionName,
+                colors: itemData.colors,
+                currentScale: 100,
+                timestamp: new Date().toISOString(),
+                source: 'cart_edit_modal',
+                layers: itemData.colors
+            };
+
+            // Update saved patterns
+            const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+            savedPatterns.push(updatedPattern);
+            localStorage.setItem('colorflexSavedPatterns', JSON.stringify(savedPatterns));
+
+            // Generate and store thumbnail
+            this.generateAndStoreThumbnail(updatedPattern);
+
+            console.log('💾 Updated localStorage with new pattern data');
+
+        } catch (error) {
+            console.error('❌ Error updating localStorage:', error);
+        }
+    }
+
+    async generateAndStoreThumbnail(patternData) {
+        // Generate a thumbnail for the updated pattern
+        try {
+            // This would integrate with ColorFlex rendering engine
+            // For now, create a simple placeholder thumbnail
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = 200;
+            canvas.height = 200;
+
+            // Simple pattern preview
+            ctx.fillStyle = '#1a202c';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            // Draw color swatches
+            if (patternData.colors && patternData.colors.length > 0) {
+                const swatchSize = 40;
+                const spacing = 10;
+                patternData.colors.forEach((color, index) => {
+                    const x = spacing + (index % 4) * (swatchSize + spacing);
+                    const y = spacing + Math.floor(index / 4) * (swatchSize + spacing);
+
+                    ctx.fillStyle = color.hex || this.lookupColorHex(color.color);
+                    ctx.fillRect(x, y, swatchSize, swatchSize);
+                });
+            }
+
+            // Convert to data URL
+            const thumbnailData = canvas.toDataURL('image/png');
+
+            // Store thumbnail
+            const thumbnailKey = `cart_thumbnail_${patternData.patternName}_${patternData.collectionName}`;
+            const thumbnailInfo = {
+                thumbnail: thumbnailData,
+                colors: patternData.colors,
+                timestamp: new Date().toISOString(),
+                source: 'cart_edit_modal'
+            };
+
+            localStorage.setItem(thumbnailKey, JSON.stringify(thumbnailInfo));
+            console.log('🖼️ Generated and stored thumbnail for updated pattern');
+
+        } catch (error) {
+            console.error('❌ Error generating thumbnail:', error);
+        }
+    }
+
+    updateCartUI(itemData) {
+        // Update the cart item in the UI
+        console.log('🎨 Updating cart UI with new data:', itemData);
+
+        // Update thumbnail, description, etc.
+        if (this.currentCartItem) {
+            // Update visual elements
+            const titleElement = this.currentCartItem.querySelector('.cart-item__name, .cart-item__title');
+            if (titleElement) {
+                titleElement.textContent = `Custom ${itemData.pattern}`;
+            }
+        }
+    }
+
+    closeModal() {
+        this.modal.style.display = 'none';
+        document.body.style.overflow = '';
+
+        // Reset state
+        this.currentCartItem = null;
+        this.currentPattern = null;
+        this.currentColors = [];
+        this.currentProductType = null;
+    }
+
+    // Utility functions
+    async loadColorsData() {
+        try {
+            const response = await fetch('/cdn/shop/files/colors.json');
+            window.cartEditorColors = await response.json();
+            console.log('✅ Loaded colors data for cart editor');
+        } catch (error) {
+            console.error('❌ Failed to load colors data:', error);
+            // Fallback color data
+            window.cartEditorColors = { colors: [] };
+        }
+    }
+
+    lookupColorHex(colorName) {
+        if (!colorName) return '#d4af37';
+
+        // Try to find color in the loaded colors data
+        const colors = window.cartEditorColors?.colors || [];
+        const colorMatch = colors.find(c =>
+            (c.name && c.name.toLowerCase().includes(colorName.toLowerCase())) ||
+            (c.colorName && c.colorName.toLowerCase().includes(colorName.toLowerCase()))
+        );
+
+        if (colorMatch) {
+            return colorMatch.hex || this.parseColorHex(colorMatch);
+        }
+
+        // Fallback color mapping for common colors
+        const fallbackColors = {
+            'snowbound': '#f7f5f1',
+            'quietude': '#d1c7b8',
+            'honorable blue': '#4a6fa5',
+            'lupine': '#9d72b8',
+            'white': '#ffffff',
+            'black': '#000000',
+            'gray': '#808080',
+            'red': '#ff0000',
+            'blue': '#0000ff',
+            'green': '#008000'
+        };
+
+        const fallbackColor = fallbackColors[colorName.toLowerCase()];
+        return fallbackColor || '#d4af37';
+    }
+
+    getScaleDisplayText(currentScale) {
+        if (currentScale === 50) return '0.5X';
+        if (currentScale === 100) return '1X';
+        if (currentScale === 200) return '2X';
+        if (currentScale === 300) return '3X';
+        if (currentScale === 400) return '4X';
+        return 'Normal';
+    }
+
+    normalizeColorToSwFormat(colorName) {
+        if (!colorName || typeof colorName !== 'string') {
+            return 'Unknown Color';
+        }
+
+        // Clean up extra whitespace and normalize case
+        const cleanName = colorName.trim();
+
+        // If it already has SW format, normalize it
+        const swMatch = cleanName.match(/^(SW|SC)\s*(\d+)\s*(.+)$/i);
+        if (swMatch) {
+            const prefix = swMatch[1].toUpperCase();
+            const number = swMatch[2];
+            const name = swMatch[3].trim();
+            return `${prefix}${number} ${this.toTitleCase(name)}`;
+        }
+
+        // If no SW number, try to look it up in colorsData
+        if (window.cartEditorColors?.colors) {
+            const searchName = cleanName.toLowerCase();
+            const colorEntry = window.cartEditorColors.colors.find(c =>
+                (c.color_name && c.color_name.toLowerCase() === searchName) ||
+                (c.name && c.name.toLowerCase() === searchName)
+            );
+
+            if (colorEntry && colorEntry.sw_number) {
+                return `${colorEntry.sw_number.toUpperCase()} ${this.toTitleCase(colorEntry.color_name || colorEntry.name)}`;
+            }
+        }
+
+        // Fallback: just format the name consistently with title case
+        return this.toTitleCase(cleanName);
+    }
+
+    toTitleCase(str) {
+        if (!str || typeof str !== 'string') {
+            return '';
+        }
+        return str.toLowerCase().split(' ').map(word =>
+            word.charAt(0).toUpperCase() + word.slice(1)
+        ).join(' ');
+    }
+
+    parseColorHex(colorData) {
+        // Parse hex from various color data formats
+        if (colorData.hex) return colorData.hex;
+        if (colorData.value && colorData.value.startsWith('#')) return colorData.value;
+        if (colorData.color && colorData.color.startsWith('#')) return colorData.color;
+        return '#d4af37'; // fallback
+    }
+
+    showColorPicker(layerIndex, layerData, container, colorSwatch) {
+        console.log(`🎨 Opening color picker for layer ${layerIndex}:`, layerData.label);
+
+        // Toggle visibility
+        const isVisible = container.style.display !== 'none';
+        if (isVisible) {
+            container.style.display = 'none';
+            return;
+        }
+
+        // Create color grid
+        container.innerHTML = '<div style="text-align: center; color: #a0aec0; padding: 10px;">Loading colors...</div>';
+        container.style.display = 'block';
+
+        // Get available colors for this layer
+        const availableColors = this.getAvailableColors(layerData);
+
+        // Create color grid
+        const colorGrid = document.createElement('div');
+        colorGrid.style.cssText = `
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(30px, 1fr));
+            gap: 6px;
+            padding: 10px;
+            max-height: 120px;
+            overflow-y: auto;
+        `;
+
+        availableColors.forEach(color => {
+            const colorOption = document.createElement('div');
+            colorOption.style.cssText = `
+                width: 30px;
+                height: 30px;
+                background-color: ${color.hex};
+                border-radius: 4px;
+                border: 2px solid #4a5568;
+                cursor: pointer;
+                transition: all 0.2s ease;
+                position: relative;
+            `;
+
+            colorOption.title = `${color.name}\nClick to select`;
+
+            colorOption.addEventListener('click', () => {
+                this.selectLayerColor(layerIndex, color, colorSwatch, container);
+            });
+
+            colorOption.addEventListener('mouseenter', () => {
+                colorOption.style.transform = 'scale(1.1)';
+                colorOption.style.borderColor = '#d4af37';
+            });
+
+            colorOption.addEventListener('mouseleave', () => {
+                colorOption.style.transform = 'scale(1)';
+                colorOption.style.borderColor = '#4a5568';
+            });
+
+            colorGrid.appendChild(colorOption);
+        });
+
+        container.innerHTML = '';
+        container.appendChild(colorGrid);
+    }
+
+    getAvailableColors(layerData) {
+        // Get colors from the loaded colors data
+        const colors = window.cartEditorColors?.colors || [];
+
+        // Return first 50 colors for performance, or filter by color group if available
+        return colors.slice(0, 50).map(color => ({
+            name: color.name || color.colorName || 'Unknown Color',
+            hex: color.hex || this.parseColorHex(color)
+        }));
+    }
+
+    selectLayerColor(layerIndex, color, colorSwatch, container) {
+        console.log(`🎯 Selected color for layer ${layerIndex}:`, color.name);
+
+        // Update the current colors array
+        if (!this.currentColors[layerIndex]) {
+            this.currentColors[layerIndex] = {};
+        }
+        this.currentColors[layerIndex].color = color.name;
+        this.currentColors[layerIndex].hex = color.hex;
+
+        // Update visual swatch
+        colorSwatch.style.backgroundColor = color.hex;
+
+        // Update the text display
+        const layerControl = colorSwatch.closest('.cart-layer-control');
+        const currentColorText = layerControl.querySelector('.color-swatch').nextElementSibling.querySelector('div:last-child');
+        if (currentColorText) {
+            currentColorText.textContent = `Current: ${color.name}`;
+        }
+
+        // Hide color picker
+        container.style.display = 'none';
+
+        // Update preview and summary
+        this.updatePreview();
+        this.updateSummary();
+
+        console.log('🎨 Layer color updated:', this.currentColors);
+    }
+
+    getProductTypeName(typeId) {
+        const types = {
+            'wallpaper-peel-stick': 'Peel & Stick Wallpaper',
+            'wallpaper-traditional': 'Traditional Wallpaper',
+            'wallpaper-unpasted': 'Unpasted Wallpaper',
+            'wallpaper-grasscloth': 'Grasscloth Wallpaper',
+            'wallpaper-textured': 'Textured Wallpaper',
+            'fabric-cotton': 'Cotton Fabric',
+            'fabric-linen': 'Linen Fabric'
+        };
+        return types[typeId] || typeId;
+    }
+
+    showSuccessMessage(message) {
+        console.log('✅', message);
+        this.showNotification(message, 'success');
+    }
+
+    showErrorMessage(message) {
+        console.log('❌', message);
+        this.showNotification(message, 'error');
+    }
+
+    showNotification(message, type = 'info') {
+        // Create notification element
+        const notification = document.createElement('div');
+        const bgColor = type === 'success' ? '#22543d' : (type === 'error' ? '#742a2a' : '#2d3748');
+        const textColor = type === 'success' ? '#68d391' : (type === 'error' ? '#feb2b2' : '#e2e8f0');
+        const icon = type === 'success' ? '✅' : (type === 'error' ? '❌' : 'ℹ️');
+
+        notification.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: ${bgColor};
+            color: ${textColor};
+            padding: 15px 20px;
+            border-radius: 8px;
+            border: 2px solid ${textColor};
+            font-family: 'Special Elite', monospace;
+            font-weight: bold;
+            z-index: 10002;
+            max-width: 400px;
+            word-wrap: break-word;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        `;
+
+        notification.innerHTML = `
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span style="font-size: 18px;">${icon}</span>
+                <span>${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" style="
+                    background: transparent;
+                    border: none;
+                    color: ${textColor};
+                    font-size: 18px;
+                    cursor: pointer;
+                    margin-left: auto;
+                ">×</button>
+            </div>
+        `;
+
+        document.body.appendChild(notification);
+
+        // Auto-remove after 5 seconds (except for success messages that refresh page)
+        if (type !== 'success') {
+            setTimeout(() => {
+                if (notification.parentElement) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+    }
+
+    updateColorControlsForPattern(pattern) {
+        // Update color controls when pattern changes
+        // This would need to integrate with ColorFlex pattern data
+        console.log('🎨 Updating color controls for pattern:', pattern.name);
+    }
+}
+
+// Initialize the cart editor when DOM is ready
+document.addEventListener('DOMContentLoaded', () => {
+    window.colorFlexCartEditor = new ColorFlexCartEditor();
+    console.log('✅ ColorFlex Cart Editor initialized');
+});
+
+// Function to trigger cart edit from cart items
+window.openColorFlexCartEditor = function(cartItemElement, itemData) {
+    const event = new CustomEvent('openCartEdit', {
+        detail: { cartItem: cartItemElement, itemData: itemData }
+    });
+    document.dispatchEvent(event);
+};
+</script>
+
+{% schema %}
+{
+  "name": "ColorFlex Cart Editor",
+  "class": "section-cart-editor",
+  "settings": []
+}
+{% endschema %}

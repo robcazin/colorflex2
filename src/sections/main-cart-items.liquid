@@ -1,0 +1,975 @@
+{{ 'component-cart.css' | asset_url | stylesheet_tag }}
+{{ 'component-cart-items.css' | asset_url | stylesheet_tag }}
+{{ 'component-totals.css' | asset_url | stylesheet_tag }}
+{{ 'component-price.css' | asset_url | stylesheet_tag }}
+{{ 'component-discounts.css' | asset_url | stylesheet_tag }}
+{{ 'quantity-popover.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+    padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+  }
+
+  @media screen and (min-width: 750px) {
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top }}px;
+      padding-bottom: {{ section.settings.padding_bottom }}px;
+    }
+  }
+  
+  /* ColorFlex Cart Item Styles */
+  .colorflex-cart-item {
+    background: linear-gradient(135deg, rgba(26, 32, 44, 0.02) 0%, rgba(45, 55, 72, 0.05) 100%);
+    border-left: 3px solid #d4af37 !important;
+  }
+
+  .colorflex-cart-item .cart-item__media {
+    position: relative;
+  }
+
+  .colorflex-cart-item .cart-item__image {
+    border: 2px solid #d4af37;
+    border-radius: 8px;
+  }
+
+  /* Enhanced Cart Item Details Styling */
+  .colorflex-cart-item .cart-item__details {
+    position: relative;
+    padding: 12px !important;
+  }
+
+  /* Style the product title link - but not the ColorFlex badge */
+  .colorflex-cart-item .cart-item__name {
+    color: #d4af37 !important;
+    text-decoration: none !important;
+    font-weight: 600 !important;
+    margin-bottom: 12px !important;
+    transition: color 0.3s ease;
+  }
+
+  .colorflex-cart-item .cart-item__name:hover {
+    color: #f7e98e !important;
+    text-decoration: underline !important;
+  }
+
+  /* Font imports handled by JavaScript for better loading */
+
+  /* Ensure Island Moments font is preserved in ColorFlex badge */
+  .colorflex-cart-item [style*="font-family: 'Island Moments'"] {
+    font-family: 'Island Moments', cursive !important;
+    font-size: 1.8rem !important;  /* Use rem instead of px to match ColorFlex page */
+    font-weight: 400 !important;   /* Island Moments only has 400 weight */
+    color: #e2e8f0 !important;
+    font-display: swap !important;
+  }
+
+  /* Ultra-high specificity override for ColorFlex cart pattern names */
+  html body div.colorflex-cart-item div span.pattern-name-island-moments.colorflex-pattern-name,
+  html body div.colorflex-cart-item div span.colorflex-pattern-name.pattern-name-island-moments,
+  html body .colorflex-cart-item .pattern-name-island-moments,
+  html body .colorflex-cart-item .colorflex-pattern-name,
+  .colorflex-cart-item .pattern-name-island-moments,
+  .colorflex-cart-item .colorflex-pattern-name {
+    font-family: 'Island Moments', cursive !important;
+    font-size: 8rem !important;
+    font-weight: 400 !important;
+    color: #e2e8f0 !important;
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Clean up the product options list */
+  .colorflex-cart-item .product-option {
+    background: rgba(212, 175, 55, 0.1) !important;
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    border-radius: 4px !important;
+    padding: 6px 8px !important;
+    margin: 4px 0 !important;
+    font-size: 11px !important;
+    color: #cbd5e0 !important;
+  }
+
+  /* Style the definition list */
+  .colorflex-cart-item dl {
+    margin: 8px 0 !important;
+  }
+
+  .colorflex-cart-item dt {
+    font-weight: 600 !important;
+    color: #d4af37 !important;
+    font-size: 11px !important;
+    margin-bottom: 2px !important;
+  }
+
+  .colorflex-cart-item dd {
+    color: #e2e8f0 !important;
+    font-size: 11px !important;
+    margin-bottom: 6px !important;
+    word-break: break-word !important;
+  }
+
+  /* Hide or style unwanted elements */
+  .colorflex-cart-item .product-option:empty {
+    display: none !important;
+  }
+
+  /* Improve spacing and organization */
+  .colorflex-cart-item .discounts {
+    margin-top: 8px !important;
+  }
+  
+  @media screen and (max-width: 749px) {
+    .colorflex-cart-item .cart-item__details > div[style*="background: linear-gradient"] {
+      font-size: 90% !important;
+      padding: 8px !important;
+    }
+    
+    .colorflex-cart-item .cart-item__details > div[style*="background: linear-gradient"] > div[style*="grid-template-columns"] {
+      grid-template-columns: 1fr !important;
+      gap: 4px !important;
+    }
+  }
+{%- endstyle -%}
+
+{%- unless settings.cart_type == 'drawer' -%}
+  <script src="{{ 'cart.js' | asset_url }}" defer="defer"></script>
+{%- endunless -%}
+
+<script src="{{ 'quantity-popover.js' | asset_url }}" defer="defer"></script>
+
+   
+<cart-items class="gradient color-{{ section.settings.color_scheme }} isolate{% if cart == empty %} is-empty{% else %} section-{{ section.id }}-padding{% endif %}">
+  <div class="page-width">
+    <div class="title-wrapper-with-link">
+      <h1 class="title title--primary">{{ 'sections.cart.title' | t }}</h1>
+      <a href="{{ routes.all_products_collection_url }}" class="underlined-link">
+        {{- 'general.continue_shopping' | t -}}
+      </a>
+    </div>
+
+    <div class="cart__warnings">
+      <h1 class="cart__empty-text">{{ 'sections.cart.empty' | t }}</h1>
+      <a href="{{ routes.all_products_collection_url }}" class="button">
+        {{ 'general.continue_shopping' | t }}
+      </a>
+
+      {%- if shop.customer_accounts_enabled and customer == null -%}
+        <h2 class="cart__login-title">{{ 'sections.cart.login.title' | t }}</h2>
+        <p class="cart__login-paragraph">
+          {{ 'sections.cart.login.paragraph_html' | t: link: routes.account_login_url }}
+        </p>
+      {%- endif -%}
+    </div>
+
+    <form action="{{ routes.cart_url }}" class="cart__contents critical-hidden" method="post" id="cart">
+      <div class="cart__items" id="main-cart-items" data-id="{{ section.id }}">
+        <div class="js-contents">
+          {%- if cart != empty -%}
+            <table class="cart-items">
+              <caption class="visually-hidden">
+                {{ 'sections.cart.title' | t }}
+              </caption>
+              <thead>
+                <tr>
+                  <th class="caption-with-letter-spacing" colspan="2" scope="col">
+                    {{ 'sections.cart.headings.product' | t }}
+                  </th>
+                  <th class="medium-hide large-up-hide right caption-with-letter-spacing" colspan="1" scope="col">
+                    {{ 'sections.cart.headings.total' | t }}
+                  </th>
+                  <th
+                    class="cart-items__heading--wide cart-items__heading--quantity small-hide caption-with-letter-spacing"
+                    colspan="1"
+                    scope="col"
+                  >
+                    {{ 'sections.cart.headings.quantity' | t }}
+                  </th>
+                  <th class="small-hide right caption-with-letter-spacing" colspan="1" scope="col">
+                    {{ 'sections.cart.headings.total' | t }}
+                  </th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {%- for item in cart.items -%}
+                  <tr class="cart-item{% if item.properties['ColorFlex Design'] == 'Yes' %} colorflex-cart-item{% endif %}" id="CartItem-{{ item.index | plus: 1 }}">
+                    <td class="cart-item__media">
+                      {% if item.properties['ColorFlex Design'] == 'Yes' %}
+                        {% comment %} ColorFlex custom pattern with generated preview {% endcomment %}
+                        {% assign pattern_name = item.properties['Custom Pattern'] | default: item.properties['Pattern Name'] | default: item.properties['pattern_name'] %}
+                        {% assign collection_name = item.properties['Collection'] | default: item.properties['Pattern Collection'] %}
+                        {% assign custom_colors = item.properties['Custom Colors'] | default: item.properties['custom_colors'] %}
+                        {% assign pattern_scale = item.properties['Pattern Scale'] %}
+                        {% assign colorflex_image_url = item.url %}
+                        {% if pattern_name and collection_name %}
+                          {% comment %} Link to ColorFlex page instead of product page {% endcomment %}
+                          {% assign colorflex_image_url = '/pages/colorflex?collection=' | append: collection_name | append: '&pattern=' | append: pattern_name %}
+                          {% if custom_colors and custom_colors != 'Default Colors' %}
+                            {% assign encoded_colors = custom_colors | url_encode %}
+                            {% assign colorflex_image_url = colorflex_image_url | append: '&colors=' | append: encoded_colors %}
+                          {% endif %}
+                          {% if pattern_scale and pattern_scale != blank %}
+                            {% assign colorflex_image_url = colorflex_image_url | append: '&scale=' | append: pattern_scale %}
+                          {% endif %}
+                          {% assign colorflex_image_url = colorflex_image_url | append: '&source=cart' %}
+                        {% endif %}
+                        <a href="{{ colorflex_image_url }}" class="cart-item__link" aria-hidden="true" tabindex="-1"> </a>
+                        <div class="cart-item__image-container gradient global-media-settings" style="position: relative;">
+                          {% assign pattern_preview = item.properties['_pattern_preview'] %}
+                          {% if pattern_preview and pattern_preview != blank %}
+                            {% comment %} Show generated pattern preview {% endcomment %}
+                            <img src="{{ pattern_preview }}" 
+                                 width="150"
+                                 height="150"
+                                 style="width: 150px; height: 150px; object-fit: cover; border: 2px solid #d4af37; border-radius: 8px;"
+                                 alt="Custom {{ item.properties['Pattern Name'] | default: 'ColorFlex' }} Pattern"
+                                 loading="lazy">
+                          {% else %}
+                            {% comment %} Fallback placeholder if no preview generated {% endcomment %}
+                            <div style="width: 150px; height: 150px; background: #374151; border: 2px solid #d4af37; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 14px; text-align: center;">
+                              🎨<br>Custom<br>ColorFlex<br>Pattern
+                            </div>
+                          {% endif %}
+                          {% comment %} ColorFlex badge overlay {% endcomment %}
+                          <div style="position: absolute; top: 4px; left: 4px; background: #d4af37; color: #1a202c; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">
+                            🎨 CUSTOM
+                          </div>
+                        </div>
+                      {% elsif item.image %}
+                        {% comment %} Standard product image {% endcomment %}
+                        <a href="{{ item.url }}" class="cart-item__link" aria-hidden="true" tabindex="-1"> </a>
+                        <div class="cart-item__image-container gradient global-media-settings">
+                          <img
+                            src="{{ item.image | image_url: width: 300 }}"
+                            class="cart-item__image"
+                            alt="{{ item.image.alt | escape }}"
+                            loading="lazy"
+                            width="150"
+                            height="{{ 150 | divided_by: item.image.aspect_ratio | ceil }}"
+                          >
+                        </div>
+                      {% endif %}
+                    </td>
+
+                    <td class="cart-item__details">
+                      {%- if settings.show_vendor -%}
+                        <p class="caption-with-letter-spacing">{{ item.product.vendor }}</p>
+                      {%- endif -%}
+
+                      {% if item.properties['ColorFlex Design'] == 'Yes' %}
+                        {% comment %} Enhanced URL for ColorFlex items with pattern data {% endcomment %}
+                        {% assign pattern_name = item.properties['Custom Pattern'] | default: item.properties['Pattern Name'] | default: item.properties['pattern_name'] %}
+                        {% assign collection_name = item.properties['Collection'] | default: item.properties['Pattern Collection'] %}
+                        {% assign custom_colors = item.properties['Custom Colors'] | default: item.properties['custom_colors'] %}
+                        {% assign pattern_scale = item.properties['Pattern Scale'] %}
+                        {% assign colorflex_url = item.url %}
+                        {% if pattern_name and collection_name %}
+                          {% comment %} Link to ColorFlex page instead of product page {% endcomment %}
+                          {% assign colorflex_url = '/pages/colorflex?collection=' | append: collection_name | append: '&pattern=' | append: pattern_name %}
+                          {% if custom_colors and custom_colors != 'Default Colors' %}
+                            {% assign encoded_colors = custom_colors | url_encode %}
+                            {% assign colorflex_url = colorflex_url | append: '&colors=' | append: encoded_colors %}
+                          {% endif %}
+                          {% if pattern_scale and pattern_scale != blank %}
+                            {% assign colorflex_url = colorflex_url | append: '&scale=' | append: pattern_scale %}
+                          {% endif %}
+                          {% assign colorflex_url = colorflex_url | append: '&source=cart' %}
+                        {% endif %}
+                        {% comment %} For ColorFlex products, disable the link - only allow Edit Design button {% endcomment %}
+                        <span class="cart-item__name h4 break" style="cursor: default;">{{ item.product.title | escape }}</span>
+                      {% else %}
+                        <a href="{{ item.url }}" class="cart-item__name h4 break">{{ item.product.title | escape }}</a>
+                      {% endif %}
+                      
+                      {% if item.properties['ColorFlex Design'] == 'Yes' %}
+                        {% comment %} Enhanced ColorFlex pattern information {% endcomment %}
+                        <div style="background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); border: 1px solid #d4af37; border-radius: 6px; padding: 12px; margin: 8px 0; color: #e2e8f0;">
+                          
+                          {% comment %} 1. ColorFlex Badge (left-aligned) {% endcomment %}
+                          <div style="text-align: left; margin-top: -7px;margin-left: -2px;margin-bottom: 12px;">
+                            <span style="background: #d4af37; color: #1a202c; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">🎨 COLORFLEX</span>
+                          </div>
+
+                          {% comment %} 2. Pattern Name in Island Moments (check multiple property names) {% endcomment %}
+                          {% assign pattern_name = item.properties['Custom Pattern'] | default: item.properties['Pattern Name'] | default: item.properties['pattern_name'] %}
+                          {% if pattern_name %}
+                            <div style="text-align: center !important; margin-bottom: -32px; margin-top: 0px; width: 100%; display: flex; justify-content: center;">
+                              <span class="pattern-name-island-moments colorflex-pattern-name" style="font-family: 'Island Moments', cursive !important; font-size: 4rem !important; font-weight: 400 !important; color: #e2e8f0 !important; text-align: center !important; display: block !important; width: 100% !important; line-height: 1.2 !important;">{{ pattern_name }}</span>
+                            </div>
+                          {% endif %}
+
+                          {% comment %} 3. Color Circles {% endcomment %}
+                          {% assign custom_colors = item.properties['Custom Colors'] | default: item.properties['custom_colors'] | default: item.properties['Colors'] %}
+                          {% if custom_colors and custom_colors != 'Default' and custom_colors != 'Default Colors' and custom_colors != blank %}
+                            <div style="margin-bottom: 12px;">
+                              <div class="colorflex-color-circles" data-colors="{{ custom_colors }}" style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; min-height: 24px;">
+                                {% comment %} Color circles will be populated by JavaScript {% endcomment %}
+                              </div>
+                            </div>
+                          {% endif %}
+
+                          {% comment %} 4. Scale/Repeat Information {% endcomment %}
+                          {% assign pattern_scale = item.properties['Pattern Scale'] %}
+                          {% if pattern_scale and pattern_scale != blank %}
+                            <div style="text-align: center; margin-bottom: 12px;">
+                              <div style="background: rgba(212, 175, 55, 0.15); border: 1px solid #d4af37; border-radius: 4px; padding: 8px; display: inline-block;">
+                                <span style="color: #d4af37; font-weight: bold; font-size: 14px; font-family: 'Special Elite', monospace;">
+                                  {% if pattern_scale == '0.5X' %}📏 0.5X
+                                  {% elsif pattern_scale == '1X' %}📏 1X
+                                  {% elsif pattern_scale == '2X' %}📏 2X
+                                  {% elsif pattern_scale == '3X' %}📏 3X
+                                  {% elsif pattern_scale == '4X' %}📏 4X
+                                  {% elsif pattern_scale == '50' %}📏 0.5X
+                                  {% elsif pattern_scale == '100' %}📏 1X
+                                  {% elsif pattern_scale == '200' %}📏 2X
+                                  {% elsif pattern_scale == '300' %}📏 3X
+                                  {% elsif pattern_scale == '400' %}📏 4X
+                                  {% else %}📏 {{ pattern_scale }}{% endif %}
+                                </span>
+                              </div>
+                            </div>
+                          {% endif %}
+
+                          {% comment %} 4. Pattern ID Badge (styled like My Designs modal) - Now includes scale in the ID itself {% endcomment %}
+                          {% assign pattern_id = item.properties['Pattern ID'] | default: item.properties['pattern_id'] | default: item.properties['colorflex-pattern-id'] %}
+                          {% if pattern_id %}
+                            <div style="text-align: center; margin-bottom: 12px;">
+                              <div style="color: #d4af37; font-size: 11px; font-family: 'Special Elite', monospace; font-weight: bold; word-break: break-all; line-height: 1.3;">
+                                ID: {{ pattern_id }}
+                              </div>
+                            </div>
+                          {% endif %}
+                          
+                          {% comment %} Pattern details grid {% endcomment %}
+                          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px; color: #a0aec0; margin-bottom: 8px;">
+                            {% if item.properties['Collection'] %}
+                              <div><strong>Collection:</strong> {{ item.properties['Collection'] | capitalize }}</div>
+                            {% endif %}
+                            {% if item.properties['Material'] %}
+                              <div><strong>Material:</strong> {{ item.properties['Material'] }}</div>
+                            {% endif %}
+                            {% if item.properties['Texture'] %}
+                              <div><strong>Texture:</strong> {{ item.properties['Texture'] }}</div>
+                            {% endif %}
+                            {% if item.properties['Length'] %}
+                              <div><strong>Length:</strong> {{ item.properties['Length'] }}</div>
+                            {% endif %}
+                            {% if item.properties['Coverage'] %}
+                              <div><strong>Coverage:</strong> {{ item.properties['Coverage'] }}</div>
+                            {% endif %}
+                            {% if item.properties['Unit Price'] %}
+                              <div><strong>Unit Price:</strong> {{ item.properties['Unit Price'] }}</div>
+                            {% endif %}
+                            {% if item.properties['Total Price'] %}
+                              <div><strong>Total Price:</strong> {{ item.properties['Total Price'] }}</div>
+                            {% endif %}
+                            {% if item.properties['Customized'] %}
+                              <div><strong>Customized:</strong> {{ item.properties['Customized'] }}</div>
+                            {% endif %}
+                            {% if item.properties['Save Date'] %}
+                              <div><strong>Save Date:</strong> {{ item.properties['Save Date'] }}</div>
+                            {% endif %}
+                            {% comment %} Pattern ID moved to main layout above {% endcomment %}
+                          </div>
+                          
+                        </div>
+                      {% endif %}
+
+                      {%- if item.original_price != item.final_price -%}
+                        <div class="cart-item__discounted-prices">
+                          <span class="visually-hidden">
+                            {{ 'products.product.price.regular_price' | t }}
+                          </span>
+                          <s class="cart-item__old-price product-option">
+                            {{- item.original_price | money -}}
+                          </s>
+                          <span class="visually-hidden">
+                            {{ 'products.product.price.sale_price' | t }}
+                          </span>
+                          <strong class="cart-item__final-price product-option">
+                            {{ item.final_price | money }}
+                          </strong>
+                        </div>
+                      {%- else -%}
+                        <div class="product-option">
+                          {{ item.original_price | money }}
+                        </div>
+                      {%- endif -%}
+
+                      {%- if item.product.has_only_default_variant == false
+                        or item.properties.size != 0
+                        or item.selling_plan_allocation != null
+                      -%}
+                        <dl>
+                          {%- if item.product.has_only_default_variant == false -%}
+                            {%- for option in item.options_with_values -%}
+                              <div class="product-option">
+                                <dt>{{ option.name }}:</dt>
+                                <dd>{{ option.value }}</dd>
+                              </div>
+                            {%- endfor -%}
+                          {%- endif -%}
+
+                          {%- for property in item.properties -%}
+                            {%- assign property_first_char = property.first | slice: 0 -%}
+                            {%- if property.last != blank and property_first_char != '_' -%}
+                              <div class="product-option">
+                                <dt>{{ property.first }}:</dt>
+                                <dd>
+                                  {%- if property.last contains '/uploads/' -%}
+                                    <a href="{{ property.last }}" class="link" target="_blank">
+                                      {{ property.last | split: '/' | last }}
+                                    </a>
+                                  {%- else -%}
+                                    {{ property.last }}
+                                  {%- endif -%}
+                                </dd>
+                              </div>
+                            {%- endif -%}
+                          {%- endfor -%}
+                        </dl>
+
+                        <p class="product-option">{{ item.selling_plan_allocation.selling_plan.name }}</p>
+                      {%- endif -%}
+
+                      <ul class="discounts list-unstyled" role="list" aria-label="{{ 'customer.order.discount' | t }}">
+                        {%- for discount in item.line_level_discount_allocations -%}
+                          <li class="discounts__discount">
+                            {{- 'icon-discount.svg' | inline_asset_content -}}
+                            {{ discount.discount_application.title | escape }}
+                          </li>
+                        {%- endfor -%}
+                      </ul>
+                    </td>
+
+                    <td class="cart-item__totals right medium-hide large-up-hide">
+                      {%- render 'loading-spinner' -%}
+                      <div class="cart-item__price-wrapper">
+                        {%- if item.original_line_price != item.final_line_price -%}
+                          <dl class="cart-item__discounted-prices">
+                            <dt class="visually-hidden">
+                              {{ 'products.product.price.regular_price' | t }}
+                            </dt>
+                            <dd>
+                              <s class="cart-item__old-price price price--end">
+                                {{ item.original_line_price | money }}
+                              </s>
+                            </dd>
+                            <dt class="visually-hidden">
+                              {{ 'products.product.price.sale_price' | t }}
+                            </dt>
+                            <dd class="price price--end">
+                              {{ item.final_line_price | money }}
+                            </dd>
+                          </dl>
+                        {%- else -%}
+                          <span class="price price--end">
+                            {{ item.original_line_price | money }}
+                          </span>
+                        {%- endif -%}
+
+                        {%- if item.variant.available and item.unit_price_measurement -%}
+                          <div class="unit-price caption">
+                            <span class="visually-hidden">{{ 'products.product.price.unit_price' | t }}</span>
+                            {{ item.unit_price | money }}
+                            <span aria-hidden="true">/</span>
+                            <span class="visually-hidden"
+                              >&nbsp;{{ 'accessibility.unit_price_separator' | t }}&nbsp;</span
+                            >
+                            {%- if item.unit_price_measurement.reference_value != 1 -%}
+                              {{- item.unit_price_measurement.reference_value -}}
+                            {%- endif -%}
+                            {{ item.unit_price_measurement.reference_unit }}
+                          </div>
+                        {%- endif -%}
+                      </div>
+                    </td>
+                    {%- liquid
+                      assign has_qty_rules = false
+                      if item.variant.quantity_rule.increment > 1 or item.variant.quantity_rule.min > 1 or item.variant.quantity_rule.max != null
+                        assign has_qty_rules = true
+                      endif
+
+                      assign has_vol_pricing = false
+                      if item.variant.quantity_price_breaks.size > 0
+                        assign has_vol_pricing = true
+                      endif
+                    -%}
+                    <td class="cart-item__quantity{% if has_qty_rules or has_vol_pricing %} cart-item__quantity--info{% endif %}">
+                      <quantity-popover>
+                        <div class="cart-item__quantity-wrapper quantity-popover-wrapper">
+                          <label class="visually-hidden" for="Quantity-{{ item.index | plus: 1 }}">
+                            {{ 'products.product.quantity.label' | t }}
+                          </label>
+                          <div class="quantity-popover-container{% if has_qty_rules or has_vol_pricing %} quantity-popover-container--hover{% endif %}">
+                            {%- if has_qty_rules or has_vol_pricing -%}
+                              <button
+                                type="button"
+                                aria-expanded="false"
+                                class="quantity-popover__info-button quantity-popover__info-button--icon-only button button--tertiary small-hide medium-hide"
+                              >
+                                {{- 'icon-info.svg' | inline_asset_content -}}
+                              </button>
+                            {%- endif -%}
+                            <quantity-input class="quantity cart-quantity">
+                              <button class="quantity__button" name="minus" type="button">
+                                <span class="visually-hidden">
+                                  {{- 'products.product.quantity.decrease' | t: product: item.product.title | escape -}}
+                                </span>
+                                <span class="svg-wrapper">
+                                  {{- 'icon-minus.svg' | inline_asset_content -}}
+                                </span>
+                              </button>
+                              <input
+                                class="quantity__input"
+                                data-quantity-variant-id="{{ item.variant.id }}"
+                                type="number"
+                                name="updates[]"
+                                value="{{ item.quantity }}"
+                                {% # theme-check-disable %}
+                                data-cart-quantity="{{ cart | item_count_for_variant: item.variant.id }}"
+                                min="0"
+                                data-min="{{ item.variant.quantity_rule.min }}"
+                                {% if item.variant.quantity_rule.max != null %}
+                                  max="{{ item.variant.quantity_rule.max }}"
+                                {% endif %}
+                                step="{{ item.variant.quantity_rule.increment }}"
+                                {% # theme-check-enable %}
+                                aria-label="{{ 'products.product.quantity.input_label' | t: product: item.product.title | escape }}"
+                                id="Quantity-{{ item.index | plus: 1 }}"
+                                data-index="{{ item.index | plus: 1 }}"
+                              >
+                              <button class="quantity__button" name="plus" type="button">
+                                <span class="visually-hidden">
+                                  {{- 'products.product.quantity.increase' | t: product: item.product.title | escape -}}
+                                </span>
+                                <span class="svg-wrapper">
+                                  {{- 'icon-plus.svg' | inline_asset_content -}}
+                                </span>
+                              </button>
+                            </quantity-input>
+                          </div>
+                          <cart-remove-button
+                            id="Remove-{{ item.index | plus: 1 }}"
+                            data-index="{{ item.index | plus: 1 }}"
+                          >
+                            <a
+                              href="{{ item.url_to_remove }}"
+                              class="button button--tertiary"
+                              aria-label="{{ 'sections.cart.remove_title' | t: title: item.title | escape }}"
+                            >
+                              <span class="svg-wrapper">
+                                {{- 'icon-remove.svg' | inline_asset_content -}}
+                              </span>
+                            </a>
+                          </cart-remove-button>
+                        </div>
+                        {%- if has_qty_rules or has_vol_pricing -%}
+                          <button
+                            type="button"
+                            class="quantity-popover__info-button quantity-popover__info-button--icon-with-label button button--tertiary large-up-hide"
+                            aria-expanded="false"
+                          >
+                            {{- 'icon-info.svg' | inline_asset_content -}}
+                            <span>
+                              {%- if has_vol_pricing -%}
+                                {{ 'products.product.volume_pricing.note' | t }}
+                              {%- elsif has_qty_rules -%}
+                                {{ 'products.product.quantity.note' | t }}
+                              {%- endif -%}
+                            </span>
+                          </button>
+                        {%- endif -%}
+                        {%- if has_vol_pricing or has_qty_rules -%}
+                          <div
+                            class="cart-items__info global-settings-popup quantity-popover__info"
+                            tabindex="-1"
+                            hidden
+                          >
+                            {%- if has_qty_rules == false -%}
+                              <span class="volume-pricing-label caption">
+                                {{- 'products.product.volume_pricing.title' | t -}}
+                              </span>
+                            {%- endif -%}
+                            <div class="quantity__rules caption">
+                              {%- if item.variant.quantity_rule.increment > 1 -%}
+                                <span class="divider">
+                                  {{-
+                                    'products.product.quantity.multiples_of'
+                                    | t: quantity: item.variant.quantity_rule.increment
+                                  -}}
+                                </span>
+                              {%- endif -%}
+                              {%- if item.variant.quantity_rule.min > 1 -%}
+                                <span class="divider">
+                                  {{-
+                                    'products.product.quantity.min_of'
+                                    | t: quantity: item.variant.quantity_rule.min
+                                  -}}
+                                </span>
+                              {%- endif -%}
+                              {%- if item.variant.quantity_rule.max != null -%}
+                                <span class="divider">
+                                  {{-
+                                    'products.product.quantity.max_of'
+                                    | t: quantity: item.variant.quantity_rule.max
+                                  -}}
+                                </span>
+                              {%- endif -%}
+                            </div>
+                            <button
+                              class="button-close button button--tertiary large-up-hide"
+                              type="button"
+                              aria-label="{{ 'accessibility.close' | t }}"
+                            >
+                              <span class="svg-wrapper">
+                                {{- 'icon-close.svg' | inline_asset_content -}}
+                              </span>
+                            </button>
+                            {%- if item.variant.quantity_price_breaks.size > 0 -%}
+                              <volume-pricing class="parent-display">
+                                <ul class="list-unstyled">
+                                  <li>
+                                    <span>{{ item.variant.quantity_rule.min }}+</span>
+                                    {%- assign price = item.variant.price | money_with_currency -%}
+                                    <span> {{ 'sections.quick_order_list.each' | t: money: price }}</span>
+                                  </li>
+                                  {%- for price_break in item.variant.quantity_price_breaks -%}
+                                    <li>
+                                      <span>
+                                        {{- price_break.minimum_quantity -}}
+                                        <span aria-hidden="true">+</span></span
+                                      >
+                                      {%- assign price = price_break.price | money_with_currency -%}
+                                      <span> {{ 'sections.quick_order_list.each' | t: money: price }}</span>
+                                    </li>
+                                  {%- endfor -%}
+                                </ul>
+                              </volume-pricing>
+                            {%- endif -%}
+                          </div>
+                        {%- endif -%}
+                        <div class="cart-item__error" id="Line-item-error-{{ item.index | plus: 1 }}" role="alert">
+                          <small class="cart-item__error-text"></small>
+                          <span class="svg-wrapper">
+                            {{- 'icon-error.svg' | inline_asset_content -}}
+                          </span>
+                        </div>
+                      </quantity-popover>
+                    </td>
+
+                    <td class="cart-item__totals right small-hide">
+                      {%- render 'loading-spinner' -%}
+                      <div class="cart-item__price-wrapper">
+                        {%- if item.original_line_price != item.final_line_price -%}
+                          <dl class="cart-item__discounted-prices">
+                            <dt class="visually-hidden">
+                              {{ 'products.product.price.regular_price' | t }}
+                            </dt>
+                            <dd>
+                              <s class="cart-item__old-price price price--end">
+                                {{ item.original_line_price | money }}
+                              </s>
+                            </dd>
+                            <dt class="visually-hidden">
+                              {{ 'products.product.price.sale_price' | t }}
+                            </dt>
+                            <dd class="price price--end">
+                              {{ item.final_line_price | money }}
+                            </dd>
+                          </dl>
+                        {%- else -%}
+                          <span class="price price--end">
+                            {{ item.original_line_price | money }}
+                          </span>
+                        {%- endif -%}
+
+                        {%- if item.variant.available and item.unit_price_measurement -%}
+                          <div class="unit-price caption">
+                            <span class="visually-hidden">{{ 'products.product.price.unit_price' | t }}</span>
+                            {{ item.unit_price | money }}
+                            <span aria-hidden="true">/</span>
+                            <span class="visually-hidden"
+                              >&nbsp;{{ 'accessibility.unit_price_separator' | t }}&nbsp;</span
+                            >
+                            {%- if item.unit_price_measurement.reference_value != 1 -%}
+                              {{- item.unit_price_measurement.reference_value -}}
+                            {%- endif -%}
+                            {{ item.unit_price_measurement.reference_unit }}
+                          </div>
+                        {%- endif -%}
+                      </div>
+                    </td>
+                  </tr>
+                {%- endfor -%}
+              </tbody>
+            </table>
+          {%- endif -%}
+        </div>
+      </div>
+
+      <p class="visually-hidden" id="cart-live-region-text" aria-live="polite" role="status"></p>
+      <p
+        class="visually-hidden"
+        id="shopping-cart-line-item-status"
+        aria-live="polite"
+        aria-hidden="true"
+        role="status"
+      >
+        {{ 'accessibility.loading' | t }}
+      </p>
+    </form>
+  </div>
+</cart-items>
+
+<script>
+// ColorFlex cart color circles handler
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🎨 Initializing ColorFlex cart color circles');
+
+  // Ensure Island Moments font is loaded for cart pattern names
+  function loadIslandMomentsFont() {
+    const existingFont = document.querySelector('link[href*="Island+Moments"]');
+    if (!existingFont) {
+      const fontLink = document.createElement('link');
+      fontLink.href = 'https://fonts.googleapis.com/css2?family=Island+Moments:wght@400&display=swap';
+      fontLink.rel = 'stylesheet';
+      document.head.appendChild(fontLink);
+      console.log('📝 Loaded Island Moments font for cart');
+    }
+  }
+
+  // Load font immediately
+  loadIslandMomentsFont();
+
+  // Color lookup function (enhanced for cart data)
+  function lookupColor(colorName) {
+    if (!colorName) return '#e2e8f0';
+
+    // Clean the color name (remove SW/SC numbers and extra text, handle double prefixes)
+    let cleanName = colorName.replace(/^(SW|SC)+\s*/gi, '').replace(/^\d+\s*/, '').trim().toLowerCase();
+
+    // Handle compound color names by taking the main part
+    cleanName = cleanName.split(/\s+(tint|shade|deep|light|dark)\s*/)[0];
+
+    // Enhanced color mapping
+    const colorMap = {
+      'snowbound': '#f7f7f5',
+      'quietude': '#8f9779',
+      'naval': '#2c4251',
+      'grizzle gray': '#7d8471',
+      'grizzle grey': '#7d8471',
+      'cityscape': '#535353',
+      'tin lizzie': '#1b1b1b',
+      'sawdust': '#deb887',
+      'ecru': '#c2b280',
+      'cottage linen': '#f4f1e8',
+      'mediterranean': '#006a6b',
+      'shamrock': '#009639',
+      'easy green': '#7cb342',
+      'topiary': '#4a6741',
+      'greenery': '#88b04b',
+      'jay blue': '#4682b4',
+      'blue plate': '#1e3a8a',
+      'major blue': '#1d4ed8',
+      'flyway': '#0ea5e9',
+      'sky fall': '#7dd3fc',
+      'bluebell': '#6366f1',
+      'minor blue': '#3b82f6',
+      'cottage coal': '#2d3748',
+      'concord grape': '#663399',
+      'plummy': '#8B4B8C',
+      'wood violet': '#8B5A96',
+      'berry cream': '#DDA0DD',
+      'obi lilac': '#B19CD9',
+      'enchant': '#C8A2C8',
+      'lite lavender': '#E6E6FA',
+      'dried thyme': '#7b8070',
+      'slate tile': '#606e74',
+      'foothills': '#827466',
+      'ecru': '#d0ba94'
+    };
+
+    return colorMap[cleanName] || '#e2e8f0';
+  }
+
+  // Helper function to find SW numbers from color names
+  function findSWNumber(colorName) {
+    const colorMap = {
+      'sun dried tomato': 'SW7585',
+      'rembrandt ruby': 'SW0033',
+      'red barn': 'SW7591',
+      'stolen kiss': 'SW7586',
+      'quietude': 'SW6212',
+      'peristyle brass': 'SW0043',
+      'underseas': 'SW6214',
+      'iron ore': 'SW7069',
+      'bracing blue': 'SW6242',
+      'distance': 'SW6243',      // ADD MISSING COLORS
+      'slate tile': 'SW7624',
+      'oyster bay': 'SW6206',
+      'snowbound': 'SW7004',
+      'accessible beige': 'SW7036',
+      'agreeable gray': 'SW7029',
+      'repose gray': 'SW7015',
+      'tricorn black': 'SW6258',
+      'pure white': 'SW7005',
+      'sleepy hollow': 'SW9145',
+      'greenfields': 'SW6242'
+    };
+
+    const normalized = colorName.toLowerCase().trim();
+    return colorMap[normalized] || null;
+  }
+
+  // Clean color name for display - normalize to "SW#### Name" format
+  function cleanColorName(colorName) {
+    const originalName = colorName.trim();
+    console.log(`🧹 Cleaning color name: "${originalName}"`);
+
+    // Extract SW/SC number if present
+    const swMatch = originalName.match(/\b(SW|SC)\s*(\d+)\b/i);
+
+    if (swMatch) {
+      // Has SW number - extract it and clean the name part
+      const prefix = swMatch[1].toUpperCase();
+      const number = swMatch[2];
+      let namePart = originalName.replace(/\b(SW|SC)\s*\d+\b/i, '').trim();
+
+      // Capitalize the name part properly
+      namePart = namePart.split(' ').map(word =>
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      ).join(' ');
+
+      const result = `${prefix}${number} ${namePart}`;
+      console.log(`✅ Normalized with SW: "${originalName}" → "${result}"`);
+      return result;
+    } else {
+      // No SW number - try to look up and add it
+      const cleanedName = originalName.split(' ').map(word =>
+        word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+      ).join(' ');
+
+      // Try to find SW number for this color
+      const swNumber = findSWNumber(originalName);
+      if (swNumber) {
+        const result = `${swNumber} ${cleanedName}`;
+        console.log(`✅ Added SW number: "${originalName}" → "${result}"`);
+        return result;
+      } else {
+        console.log(`✅ Normalized without SW: "${originalName}" → "${cleanedName}"`);
+        return cleanedName;
+      }
+    }
+  }
+
+  // Process all color circle containers
+  const colorContainers = document.querySelectorAll('.colorflex-color-circles');
+  console.log('🔍 Found', colorContainers.length, 'color circle containers');
+
+  colorContainers.forEach((container, index) => {
+    const colorsData = container.getAttribute('data-colors');
+    console.log(`🔍 Container ${index} colors data:`, colorsData);
+
+    if (!colorsData) {
+      console.log('❌ No colors data found for container', index);
+      return;
+    }
+
+    // Clear the container first (remove debug text)
+    container.innerHTML = '';
+
+    const colors = colorsData.split(',').map(c => c.trim());
+    console.log(`🎨 Processing ${colors.length} colors:`, colors);
+
+    colors.forEach((colorName, colorIndex) => {
+      if (!colorName || colorName.trim() === '') {
+        console.log(`⚠️ Skipping empty color at index ${colorIndex}`);
+        return;
+      }
+
+      const cleanName = cleanColorName(colorName);
+      const colorHex = lookupColor(colorName);
+
+      console.log(`🎨 Color ${colorIndex}: "${colorName}" → "${cleanName}" → ${colorHex}`);
+
+      // Create color circle
+      const circle = document.createElement('div');
+      circle.style.cssText = `
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: 1px solid #d4af37;
+        background: ${colorHex};
+        flex-shrink: 0;
+        cursor: help;
+        transition: transform 0.2s ease;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      `;
+
+      circle.title = cleanName;
+
+      // Add hover effect
+      circle.addEventListener('mouseenter', function() {
+        this.style.transform = 'scale(1.15)';
+        this.style.border = '2px solid #d4af37';
+      });
+
+      circle.addEventListener('mouseleave', function() {
+        this.style.transform = 'scale(1)';
+        this.style.border = '1px solid #d4af37';
+      });
+
+      container.appendChild(circle);
+      console.log(`✅ Added color circle for "${cleanName}" with hex ${colorHex}`);
+    });
+
+    console.log(`✅ Finished processing ${colors.length} colors, added ${container.children.length} circles`);
+  });
+
+  console.log('✅ ColorFlex cart color circles initialized');
+});
+</script>
+
+{% schema %}
+{
+  "name": "t:sections.main-cart-items.name",
+  "settings": [
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:sections.all.colors.label",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 36
+    }
+  ]
+}
+{% endschema %}

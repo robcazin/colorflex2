@@ -1,0 +1,11 @@
+<div class="page-width">
+  {% form 'activate_customer_password' %}
+    {{ form.errors | default_errors }}
+    <input type="password" name="customer[password]" placeholder="{{ 'customer.activate_account.password' | t }}">
+    <input type="password" name="customer[password_confirmation]" placeholder="{{ 'customer.activate_account.password_confirm' | t }}">
+    <button type="submit">{{ 'customer.activate_account.submit' | t }}</button>
+  {% endform %}
+</div>
+{% schema %}
+{ "name": "Activate account", "tag": "section", "settings": [] }
+{% endschema %}

@@ -1,0 +1,58 @@
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1 🔍 Searching in 1531 colors for: "honorable blue"
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1 ✅ Found by name: "SW6811 HONORABLE BLUE" -> "honorable blue" -> #164576
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1   📐 Pattern layer 0:
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1     Layer path: flame-tree_trees_layer-1_scale-1.0.png
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1     Full layer path: https://so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1     Maps to input 2: Trees = "SW6811 HONORABLE BLUE"
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1     Resolved color: #164576
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1     Input exists: true
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1     🔍 Path conversion check for layer 0:
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1       Full path: https://so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1       Selected furniture: Sofa-Capitol (config key: furniture)
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1       Has mockupLayers: false
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1       Template: data/furniture/sofa-capitol/patterns/{collection}/{patternSlug}/
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1       Needs conversion: true
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1     🔍 Extracted scale from filename: "1.0" (from: flame-tree_trees_layer-1_scale-1.0.png)
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1     🔍 Filename cleanup: "flame-tree_trees_layer-1_scale-1.0.png" → "flame-tree_trees_layer-1.png"
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1     🔧 Added scale "1.0" to filename: flame-tree_trees_layer-1_scale-1.0.png
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1     🔄 Converted path (new format): https://so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png → https://so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1     🎨 About to draw pattern layer 0:
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1       Original path: https://so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1       Normalized path: https://so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1       Using color: #164576
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1       Using zoom state: scale=1, offset=(0, 0)
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1       Canvas context: available
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1       Canvas size: 800x600
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1 🔍 drawFurnitureLayer ENTRY:
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1   imagePath received: https://so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1   Is sofa base? false
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1   Is ferns pattern? false
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1 🔍 drawFurnitureLayer DEBUG for: flame-tree_trees_layer-1_scale-1.0.png
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1    📊 ZOOM STATE: scale=1, offset=(0.0, 0.0)
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1    🔒 Using PASSED zoom state
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1    Canvas size: 800x600
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1    🔍 Attempting to load image: https://so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1 📥 Cache MISS: Loading flame-tree_trees_layer-1_scale-1.0.png (Queue: 0, Pending: 0/6)
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1 ✅ Simple mode: Forced roomMockup to 800x600 after collection switch (delayed)
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1 🔍 ACTUAL UI INPUTS:
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1 ✅ Rendered layer 1 with color #6487b0
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1 ✅ Pattern preview rendered
+extraordinary-color-furniture?bombay:1 Access to image at 'https://so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png' from origin 'https://saffroncottage.shop' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png:1  GET https://so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png net::ERR_FAILED 404 (Not Found)
+Image
+(anonymous) @ color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1
+Ae @ color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1
+(anonymous) @ color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1
+Ue @ color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1
+be @ color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1
+He @ color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1
+await in He
+Oe @ color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1
+window.switchCollection @ color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1
+trySwitchCollection @ extraordinary-color-furniture?bombay:317
+(anonymous) @ extraordinary-color-furniture?bombay:330
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1 ❌ Failed to load image: https://so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png
+l.onerror @ color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1 ❌ Error details: Event {isTrusted: true, type: 'error', target: img, currentTarget: img, eventPhase: 2, …}
+l.onerror @ color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1
+color-flex-furniture-simple.min.js?v=153271466567387205841769794627:1 ❌ Error in drawFurnitureLayer: Error: Failed to load image: https://so-animation.com/colorflex/data/collections/folksie-fur/layers/Sofa-Capitol/flame-tree_trees_layer-1_scale-1.0.png

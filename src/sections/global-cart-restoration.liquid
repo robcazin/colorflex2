@@ -1,0 +1,1388 @@
+{% comment %}
+GLOBAL CART THUMBNAIL RESTORATION
+Add this section to your theme.liquid or cart template
+This enables cart thumbnail restoration on all pages
+{% endcomment %}
+
+<script>
+/**
+ * GLOBAL CART THUMBNAIL RESTORATION SYSTEM
+ * Restores custom pattern thumbnails in cart items
+ */
+
+(function() {
+    'use strict';
+
+    console.log('🛒 Global Cart: Setting up thumbnail restoration...');
+
+    // Clean up old localStorage data on page load
+    try {
+        // Remove stale autoload data (older than 5 minutes)
+        const autoLoadData = localStorage.getItem('colorflexAutoLoad');
+        if (autoLoadData) {
+            const parsed = JSON.parse(autoLoadData);
+            const age = Date.now() - (parsed.timestamp || 0);
+            if (age > 5 * 60 * 1000) {
+                console.log('🧹 Cleaning up stale autoload data');
+                localStorage.removeItem('colorflexAutoLoad');
+            }
+        }
+
+        // Remove stale thumbnail data (older than 1 hour)
+        const thumbnailKey = localStorage.getItem('colorflexCurrentThumbnail');
+        if (thumbnailKey && thumbnailKey.length > 100000) { // > 100KB
+            console.log('🧹 Cleaning up large thumbnail data');
+            localStorage.removeItem('colorflexCurrentThumbnail');
+        }
+    } catch (error) {
+        console.warn('⚠️ Error during localStorage cleanup:', error);
+    }
+
+    // Function to build saved pattern data from cart properties (for loadSavedPatternToUI)
+    function buildSavedPatternFromCartData(cartItem) {
+        try {
+            const patternName = cartItem.properties['Custom Pattern'];
+            const collectionName = cartItem.properties['Pattern Collection'];
+            const customColors = cartItem.properties['Custom Colors'];
+            const patternScale = cartItem.properties['Pattern Scale'] || 'Normal';
+            const patternId = cartItem.properties['Pattern ID'];
+
+            if (!patternName || !collectionName) {
+                console.warn('⚠️ Missing required pattern data in cart item');
+                return null;
+            }
+
+            // Parse colors from cart data (e.g., "HONORABLE BLUE, LUPINE, HORORABLE BLUE")
+            let colors = [];
+            if (customColors) {
+                const colorNames = customColors.split(',').map(c => c.trim());
+                colors = colorNames.map((colorName, index) => {
+                    // Fix common typos from cached cart data
+                    let fixedColorName = colorName;
+                    if (colorName.includes('HORORABLE BLUE')) {
+                        fixedColorName = colorName.replace('HORORABLE BLUE', 'HONORABLE BLUE');
+                        console.log(`🔧 Fixed color typo: "${colorName}" → "${fixedColorName}"`);
+                    }
+
+                    return {
+                        color: fixedColorName,
+                        label: `Layer ${index + 1}`,
+                        name: fixedColorName
+                    };
+                });
+                console.log(`🎨 Parsed ${colors.length} colors from cart data:`, colors);
+            }
+
+            // Get thumbnail from localStorage if available
+            const thumbnailKey = `cart_thumbnail_${patternName}_${collectionName}`;
+            const storedThumbnail = localStorage.getItem(thumbnailKey);
+            let thumbnail = null;
+            if (storedThumbnail) {
+                try {
+                    const thumbnailInfo = JSON.parse(storedThumbnail);
+                    thumbnail = thumbnailInfo.thumbnail;
+                } catch (e) {
+                    console.warn('⚠️ Could not parse stored thumbnail for saved pattern');
+                }
+            }
+
+            // Parse scale information from cart properties
+            let currentScale = 100;
+            let scaleMultiplier = 1.0;
+
+            if (cartItem.properties['Scale Value']) {
+                currentScale = parseInt(cartItem.properties['Scale Value']) || 100;
+            } else if (patternScale) {
+                // Fallback to parsing from Pattern Scale text
+                if (patternScale.includes('0.5X')) currentScale = 50;
+                else if (patternScale.includes('2X')) currentScale = 200;
+                else if (patternScale.includes('3X')) currentScale = 300;
+                else if (patternScale.includes('4X')) currentScale = 400;
+            }
+
+            if (cartItem.properties['Scale Multiplier']) {
+                scaleMultiplier = parseFloat(cartItem.properties['Scale Multiplier']) || 1.0;
+            }
+
+            // Build saved pattern object in the same format as "My Designs"
+            const savedPattern = {
+                id: patternId || `cart-${patternName}-${Date.now()}`,
+                patternName: patternName,
+                collectionName: collectionName,
+                colors: colors,
+                currentScale: currentScale,
+                scaleMultiplier: scaleMultiplier,
+                thumbnail: thumbnail,
+                timestamp: new Date().toISOString(),
+                source: 'cart_restoration',
+                layers: colors // Include layers for compatibility
+            };
+
+            console.log('🔧 Built saved pattern from cart data:', {
+                patternName: savedPattern.patternName,
+                collectionName: savedPattern.collectionName,
+                colorCount: savedPattern.colors.length,
+                hasThunbnail: !!savedPattern.thumbnail,
+                currentScale: savedPattern.currentScale
+            });
+
+            return savedPattern;
+
+        } catch (error) {
+            console.error('❌ Error building saved pattern from cart data:', error);
+            return null;
+        }
+    }
+
+    // Function to restore thumbnail using cart API data
+    function restoreCartThumbnailFromData(cartItem, itemIndex) {
+        console.log(`🎯 Restoring thumbnail for ColorFlex item ${itemIndex}:`, cartItem.title);
+        
+        const patternName = cartItem.properties['Custom Pattern'];
+        const collection = cartItem.properties['Pattern Collection'] || 'unknown';
+        const thumbnailKey = cartItem.properties['Thumbnail Key'];
+        
+        console.log(`📋 Pattern: "${patternName}", Collection: "${collection}", Key: "${thumbnailKey}"`);
+        
+        // Try to get thumbnail data
+        let thumbnailData = null;
+        
+        if (thumbnailKey) {
+            const storedThumbnail = localStorage.getItem(thumbnailKey);
+            if (storedThumbnail) {
+                try {
+                    const thumbnailInfo = JSON.parse(storedThumbnail);
+                    thumbnailData = thumbnailInfo.thumbnail;
+                    console.log('💾 Found stored cart thumbnail via key');
+                } catch (e) {
+                    console.warn('⚠️ Could not parse stored thumbnail');
+                }
+            }
+        }
+        
+        // Fallback: check saved patterns
+        if (!thumbnailData && patternName) {
+            const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+            const matchingPattern = savedPatterns.find(p => 
+                p.patternName === patternName && 
+                (p.collectionName === collection || collection === 'unknown')
+            );
+            
+            if (matchingPattern && matchingPattern.thumbnail) {
+                thumbnailData = matchingPattern.thumbnail;
+                console.log('🎨 Using saved pattern thumbnail');
+            }
+        }
+        
+        if (thumbnailData) {
+            // Find the cart item in DOM and update its image
+            const cartItemElement = document.getElementById(`CartItem-${itemIndex + 1}`);
+            if (cartItemElement) {
+                updateCartItemImageFromData(cartItemElement, thumbnailData, patternName);
+            } else {
+                console.warn(`❌ Could not find cart item element for index ${itemIndex}`);
+            }
+        } else {
+            console.warn(`❌ No thumbnail data found for: ${patternName}`);
+        }
+    }
+
+    // Function to update cart item image using thumbnail data
+    function updateCartItemImageFromData(cartItemElement, thumbnailData, patternName) {
+        const images = cartItemElement.querySelectorAll('img');
+        
+        console.log(`🖼️ Found ${images.length} images in cart item`);
+        
+        images.forEach((img, index) => {
+            console.log(`🔍 Updating cart item image ${index}: ${img.alt || 'No alt text'}`);
+            
+            // Store original src for potential restoration
+            if (!img.dataset.originalSrc) {
+                img.dataset.originalSrc = img.src;
+            }
+            
+            // Update the image
+            img.src = thumbnailData;
+            img.alt = `Custom Pattern: ${patternName}`;
+            
+            // Update srcset if it exists
+            if (img.srcset) {
+                img.srcset = thumbnailData;
+            }
+            
+            console.log(`✅ Updated cart thumbnail for: ${patternName}`);
+        });
+    }
+
+    // Function to restore thumbnails in cart
+    function restoreCartThumbnails() {
+        // Prevent multiple simultaneous executions
+        if (window.cartRestorationInProgress) {
+            console.log('🔒 Cart restoration already in progress, skipping duplicate call');
+            return;
+        }
+
+        window.cartRestorationInProgress = true;
+        console.log('🔍 Scanning for cart items to restore thumbnails...');
+
+        // First, try to access Shopify's cart data directly
+        if (window.fetch) {
+            fetch('/cart.js')
+                .then(response => response.json())
+                .then(cartData => {
+                    console.log('🛒 Shopify cart data:', cartData);
+                    if (cartData.items) {
+                        cartData.items.forEach((item, index) => {
+                            console.log(`📦 Cart item ${index}:`, {
+                                title: item.title,
+                                properties: item.properties,
+                                variant_title: item.variant_title,
+                                id: item.id,
+                                key: item.key
+                            });
+
+                            // Show properties in detail
+                            if (item.properties && Object.keys(item.properties).length > 0) {
+                                console.log(`🔍 Properties for item ${index}:`);
+                                Object.entries(item.properties).forEach(([key, value]) => {
+                                    console.log(`  "${key}": "${value}"`);
+                                });
+
+                                // Check if this is a ColorFlex item
+                                const isColorFlex = item.properties['Custom Pattern'] ||
+                                                   item.properties['ColorFlex Source'] ||
+                                                   item.properties['Pattern Collection'];
+
+                                if (isColorFlex) {
+                                    console.log(`✅ Found ColorFlex item in cart data!`);
+
+                                    // Build complete saved pattern data from cart properties for loadSavedPatternToUI
+                                    const cartSavedPattern = buildSavedPatternFromCartData(item);
+                                    if (cartSavedPattern) {
+                                        // Store this as a saved pattern for click restoration
+                                        const cartPatternKey = `cart_saved_${item.properties['Custom Pattern']}_${item.properties['Pattern Collection']}`;
+                                        localStorage.setItem(cartPatternKey, JSON.stringify(cartSavedPattern));
+                                        console.log('💾 Created saved pattern from cart data for loadSavedPatternToUI:', cartSavedPattern.patternName);
+                                    }
+
+                                    // Try to restore thumbnail using cart data
+                                    restoreCartThumbnailFromData(item, index);
+                                } else {
+                                    console.log(`❌ Not a ColorFlex item - missing expected properties`);
+                                }
+                            } else {
+                                console.log(`❌ No properties found for item ${index}`);
+                            }
+                        });
+                    }
+
+                    // Release the lock after processing
+                    setTimeout(() => {
+                        window.cartRestorationInProgress = false;
+                    }, 2000);
+                })
+                .catch(error => {
+                    console.warn('⚠️ Could not fetch cart data:', error);
+                    window.cartRestorationInProgress = false;
+                });
+        } else {
+            window.cartRestorationInProgress = false;
+        }
+        
+        // Based on debug results, we know the cart structure uses .cart-item
+        const cartItems = document.querySelectorAll('.cart-item');
+        
+        console.log(`🔍 Found ${cartItems.length} cart items using .cart-item selector`);
+        
+        cartItems.forEach((item, index) => {
+            console.log(`🔍 Checking cart item ${index}:`, item.id || item.className);
+            
+            // Debug: Show the full HTML structure of this cart item
+            console.log(`🏗️ Cart item ${index} HTML structure:`, item.outerHTML.substring(0, 500) + '...');
+            
+            // Look for the details section which contains pattern information
+            const detailsSection = item.querySelector('.cart-item__details');
+            if (!detailsSection) {
+                console.log(`❌ No details section found for item ${index}`);
+                return;
+            }
+            
+            // Get text content from details section
+            const detailsText = detailsSection.textContent || detailsSection.innerText || '';
+            console.log(`📝 Details text preview: ${detailsText.substring(0, 200)}...`);
+            
+            // Debug: Look for ALL possible property-related elements
+            const allPropertyElements = item.querySelectorAll('*[class*="property"], *[data*="property"], input[name*="properties"]');
+            console.log(`🔍 Found ${allPropertyElements.length} potential property elements in cart item ${index}`);
+            allPropertyElements.forEach((el, i) => {
+                console.log(`  Property element ${i}:`, el.tagName, el.className, el.dataset, el.name, el.value, el.textContent?.substring(0, 50));
+            });
+            
+            // Look for ColorFlex pattern products - check visible text AND cart line item data
+            const hasColorFlexSource = detailsText.includes('ColorFlex Source') || detailsText.includes('Custom Pattern');
+            const hasPatternCollection = detailsText.includes('Pattern Collection');
+            const hasThumbnailKey = detailsText.includes('cart_thumbnail_');
+            
+            // Also check for cart line item data attributes (Shopify stores properties here)
+            let isColorFlexProduct = false;
+            let lineItemData = null;
+            
+            // Try multiple approaches to find cart properties
+            
+            // Approach 1: Check data attributes on cart item
+            const lineItemElement = item.querySelector('[data-cart-item-key], [data-line-item-key], [data-index]');
+            if (lineItemElement) {
+                const possibleDataAttrs = ['data-properties', 'data-item-properties', 'data-cart-properties'];
+                for (const attr of possibleDataAttrs) {
+                    const dataAttr = lineItemElement.getAttribute(attr);
+                    if (dataAttr) {
+                        try {
+                            lineItemData = JSON.parse(dataAttr);
+                            console.log(`📊 Found line item data via ${attr}:`, lineItemData);
+                            break;
+                        } catch (e) {
+                            console.log(`⚠️ Could not parse ${attr}:`, dataAttr);
+                        }
+                    }
+                }
+            }
+            
+            // Approach 2: Look for hidden form fields in the cart item (some themes store properties this way)
+            if (!lineItemData) {
+                const hiddenFields = item.querySelectorAll('input[type="hidden"][name*="properties"]');
+                if (hiddenFields.length > 0) {
+                    lineItemData = {};
+                    hiddenFields.forEach(field => {
+                        const nameMatch = field.name.match(/properties\[([^\]]+)\]/);
+                        if (nameMatch) {
+                            lineItemData[nameMatch[1]] = field.value;
+                        }
+                    });
+                    console.log(`📊 Found line item data via hidden fields:`, lineItemData);
+                }
+            }
+            
+            // Approach 3: Check for property display elements (some themes show properties as text)
+            if (!lineItemData) {
+                const propertyElements = item.querySelectorAll('.cart-item__property, .line-item-property, [data-cart-item-property]');
+                if (propertyElements.length > 0) {
+                    lineItemData = {};
+                    propertyElements.forEach(el => {
+                        const text = el.textContent || el.innerText || '';
+                        const propMatch = text.match(/([^:]+):\s*(.+)/);
+                        if (propMatch) {
+                            lineItemData[propMatch[1].trim()] = propMatch[2].trim();
+                        }
+                    });
+                    console.log(`📊 Found line item data via property elements:`, lineItemData);
+                }
+            }
+            
+            // Check if this is a ColorFlex product based on visible text OR line item data
+            if (lineItemData) {
+                isColorFlexProduct = lineItemData['Custom Pattern'] || 
+                                   lineItemData['ColorFlex Source'] || 
+                                   lineItemData['Pattern Collection'] ||
+                                   Object.keys(lineItemData).some(key => key.includes('cart_thumbnail_'));
+            }
+            
+            if (!hasColorFlexSource && !hasPatternCollection && !hasThumbnailKey && !isColorFlexProduct) {
+                console.log(`❌ Not a ColorFlex pattern item - no pattern properties found in visible text or line item data`);
+                return;
+            }
+            
+            console.log(`✅ ColorFlex pattern detected via:`, {
+                hasColorFlexSource,
+                hasPatternCollection, 
+                hasThumbnailKey,
+                hasLineItemData: !!lineItemData,
+                isColorFlexProduct
+            });
+            
+            // Extract pattern information using multiple approaches
+            const patternMatch = detailsText.match(/Custom Pattern:\s*([^\n\r]+?)(?=\n|\r|Pattern Collection|Texture|ColorFlex|$)/i);
+            const collectionMatch = detailsText.match(/Pattern Collection:\s*([^\n\r]+?)(?=\n|\r|Custom Pattern|Texture|ColorFlex|$)/i);
+            const thumbnailKeyMatch = detailsText.match(/cart_thumbnail_([^_\n\r]+)_([^\s\n\r]+)/i);
+            
+            // Also try to get pattern name from product title (for items like "Thalweg")
+            const titleElement = item.querySelector('.cart-item__name, .cart-item__title, h3, .product-title');
+            const productTitle = titleElement ? titleElement.textContent.trim() : '';
+            
+            console.log(`🔍 Pattern matching results for item ${index}:`);
+            console.log(`  Product title:`, productTitle);
+            console.log(`  Pattern match:`, patternMatch);
+            console.log(`  Collection match:`, collectionMatch);
+            console.log(`  Thumbnail key match:`, thumbnailKeyMatch);
+            
+            let patternName = null;
+            let collectionName = 'unknown';
+            
+            // Try multiple sources for pattern name
+            if (patternMatch) {
+                patternName = patternMatch[1].trim();
+            } else if (lineItemData && lineItemData['Custom Pattern']) {
+                // Use line item data if available
+                patternName = lineItemData['Custom Pattern'];
+                console.log(`📊 Using line item data for pattern name: "${patternName}"`);
+            } else if (productTitle && !productTitle.toLowerCase().includes('custom wallpaper')) {
+                // Use product title as pattern name if it's not "Custom Wallpaper"
+                patternName = productTitle;
+                console.log(`📝 Using product title as pattern name: "${patternName}"`);
+            }
+            
+            if (collectionMatch) {
+                collectionName = collectionMatch[1].trim();
+            } else if (lineItemData && lineItemData['Pattern Collection']) {
+                // Use line item data if available
+                collectionName = lineItemData['Pattern Collection'];
+                console.log(`📊 Using line item data for collection: "${collectionName}"`);
+            }
+            
+            // Fallback to thumbnail key if needed
+            if (!patternName && thumbnailKeyMatch) {
+                patternName = thumbnailKeyMatch[1].trim();
+                collectionName = thumbnailKeyMatch[2].trim();
+            }
+            
+            // Additional fallback: check line item data for thumbnail key
+            if (lineItemData && lineItemData['Thumbnail Key']) {
+                const thumbnailKey = lineItemData['Thumbnail Key'];
+                const keyMatch = thumbnailKey.match(/cart_thumbnail_([^_]+)_(.+)/);
+                if (keyMatch && !patternName) {
+                    patternName = keyMatch[1];
+                    collectionName = keyMatch[2];
+                    console.log(`🔑 Using thumbnail key from line item data: "${patternName}" from "${collectionName}"`);
+                }
+            }
+            
+            if (patternName) {
+                console.log(`🎯 Found ColorFlex pattern: "${patternName}" from "${collectionName}"`);
+                
+                // Try to restore thumbnail for this item
+                restoreThumbnailForItem(item, patternName, collectionName);
+
+                // Also fix the product link
+                fixCartItemLink(item, patternName, collectionName);
+
+                // Clean up visible properties display
+                cleanupCartItemProperties(item);
+            } else {
+                console.log(`❌ No pattern info found in ColorFlex item ${index} - could not extract pattern name`);
+            }
+        });
+    }
+    
+    // Function to restore thumbnail for a specific cart item
+    function restoreThumbnailForItem(cartItem, patternName, collectionName) {
+        if (!patternName) return;
+
+        console.log(`🖼️ Restoring thumbnail for: ${patternName} from ${collectionName}`);
+
+        // Try to get stored thumbnail
+        const cartKey = `cart_thumbnail_${patternName}_${collectionName}`;
+        console.log('🔍 Cart restoration debug:', {
+            patternName: patternName,
+            collectionName: collectionName,
+            cartKey: cartKey,
+            searchingFor: `localStorage.getItem('${cartKey}')`
+        });
+
+        const storedThumbnail = localStorage.getItem(cartKey);
+        console.log('📦 Retrieved from localStorage:', {
+            key: cartKey,
+            found: !!storedThumbnail,
+            dataLength: storedThumbnail ? storedThumbnail.length : 0,
+            isValidJSON: storedThumbnail ? (() => {
+                try { JSON.parse(storedThumbnail); return true; } catch { return false; }
+            })() : false
+        });
+
+        let thumbnailData = null;
+        if (storedThumbnail) {
+            try {
+                const thumbnailInfo = JSON.parse(storedThumbnail);
+                thumbnailData = thumbnailInfo.thumbnail;
+                console.log('💾 Found stored cart thumbnail:', {
+                    hasThumbnail: !!thumbnailData,
+                    thumbnailLength: thumbnailData ? thumbnailData.length : 0,
+                    colors: thumbnailInfo.colors ? thumbnailInfo.colors.length : 0,
+                    timestamp: thumbnailInfo.timestamp
+                });
+            } catch (e) {
+                console.warn('⚠️ Could not parse stored thumbnail:', e.message);
+            }
+        } else {
+            // Debug: show all available localStorage keys
+            const allKeys = Object.keys(localStorage);
+            const cartKeys = allKeys.filter(k => k.startsWith('cart_thumbnail_'));
+            console.log('🔍 Available cart thumbnail keys:', cartKeys);
+
+            // Also check for similar keys (case sensitivity, etc.)
+            const similarKeys = allKeys.filter(k =>
+                k.toLowerCase().includes(patternName.toLowerCase()) ||
+                k.toLowerCase().includes(collectionName.toLowerCase())
+            );
+            console.log('🔍 Keys containing pattern/collection name:', similarKeys);
+        }
+
+        // Fallback: check saved patterns
+        if (!thumbnailData) {
+            const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+            console.log(`🔍 Searching ${savedPatterns.length} saved patterns for fallback...`);
+
+            // REVERT TO SIMPLE WORKING LOGIC: Just find most recent matching pattern
+            const matchingPattern = savedPatterns
+                .filter(p => p.patternName === patternName &&
+                            (p.collectionName === collectionName || collectionName === 'unknown'))
+                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]; // Get most recent
+
+            if (matchingPattern && matchingPattern.thumbnail) {
+                thumbnailData = matchingPattern.thumbnail;
+                console.log('🎨 Using saved pattern thumbnail (most recent):', {
+                    patternId: matchingPattern.id,
+                    timestamp: matchingPattern.timestamp,
+                    hasColors: matchingPattern.colors ? matchingPattern.colors.length : 0
+                });
+            } else {
+                console.log('❌ No matching saved pattern found for fallback');
+            }
+        }
+
+        if (thumbnailData) {
+            // Single update with success tracking to prevent redundant retries
+            const success = updateCartItemImage(cartItem, thumbnailData, patternName);
+
+            // Only retry once if the first attempt failed
+            if (!success) {
+                setTimeout(() => {
+                    console.log(`🔄 Single retry for: ${patternName}`);
+                    updateCartItemImage(cartItem, thumbnailData, patternName);
+                }, 1000);
+            }
+        } else {
+            console.warn(`❌ No thumbnail data found for: ${patternName}`);
+        }
+
+        // ✅ FIX: Always add "Edit Design" button for ColorFlex items, even if thumbnail fails
+        // The edit button should be available regardless of thumbnail restoration success
+        addCartEditButton(cartItem, patternName, collectionName, thumbnailData);
+    }
+    
+    // Function to update cart item image
+    function updateCartItemImage(cartItem, thumbnailData, patternName) {
+        // Enhanced image detection - try multiple selectors
+        let images = cartItem.querySelectorAll('img');
+
+        console.log(`🖼️ Found ${images.length} images with standard selector`);
+        console.log(`📸 Thumbnail data length: ${thumbnailData.length} characters`);
+
+        // If no images found, try alternative selectors
+        if (images.length === 0) {
+            // Try looking in media container specifically
+            const mediaContainer = cartItem.querySelector('.cart-item__media, .cart-item__image-container, .cart__item-media');
+            if (mediaContainer) {
+                images = mediaContainer.querySelectorAll('img');
+                console.log(`🔍 Found ${images.length} images in media container`);
+            }
+        }
+
+        // If still no images, try looking for lazy-loaded images
+        if (images.length === 0) {
+            images = cartItem.querySelectorAll('[data-src], [src*="image"], .cart-item img, .product-image img');
+            console.log(`🔍 Found ${images.length} images with expanded selectors`);
+        }
+
+        // Debug the DOM structure if still no images
+        if (images.length === 0) {
+            console.warn('❌ No images found in cart item');
+            console.log('🔍 Cart item HTML structure for debugging:', cartItem.outerHTML.substring(0, 1000));
+
+            // Try to create an image element if media container exists
+            const mediaContainer = cartItem.querySelector('.cart-item__media, .cart-item__image-container');
+            if (mediaContainer) {
+                console.log('🎯 Attempting to inject image into media container...');
+                const existingImage = mediaContainer.querySelector('img, [style*="background-image"]');
+
+                if (existingImage) {
+                    // Update existing image
+                    if (existingImage.tagName === 'IMG') {
+                        existingImage.src = thumbnailData;
+                        existingImage.alt = `Custom Pattern: ${patternName}`;
+                        console.log('✅ Updated existing image element');
+                        return;
+                    }
+                } else {
+                    // Create new image element
+                    const newImg = document.createElement('img');
+                    newImg.src = thumbnailData;
+                    newImg.alt = `Custom Pattern: ${patternName}`;
+                    newImg.style.cssText = 'width: 100%; height: 100%; object-fit: cover; border-radius: 8px; border: 2px solid #d4af37;';
+
+                    // Clear container and add our image
+                    mediaContainer.innerHTML = '';
+                    mediaContainer.appendChild(newImg);
+                    console.log('✅ Created and injected new image element');
+                    return;
+                }
+            }
+            return;
+        }
+        
+        let imageUpdated = false;
+        
+        images.forEach((img, index) => {
+            console.log(`🔍 Image ${index}: src="${img.src.substring(0, 50)}...", alt="${img.alt}"`);
+            
+            // Since each cart item has exactly one product image, update it
+            const shouldUpdate = true; // Update all images in Custom Wallpaper cart items
+            
+            if (shouldUpdate) {
+                console.log(`🎯 Updating cart item image ${index}: ${img.alt || 'No alt text'}`);
+                
+                // Store original src for potential restoration
+                if (!img.dataset.originalSrc) {
+                    img.dataset.originalSrc = img.src;
+                }
+                
+                // Update the image
+                img.src = thumbnailData;
+                img.alt = `Custom Pattern: ${patternName}`;
+                
+                // Update srcset if it exists
+                if (img.srcset) {
+                    img.srcset = thumbnailData;
+                }
+                
+                console.log(`✅ Updated cart thumbnail for: ${patternName}`);
+                imageUpdated = true;
+            }
+        });
+        
+        if (!imageUpdated) {
+            console.warn(`⚠️ No suitable images found to update in cart item`);
+        }
+
+        return imageUpdated; // Return success status for retry logic
+    }
+
+    // Function to add "Edit Item" button functionality for cart edit modal
+    function addCartEditButton(cartItem, patternName, collectionName, thumbnailData) {
+        console.log(`🛠️ Adding cart edit functionality for: ${patternName} from ${collectionName}`);
+
+        // Get the cart item data for editing
+        const cartPatternKey = `cart_saved_${patternName}_${collectionName}`;
+        let savedPatternData = null;
+
+        const cartSavedPattern = localStorage.getItem(cartPatternKey);
+        if (cartSavedPattern) {
+            try {
+                savedPatternData = JSON.parse(cartSavedPattern);
+                console.log('🎯 Found cart-saved pattern data for editing:', savedPatternData.patternName);
+            } catch (e) {
+                console.warn('⚠️ Could not parse cart saved pattern');
+            }
+        }
+
+        // Fallback to regular saved patterns
+        if (!savedPatternData) {
+            const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+            savedPatternData = savedPatterns.find(p =>
+                p.patternName === patternName &&
+                (p.collectionName === collectionName || collectionName === 'unknown')
+            );
+            console.log('🔄 Using regular saved pattern for editing:', !!savedPatternData);
+        }
+
+        // Find the cart item details/buttons area
+        const cartItemDetails = cartItem.querySelector('.cart-item__details, .cart-item__content, .cart-item-details');
+        if (!cartItemDetails) {
+            console.warn(`❌ Could not find cart item details area for: ${patternName}`);
+            return;
+        }
+
+        // Check if edit button already exists
+        if (cartItem.querySelector('.cart-edit-button')) {
+            console.log('ℹ️ Edit button already exists, skipping...');
+            return;
+        }
+
+        // Create edit button
+        const editButton = document.createElement('button');
+        editButton.className = 'cart-edit-button';
+        editButton.textContent = '✏️ Edit Design';
+        editButton.style.cssText = `
+            background: linear-gradient(135deg, #d4af37, #b8941f);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(212, 175, 55, 0.3);
+        `;
+
+        // Add hover effects
+        editButton.addEventListener('mouseenter', () => {
+            editButton.style.transform = 'translateY(-2px)';
+            editButton.style.boxShadow = '0 4px 8px rgba(212, 175, 55, 0.4)';
+        });
+
+        editButton.addEventListener('mouseleave', () => {
+            editButton.style.transform = 'translateY(0)';
+            editButton.style.boxShadow = '0 2px 4px rgba(212, 175, 55, 0.3)';
+        });
+
+        // Add click handler to open cart edit modal
+        editButton.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            console.log(`🛠️ Opening cart edit modal for: ${patternName}`);
+
+            // Check if cart edit modal system is available
+            if (window.colorFlexCartEditor) {
+                window.colorFlexCartEditor.openEditModal({
+                    cartItem: cartItem,
+                    patternName: patternName,
+                    collectionName: collectionName,
+                    savedPattern: savedPatternData,
+                    thumbnailData: thumbnailData
+                });
+                console.log('✅ Cart edit modal opened successfully');
+            } else {
+                console.warn('⚠️ Cart edit modal not available, falling back to ColorFlex navigation');
+
+                // Fallback: navigate to ColorFlex page for editing
+                if (window.location.pathname.includes('colorflex')) {
+                    // On ColorFlex page - load pattern directly
+                    if (window.loadSavedPatternToUI && savedPatternData) {
+                        try {
+                            window.loadSavedPatternToUI(savedPatternData);
+                            console.log('✅ Pattern loaded for editing in ColorFlex');
+                        } catch (error) {
+                            console.error('❌ Error loading pattern for editing:', error);
+                        }
+                    }
+                } else {
+                    // Navigate to ColorFlex page
+                    if (savedPatternData) {
+                        try {
+                            // Clear old autoload data first
+                            localStorage.removeItem('colorflexAutoLoad');
+
+                            // Create a lightweight copy without thumbnail (too large for localStorage)
+                            const lightweightData = {
+                                patternName: savedPatternData.patternName,
+                                collectionName: savedPatternData.collectionName,
+                                colors: savedPatternData.colors,
+                                currentScale: savedPatternData.currentScale,
+                                scaleMultiplier: savedPatternData.scaleMultiplier,
+                                id: savedPatternData.id
+                                // Intentionally omit thumbnail to save space
+                            };
+
+                            localStorage.setItem('colorflexAutoLoad', JSON.stringify({
+                                pattern: lightweightData,
+                                source: 'cart_edit',
+                                timestamp: Date.now()
+                            }));
+                            console.log('✅ Stored lightweight pattern data for autoload');
+                        } catch (quotaError) {
+                            console.warn('⚠️ localStorage quota exceeded, continuing without autoload data');
+                            // Continue anyway - ColorFlex will load from URL params
+                        }
+                    }
+                    // Build URL with scale parameters
+                    let colorflexUrl = `/pages/colorflex?collection=${collectionName}&pattern=${encodeURIComponent(patternName)}&source=cart_edit`;
+
+                    // Add scale parameters if available
+                    if (savedPatternData && savedPatternData.currentScale !== undefined) {
+                        colorflexUrl += `&scale=${savedPatternData.currentScale}`;
+                    }
+                    if (savedPatternData && savedPatternData.scaleMultiplier !== undefined) {
+                        colorflexUrl += `&scaleMultiplier=${savedPatternData.scaleMultiplier}`;
+                    }
+
+                    console.log('🔗 Navigating to ColorFlex with scale info:', colorflexUrl);
+                    window.location.href = colorflexUrl;
+                }
+            }
+        });
+
+        // Add the edit button to cart item
+        cartItemDetails.appendChild(editButton);
+        console.log(`✅ Added cart edit button for: ${patternName}`);
+
+        // Also make the image clickable for quick edit (secondary action)
+        const imageContainer = cartItem.querySelector('.cart-item__media, .cart-item__image-container, img');
+        if (imageContainer) {
+            imageContainer.style.cursor = 'pointer';
+            imageContainer.title = 'Click to edit this design';
+
+            imageContainer.addEventListener('click', (e) => {
+                e.preventDefault();
+                editButton.click(); // Trigger the same edit action
+            });
+
+            console.log(`✅ Made cart image clickable for editing: ${patternName}`);
+        }
+    }
+    
+    // Function to fix cart item product links
+    function fixCartItemLink(cartItem, patternName, collectionName) {
+        const links = cartItem.querySelectorAll('a[href*="custom-wallpaper"]');
+        
+        links.forEach(link => {
+            // Get the saved pattern data from localStorage
+            const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+            const matchingPattern = savedPatterns.find(p => 
+                p.patternName === patternName && 
+                (p.collectionName === collectionName || collectionName === 'unknown')
+            );
+            
+            if (matchingPattern) {
+                console.log(`🔗 Found saved pattern data for: ${patternName}`, matchingPattern);
+                
+                // Instead of going to Custom Wallpaper, redirect to ColorFlex page with pattern loaded
+                // This matches exactly how the "Load Pattern" button works in unified modal
+                
+                // Normalize collection name for URL (lowercase-hyphenated)
+                const normalizedCollectionName = collectionName.toLowerCase().replace(/\s+/g, '-');
+                
+                // Build ColorFlex URL with full pattern data
+                const params = new URLSearchParams({
+                    collection: normalizedCollectionName,
+                    pattern: patternName,
+                    source: 'cart_saved_pattern',
+                    saved_pattern_id: matchingPattern.id
+                });
+                
+                // Add saved pattern colors if available
+                if (matchingPattern.colors && matchingPattern.colors.length > 0) {
+                    const savedLayers = JSON.stringify(matchingPattern.colors.map((color, index) => ({
+                        index: index,
+                        color: color.color,
+                        label: color.label,
+                        isShadow: false
+                    })));
+                    params.append('saved_layers', savedLayers);
+                    
+                    const colorString = matchingPattern.colors.map(c => c.color).join(',');
+                    params.append('colors', colorString);
+                    
+                    console.log(`🎨 Added ${matchingPattern.colors.length} saved colors to URL`);
+                }
+                
+                // Change the link to go to ColorFlex page instead of Custom Wallpaper
+                const colorFlexUrl = `${window.location.origin}/pages/colorflex?${params.toString()}`;
+                link.href = colorFlexUrl;
+                
+                console.log(`🔗 Updated cart link to ColorFlex: ${link.href.substring(0, 80)}...`);
+            } else {
+                console.warn(`⚠️ No saved pattern data found for: ${patternName} from ${collectionName}`);
+                console.log('📝 Available saved patterns:', savedPatterns.map(p => `${p.patternName} (${p.collectionName})`));
+                
+                // Fallback to original Custom Wallpaper link with basic parameters
+                const currentHref = link.href;
+                const url = new URL(currentHref);
+                
+                url.searchParams.set('pattern_name', patternName);
+                url.searchParams.set('collection', collectionName);
+                url.searchParams.set('source', 'cart');
+                
+                link.href = url.toString();
+                console.log(`🔗 Updated cart link (fallback): ${link.href.substring(0, 80)}...`);
+            }
+        });
+    }
+    
+    // Function to clean up visible cart properties
+    function cleanupCartItemProperties(cartItem) {
+        // Hide technical properties that shouldn't be visible to customers
+        const propertyElements = cartItem.querySelectorAll('dt, dd, .product-option');
+        
+        propertyElements.forEach(element => {
+            const text = element.textContent || '';
+            if (text.includes('ColorFlex Source') || text.includes('Thumbnail Key')) {
+                element.style.display = 'none';
+                console.log('🙈 Hidden technical property element:', text.substring(0, 30));
+            }
+        });
+    }
+    
+    // Initialize cart thumbnail restoration
+    function initializeCartThumbnailRestoration() {
+        console.log('🔧 Initializing cart thumbnail restoration system...');
+
+        // Check if we're on a page with cart items (but don't exit early)
+        const hasCartItems = document.querySelectorAll('.cart-item').length > 0;
+
+        if (!hasCartItems) {
+            console.log('🛒 No cart items detected initially, but setting up system anyway...');
+        } else {
+            console.log('🛒 Cart items detected, initializing restoration system...');
+        }
+        
+        // Run restoration immediately
+        restoreCartThumbnails();
+        
+        // Set up mutation observer for dynamic cart updates
+        const observer = new MutationObserver(function(mutations) {
+            let shouldRestore = false;
+            
+            mutations.forEach(function(mutation) {
+                if (mutation.type === 'childList' && mutation.addedNodes.length > 0) {
+                    // Check if cart items were added
+                    mutation.addedNodes.forEach(function(node) {
+                        if (node.nodeType === 1) { // Element node
+                            if (node.classList && (
+                                node.classList.toString().includes('cart') ||
+                                node.classList.toString().includes('item') ||
+                                node.classList.toString().includes('line')
+                            )) {
+                                shouldRestore = true;
+                            }
+                        }
+                    });
+                }
+            });
+            
+            if (shouldRestore) {
+                console.log('🔄 Cart content changed, restoring thumbnails...');
+                setTimeout(restoreCartThumbnails, 500);
+            }
+        });
+        
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+        
+        // Periodic restoration disabled to prevent flashing
+        // setInterval(() => {
+        //     console.log('🔄 Periodic cart restoration check...');
+        //     restoreCartThumbnails();
+        // }, 10000);
+        
+        // Manual triggers for testing
+        window.testCartThumbnails = () => {
+            console.log('🧪 Manual cart thumbnail test triggered');
+            restoreCartThumbnails();
+        };
+
+        window.restoreCart = () => {
+            console.log('🔧 Manual cart restoration triggered');
+            restoreCartThumbnails();
+        };
+
+        window.debugCartImages = () => {
+            console.log('🔍 Debugging cart image structure...');
+            const cartItems = document.querySelectorAll('.cart-item');
+            cartItems.forEach((item, index) => {
+                console.log(`🔍 Cart item ${index}:`);
+                console.log('  - All images:', item.querySelectorAll('img').length);
+                console.log('  - Media containers:', item.querySelectorAll('.cart-item__media, .cart-item__image-container').length);
+                console.log('  - All elements with src:', item.querySelectorAll('[src]').length);
+
+                const mediaContainer = item.querySelector('.cart-item__media, .cart-item__image-container');
+                if (mediaContainer) {
+                    console.log('  - Media container HTML:', mediaContainer.outerHTML.substring(0, 300));
+                }
+            });
+        };
+
+        window.debugCheckoutImages = () => {
+            console.log('🔍 Debugging checkout page structure...');
+            const allImages = document.querySelectorAll('img');
+            console.log(`📊 Total images on page: ${allImages.length}`);
+
+            allImages.forEach((img, index) => {
+                console.log(`🖼️ Image ${index}:`);
+                console.log(`  - Src: ${img.src?.substring(0, 100)}...`);
+                console.log(`  - Alt: ${img.alt}`);
+                console.log(`  - Size: ${img.offsetWidth}x${img.offsetHeight}`);
+                console.log(`  - Parent text: ${img.parentElement?.textContent?.substring(0, 50)}...`);
+
+                // Check if this looks like a Custom Wallpaper image
+                const isCustomWallpaper = img.src?.includes('custom-wallpaper') ||
+                                         img.alt?.toLowerCase().includes('custom wallpaper') ||
+                                         img.parentElement?.textContent?.toLowerCase().includes('custom wallpaper');
+
+                if (isCustomWallpaper) {
+                    console.log(`  ⭐ POTENTIAL CUSTOM WALLPAPER IMAGE!`);
+                }
+            });
+
+            // Also check for text mentioning Custom Wallpaper
+            const textElements = document.querySelectorAll('*');
+            let customWallpaperMentions = 0;
+            textElements.forEach(el => {
+                if (el.textContent?.toLowerCase().includes('custom wallpaper')) {
+                    customWallpaperMentions++;
+                }
+            });
+            console.log(`📝 Found ${customWallpaperMentions} elements mentioning "Custom Wallpaper"`);
+        };
+
+        window.forceCheckoutThumbnails = () => {
+            console.log('🔧 Force updating checkout thumbnails...');
+            if (window.location.href.includes('/checkout')) {
+                checkoutRestoration();
+                universalCheckoutRestore();
+                console.log('✅ Forced checkout thumbnail update complete');
+            } else {
+                console.log('❌ Not on checkout page');
+            }
+        };
+        
+        console.log('✅ Cart thumbnail restoration system active');
+        console.log('💡 Cart functions: window.testCartThumbnails() or window.restoreCart()');
+        console.log('💡 Debug functions: window.debugCartImages() or window.debugCheckoutImages()');
+        console.log('💡 Checkout function: window.forceCheckoutThumbnails()');
+
+        // Add immediate manual restoration for cart emergencies
+        window.emergencyCartRestore = () => {
+            console.log('🚨 EMERGENCY CART RESTORATION TRIGGERED!');
+
+            // Force immediate restoration multiple times
+            restoreCartThumbnails();
+
+            setTimeout(() => {
+                console.log('🔄 Emergency retry 1...');
+                restoreCartThumbnails();
+            }, 500);
+
+            setTimeout(() => {
+                console.log('🔄 Emergency retry 2...');
+                restoreCartThumbnails();
+            }, 1500);
+
+            setTimeout(() => {
+                console.log('🔄 Emergency retry 3...');
+                restoreCartThumbnails();
+            }, 3000);
+
+            console.log('✅ Emergency cart restoration sequence initiated');
+        };
+
+        console.log('🚨 EMERGENCY FUNCTION: window.emergencyCartRestore()');
+
+        // Try to extend to checkout if possible
+        tryExtendToCheckout();
+    }
+
+    // Function to attempt checkout thumbnail restoration
+    function tryExtendToCheckout() {
+        console.log('🛒 Attempting to extend thumbnail restoration to checkout...');
+
+        // Check if we're on a checkout page
+        if (window.location.href.includes('/checkouts/') || window.location.href.includes('/checkout')) {
+            console.log('✅ Checkout page detected, setting up thumbnail restoration...');
+
+            // For checkout pages, we need to be more careful and use different approaches
+            setupCheckoutThumbnailRestoration();
+        } else {
+            console.log('ℹ️ Not on checkout page, checkout extension not needed');
+        }
+
+        // Also try to improve cart data for checkout display
+        enhanceCartDataForCheckout();
+    }
+
+    // Function to setup thumbnail restoration on checkout pages
+    function setupCheckoutThumbnailRestoration() {
+        console.log('🔧 Setting up checkout thumbnail restoration...');
+
+        // Method 1: Try to find and update product images in checkout
+        const checkoutRestoration = () => {
+            // Try multiple selectors for checkout items
+            const selectors = [
+                '[data-product-line-item]',
+                '.product-line-item',
+                '.line-item',
+                '.checkout-line-item',
+                '.order-line-item',
+                '[class*="line-item"]',
+                '[class*="product"]'
+            ];
+
+            let productItems = [];
+            for (const selector of selectors) {
+                productItems = document.querySelectorAll(selector);
+                if (productItems.length > 0) {
+                    console.log(`🔍 Found ${productItems.length} items using selector: ${selector}`);
+                    break;
+                }
+            }
+
+            if (productItems.length === 0) {
+                // Try a broader search
+                productItems = document.querySelectorAll('*');
+                productItems = Array.from(productItems).filter(el => {
+                    const text = el.textContent || '';
+                    return text.toLowerCase().includes('custom wallpaper') || text.toLowerCase().includes('custom fabric');
+                });
+                console.log(`🔍 Found ${productItems.length} items via text search`);
+            }
+
+            productItems.forEach((item, index) => {
+                // Try multiple ways to find title and image
+                const titleSelectors = ['.product-title', '.line-item-title', '[data-product-title]', 'h1', 'h2', 'h3', '.title'];
+                const imageSelectors = ['img', '.product-image img', '.line-item-image img', '[style*="background-image"]'];
+
+                let productTitle = null;
+                let productImage = null;
+
+                // Find title
+                for (const selector of titleSelectors) {
+                    productTitle = item.querySelector(selector);
+                    if (productTitle) break;
+                }
+
+                // Find image
+                for (const selector of imageSelectors) {
+                    productImage = item.querySelector(selector);
+                    if (productImage) break;
+                }
+
+                // Also check if the item itself contains the title/image
+                if (!productTitle) {
+                    const text = item.textContent || item.innerText || '';
+                    if (text.toLowerCase().includes('custom wallpaper') || text.toLowerCase().includes('custom fabric')) {
+                        productTitle = { textContent: text.substring(0, 100) }; // Mock title element
+                    }
+                }
+
+                if (!productImage) {
+                    productImage = item.querySelector('*');
+                    if (productImage && !productImage.src) {
+                        productImage = null;
+                    }
+                }
+
+                if (productTitle) {
+                    const title = productTitle.textContent || productTitle.innerText || '';
+                    console.log(`🔍 Checkout item ${index}: "${title.substring(0, 50)}..."`);
+
+                    // Check if this is a Custom Wallpaper/Fabric item
+                    if (title.toLowerCase().includes('custom wallpaper') || title.toLowerCase().includes('custom fabric')) {
+                        console.log('✅ Found ColorFlex item in checkout, attempting restoration...');
+
+                        // Try to get pattern data from localStorage
+                        const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+                        if (savedPatterns.length > 0) {
+                            // Use the most recent pattern (or try to match by cart data)
+                            const latestPattern = savedPatterns[savedPatterns.length - 1];
+                            if (latestPattern.thumbnail) {
+                                console.log(`🎯 Updating checkout image for: ${latestPattern.patternName}`);
+
+                                if (productImage && productImage.src) {
+                                    // Update existing image
+                                    productImage.src = latestPattern.thumbnail;
+                                    productImage.alt = `Custom Pattern: ${latestPattern.patternName}`;
+                                    console.log('✅ Checkout thumbnail updated via existing image!');
+                                } else {
+                                    // Create new image if none exists
+                                    const newImg = document.createElement('img');
+                                    newImg.src = latestPattern.thumbnail;
+                                    newImg.alt = `Custom Pattern: ${latestPattern.patternName}`;
+                                    newImg.style.cssText = 'max-width: 60px; height: 60px; object-fit: cover; border-radius: 4px;';
+
+                                    // Try to insert the image
+                                    if (item.querySelector('.product-image, .line-item-image')) {
+                                        item.querySelector('.product-image, .line-item-image').appendChild(newImg);
+                                    } else {
+                                        item.insertBefore(newImg, item.firstChild);
+                                    }
+                                    console.log('✅ Checkout thumbnail created and inserted!');
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        // Run immediately and setup observers
+        checkoutRestoration();
+
+        // Setup mutation observer for dynamic content
+        const checkoutObserver = new MutationObserver(() => {
+            console.log('🔄 Checkout content changed, retrying thumbnail restoration...');
+            setTimeout(checkoutRestoration, 500);
+        });
+
+        checkoutObserver.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+        // Periodic checkout restoration disabled to prevent flashing
+        // setInterval(() => {
+        //     console.log('🔄 Periodic checkout thumbnail check...');
+        //     checkoutRestoration();
+        // }, 2000);
+
+        // Additional universal checkout approach - try to find ANY images on checkout
+        const universalCheckoutRestore = () => {
+            console.log('🎯 Universal checkout image search...');
+
+            // Get all images on the page
+            const allImages = document.querySelectorAll('img');
+            console.log(`🔍 Found ${allImages.length} total images on checkout page`);
+
+            allImages.forEach((img, index) => {
+                // Check if image src contains generic Custom Wallpaper patterns
+                if (img.src && (
+                    img.src.includes('custom-wallpaper') ||
+                    img.src.includes('custom_wallpaper') ||
+                    img.alt && img.alt.toLowerCase().includes('custom wallpaper')
+                )) {
+                    console.log(`🎯 Found potential Custom Wallpaper image ${index}:`, img.src.substring(0, 100));
+
+                    // Get the latest pattern thumbnail
+                    const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+                    if (savedPatterns.length > 0) {
+                        const latestPattern = savedPatterns[savedPatterns.length - 1];
+                        if (latestPattern.thumbnail) {
+                            console.log(`🔄 Replacing with pattern: ${latestPattern.patternName}`);
+                            img.src = latestPattern.thumbnail;
+                            img.alt = `Custom Pattern: ${latestPattern.patternName}`;
+                            console.log('✅ Universal checkout thumbnail replacement successful!');
+                        }
+                    }
+                }
+            });
+
+            // Also try to find images by size (checkout images are often small thumbnails)
+            allImages.forEach((img, index) => {
+                if (img.offsetWidth > 0 && img.offsetWidth <= 80 && img.offsetHeight > 0 && img.offsetHeight <= 80) {
+                    console.log(`🔍 Found small image (${img.offsetWidth}x${img.offsetHeight}) - potential checkout thumbnail`);
+
+                    // Check if this could be a product image based on context
+                    const parentText = img.parentElement?.textContent || '';
+                    if (parentText.toLowerCase().includes('custom wallpaper') || parentText.toLowerCase().includes('custom fabric')) {
+                        const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+                        if (savedPatterns.length > 0) {
+                            const latestPattern = savedPatterns[savedPatterns.length - 1];
+                            if (latestPattern.thumbnail) {
+                                console.log(`🎯 Updating small image for: ${latestPattern.patternName}`);
+                                img.src = latestPattern.thumbnail;
+                                img.alt = `Custom Pattern: ${latestPattern.patternName}`;
+                                console.log('✅ Small image checkout thumbnail updated!');
+                            }
+                        }
+                    }
+                }
+            });
+        };
+
+        // Run universal approach with delays
+        setTimeout(universalCheckoutRestore, 1000);
+        setTimeout(universalCheckoutRestore, 3000);
+        setTimeout(universalCheckoutRestore, 5000);
+
+        // Periodic universal checkout restore disabled to prevent flashing
+        // setInterval(universalCheckoutRestore, 10000);
+
+        console.log('✅ Checkout thumbnail restoration setup complete');
+    }
+
+    // Function to enhance cart data for better checkout display
+    function enhanceCartDataForCheckout() {
+        console.log('🔧 Enhancing cart data for checkout display...');
+
+        // This function runs on cart pages to improve data that flows to checkout
+        if (window.location.pathname.includes('/cart') || document.querySelector('.cart-item')) {
+            // Try to add line item properties that might be visible in checkout
+            const cartItems = document.querySelectorAll('.cart-item');
+
+            cartItems.forEach((item, index) => {
+                const detailsText = item.textContent || '';
+
+                if (detailsText.includes('Custom Pattern') || detailsText.includes('ColorFlex')) {
+                    console.log(`🎯 Enhancing cart item ${index} data for checkout...`);
+
+                    // Look for forms or update mechanisms
+                    const updateForm = item.querySelector('form, [data-cart-item-key]');
+                    if (updateForm) {
+                        // Try to add additional properties that might flow to checkout
+                        console.log('📝 Found update mechanism, considering enhancements...');
+                    }
+                }
+            });
+        }
+    }
+    
+    // Initialize when DOM is ready - MULTIPLE ATTEMPTS FOR RELIABILITY
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeCartThumbnailRestoration);
+    } else {
+        initializeCartThumbnailRestoration();
+    }
+
+    // Single delayed initialization to ensure DOM is ready
+    setTimeout(() => {
+        if (!window.cartSystemInitialized) {
+            window.cartSystemInitialized = true;
+            initializeCartThumbnailRestoration();
+        }
+    }, 1000);
+
+    // IMMEDIATE CART RESTORATION (run right now)
+    console.log('🔥 Running immediate cart restoration...');
+
+    // Define a simple cart restoration function that we know will work
+    function simpleCartRestore() {
+        console.log('🔧 Simple cart restore triggered');
+        const cartItems = document.querySelectorAll('.cart-item');
+        console.log(`🔍 Found ${cartItems.length} cart items for simple restore`);
+
+        cartItems.forEach((item, index) => {
+            console.log(`🔍 Processing cart item ${index}`);
+            const img = item.querySelector('img');
+            if (img) {
+                console.log(`🖼️ Found image in item ${index}: ${img.src.substring(0, 50)}...`);
+
+                // Check if this is a ColorFlex item
+                const detailsText = item.textContent || '';
+                if (detailsText.includes('Custom Pattern') || detailsText.includes('ColorFlex')) {
+                    console.log(`✅ ColorFlex item detected in cart item ${index}`);
+
+                    // Get saved patterns
+                    const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+                    if (savedPatterns.length > 0) {
+                        const latestPattern = savedPatterns[savedPatterns.length - 1];
+                        if (latestPattern.thumbnail) {
+                            console.log(`🎯 Updating cart image with: ${latestPattern.patternName}`);
+                            img.src = latestPattern.thumbnail;
+                            img.alt = `Custom Pattern: ${latestPattern.patternName}`;
+                            console.log('✅ Simple cart thumbnail updated!');
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Single immediate restore only
+    setTimeout(() => {
+        if (!window.cartRestorationInProgress) {
+            console.log('🎯 Single immediate cart restoration triggered');
+            restoreCartThumbnails();
+        }
+    }, 500);
+    
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Cart Restoration",
+  "class": "section-cart-restoration",
+  "settings": []
+}
+{% endschema %}

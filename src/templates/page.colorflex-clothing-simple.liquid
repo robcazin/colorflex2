@@ -1,0 +1,478 @@
+{% layout none %}
+<!-- ColorFlex Clothing Simple Mode -->
+<!-- Created: January 11, 2026 -->
+<!-- Updated: January 16, 2026 - Matched furniture-simple structure -->
+
+<!-- Font imports -->
+{% # theme-check-disable RemoteAsset %}
+<link href="https://fonts.googleapis.com/css2?family=Island+Moments&family=Special+Elite&display=swap" rel="stylesheet">
+{% # theme-check-enable RemoteAsset %}
+
+<!-- Hide Saffron Cottage logo and force background -->
+<style>
+  /* Force page background to prevent white flash */
+  html, body {
+    background: #1a202c !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .header-wrapper, .header__heading-logo, .header-logo, header .logo, .site-header__logo {
+    display: none !important;
+  }
+
+  /* Pulsating animation for collection selector */
+  @keyframes pulsate {
+    0%, 100% {
+      filter: brightness(1);
+    }
+    50% {
+      filter: brightness(1.3);
+    }
+  }
+
+  #collectionHeader {
+    animation: pulsate 3s ease-in-out infinite;
+  }
+
+  /* Sidebar scrolling */
+  #patternThumbnailsSidebar {
+    max-height: 690px;
+    overflow-y: auto;
+    overflow-x: hidden;
+  }
+
+  /* Layer thumbnail styling */
+  .layer-thumbnail-container {
+    display: inline-block;
+    text-align: center;
+    margin: 0 0.5rem;
+  }
+
+  .layer-thumbnail-img {
+    width: 100px;
+    height: 100px;
+    object-fit: contain;
+    background: #2d3748;
+    border: 2px solid #4a5568;
+    border-radius: 4px;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+
+  .layer-label {
+    font-family: 'Special Elite', monospace;
+    font-size: 0.75rem;
+    color: #a0aec0;
+    margin-bottom: 0.25rem;
+  }
+
+  .layer-color-input {
+    width: 100px;
+    padding: 0.35rem;
+    background: #2d3748;
+    border: 1px solid #4a5568;
+    border-radius: 4px;
+    color: white;
+    font-size: 0.75rem;
+    text-align: center;
+  }
+
+  .layer-color-input:focus {
+    outline: none;
+    border-color: #1e40af;
+  }
+
+  /* Clothing Simple Mode: Pattern preview 450x450, Mockup handled by JS (same as regular mode) */
+  #preview {
+    width: 600px !important;
+    height: 700px !important;
+  }
+  #preview canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  /* Mockup: JS sets 600x700 with zoom system, same as regular clothing mode */
+</style>
+
+<!-- Mode Detection Script - Must load BEFORE ColorFlex -->
+<script>
+  // ✅ CRITICAL: Set clothing mode explicitly and freeze it to prevent overwrites
+  window.COLORFLEX_MODE = 'CLOTHING';
+  window.CLOTHING_DEFAULT_COLLECTION = 'botanicals-clo';
+  window.COLORFLEX_SIMPLE_MODE = true;
+
+  // Freeze COLORFLEX_MODE to prevent overwrites
+  Object.defineProperty(window, 'COLORFLEX_MODE', {
+    value: 'CLOTHING',
+    writable: false,
+    configurable: false
+  });
+  
+  // Freeze COLORFLEX_SIMPLE_MODE so nothing can overwrite it
+  Object.defineProperty(window, 'COLORFLEX_SIMPLE_MODE', {
+    value: true,
+    writable: false,
+    configurable: false
+  });
+
+  console.log('👗 ColorFlex Clothing Simple Mode (redesigned with layer thumbnails)');
+  console.log('🔧 TEMPLATE VERSION: 2026-01-17-v6 | SIMPLE_MODE =', window.COLORFLEX_SIMPLE_MODE);
+  console.log('🔧 COLORFLEX_MODE =', window.COLORFLEX_MODE);
+</script>
+
+<!-- Collections Modal -->
+<div id="collectionsModal" style="
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+">
+  <div style="
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+    border: 3px solid #4a90e2;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 900px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    color: white;
+  ">
+    <!-- Close button -->
+    <button id="closeCollectionsModal" style="
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      border: 2px solid #4a90e2;
+      color: #4a90e2;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      transition: all 0.3s ease;
+    " onmouseover="this.style.background='rgba(74, 144, 226, 0.2)'" onmouseout="this.style.background='transparent'">
+      ×
+    </button>
+
+    <h2 style="
+      color: #4a90e2;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      font-family: 'Island Moments', cursive;
+      text-align: center;
+    ">Select a Clothing Collection</h2>
+
+    <!-- Collections Grid -->
+    <div id="collectionsGrid" style="
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    ">
+      <!-- Collections will be populated here by JavaScript -->
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const modal = document.getElementById('collectionsModal');
+  const closeBtn = document.getElementById('closeCollectionsModal');
+
+  // Function to open collections modal
+  window.openCollectionsModal = function(event) {
+    if (event) {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    
+    // Get collections from window.collectionsData or fallback to appState (set by CFM.js)
+    // Use allCollections to include clothing variants (.clo-1) which are filtered out of appState.collections
+    const collections = window.collectionsData || window.appState?.allCollections || window.appState?.collections || [];
+
+    if (collections.length === 0) {
+      console.warn('No collections data available yet. Please wait for ColorFlex to initialize.');
+      modal.style.display = 'flex';
+      const collectionsGrid = document.getElementById('collectionsGrid');
+      collectionsGrid.innerHTML = '<div style="text-align: center; padding: 2rem; color: #a0aec0;">Loading collections...</div>';
+
+      setTimeout(() => {
+        const retryCollections = window.collectionsData || window.appState?.collections || [];
+        if (retryCollections.length > 0) {
+          window.openCollectionsModal();
+        }
+      }, 500);
+      return;
+    }
+
+    // Clear existing grid
+    const collectionsGrid = document.getElementById('collectionsGrid');
+    collectionsGrid.innerHTML = '';
+
+    // Filter to clothing collections and sort alphabetically
+    // Match: .clo-1, .clo-2, -clo, .clo-, etc.
+    const clothingCollections = collections
+      .filter(c => c.name && (c.name.includes('-clo') || c.name.includes('.clo')))
+      .sort((a, b) => a.name.localeCompare(b.name));
+    
+    console.log(`🔍 Found ${clothingCollections.length} clothing collections out of ${collections.length} total`);
+
+    // Populate collections grid
+    clothingCollections.forEach(collection => {
+        const card = document.createElement('div');
+        card.style.cssText = `
+          background: #2d3748;
+          border: 2px solid transparent;
+          border-radius: 8px;
+          padding: 1rem;
+          cursor: pointer;
+          transition: all 0.3s ease;
+          text-align: center;
+          position: relative;
+        `;
+
+        const hasColorFlexPatterns = collection.patterns && collection.patterns.some(p =>
+          p.layers && Array.isArray(p.layers) && p.layers.length > 0
+        );
+
+        let cleanName = collection.name
+          .replace(/[-.]clo[-\d]*/gi, '')
+          .replace(/\s*\([^)]*\)\s*/g, '')
+          .replace(/[-_]/g, ' ')
+          .trim();
+
+        cleanName = cleanName.split(' ').map(word =>
+          word.charAt(0).toUpperCase() + word.slice(1).toLowerCase()
+        ).join(' ');
+
+        let cardHTML = '';
+
+        if (hasColorFlexPatterns) {
+          cardHTML += `
+            <div style="
+              position: absolute;
+              top: 8px;
+              right: 8px;
+              width: 32px;
+              height: 32px;
+              border-radius: 50%;
+              overflow: hidden;
+              border: 2px solid #4a90e2;
+              background: rgba(74, 144, 226, 0.1);
+            ">
+            <img
+              src="https://so-animation.com/colorflex/img/camelion-sm-r.jpg"
+              style="width: 100%; height: 100%; object-fit: cover;"
+              alt="ColorFlex Enabled"
+            >
+          </div>
+        `;
+      }
+
+      cardHTML += `
+          <h3 style="
+            font-family: 'IM Fell English', serif;
+            font-size: 1.2rem;
+            color: white;
+            margin: 0 0 0.5rem 0;
+            text-transform: uppercase;
+            ${hasColorFlexPatterns ? 'padding-right: 40px;' : ''}
+          ">${collection.displayName || cleanName}</h3>
+          <div style="
+            font-size: 0.85rem;
+            color: #a0aec0;
+          ">${collection.patterns ? collection.patterns.length : 0} patterns</div>
+          ${hasColorFlexPatterns ? `
+            <div style="
+              font-size: 0.75rem;
+              color: #4a90e2;
+              margin-top: 0.5rem;
+              font-weight: bold;
+            ">🎨 ColorFlex Enabled</div>
+          ` : ''}
+        `;
+
+        card.innerHTML = cardHTML;
+
+      // Hover effects
+      card.addEventListener('mouseenter', function() {
+        this.style.borderColor = '#4a90e2';
+        this.style.background = '#3d4758';
+        this.style.transform = 'translateY(-4px)';
+        this.style.boxShadow = '0 8px 16px rgba(74, 144, 226, 0.2)';
+      });
+
+      card.addEventListener('mouseleave', function() {
+        this.style.borderColor = 'transparent';
+        this.style.background = '#2d3748';
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = 'none';
+      });
+
+      // Click to select collection
+      card.addEventListener('click', function() {
+        const collectionName = collection.name;
+
+        function trySwitchCollection(retryCount) {
+          if (window.switchCollection) {
+            console.log('✅ Calling window.switchCollection for:', collectionName);
+            window.switchCollection(collectionName);
+            closeCollectionsModal();
+          } else if (retryCount > 0) {
+            console.log('⏳ switchCollection not available yet, retrying... (attempts left: ' + retryCount + ')');
+            setTimeout(function() {
+              trySwitchCollection(retryCount - 1);
+            }, 200);
+          } else {
+            console.error('❌ switchCollection function not available after retries');
+            alert('ColorFlex is still loading. Please wait a moment and try again.');
+          }
+        }
+
+        trySwitchCollection(5);
+      });
+
+      collectionsGrid.appendChild(card);
+    });
+
+    // Show modal
+    modal.style.display = 'flex';
+  };
+
+  // Function to close modal
+  function closeCollectionsModal() {
+    modal.style.display = 'none';
+  }
+
+  // Event listeners
+  closeBtn.addEventListener('click', closeCollectionsModal);
+
+  // Close on background click
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeCollectionsModal();
+    }
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      closeCollectionsModal();
+    }
+  });
+})();
+</script>
+
+<!-- Asset URLs -->
+<script>
+window.ColorFlexAssets = {
+  colorsUrl: "{{ 'colors.json' | asset_url }}",
+  collectionsUrl: "{{ 'collections.json' | asset_url }}",
+  furnitureConfigUrl: "{{ 'furniture-config.json' | asset_url }}",
+  mockupsUrl: "{{ 'mockups.json' | asset_url }}"
+};
+</script>
+
+<!-- Main Layout -->
+<div id="colorflexMainContainer" style="background:#1a202c; color:white; padding:1rem; min-height:100vh; display:block !important;">
+
+  <!-- Extraordinary Color Header -->
+  <div style="text-align:center; margin-bottom:1rem;">
+    <h1 style="font-family:'Island Moments',cursive; font-size:3.5rem; margin:0; line-height:1;">
+      <a href="/pages/extraordinary-color" style="text-decoration:none; transition:opacity 0.3s;" onmouseover="this.style.opacity='0.7'" onmouseout="this.style.opacity='1'">
+        <span style="color:rgba(255,255,255,0.75);">Extraordinary </span><span style="color:#ff0000;">C</span><span style="color:#ff8800;">o</span><span style="color:#ffff00;">l</span><span style="color:#00ff00;">o</span><span style="color:#0088ff;">r</span>
+      </a>
+    </h1>
+  </div>
+
+  <!-- Top Section: Sidebar | Pattern Preview | Mockup Preview -->
+  <div style="display:grid; grid-template-columns:260px 450px 1fr; gap:1.5rem; margin-bottom:1.5rem; align-items:start;">
+
+    <!-- Left Sidebar: Collection + Pattern Thumbnails -->
+    <div>
+      <!-- Collection Selector -->
+      <button id="collectionHeader" onclick="window.openCollectionsModal()" style="width:100%; background:linear-gradient(135deg,#1e40af 0%,#3b82f6 100%); padding:0.5rem; border:none; border-radius:6px; font-family:'Island Moments',cursive; font-size:1.2rem; color:white; cursor:pointer; box-shadow:0 4px 12px rgba(30,64,175,0.3); margin-bottom:1rem;">
+        BOTANICALS ▼
+      </button>
+
+      <!-- Pattern Thumbnails (Vertical Scrolling) -->
+      <div id="patternThumbnailsSidebar"></div>
+    </div>
+
+    <!-- Center: Pattern Preview -->
+    <div style="text-align:center;">
+      <h3 style="font-family:'Island Moments',cursive; font-size:1.5rem; margin-bottom:0.5rem; font-style:italic;">Pattern Preview</h3>
+      <div id="preview" style="width:450px; height:450px; background:#434341; margin:0 auto; border:3px solid #d4af37; border-radius:8px;"></div>
+      <h3 id="patternName" style="font-family:'Special Elite',monospace; font-size:1.3rem; margin:0.75rem 0; color:#d4af37;">Pattern Name</h3>
+      <div id="patternRepeats" style="font-size:0.9rem; color:#a0aec0; margin-bottom:0.75rem;">Pattern Repeats 24x24</div>
+      <div style="display:flex; gap:0.75rem; justify-content:center;">
+        <button id="saveToListButton" style="padding:0.6rem 1.2rem; background:#d4af37; color:#1a202c; border:none; border-radius:4px; font-size:0.9rem; font-weight:bold; cursor:pointer;">Save to My Designs</button>
+        <button id="buyItNowButton" style="padding:0.6rem 1.2rem; background:transparent; border:2px solid #1e40af; color:#1e40af; border-radius:4px; font-size:0.9rem; font-weight:bold; cursor:pointer;">Select Material</button>
+      </div>
+    </div>
+
+    <!-- Right: Mockup Preview -->
+    <div style="display:flex; flex-direction:column; align-items:center;">
+      <h3 style="font-family:'Island Moments',cursive; font-size:1.5rem; margin-left:0.5rem; margin-bottom:0.5rem; font-style:italic;">Mockup Preview</h3>
+
+      <div id="roomMockup" style="width:600px; height:700px; background:#434341; margin:0 auto; border:3px solid #d4af37; border-radius:8px;"></div>
+      <!-- Controls BELOW mockup - all on one line -->
+      <div style="display:flex; align-items:center; justify-content:center; gap:1.5rem; margin-top:0.75rem;">
+        <!-- Scale Controls -->
+        <div id="scaleControls" style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-size:0.85rem; font-weight:600; text-transform:uppercase;">Scale:</span>
+          <button onclick="window.decrementClothingScale()" style="padding:0.4rem 0.8rem; background:#e2e8f0; color:#2d3748; border:none; border-radius:4px; font-size:0.85rem; cursor:pointer; font-weight:bold;">−</button>
+          <span id="currentScaleDisplay" style="font-size:0.9rem; font-weight:600; min-width:50px; text-align:center;">1.0X</span>
+          <button onclick="window.incrementClothingScale()" style="padding:0.4rem 0.8rem; background:#e2e8f0; color:#2d3748; border:none; border-radius:4px; font-size:0.85rem; cursor:pointer; font-weight:bold;">+</button>
+        </div>
+        <!-- Garment Selector -->
+        <div id="garmentSelector" style="display:flex; align-items:center; gap:0.5rem;">
+          <span style="font-size:0.85rem; font-weight:600; text-transform:uppercase;">Garment:</span>
+          <button onclick="window.selectGarment('dress')" data-garment="dress" class="garment-button" style="padding:0.4rem 1rem; background:#1e40af; color:white; border:none; border-radius:4px; font-size:0.85rem; cursor:pointer;">Dress</button>
+          <button onclick="window.selectGarment('pantsuit')" data-garment="pantsuit" class="garment-button" style="padding:0.4rem 1rem; background:#e2e8f0; color:#2d3748; border:none; border-radius:4px; font-size:0.85rem; cursor:pointer;">Pantsuit</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Bottom Section: Layer Thumbnails with Color Inputs -->
+  <div style="background:#2d3748; padding:1.5rem; border-radius:12px; max-width:1800px; margin:0 auto; box-shadow:0 4px 12px rgba(0,0,0,0.3);">
+    <h3 style="font-family:'Island Moments',cursive; font-size:1.8rem; margin:0 0 1rem 0; text-align:center; color:#d4af37;">Pattern Layer Thumbnail Images</h3>
+    <div id="layerThumbnailsContainer" style="text-align:center; white-space:nowrap; overflow-x:auto; overflow-y:hidden;"></div>
+  </div>
+
+  <!-- Hidden DOM elements required by CFM.js (not used in simple mode but must exist) -->
+  <div id="collectionThumbnails" style="display:none !important; visibility:hidden !important; height:0 !important; overflow:hidden !important;"></div>
+  <div id="layerInputsContainer" style="display:none;"></div>
+  <div id="curatedColorsContainer" style="display:none;"></div>
+  <div id="coordinatesContainer" style="display:none;"></div>
+
+</div>
+
+<!-- Load ColorFlex -->
+{{ 'color-flex-core.min.css' | asset_url | stylesheet_tag }}
+<script>
+  // ✅ CRITICAL: Ensure COLORFLEX_MODE is set before loading CFM.js
+  if (!window.COLORFLEX_MODE) {
+    window.COLORFLEX_MODE = 'CLOTHING';
+    console.log('🔧 COLORFLEX_MODE was missing, setting to CLOTHING');
+  }
+  console.log('🔧 Final check before CFM.js load: COLORFLEX_MODE =', window.COLORFLEX_MODE);
+</script>
+<script src="{{ 'color-flex-clothing-simple.min.js' | asset_url }}" defer></script>
+
+<!-- Load Simple Mode CSS - MUST load AFTER core CSS -->
+{{ 'colorflex-simple-mode.css' | asset_url | stylesheet_tag }}

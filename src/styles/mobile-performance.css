@@ -1,0 +1,16 @@
+/* Mobile-specific performance optimizations */
+@media (max-width: 767px) {
+  /* Hide heavy components on mobile */
+  .colorFlex-mockup { display: none !important; }
+  
+  /* Simplify animations */
+  .colorFlex-customizer * { 
+    animation-duration: 0.1s !important; 
+    transition-duration: 0.1s !important; 
+  }
+  
+  /* Optimize touch targets */
+  .curated-color { min-width: 44px !important; min-height: 44px !important; }
+  .color-circle { min-width: 44px !important; min-height: 44px !important; }
+  .layer-input { min-height: 44px !important; font-size: 16px !important; }
+}

@@ -1,0 +1,202 @@
+{
+  "mockups": {
+    "english-countryside-bedroom": {
+      "id": "english-countryside-bedroom",
+      "name": "English Countryside Bedroom",
+      "image": "./data/mockups/English-Countryside-Bedroom-1-W90H60.png",
+      "shadow": "./data/mockups/English-Countryside-Bedroom-1-shadow-W90H60.jpg",
+      "widthInches": 96,
+      "heightInches": 72,
+      "description": "Elegant English countryside bedroom with window"
+    },
+    "english-countryside-bedroom-alt": {
+      "id": "english-countryside-bedroom-alt",
+      "name": "English Countryside Bedroom (Alt)",
+      "image": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
+      "shadow": "./data/mockups/English-Countryside-Bedroom-1-shadow-W60H40.jpg",
+      "widthInches": 96,
+      "heightInches": 72,
+      "description": "English countryside bedroom (alternative resolution)"
+    },
+    "english-countryside-fireplace": {
+      "id": "english-countryside-fireplace",
+      "name": "English Countryside Fireplace",
+      "image": "./data/mockups/English-Countryside-fireplace-W90H60.png",
+      "shadow": "./data/mockups/English-Countryside-fireplace-shadow-W90H60.jpg",
+      "widthInches": 90,
+      "heightInches": 60,
+      "description": "Cozy fireplace scene with mantel"
+    },
+    "cupboard": {
+      "id": "cupboard",
+      "name": "Vintage Cupboard",
+      "image": "./data/mockups/Cupboard-W100H80.png",
+      "shadow": "./data/mockups/Cupboard-shadows-W100H80.jpg",
+      "widthInches": 110,
+      "heightInches": 80,
+      "description": "Vintage wooden cupboard interior"
+    },
+    "dresser": {
+      "id": "dresser",
+      "name": "Vintage Dresser",
+      "image": "./data/mockups/Dresser-W100H80.png",
+      "shadow": "./data/mockups/Dresser-shadows-W100H80.jpg",
+      "widthInches": 80,
+      "heightInches": 50,
+      "description": "Vintage dresser with mirror"
+    },
+    "cottage-door": {
+      "id": "cottage-door",
+      "name": "Cottage Door",
+      "image": "./data/mockups/Cottage-Door-W120H90.png",
+      "shadow": "./data/mockups/Cottage-Door-shadow-W120H90.jpg",
+      "widthInches": 72,
+      "heightInches": 54,
+      "description": "Rustic cottage interior with door"
+    },
+    "farmhouse-bathroom": {
+      "id": "farmhouse-bathroom",
+      "name": "Farmhouse Bathroom",
+      "image": "./data/mockups/FarmhouseBathroom.png",
+      "shadow": "./data/mockups/FarmhouseBathroom-shadow.jpg",
+      "widthInches": 72,
+      "heightInches": 54,
+      "description": "Charming farmhouse bathroom"
+    },
+    "provenceBench": {
+      "id": "provenceBench",
+      "name": "Provence Bench",
+      "image": "./data/mockups/provenceBench.png",
+      "shadow": "./data/mockups/provenceBench-shadow.jpg",
+      "widthInches": 96,
+      "heightInches": 72,
+      "description": "Rustic Provence-style bench"
+    },
+    "longHallway": {
+      "id": "longHallway",
+      "name": "Long Hallway with Shadow",
+      "image": "./data/mockups/longHallway.png",
+      "shadow": "./data/mockups/longHallway-shadow.jpg",
+      "widthInches": 72,
+      "heightInches": 54,
+      "description": "Long hallway interior with shadow"
+    },
+    "library": {
+      "id": "library",
+      "name": "Library Room",
+      "image": "./data/mockups/library-W120H90.png",
+      "shadow": null,
+      "widthInches": 120,
+      "heightInches": 90,
+      "description": "Traditional library with bookshelves"
+    },
+    "white-dresser": {
+      "id": "white-dresser",
+      "name": "White Dresser",
+      "image": "./data/mockups/white-dresser-W90H60.png",
+      "shadow": "./data/mockups/white-dresser-shadow-W90H60.jpg",
+      "widthInches": 90,
+      "heightInches": 60,
+      "description": "Modern white dresser"
+    },
+    "rustic-desk": {
+      "id": "rustic-desk",
+      "name": "Rustic Desk",
+      "image": "./data/mockups/rusticDesk.png",
+      "shadow": "./data/mockups/rusticDesk-shadow.jpg",
+      "widthInches": 60,
+      "heightInches": 45,
+      "description": "Rustic wooden desk"
+    },
+    "wallpaper-mockup-39": {
+      "id": "wallpaper-mockup-39",
+      "name": "Wallpaper Room 39",
+      "image": "./data/mockups/wallpaper-mockup-39-W60H45.png",
+      "shadow": "./data/mockups/wallpaper-mockup-39-shadow-W60H45.jpg",
+      "widthInches": 60,
+      "heightInches": 45,
+      "description": "Simple room mockup"
+    },
+    "bathtub": {
+      "id": "bathtub",
+      "name": "Bathroom with Tub",
+      "image": "./data/mockups/bath-tub-W150H112.png",
+      "shadow": "./data/mockups/bath-tub-shadow-W150H112.png",
+      "widthInches": 150,
+      "heightInches": 112.5,
+      "description": "Elegant bathroom with clawfoot tub"
+    },
+    "t-shirt": {
+      "id": "t-shirt",
+      "name": "T-Shirt Mockup",
+      "image": "./data/mockups/clothing/t-shirt-mockup-W60H60.png",
+      "shadow": "./data/mockups/clothing/t-shirt-mockup-shadow-W60H60.jpg",
+      "widthInches": 60,
+      "heightInches": 60,
+      "description": "T-shirt clothing mockup"
+    },
+    "dress-mannequin": {
+      "id": "dress-mannequin",
+      "name": "Dress Mannequin",
+      "image": "./data/mockups/clothing/dress-mannequin.png",
+      "shadow": null,
+      "widthInches": 60,
+      "heightInches": 90,
+      "description": "Dress on mannequin"
+    },
+    "armchair": {
+      "id": "armchair",
+      "name": "Armchair",
+      "image": "./data/mockups/armchair-W120H90.png",
+      "shadow": null,
+      "widthInches": 36,
+      "heightInches": 40,
+      "description": "Upholstered armchair for furniture mode"
+    },
+    "white-dresser-large": {
+      "id": "white-dresser-large",
+      "name": "White Dresser (Large)",
+      "image": "./data/mockups/white-dresser-W72H72.png",
+      "shadow": null,
+      "widthInches": 72,
+      "heightInches": 72,
+      "description": "Modern white dresser - larger version"
+    },
+    "mudroom": {
+      "id": "mudroom",
+      "name": "Mudroom",
+      "image": "./data/mockups/mudroom-mockup.png",
+      "shadow": null,
+      "widthInches": 120,
+      "heightInches": 90,
+      "description": "Mudroom interior"
+    },
+    "still-life-pine": {
+      "id": "still-life-pine",
+      "name": "Still Life - Pine Bough",
+      "image": "./data/mockups/Still-Life-Pine-Bough-W48H36.png",
+      "shadow": null,
+      "widthInches": 48,
+      "heightInches": 36,
+      "description": "Still life arrangement with pine bough"
+    },
+    "stillLife_eucalyptus": {
+      "id": "stillLife_eucalyptus",
+      "name": "Still Life - Eucalyptus",
+      "image": "./data/mockups/stillLife_eucalyptus.png",
+      "shadow": "stillLife_eucalyptus",
+      "widthInches": 48,
+      "heightInches": 36,
+      "description": "Still life arrangement with eucalyptus"
+    },
+    "soakingTub": {
+      "id": "soaking-tub",
+      "name": "Soaking Tub",
+      "image": "./data/mockups/soakingTub.png",
+      "shadow": "./data/mockups/soakingTub-shadow.png",
+      "widthInches": 48,
+      "heightInches": 36,
+      "description": "Shadow for still life arrangement with eucalyptus"
+    }
+  }
+}

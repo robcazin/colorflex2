@@ -1,0 +1,46 @@
+/* Shopify theme compatibility and conflict resolution */
+
+/* Reset button styles that themes often override */
+.colorFlex-customizer button {
+  font-family: "Special Elite", serif !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  box-shadow: none !important;
+  border: none !important;
+  border-radius: 4px !important;
+}
+
+/* Popular theme compatibility */
+.theme-dawn .colorFlex-customizer { font-family: var(--font-body-family, "IM Fell English", serif); }
+.theme-debut .colorFlex-customizer button { text-transform: none !important; }
+.theme-impulse .colorFlex-customizer { margin: 2rem auto; }
+
+/* Fix common z-index conflicts */
+.colorFlex-customizer { position: relative; z-index: 1; }
+.color-flex-success-preview { z-index: 10000 !important; }
+
+/* Cart integration styles */
+.color-flex-cart-display {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 8px;
+  font-family: inherit;
+}
+
+.customization-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  margin-bottom: 8px;
+}
+
+.mini-swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+  display: inline-block;
+}

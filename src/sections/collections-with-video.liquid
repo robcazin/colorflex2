@@ -1,0 +1,517 @@
+{% comment %}
+  Featured Collections with Video Section
+
+  Displays a grid of featured collections on the left with a video on the right.
+  Fully customizable through the Shopify theme editor.
+{% endcomment %}
+
+<style>
+  .collections-video-section {
+    max-width: {{ section.settings.container_width }}px;
+    margin: 0 auto;
+    padding: {{ section.settings.section_padding_top }}px 20px {{ section.settings.section_padding_bottom }}px;
+  }
+
+  .collections-video-container {
+    display: flex;
+    gap: 36px;
+    align-items: center;
+  }
+
+  .collections-side {
+    flex: 2;
+  }
+
+  .collections-side h1 {
+    font-size: {{ section.settings.heading_size }}px;
+    margin-bottom: 24px;
+    color: {{ section.settings.heading_color }};
+  }
+
+  .collections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax({{ section.settings.collection_card_min_width }}px, 1fr));
+    gap: {{ section.settings.grid_gap }}px;
+  }
+
+  .collection-card {
+    text-decoration: none;
+    display: block;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-radius: {{ section.settings.card_border_radius }}px;
+    overflow: hidden;
+  }
+
+  .collection-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .collection-card-image {
+    width: 100%;
+    height: {{ section.settings.image_height }}px;
+    object-fit: cover;
+    display: block;
+  }
+
+  .collection-card-title {
+    padding: 12px;
+    text-align: center;
+    font-size: {{ section.settings.collection_title_size }}px;
+    color: {{ section.settings.collection_title_color }};
+    background: {{ section.settings.card_background }};
+  }
+
+  .video-side {
+    flex: 1;
+    position: sticky;
+    top: 50px;
+  }
+
+  .video-side h3 {
+    font-size: {{ section.settings.video_heading_size }}px;
+    margin-bottom: 16px;
+    color: {{ section.settings.heading_color }};
+  }
+
+  .video-container {
+    position: relative;
+    width: 100%;
+    {% if section.settings.video_orientation == 'portrait' %}
+      padding-bottom: 177.78%; /* 9:16 aspect ratio for vertical video */
+    {% else %}
+      padding-bottom: 56.25%; /* 16:9 aspect ratio for horizontal video */
+    {% endif %}
+    height: 0;
+    overflow: hidden;
+    border-radius: {{ section.settings.video_border_radius }}px;
+    background: #000;
+  }
+
+  .video-container iframe,
+  .video-container video {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    border: none;
+    object-fit: contain;
+  }
+
+  /* Responsive */
+  @media (max-width: 768px) {
+    .collections-video-container {
+      flex-direction: column;
+    }
+
+    .video-side {
+      position: static;
+      width: 100%;
+    }
+
+    .collections-grid {
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    }
+  }
+</style>
+
+<div class="collections-video-section">
+  {% if section.settings.section_heading != blank %}
+    <h2 style="text-align: center; font-size: {{ section.settings.main_heading_size }}px; margin-bottom: 40px; color: {{ section.settings.heading_color }};">
+      {{ section.settings.section_heading }}
+    </h2>
+  {% endif %}
+
+  <div class="collections-video-container">
+    <!-- Left side - Collections Grid -->
+    <div class="collections-side">
+      {% if section.settings.collections_heading != blank %}
+        <h1>{{ section.settings.collections_heading }}</h1>
+      {% endif %}
+
+      <div class="collections-grid">
+        {% for block in section.blocks %}
+          {% if block.type == 'collection' %}
+            {% assign collection = collections[block.settings.collection] %}
+            {% if collection %}
+              <a href="{{ collection.url }}" class="collection-card" {{ block.shopify_attributes }}>
+                {% if collection.featured_image %}
+                  <img
+                    src="{{ collection.featured_image | image_url: width: 400 }}"
+                    alt="{{ collection.title }}"
+                    class="collection-card-image"
+                    width="400"
+                    height="{{ section.settings.image_height }}"
+                    loading="lazy"
+                  >
+                {% elsif collection.products.first and collection.products.first.featured_image %}
+                  <img
+                    src="{{ collection.products.first.featured_image | image_url: width: 400 }}"
+                    alt="{{ collection.title }}"
+                    class="collection-card-image"
+                    width="400"
+                    height="{{ section.settings.image_height }}"
+                    loading="lazy"
+                  >
+                {% else %}
+                  <div class="collection-card-image" style="background: #f0f0f0; display: flex; align-items: center; justify-content: center;">
+                    <span style="color: #999;">No image</span>
+                  </div>
+                {% endif %}
+
+                <h3 class="collection-card-title">{{ collection.title }}</h3>
+              </a>
+            {% else %}
+              <div class="collection-card" {{ block.shopify_attributes }} style="border: 2px dashed #ccc; cursor: default; background: #1a1a1a;">
+                <div class="collection-card-image" style="background: #2a2a2a; height: {{ section.settings.image_height }}px; display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 8px;">
+                  <span style="color: #999; font-size: 16px;">⚠️ No Collection Selected</span>
+                  <span style="color: #777; font-size: 13px;">Click this block in the sidebar →</span>
+                  <span style="color: #777; font-size: 13px;">Then select a collection</span>
+                </div>
+                <h3 class="collection-card-title" style="color: #999;">Select Collection</h3>
+              </div>
+            {% endif %}
+          {% endif %}
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Right side - Video -->
+    {% if section.settings.show_video %}
+      <div class="video-side">
+        {% if section.settings.video_heading != blank %}
+          <h3>{{ section.settings.video_heading }}</h3>
+        {% endif %}
+
+        <div class="video-container" id="video-playlist-{{ section.id }}">
+          {%- assign video_urls = section.settings.video_playlist | newline_to_br | strip_newlines | split: '<br />' -%}
+
+          {% if video_urls.size > 0 and section.settings.video_playlist != blank %}
+            {%- for video_url in video_urls -%}
+              {%- assign trimmed_url = video_url | strip -%}
+              {%- if trimmed_url != blank -%}
+                <video
+                  class="playlist-video"
+                  data-video-index="{{ forloop.index0 }}"
+                  {% if forloop.first %}data-active="true"{% endif %}
+                  autoplay
+                  muted
+                  playsinline
+                  style="width: 100%; height: 100%; object-fit: cover; position: absolute; top: 0; left: 0; display: {% if forloop.first %}block{% else %}none{% endif %};"
+                >
+                  <source src="{{ trimmed_url }}" type="video/mp4">
+                  Your browser does not support the video tag.
+                </video>
+              {%- endif -%}
+            {%- endfor -%}
+          {% else %}
+            <div style="background: #f0f0f0; height: 100%; display: flex; align-items: center; justify-content: center; color: #999;">
+              <p>Add video URLs to the playlist (one per line)</p>
+            </div>
+          {% endif %}
+        </div>
+
+        {% if section.settings.video_description != blank %}
+          <p style="margin-top: 12px; font-size: 14px; color: #666;">
+            {{ section.settings.video_description }}
+          </p>
+        {% endif %}
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function() {
+  const container = document.getElementById('video-playlist-{{ section.id }}');
+  if (!container) return;
+
+  const videos = container.querySelectorAll('.playlist-video');
+  if (videos.length === 0) return;
+
+  let currentIndex = 0;
+
+  function playNextVideo() {
+    // Hide current video
+    videos[currentIndex].style.display = 'none';
+    videos[currentIndex].pause();
+    videos[currentIndex].removeAttribute('data-active');
+
+    // Move to next video (loop back to start if at end)
+    currentIndex = (currentIndex + 1) % videos.length;
+
+    // Show and play next video
+    videos[currentIndex].style.display = 'block';
+    videos[currentIndex].setAttribute('data-active', 'true');
+    videos[currentIndex].currentTime = 0;
+    videos[currentIndex].play();
+  }
+
+  // Attach ended event to all videos
+  videos.forEach(function(video, index) {
+    video.addEventListener('ended', playNextVideo);
+  });
+
+  // Ensure first video plays
+  if (videos[0]) {
+    videos[0].play();
+  }
+})();
+</script>
+
+{% schema %}
+{
+  "name": "Collections with Video",
+  "tag": "section",
+  "class": "section-collections-video",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Section Settings"
+    },
+    {
+      "type": "text",
+      "id": "section_heading",
+      "label": "Main Section Heading",
+      "default": "Explore Our Collections"
+    },
+    {
+      "type": "range",
+      "id": "main_heading_size",
+      "min": 20,
+      "max": 60,
+      "step": 2,
+      "unit": "px",
+      "label": "Main Heading Size",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "container_width",
+      "min": 1000,
+      "max": 1600,
+      "step": 50,
+      "unit": "px",
+      "label": "Container Width",
+      "default": 1300
+    },
+    {
+      "type": "range",
+      "id": "section_padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Section Padding Top",
+      "default": 40
+    },
+    {
+      "type": "range",
+      "id": "section_padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "Section Padding Bottom",
+      "default": 40
+    },
+    {
+      "type": "color",
+      "id": "heading_color",
+      "label": "Heading Color",
+      "default": "#000000"
+    },
+    {
+      "type": "header",
+      "content": "Collections Settings"
+    },
+    {
+      "type": "text",
+      "id": "collections_heading",
+      "label": "Collections Heading",
+      "default": "Featured Collections"
+    },
+    {
+      "type": "range",
+      "id": "heading_size",
+      "min": 16,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "label": "Collections Heading Size",
+      "default": 28
+    },
+    {
+      "type": "range",
+      "id": "collection_card_min_width",
+      "min": 150,
+      "max": 300,
+      "step": 10,
+      "unit": "px",
+      "label": "Collection Card Min Width",
+      "default": 200
+    },
+    {
+      "type": "range",
+      "id": "grid_gap",
+      "min": 10,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Grid Gap",
+      "default": 20
+    },
+    {
+      "type": "range",
+      "id": "image_height",
+      "min": 150,
+      "max": 400,
+      "step": 10,
+      "unit": "px",
+      "label": "Collection Image Height",
+      "default": 250
+    },
+    {
+      "type": "range",
+      "id": "card_border_radius",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "label": "Card Border Radius",
+      "default": 8
+    },
+    {
+      "type": "range",
+      "id": "collection_title_size",
+      "min": 12,
+      "max": 24,
+      "step": 1,
+      "unit": "px",
+      "label": "Collection Title Size",
+      "default": 16
+    },
+    {
+      "type": "color",
+      "id": "collection_title_color",
+      "label": "Collection Title Color",
+      "default": "#000000"
+    },
+    {
+      "type": "color",
+      "id": "card_background",
+      "label": "Card Background Color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "header",
+      "content": "Video Playlist Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_video",
+      "label": "Show Video Playlist",
+      "default": true
+    },
+    {
+      "type": "text",
+      "id": "video_heading",
+      "label": "Video Heading",
+      "default": "Watch Our Story"
+    },
+    {
+      "type": "range",
+      "id": "video_heading_size",
+      "min": 16,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "label": "Video Heading Size",
+      "default": 24
+    },
+    {
+      "type": "textarea",
+      "id": "video_playlist",
+      "label": "Video Playlist URLs",
+      "info": "Enter one video URL per line. Videos will play sequentially.",
+      "placeholder": "https://your-server.com/video1.mp4\nhttps://your-server.com/video2.mp4\nhttps://your-server.com/video3.mp4"
+    },
+    {
+      "type": "select",
+      "id": "video_orientation",
+      "label": "Video Orientation",
+      "options": [
+        {
+          "value": "landscape",
+          "label": "Landscape (16:9)"
+        },
+        {
+          "value": "portrait",
+          "label": "Portrait (9:16)"
+        }
+      ],
+      "default": "landscape"
+    },
+    {
+      "type": "textarea",
+      "id": "video_description",
+      "label": "Video Description"
+    },
+    {
+      "type": "range",
+      "id": "video_border_radius",
+      "min": 0,
+      "max": 30,
+      "step": 2,
+      "unit": "px",
+      "label": "Video Border Radius",
+      "default": 8
+    }
+  ],
+  "blocks": [
+    {
+      "type": "collection",
+      "name": "Collection",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Collection"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Collections with Video",
+      "blocks": [
+        {
+          "type": "collection"
+        },
+        {
+          "type": "collection"
+        },
+        {
+          "type": "collection"
+        },
+        {
+          "type": "collection"
+        },
+        {
+          "type": "collection"
+        },
+        {
+          "type": "collection"
+        },
+        {
+          "type": "collection"
+        },
+        {
+          "type": "collection"
+        }
+      ]
+    }
+  ]
+}
+{% endschema %}

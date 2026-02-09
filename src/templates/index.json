@@ -1,0 +1,172 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+ {
+  "sections": {
+    "collections_with_video_c46fKJ": {
+      "type": "collections-with-video",
+      "blocks": {
+        "collection_wFDpLr": {
+          "type": "collection",
+          "settings": {
+            "collection": "bombay"
+          }
+        },
+        "collection_bdhkWn": {
+          "type": "collection",
+          "settings": {
+            "collection": "folksie"
+          }
+        },
+        "collection_BX83m9": {
+          "type": "collection",
+          "settings": {
+            "collection": "english-cottage"
+          }
+        },
+        "collection_JfczMA": {
+          "type": "collection",
+          "settings": {
+            "collection": "farmhouse"
+          }
+        },
+        "collection_LG4bnX": {
+          "type": "collection",
+          "settings": {
+            "collection": "botanicals"
+          }
+        },
+        "collection_fdkAy9": {
+          "type": "collection",
+          "settings": {
+            "collection": "geometry"
+          }
+        },
+        "collection_grajkD": {
+          "type": "collection",
+          "settings": {
+            "collection": "coverlets"
+          }
+        },
+        "collection_6hfxNE": {
+          "type": "collection",
+          "settings": {
+            "collection": "silk-road"
+          }
+        }
+      },
+      "block_order": [
+        "collection_wFDpLr",
+        "collection_bdhkWn",
+        "collection_BX83m9",
+        "collection_JfczMA",
+        "collection_LG4bnX",
+        "collection_fdkAy9",
+        "collection_grajkD",
+        "collection_6hfxNE"
+      ],
+      "name": "Collections with Video",
+      "settings": {
+        "section_heading": "",
+        "main_heading_size": 20,
+        "container_width": 1300,
+        "section_padding_top": 0,
+        "section_padding_bottom": 0,
+        "heading_color": "#ccab6c",
+        "collections_heading": "Shop Collections",
+        "heading_size": 38,
+        "collection_card_min_width": 190,
+        "grid_gap": 14,
+        "image_height": 240,
+        "card_border_radius": 8,
+        "collection_title_size": 24,
+        "collection_title_color": "#ccab6c",
+        "card_background": "#2e2a39",
+        "show_video": true,
+        "video_heading": "",
+        "video_heading_size": 16,
+        "video_playlist": "https://so-animation.com/colorflex/videos/179v3.mp4\nhttps://so-animation.com/colorflex/videos/IBERIA-V4.mp4",
+        "video_orientation": "portrait",
+        "video_description": "",
+        "video_border_radius": 8
+      }
+    },
+    "rich_text_76niMp": {
+      "type": "rich-text",
+      "blocks": {
+        "text_tHbt3W": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Our ColorFlex custom patterns are available in both Wallpaper and Fabric. Once your design is complete, purchase options will be presented at checkout. Wallpapers are available as pre-pasted, peel and stick, unpasted, and natural grass cloth. Custom-printed fabrics are available in soft velvet, faux suede, decorator linen, lightweight linen, light-blocking drapery, and drapery sheer.</p>"
+          }
+        }
+      },
+      "block_order": [
+        "text_tHbt3W"
+      ],
+      "name": "t:sections.rich-text.presets.name",
+      "settings": {
+        "desktop_content_position": "center",
+        "content_alignment": "center",
+        "color_scheme": "",
+        "full_width": true,
+        "padding_top": 40,
+        "padding_bottom": 52
+      }
+    },
+    "rich_text_iAnWT6": {
+      "type": "rich-text",
+      "blocks": {
+        "heading_bgWjj6": {
+          "type": "heading",
+          "settings": {
+            "heading": "Saffron Cottage Sample Pack",
+            "heading_size": "hxl"
+          }
+        },
+        "text_KEqQm4": {
+          "type": "text",
+          "settings": {
+            "text": "<p>Order our material sample kit.</p>"
+          }
+        },
+        "button_XHyPxH": {
+          "type": "button",
+          "settings": {
+            "button_label": "ORDER",
+            "button_link": "shopify://products/saffron-cottage-material-sample-pack",
+            "button_style_secondary": false,
+            "button_label_2": "",
+            "button_link_2": "",
+            "button_style_secondary_2": false
+          }
+        }
+      },
+      "block_order": [
+        "heading_bgWjj6",
+        "text_KEqQm4",
+        "button_XHyPxH"
+      ],
+      "name": "t:sections.rich-text.presets.name",
+      "settings": {
+        "desktop_content_position": "center",
+        "content_alignment": "center",
+        "color_scheme": "",
+        "full_width": true,
+        "padding_top": 40,
+        "padding_bottom": 52
+      }
+    }
+  },
+  "order": [
+    "collections_with_video_c46fKJ",
+    "rich_text_76niMp",
+    "rich_text_iAnWT6"
+  ]
+}

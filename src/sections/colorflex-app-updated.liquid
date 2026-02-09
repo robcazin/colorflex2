@@ -1,0 +1,114 @@
+<div class="colorflex-section" {{ section.shopify_attributes }}>
+  <div style="background: #1a202c; color: white; padding: 2rem; border-radius: 8px; margin: 2rem 0;">
+    
+    <h2 style="text-align: center; margin-bottom: 2rem;">{{ section.settings.title }}</h2>
+    
+    <!-- ColorFlex App -->
+    <div id="mainContainer" style="position: relative; min-height: 80vh;">
+      
+      <!-- FIXED: Curated Colors Section (moved outside main grid) -->
+      <section id="curatedColorsSection" style="width: 100%; padding: 1.5rem 0; background-color: #2c2c2c; margin-bottom: 2rem;">
+        <div id="curatedColorsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 1400px; margin: 0 auto; padding: 0 1rem;"></div>
+      </section>
+      
+      <div style="display: grid; grid-template-columns: 1fr 200px 1fr; gap: 2rem; max-width: 1400px; margin: 0 auto;">
+        
+        <!-- Pattern Preview -->
+        <div style="text-align: center;">
+          <h3>Pattern Preview</h3>
+          <div id="preview" style="width: 700px; height: 700px; background: #434341; margin: 0 auto;"></div>
+          <h3 id="patternName">Pattern Name</h3>
+          <button id="printButton">Print Pattern</button>
+        </div>
+        
+        <!-- Color Controls -->
+        <div id="colorControls" style="display: flex; flex-direction: column;">
+          <h3 style="text-align: center;">Color Layers</h3>
+          <div id="layerInputsContainer"></div>
+        </div>
+        
+        <!-- Room Mockup -->
+        <div style="text-align: center;">
+          <h3>Room Mockup Preview</h3>
+          <div id="roomMockup" style="width: 600px; height: 450px; background: #434341; margin: 0 auto;"></div>
+          
+          <div id="scaleControls" style="margin-top: 1rem;">
+            <button data-multiplier="1" onclick="setPatternScale(1)" style="margin: 0 0.25rem; padding: 0.5rem 1rem; background: #e2e8f0; border: none; border-radius: 4px;">Normal</button>
+            <button data-multiplier="0.5" onclick="setPatternScale(0.5)" style="margin: 0 0.25rem; padding: 0.5rem 1rem; background: #e2e8f0; border: none; border-radius: 4px;">2X</button>
+            <button data-multiplier="0.25" onclick="setPatternScale(0.25)" style="margin: 0 0.25rem; padding: 0.5rem 1rem; background: #e2e8f0; border: none; border-radius: 4px;">3X</button>
+            <button data-multiplier="0.125" onclick="setPatternScale(0.125)" style="margin: 0 0.25rem; padding: 0.5rem 1rem; background: #e2e8f0; border: none; border-radius: 4px;">4X</button>
+          </div>
+          
+          <div id="coordinatesContainer" style="margin-top: 2rem; min-height: 200px;"></div>
+        </div>
+        
+      </div>
+      
+      <div id="leftSidebar" style="position: fixed; left: 0; top: 200px; width: 180px; background: #2d3748; padding: 1rem; z-index: 20;">
+        <h6 id="collectionHeader">FARMHOUSE Collection</h6>
+        <div id="collectionThumbnails"></div>
+      </div>
+      
+    </div>
+    
+    <div id="colorPopup" style="display: none;">
+      <div>
+        <p>🎨 Click a curated color to set this background color.</p>
+        <label><input type="checkbox" id="disablePopup"> Don't show this message again</label>
+        <button id="popupOkButton">OK</button>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+{{ 'color-flex-core.min.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'color-flex-core.min.js' | asset_url }}"></script>
+
+<script>
+if (typeof window.colorFlexInitialized === 'undefined') {
+  window.colorFlexInitialized = true;
+  
+  window.addEventListener('load', function() {
+    console.log('🎨 ColorFlex section starting...');
+    
+    // Add DOM validation for debugging
+    console.log('🔍 DOM Validation:');
+    const requiredElements = ['curatedColorsContainer', 'layerInputsContainer', 'preview', 'patternName', 'collectionHeader'];
+    requiredElements.forEach(id => {
+      const element = document.getElementById(id);
+      if (element) {
+        console.log(`  ✅ ${id}: found`);
+      } else {
+        console.error(`  ❌ ${id}: NOT FOUND`);
+      }
+    });
+    
+    if (typeof startApp === 'function') {
+      startApp();
+      console.log('✅ ColorFlex initialized via section');
+    } else {
+      console.log('❌ startApp not found');
+    }
+  });
+}
+</script>
+
+{% schema %}
+{
+  "name": "ColorFlex App",
+  "settings": [
+    {
+      "type": "text",
+      "id": "title",
+      "label": "Section Title",
+      "default": "ColorFlex Pattern Customizer"
+    }
+  ],
+  "presets": [
+    {
+      "name": "ColorFlex App"
+    }
+  ]
+}
+{% endschema %}

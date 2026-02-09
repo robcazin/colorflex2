@@ -1,0 +1,1060 @@
+<!-- Custom Product Pattern Display -->
+<!-- This snippet should be included in Custom Wallpaper and Custom Fabric product page templates -->
+<!-- It reads URL parameters and displays the selected ColorFlex pattern information as customization details -->
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('🎨 Custom Product Pattern Display initialized');
+    
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const patternName = urlParams.get('pattern_name');
+    const collection = urlParams.get('collection');
+    const patternId = urlParams.get('pattern_id');
+    const customColors = urlParams.get('custom_colors') || urlParams.get('layer_colors');
+    const preferredMaterial = urlParams.get('preferred_material');
+    const source = urlParams.get('source');
+    
+    console.log('🔍 Pattern Parameters:', {
+        patternName,
+        collection,
+        patternId,
+        customColors,
+        preferredMaterial,
+        source
+    });
+    
+    // Only show pattern info if we have pattern data
+    if (patternName && (source === 'colorflex_saved_patterns' || source === 'colorflex_configuration_flow')) {
+        console.log('✅ ColorFlex pattern detected, displaying pattern info');
+        displayPatternInfo({
+            patternName,
+            collection,
+            patternId,
+            customColors,
+            preferredMaterial
+        });
+        
+        // Hide duplicate product information for ColorFlex patterns
+        hideGenericProductInfo();
+        
+        // Pre-select variant based on texture selection
+        const preselectedVariant = urlParams.get('preselect_variant');
+        const selectedTexture = urlParams.get('selected_texture');
+        if (preselectedVariant || selectedTexture) {
+            preselectProductVariant(preselectedVariant, selectedTexture);
+        }
+        
+        // Enhance add to cart to include pattern properties
+        enhanceAddToCartWithPatternProperties({
+            patternName,
+            collection,
+            patternId,
+            customColors,
+            preferredMaterial,
+            saveDate: urlParams.get('save_date'),
+            patternSize: urlParams.get('pattern_size'),
+            tilingType: urlParams.get('tiling_type')
+        });
+        
+        // Generate and set dynamic cart image
+        generateDynamicCartImage({
+            patternName,
+            collection,
+            patternId,
+            customColors
+        });
+        
+        // Fix cart popup thumbnail
+        fixCartPopupThumbnail();
+    } else {
+        console.log('ℹ️ No ColorFlex pattern data found, showing regular product page');
+    }
+});
+
+/**
+ * Display pattern information on the product page
+ */
+function displayPatternInfo(pattern) {
+    // Create pattern info container
+    const patternDisplay = document.createElement('div');
+    patternDisplay.id = 'colorflexPatternDisplay';
+    patternDisplay.style.cssText = `
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 20px;
+        margin: 20px 0;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    `;
+    
+    let displayHTML = `
+        <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+            <div style="font-size: 24px;">🎨</div>
+            <div>
+                <h3 style="margin: 0; font-size: 18px; font-weight: bold;">Your ColorFlex Pattern</h3>
+                <p style="margin: 5px 0 0 0; opacity: 0.9; font-size: 14px;">Custom pattern will be applied to your order</p>
+            </div>
+        </div>
+        
+        <div style="background: rgba(255,255,255,0.1); padding: 15px; border-radius: 8px;">
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px;">
+                <div>
+                    <strong style="display: block; margin-bottom: 5px;">Pattern Name:</strong>
+                    <span style="font-family: 'Special Elite', monospace;">${pattern.patternName}</span>
+                </div>
+                <div>
+                    <strong style="display: block; margin-bottom: 5px;">Collection:</strong>
+                    <span style="font-family: 'Special Elite', monospace;">${pattern.collection || 'N/A'}</span>
+                </div>
+    `;
+    
+    if (pattern.customColors) {
+        const colors = pattern.customColors.split(',').map(c => c.trim()).filter(c => c);
+        if (colors.length > 0) {
+            displayHTML += `
+                <div style="grid-column: 1 / -1;">
+                    <strong style="display: block; margin-bottom: 8px;">Custom Colors:</strong>
+                    <div style="display: flex; flex-wrap: wrap; gap: 8px;">
+            `;
+            
+            colors.forEach(color => {
+                displayHTML += `
+                    <div style="
+                        background: rgba(255,255,255,0.2);
+                        padding: 4px 8px;
+                        border-radius: 4px;
+                        font-size: 12px;
+                        font-family: 'Special Elite', monospace;
+                    ">${color}</div>
+                `;
+            });
+            
+            displayHTML += `
+                    </div>
+                </div>
+            `;
+        }
+    }
+    
+    if (pattern.preferredMaterial) {
+        displayHTML += `
+            <div style="grid-column: 1 / -1;">
+                <strong style="display: block; margin-bottom: 5px;">Recommended Material:</strong>
+                <span style="
+                    background: rgba(255,255,255,0.2);
+                    padding: 6px 12px;
+                    border-radius: 6px;
+                    font-weight: bold;
+                    text-transform: capitalize;
+                ">${pattern.preferredMaterial}</span>
+            </div>
+        `;
+    }
+    
+    displayHTML += `
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin-top: 15px; font-size: 13px; opacity: 0.8;">
+            ✨ Pattern details will be included with your order as line item properties
+        </div>
+    `;
+    
+    patternDisplay.innerHTML = displayHTML;
+    
+    // Insert after product title
+    const productTitle = document.querySelector('.product__title, h1, [class*="title"]');
+    if (productTitle) {
+        productTitle.parentNode.insertBefore(patternDisplay, productTitle.nextSibling);
+        console.log('✅ Pattern info displayed after product title');
+    } else {
+        // Fallback: insert at top of product form or main content
+        const productForm = document.querySelector('.product-form, form[action*="cart"], main, .main-content');
+        if (productForm) {
+            productForm.insertBefore(patternDisplay, productForm.firstChild);
+            console.log('✅ Pattern info displayed at top of product content');
+        }
+    }
+}
+
+/**
+ * Pre-select the product variant that matches the texture selection
+ */
+function preselectProductVariant(variantId, selectedTexture) {
+    console.log('🎯 Attempting to pre-select product variant:', variantId || selectedTexture);
+    
+    // Give the variant selectors time to load
+    setTimeout(function() {
+        const variantSelectors = document.querySelectorAll('select[name*="variant"], select[name*="id"], input[name*="variant"], input[name*="id"]');
+        
+        variantSelectors.forEach(selector => {
+            if (selector.tagName === 'SELECT') {
+                // For select dropdowns - try exact variant ID first, then texture match
+                Array.from(selector.options).forEach(option => {
+                    const matchesId = variantId && (option.value === variantId || option.dataset.variantId === variantId);
+                    const matchesTexture = selectedTexture && option.textContent.toLowerCase().includes(selectedTexture.toLowerCase());
+                    
+                    if (matchesId || matchesTexture) {
+                        option.selected = true;
+                        console.log('✅ Pre-selected variant:', option.textContent);
+                        
+                        // Trigger change event to update other selectors/pricing
+                        selector.dispatchEvent(new Event('change', { bubbles: true }));
+                    }
+                });
+            } else {
+                // For radio buttons
+                const label = document.querySelector(`label[for="${selector.id}"]`);
+                const matchesId = variantId && (selector.value === variantId || selector.dataset.variantId === variantId);
+                const matchesTexture = selectedTexture && label && label.textContent.toLowerCase().includes(selectedTexture.toLowerCase());
+                
+                if (matchesId || matchesTexture) {
+                    selector.checked = true;
+                    console.log('✅ Pre-selected variant:', label ? label.textContent : selector.value);
+                    
+                    // Trigger change event
+                    selector.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            }
+        });
+        
+        // Add hover image previews after variant selection is set up
+        setupVariantHoverImages();
+    }, 500);
+}
+
+/**
+ * Set up hover image previews for variant options
+ */
+function setupVariantHoverImages() {
+    console.log('🖼️ Setting up variant hover image previews');
+    
+    // Create hover preview container
+    const hoverPreview = document.createElement('div');
+    hoverPreview.id = 'variantHoverPreview';
+    hoverPreview.style.cssText = `
+        position: fixed;
+        top: 50%;
+        right: 20px;
+        transform: translateY(-50%);
+        width: 300px;
+        height: 300px;
+        background: white;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        display: none;
+        z-index: 10000;
+        overflow: hidden;
+        border: 3px solid #667eea;
+    `;
+    
+    const previewImage = document.createElement('img');
+    previewImage.style.cssText = `
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    `;
+    
+    const previewLabel = document.createElement('div');
+    previewLabel.style.cssText = `
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 10px;
+        font-weight: bold;
+        text-align: center;
+        font-size: 14px;
+    `;
+    
+    hoverPreview.appendChild(previewImage);
+    hoverPreview.appendChild(previewLabel);
+    document.body.appendChild(hoverPreview);
+    
+    // Define preview images for different materials/options
+    const variantImages = {
+        // Material type images
+        'wallpaper': '/cdn/shop/files/wallpaper-sample-preview.jpg?v=1',
+        'peel': '/cdn/shop/files/peel-stick-wallpaper-preview.jpg?v=1',
+        'stick': '/cdn/shop/files/peel-stick-wallpaper-preview.jpg?v=1',
+        'traditional': '/cdn/shop/files/traditional-wallpaper-preview.jpg?v=1',
+        'fabric': '/cdn/shop/files/fabric-sample-preview.jpg?v=1',
+        'cotton': '/cdn/shop/files/cotton-fabric-preview.jpg?v=1',
+        'linen': '/cdn/shop/files/linen-fabric-preview.jpg?v=1',
+        'canvas': '/cdn/shop/files/canvas-fabric-preview.jpg?v=1',
+        
+        // Size/format images  
+        'sample': '/cdn/shop/files/sample-size-preview.jpg?v=1',
+        'small': '/cdn/shop/files/small-roll-preview.jpg?v=1',
+        'large': '/cdn/shop/files/large-roll-preview.jpg?v=1',
+        'roll': '/cdn/shop/files/wallpaper-roll-preview.jpg?v=1',
+        'yard': '/cdn/shop/files/fabric-by-yard-preview.jpg?v=1',
+        'custom': '/cdn/shop/files/custom-size-preview.jpg?v=1',
+        
+        // Texture options - will use placeholder if images not available
+        'smooth': '/cdn/shop/files/texture-smooth-preview.jpg?v=1',
+        'rough': '/cdn/shop/files/texture-rough-preview.jpg?v=1',
+        'textured': '/cdn/shop/files/texture-textured-preview.jpg?v=1'
+    };
+    
+    // Add hover events to variant selectors - enhanced targeting for different themes
+    const variantElements = document.querySelectorAll(`
+        select[name*="variant"] option,
+        select[name*="id"] option,
+        input[name*="variant"] + label,
+        label[for*="variant"],
+        .variant-option,
+        .product-option,
+        button[data-variant],
+        button[data-value],
+        .variant-input + label,
+        .variant-button,
+        .product-form__buttons button,
+        .product-single__variants button,
+        fieldset button,
+        [class*="option"] button,
+        [class*="variant"] button,
+        [class*="texture"] button,
+        [class*="material"] button
+    `);
+    
+    variantElements.forEach((element, index) => {
+        const text = element.textContent || element.value || '';
+        const previewImage = findBestMatchingImage(text.toLowerCase(), variantImages);
+        
+        // Add debug info
+        console.log(`🔍 Element ${index}:`, {
+            tag: element.tagName,
+            text: text.trim(),
+            className: element.className,
+            hasPreview: !!previewImage
+        });
+        
+        if (previewImage) {
+            element.addEventListener('mouseenter', function(e) {
+                console.log('🖱️ Hover started for:', text);
+                showVariantPreview(previewImage, text, e);
+            });
+            
+            element.addEventListener('mouseleave', function() {
+                console.log('🖱️ Hover ended for:', text);
+                hideVariantPreview();
+            });
+            
+            element.addEventListener('mousemove', function(e) {
+                updatePreviewPosition(e);
+            });
+        } else {
+            // Even without matching image, let's try to create a placeholder
+            element.addEventListener('mouseenter', function(e) {
+                console.log('🖱️ Hover (no match) for:', text);
+                const placeholderImage = { 
+                    url: 'placeholder', 
+                    keyword: 'general', 
+                    placeholder: true 
+                };
+                showVariantPreview(placeholderImage, text, e);
+            });
+            
+            element.addEventListener('mouseleave', function() {
+                hideVariantPreview();
+            });
+        }
+    });
+    
+    console.log('✅ Variant hover previews set up for', variantElements.length, 'elements');
+}
+
+/**
+ * Find the best matching preview image for a variant option
+ */
+function findBestMatchingImage(text, imageMap) {
+    // Try exact matches first
+    for (const [keyword, image] of Object.entries(imageMap)) {
+        if (text.includes(keyword)) {
+            return { url: image, keyword: keyword };
+        }
+    }
+    
+    // Try partial matches
+    const words = text.split(' ');
+    for (const word of words) {
+        for (const [keyword, image] of Object.entries(imageMap)) {
+            if (word.includes(keyword) || keyword.includes(word)) {
+                return { url: image, keyword: keyword };
+            }
+        }
+    }
+    
+    return null;
+}
+
+/**
+ * Show variant preview on hover
+ */
+function showVariantPreview(imageData, variantText, mouseEvent) {
+    const preview = document.getElementById('variantHoverPreview');
+    if (!preview) return;
+    
+    const image = preview.querySelector('img');
+    const label = preview.querySelector('div');
+    
+    // Create placeholder if image doesn't exist
+    if (imageData.url.includes('cdn.shop') && !imageData.placeholder) {
+        // Try to load the image, if it fails, create a placeholder
+        const testImg = new Image();
+        testImg.onload = function() {
+            image.src = imageData.url;
+        };
+        testImg.onerror = function() {
+            console.log('🖼️ Creating placeholder for:', variantText);
+            createPlaceholderPreview(image, variantText, imageData.keyword);
+        };
+        testImg.src = imageData.url;
+    } else {
+        // Use provided image or create immediate placeholder
+        if (imageData.placeholder || !imageData.url.includes('cdn.shop')) {
+            createPlaceholderPreview(image, variantText, imageData.keyword);
+        } else {
+            image.src = imageData.url;
+        }
+    }
+    
+    label.textContent = variantText;
+    
+    // Position near mouse but keep on screen
+    updatePreviewPosition(mouseEvent);
+    
+    preview.style.display = 'block';
+    
+    // Add fade-in animation
+    preview.style.opacity = '0';
+    setTimeout(() => {
+        preview.style.transition = 'opacity 0.2s ease';
+        preview.style.opacity = '1';
+    }, 10);
+}
+
+/**
+ * Create a placeholder preview when image isn't available
+ */
+function createPlaceholderPreview(imgElement, variantText, keyword) {
+    // Create canvas for placeholder
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = 300;
+    canvas.height = 300;
+    
+    // Choose color based on keyword
+    let bgColor = '#667eea';
+    if (keyword.includes('fabric')) bgColor = '#764ba2';
+    if (keyword.includes('wallpaper')) bgColor = '#4a90e2';
+    if (keyword.includes('smooth')) bgColor = '#48bb78';
+    if (keyword.includes('rough')) bgColor = '#ed8936';
+    if (keyword.includes('textured')) bgColor = '#805ad5';
+    if (keyword.includes('sample')) bgColor = '#38b2ac';
+    if (keyword.includes('roll')) bgColor = '#3182ce';
+    
+    // Create gradient background
+    const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+    gradient.addColorStop(0, bgColor);
+    gradient.addColorStop(1, adjustBrightness(bgColor, -20));
+    
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Add pattern based on type
+    ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+    ctx.lineWidth = 2;
+    
+    if (keyword.includes('smooth')) {
+        // Clean lines for smooth
+        for (let i = 0; i < 10; i++) {
+            ctx.beginPath();
+            ctx.moveTo(0, i * 30);
+            ctx.lineTo(canvas.width, i * 30);
+            ctx.stroke();
+        }
+    } else if (keyword.includes('rough')) {
+        // Jagged lines for rough
+        for (let i = 0; i < 20; i++) {
+            ctx.beginPath();
+            ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+            ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+            ctx.stroke();
+        }
+    } else if (keyword.includes('textured')) {
+        // Grid pattern for textured
+        for (let x = 0; x < canvas.width; x += 30) {
+            for (let y = 0; y < canvas.height; y += 30) {
+                ctx.strokeRect(x, y, 30, 30);
+            }
+        }
+    } else {
+        // Default geometric pattern
+        for (let i = 0; i < 5; i++) {
+            ctx.beginPath();
+            ctx.arc(
+                Math.random() * canvas.width,
+                Math.random() * canvas.height,
+                20 + Math.random() * 30,
+                0, 2 * Math.PI
+            );
+            ctx.stroke();
+        }
+    }
+    
+    // Add text overlay
+    ctx.fillStyle = 'rgba(0,0,0,0.7)';
+    ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+    
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(variantText, canvas.width/2, canvas.height - 35);
+    
+    ctx.font = '12px Arial';
+    ctx.fillText('Preview', canvas.width/2, canvas.height - 15);
+    
+    // Set as image source
+    imgElement.src = canvas.toDataURL();
+}
+
+/**
+ * Adjust color brightness
+ */
+function adjustBrightness(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = (num >> 16) + amt;
+    const G = (num >> 8 & 0x00FF) + amt;
+    const B = (num & 0x0000FF) + amt;
+    return '#' + (0x1000000 + (R<255?R<1?0:R:255)*0x10000 +
+        (G<255?G<1?0:G:255)*0x100 + (B<255?B<1?0:B:255))
+        .toString(16).slice(1);
+}
+
+/**
+ * Hide variant preview
+ */
+function hideVariantPreview() {
+    const preview = document.getElementById('variantHoverPreview');
+    if (preview) {
+        preview.style.transition = 'opacity 0.2s ease';
+        preview.style.opacity = '0';
+        setTimeout(() => {
+            preview.style.display = 'none';
+        }, 200);
+    }
+}
+
+/**
+ * Update preview position based on mouse location
+ */
+function updatePreviewPosition(mouseEvent) {
+    const preview = document.getElementById('variantHoverPreview');
+    if (!preview) return;
+    
+    const rect = preview.getBoundingClientRect();
+    const windowWidth = window.innerWidth;
+    const windowHeight = window.innerHeight;
+    
+    let x = mouseEvent.clientX + 20;
+    let y = mouseEvent.clientY - rect.height / 2;
+    
+    // Keep preview on screen
+    if (x + rect.width > windowWidth) {
+        x = mouseEvent.clientX - rect.width - 20;
+    }
+    if (y < 10) {
+        y = 10;
+    }
+    if (y + rect.height > windowHeight - 10) {
+        y = windowHeight - rect.height - 10;
+    }
+    
+    preview.style.left = x + 'px';
+    preview.style.top = y + 'px';
+    preview.style.right = 'auto';
+    preview.style.transform = 'none';
+}
+
+/**
+ * Enhance the add to cart functionality to include pattern properties
+ */
+function enhanceAddToCartWithPatternProperties(patternData) {
+    console.log('🛒 Enhancing add to cart with pattern properties');
+    
+    // Find add to cart forms and buttons
+    const addToCartForms = document.querySelectorAll('form[action*="cart"]');
+    const addToCartButtons = document.querySelectorAll('button[name="add"], input[name="add"], [data-action*="cart"]');
+    
+    // Add hidden inputs to forms with pattern properties (including thumbnail)
+    addToCartForms.forEach(form => {
+        addPatternPropertiesToForm(form, patternData);
+        
+        // Also ensure properties are added on form submit
+        form.addEventListener('submit', function(e) {
+            console.log('📦 Form submitting - ensuring pattern properties are included');
+            addPatternPropertiesToForm(form, patternData);
+        });
+    });
+    
+    // Intercept add to cart button clicks to add properties
+    addToCartButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            console.log('🛒 Add to cart clicked - ensuring pattern properties are included');
+            
+            // Find the closest form or create properties object
+            const form = button.closest('form') || button.form;
+            if (form) {
+                addPatternPropertiesToForm(form, patternData);
+            } else {
+                // For AJAX add to cart, we'll need to modify the request
+                console.log('⚠️ No form found - AJAX cart implementation may need custom handling');
+            }
+        });
+    });
+    
+    console.log('✅ Add to cart enhancement complete');
+}
+
+/**
+ * Add pattern properties as hidden form inputs
+ */
+function addPatternPropertiesToForm(form, patternData) {
+    // Remove any existing pattern properties to avoid duplicates
+    form.querySelectorAll('input[name*="properties[Pattern"], input[name*="properties[_pattern"]').forEach(input => input.remove());
+    
+    // Get thumbnail from localStorage (stored by CFM.js or ProductConfigurationFlow)
+    const thumbnail = localStorage.getItem('colorflexCurrentThumbnail');
+    
+    // If no thumbnail in localStorage, try to capture it
+    let patternPreview = thumbnail;
+    if (!patternPreview && typeof window.capturePatternThumbnail === 'function') {
+        console.log('📸 Capturing thumbnail for cart...');
+        try {
+            patternPreview = window.capturePatternThumbnail();
+            if (patternPreview) {
+                // Store it for future use
+                localStorage.setItem('colorflexCurrentThumbnail', patternPreview);
+            }
+        } catch (error) {
+            console.error('❌ Error capturing thumbnail:', error);
+        }
+    }
+    
+    const properties = {
+        'Pattern Name': patternData.patternName,
+        'Collection': patternData.collection || 'N/A',
+        'Pattern ID': patternData.patternId,
+        'Custom Colors': patternData.customColors || 'Default Colors',
+        'ColorFlex Design': 'Yes',
+        'Save Date': patternData.saveDate || new Date().toLocaleDateString(),
+        'Pattern Size': patternData.patternSize || 'Standard',
+        'Tiling Type': patternData.tilingType || 'Standard',
+        'Source': 'ColorFlex Saved Pattern'
+    };
+    
+    // 🔧 CRITICAL: Add thumbnail as _pattern_preview
+    if (patternPreview) {
+        properties['_pattern_preview'] = patternPreview;
+        console.log('✅ Added _pattern_preview to cart properties');
+    } else {
+        console.warn('⚠️ No thumbnail available to add to cart');
+    }
+    
+    // Add hidden inputs for each property
+    Object.entries(properties).forEach(([key, value]) => {
+        if (value && value !== 'N/A') {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = `properties[${key}]`;
+            input.value = value;
+            form.appendChild(input);
+            
+            console.log(`📝 Added property: ${key} = ${value ? (key === '_pattern_preview' ? 'base64 image data' : value) : 'empty'}`);
+        }
+    });
+}
+
+/**
+ * Generate dynamic cart image with the custom pattern
+ */
+function generateDynamicCartImage(patternData) {
+    console.log('🖼️ Generating dynamic cart image for pattern:', patternData.patternName);
+    
+    // Check if we have stored thumbnail in localStorage from ColorFlex
+    const storedThumbnail = localStorage.getItem('colorflexCurrentThumbnail');
+    
+    if (storedThumbnail) {
+        // Use the stored thumbnail directly
+        replaceProductImages(storedThumbnail, patternData);
+    } else {
+        // Generate pattern preview using ColorFlex data
+        generatePatternPreviewImage(patternData).then(imageUrl => {
+            if (imageUrl) {
+                replaceProductImages(imageUrl, patternData);
+            }
+        }).catch(error => {
+            console.warn('⚠️ Could not generate dynamic cart image:', error);
+            // Fallback to adding pattern info overlay to existing images
+            addPatternInfoOverlay(patternData);
+        });
+    }
+}
+
+/**
+ * Replace product images with custom pattern image
+ */
+function replaceProductImages(imageUrl, patternData) {
+    console.log('🔄 Replacing product images with custom pattern');
+    
+    // Find main product images
+    const productImages = document.querySelectorAll(`
+        .product__media img,
+        .product-single__photo img,
+        .product-image img,
+        .featured-image img,
+        [class*="product"] img[src*="cdn.shopify"],
+        .main-product img[src*="cdn.shopify"]
+    `);
+    
+    productImages.forEach(img => {
+        // Store original src for potential restoration
+        if (!img.dataset.originalSrc) {
+            img.dataset.originalSrc = img.src;
+        }
+        
+        // Replace with custom pattern image
+        img.src = imageUrl;
+        img.alt = `Custom ColorFlex Pattern: ${patternData.patternName}`;
+        
+        // Add subtle border/styling to indicate custom image
+        img.style.border = '3px solid #667eea';
+        img.style.borderRadius = '8px';
+        
+        console.log('✅ Replaced product image with custom pattern');
+    });
+    
+    // Update gallery thumbnails if they exist
+    const thumbnails = document.querySelectorAll(`
+        .product__media-thumbnail img,
+        .product-thumbnails img,
+        .product-gallery-thumb img
+    `);
+    
+    thumbnails.forEach(thumb => {
+        if (!thumb.dataset.originalSrc) {
+            thumb.dataset.originalSrc = thumb.src;
+        }
+        thumb.src = imageUrl;
+        thumb.style.border = '2px solid #667eea';
+        thumb.style.borderRadius = '4px';
+    });
+}
+
+/**
+ * Generate pattern preview image using canvas
+ */
+async function generatePatternPreviewImage(patternData) {
+    return new Promise((resolve, reject) => {
+        // Create canvas for pattern generation
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Standard preview size
+        canvas.width = 400;
+        canvas.height = 400;
+        
+        // Try to use ColorFlex pattern generation if available
+        if (window.generatePatternProof && patternData.patternId) {
+            // Attempt to use ColorFlex functions
+            const colors = patternData.customColors ? patternData.customColors.split(',').map(c => c.trim()) : [];
+            
+            window.generatePatternProof(patternData.patternName, patternData.collection, colors)
+                .then(canvas => {
+                    const imageUrl = canvas.toDataURL('image/jpeg', 0.8);
+                    resolve(imageUrl);
+                })
+                .catch(error => {
+                    console.warn('ColorFlex pattern generation failed, using fallback');
+                    generateFallbackPatternImage(canvas, ctx, patternData, resolve);
+                });
+        } else {
+            // Fallback: Generate simple pattern representation
+            generateFallbackPatternImage(canvas, ctx, patternData, resolve);
+        }
+        
+        // Timeout after 5 seconds
+        setTimeout(() => {
+            reject(new Error('Pattern generation timeout'));
+        }, 5000);
+    });
+}
+
+/**
+ * Generate fallback pattern image when ColorFlex functions aren't available
+ */
+function generateFallbackPatternImage(canvas, ctx, patternData, resolve) {
+    // Create a simple geometric pattern with the custom colors
+    const colors = patternData.customColors ? 
+        patternData.customColors.split(',').map(c => c.trim()) : 
+        ['#E8E6E1', '#D4AF37', '#8B4513']; // Default colors
+    
+    // Fill background with first color
+    ctx.fillStyle = colors[0] || '#E8E6E1';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Create geometric pattern
+    const tileSize = 40;
+    for (let x = 0; x < canvas.width; x += tileSize) {
+        for (let y = 0; y < canvas.height; y += tileSize) {
+            const colorIndex = Math.floor(Math.random() * colors.length);
+            const color = colors[colorIndex] || '#D4AF37';
+            
+            ctx.fillStyle = color;
+            ctx.globalAlpha = 0.3 + (Math.random() * 0.4); // Vary opacity
+            
+            // Draw different shapes based on position
+            const shapeType = (x + y) % 3;
+            if (shapeType === 0) {
+                // Circle
+                ctx.beginPath();
+                ctx.arc(x + tileSize/2, y + tileSize/2, tileSize/4, 0, 2 * Math.PI);
+                ctx.fill();
+            } else if (shapeType === 1) {
+                // Square
+                ctx.fillRect(x + tileSize/4, y + tileSize/4, tileSize/2, tileSize/2);
+            } else {
+                // Diamond
+                ctx.beginPath();
+                ctx.moveTo(x + tileSize/2, y + tileSize/4);
+                ctx.lineTo(x + 3*tileSize/4, y + tileSize/2);
+                ctx.lineTo(x + tileSize/2, y + 3*tileSize/4);
+                ctx.lineTo(x + tileSize/4, y + tileSize/2);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+    }
+    
+    // Add pattern name overlay
+    ctx.globalAlpha = 1;
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.7)';
+    ctx.fillRect(0, canvas.height - 60, canvas.width, 60);
+    
+    ctx.fillStyle = 'white';
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText(patternData.patternName, canvas.width/2, canvas.height - 35);
+    
+    ctx.font = '12px Arial';
+    ctx.fillText(patternData.collection || 'Custom Pattern', canvas.width/2, canvas.height - 15);
+    
+    // Convert to image URL
+    const imageUrl = canvas.toDataURL('image/jpeg', 0.8);
+    resolve(imageUrl);
+}
+
+/**
+ * Add pattern info overlay to existing images (fallback when image replacement fails)
+ */
+function addPatternInfoOverlay(patternData) {
+    console.log('📝 Adding pattern info overlay to existing images');
+    
+    const productImages = document.querySelectorAll(`
+        .product__media,
+        .product-single__photo,
+        .featured-image
+    `);
+    
+    productImages.forEach(container => {
+        // Skip if overlay already added
+        if (container.querySelector('.pattern-overlay')) return;
+        
+        // Create overlay
+        const overlay = document.createElement('div');
+        overlay.className = 'pattern-overlay';
+        overlay.style.cssText = `
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 10;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        `;
+        
+        overlay.innerHTML = `
+            🎨 Custom Pattern<br>
+            <span style="font-size: 10px; opacity: 0.9;">${patternData.patternName}</span>
+        `;
+        
+        // Ensure container is positioned
+        if (getComputedStyle(container).position === 'static') {
+            container.style.position = 'relative';
+        }
+        
+        container.appendChild(overlay);
+    });
+}
+
+// Global function to manually trigger pattern properties (for theme integration)
+window.addColorFlexPatternProperties = function(formSelector) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get('source');
+    if (source === 'colorflex_saved_patterns' || source === 'colorflex_configuration_flow') {
+        const form = document.querySelector(formSelector);
+        if (form) {
+            enhanceAddToCartWithPatternProperties({
+                patternName: urlParams.get('pattern_name'),
+                collection: urlParams.get('collection'),
+                patternId: urlParams.get('pattern_id'),
+                customColors: urlParams.get('custom_colors') || urlParams.get('layer_colors'),
+                preferredMaterial: urlParams.get('preferred_material')
+            });
+        }
+    }
+};
+
+// Global function to manually generate dynamic cart image (for theme integration)
+window.generateColorFlexCartImage = function() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const source = urlParams.get('source');
+    if (source === 'colorflex_saved_patterns' || source === 'colorflex_configuration_flow') {
+        generateDynamicCartImage({
+            patternName: urlParams.get('pattern_name'),
+            collection: urlParams.get('collection'),
+            patternId: urlParams.get('pattern_id'),
+            customColors: urlParams.get('custom_colors') || urlParams.get('layer_colors')
+        });
+    }
+};
+
+/**
+ * Hide generic product information that duplicates our ColorFlex pattern display
+ */
+function hideGenericProductInfo() {
+    console.log('🔄 Hiding duplicate product information for ColorFlex pattern');
+    
+    // Find and hide elements with duplicate texture/pricing info
+    setTimeout(() => {
+        // Look for text containing texture info
+        const allElements = document.querySelectorAll('*');
+        allElements.forEach(element => {
+            const text = element.textContent || '';
+            // Hide elements that show generic texture or pricing info
+            if (text.includes('Texture: Smooth') || 
+                text.includes('Texture: textured') ||
+                text.includes('Texture: Pre-pasted') ||
+                text.includes('Texture: Peel and Stick') ||
+                text.includes('Texture: Unpasted') ||
+                text.includes('Texture: Grass Cloth') ||
+                text.includes('$52 wallpaper / $46 fabric') ||
+                (text.includes('Texture Price:') && text.includes('wallpaper') && text.includes('fabric'))) {
+                
+                // Only hide if it's not our ColorFlex pattern display
+                if (!element.closest('#colorflexPatternDisplay')) {
+                    console.log('🚫 Hiding duplicate element:', text.substring(0, 50));
+                    element.style.display = 'none';
+                }
+            }
+        });
+    }, 500);
+}
+
+/**
+ * Fix cart popup thumbnail to show custom pattern image
+ */
+function fixCartPopupThumbnail() {
+    console.log('🖼️ Setting up cart popup thumbnail fix');
+    
+    // Monitor for cart popups/drawers appearing
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            mutation.addedNodes.forEach(function(node) {
+                if (node.nodeType === 1) { // Element node
+                    // Check if this is a cart popup/drawer
+                    const cartPopup = node.querySelector ? node.querySelector('.cart-popup, .cart-drawer, .mini-cart, [class*="cart"]') : null;
+                    
+                    if (cartPopup || (node.classList && (node.classList.contains('cart-popup') || node.classList.contains('cart-drawer')))) {
+                        console.log('🛒 Cart popup detected, replacing thumbnail');
+                        setTimeout(() => replaceCartThumbnails(), 100);
+                    }
+                }
+            });
+        });
+    });
+    
+    observer.observe(document.body, {
+        childList: true,
+        subtree: true
+    });
+    
+    // Also fix any existing cart elements
+    setTimeout(() => replaceCartThumbnails(), 1000);
+}
+
+/**
+ * Replace cart thumbnails with custom pattern image
+ */
+function replaceCartThumbnails() {
+    const storedThumbnail = localStorage.getItem('colorflexCurrentThumbnail');
+    if (!storedThumbnail) return;
+    
+    console.log('🔄 Replacing cart thumbnails with custom pattern');
+    
+    // Find cart item images
+    const cartImages = document.querySelectorAll(`
+        .cart-popup img,
+        .cart-drawer img,
+        .mini-cart img,
+        .cart-item img,
+        .line-item img,
+        [class*="cart"] img[src*="cdn.shopify"],
+        .ajax-cart img
+    `);
+    
+    cartImages.forEach(img => {
+        // Check if this is likely a product thumbnail (not icons, etc.)
+        if (img.src.includes('cdn.shopify') && (img.width > 50 || img.height > 50)) {
+            console.log('🖼️ Replacing cart thumbnail:', img.src.substring(0, 50) + '...');
+            img.src = storedThumbnail;
+            img.alt = 'Custom ColorFlex Pattern';
+            
+            // Add styling to indicate custom image
+            img.style.border = '2px solid #667eea';
+            img.style.borderRadius = '4px';
+        }
+    });
+}
+
+</script>
+
+<style>
+/* Ensure pattern display is responsive */
+#colorflexPatternDisplay {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+@media (max-width: 768px) {
+    #colorflexPatternDisplay {
+        margin: 15px -15px;
+        border-radius: 0;
+        padding: 15px;
+    }
+    
+    #colorflexPatternDisplay div[style*="grid-template-columns"] {
+        grid-template-columns: 1fr !important;
+    }
+}
+</style>

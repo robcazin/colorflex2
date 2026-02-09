@@ -1,0 +1,2 @@
+# Backup directory (local backups, not committed to Git)
+backups/

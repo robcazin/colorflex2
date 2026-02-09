@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ColorFlex + in3D Prototype Viewer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+            color: #fff;
+            overflow: hidden;
+        }
+
+        #container {
+            display: flex;
+            height: 100vh;
+        }
+
+        #viewer {
+            flex: 1;
+            position: relative;
+        }
+
+        #controls {
+            width: 350px;
+            background: rgba(26, 32, 44, 0.95);
+            padding: 30px;
+            overflow-y: auto;
+            border-left: 1px solid #d4af37;
+        }
+
+        h1 {
+            font-size: 24px;
+            color: #d4af37;
+            margin-bottom: 20px;
+            font-weight: 300;
+            letter-spacing: 2px;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        .section h2 {
+            font-size: 14px;
+            color: #d4af37;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            background: linear-gradient(135deg, #d4af37 0%, #b8941f 100%);
+            border: none;
+            border-radius: 4px;
+            color: #1a202c;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(212, 175, 55, 0.4);
+        }
+
+        button:active {
+            transform: translateY(0);
+        }
+
+        .pattern-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .pattern-btn {
+            padding: 8px;
+            font-size: 12px;
+            background: rgba(212, 175, 55, 0.2);
+            border: 1px solid #d4af37;
+            color: #d4af37;
+        }
+
+        .pattern-btn:hover {
+            background: rgba(212, 175, 55, 0.4);
+        }
+
+        #loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            font-size: 18px;
+            color: #d4af37;
+        }
+
+        .spinner {
+            border: 3px solid rgba(212, 175, 55, 0.3);
+            border-top: 3px solid #d4af37;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        #info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 12px;
+            max-width: 300px;
+        }
+
+        #info h3 {
+            color: #d4af37;
+            margin-bottom: 8px;
+        }
+    </style>
+</head>
+<body>
+    <div id="container">
+        <div id="viewer">
+            <div id="loading">
+                <div class="spinner"></div>
+                <p>Loading avatar...</p>
+            </div>
+            <div id="info" style="display: none;">
+                <h3>🎯 Prototype Demo</h3>
+                <p><strong>Avatar:</strong> <span id="avatarName">-</span></p>
+                <p><strong>Pattern:</strong> <span id="patternName">-</span></p>
+                <p><strong>Collection:</strong> <span id="collectionName">-</span></p>
+            </div>
+        </div>
+
+        <div id="controls">
+            <h1>ColorFlex + in3D</h1>
+
+            <div class="section">
+                <h2>📸 Select Avatar</h2>
+                <button onclick="loadAvatar('male_medium')">Male - Medium Build</button>
+                <button onclick="loadAvatar('female_small')">Female - Small Build</button>
+                <button onclick="loadAvatar('female_large')">Female - Large Build</button>
+            </div>
+
+            <div class="section">
+                <h2>🎨 ColorFlex Patterns</h2>
+                <div class="pattern-grid">
+                    <button class="pattern-btn" onclick="applyPattern('delhi-large', 'bombay')">Delhi Large</button>
+                    <button class="pattern-btn" onclick="applyPattern('keswick', 'english-cottage')">Keswick</button>
+                    <button class="pattern-btn" onclick="applyPattern('barda', 'silk-road')">Barda</button>
+                    <button class="pattern-btn" onclick="applyPattern('nile-valley', 'botanicals')">Nile Valley</button>
+                    <button class="pattern-btn" onclick="applyPattern('folkart-stripe', 'folksie')">Folkart Stripe</button>
+                    <button class="pattern-btn" onclick="applyPattern('tidal', 'geometry')">Tidal</button>
+                </div>
+            </div>
+
+            <div class="section">
+                <h2>🎥 View Controls</h2>
+                <button onclick="rotateAvatar()">Rotate View</button>
+                <button onclick="resetCamera()">Reset Camera</button>
+                <button onclick="toggleWireframe()">Toggle Wireframe</button>
+            </div>
+
+            <div class="section">
+                <h2>💾 Export</h2>
+                <button onclick="captureScreenshot()">Capture Screenshot</button>
+                <button onclick="exportGLB()">Export GLB File</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import * as THREE from 'https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js';
+        import { GLTFLoader } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/loaders/GLTFLoader.js';
+        import { OrbitControls } from 'https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/controls/OrbitControls.js';
+
+        // Scene setup
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x1a202c);
+
+        const camera = new THREE.PerspectiveCamera(
+            75,
+            window.innerWidth / window.innerHeight,
+            0.1,
+            1000
+        );
+        camera.position.set(0, 1.5, 3);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+        renderer.setSize(window.innerWidth - 350, window.innerHeight);
+        document.getElementById('viewer').appendChild(renderer.domElement);
+
+        // Controls
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.05;
+        controls.target.set(0, 1, 0);
+
+        // Lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+        directionalLight.position.set(5, 10, 5);
+        scene.add(directionalLight);
+
+        const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
+        fillLight.position.set(-5, 0, -5);
+        scene.add(fillLight);
+
+        // Global state
+        let currentAvatar = null;
+        let currentGarment = null;
+        let isWireframe = false;
+
+        // GLTF Loader
+        const loader = new GLTFLoader();
+
+        // Load avatar function
+        window.loadAvatar = function(avatarType) {
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('info').style.display = 'none';
+
+            // Clear existing avatar
+            if (currentAvatar) {
+                scene.remove(currentAvatar);
+            }
+
+            // In production, load actual GLB files from in3D
+            // For now, we'll create a placeholder
+            const avatarPath = `/assets/avatars/avatar_${avatarType}.glb`;
+
+            loader.load(
+                avatarPath,
+                (gltf) => {
+                    currentAvatar = gltf.scene;
+                    currentAvatar.scale.set(1, 1, 1);
+                    scene.add(currentAvatar);
+
+                    document.getElementById('loading').style.display = 'none';
+                    document.getElementById('info').style.display = 'block';
+                    document.getElementById('avatarName').textContent = avatarType.replace('_', ' ').toUpperCase();
+
+                    console.log('✅ Avatar loaded:', avatarType);
+                },
+                (xhr) => {
+                    console.log(`Loading: ${(xhr.loaded / xhr.total * 100)}%`);
+                },
+                (error) => {
+                    console.error('❌ Error loading avatar:', error);
+                    document.getElementById('loading').innerHTML =
+                        '<p style="color: #ff6b6b;">Error loading avatar. Using placeholder.</p>';
+
+                    // Create placeholder avatar
+                    createPlaceholderAvatar();
+                }
+            );
+        };
+
+        // Create placeholder avatar (for demo without actual in3D files)
+        function createPlaceholderAvatar() {
+            const group = new THREE.Group();
+
+            // Body
+            const bodyGeometry = new THREE.CylinderGeometry(0.3, 0.25, 1.5, 16);
+            const bodyMaterial = new THREE.MeshStandardMaterial({ color: 0xe8d5c4 });
+            const body = new THREE.Mesh(bodyGeometry, bodyMaterial);
+            body.position.y = 1;
+            group.add(body);
+
+            // Head
+            const headGeometry = new THREE.SphereGeometry(0.2, 16, 16);
+            const head = new THREE.Mesh(headGeometry, bodyMaterial);
+            head.position.y = 1.9;
+            group.add(head);
+
+            // Garment placeholder (dress shape)
+            const garmentGeometry = new THREE.CylinderGeometry(0.32, 0.5, 1.2, 16);
+            const garmentMaterial = new THREE.MeshStandardMaterial({
+                color: 0xffffff,
+                side: THREE.DoubleSide
+            });
+            const garment = new THREE.Mesh(garmentGeometry, garmentMaterial);
+            garment.position.y = 1;
+            group.add(garment);
+
+            currentGarment = garment;
+            currentAvatar = group;
+            scene.add(group);
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('info').style.display = 'block';
+            document.getElementById('avatarName').textContent = 'PLACEHOLDER';
+        }
+
+        // Apply ColorFlex pattern texture
+        window.applyPattern = function(patternName, collectionName) {
+            if (!currentGarment && currentAvatar) {
+                // Find garment mesh in loaded avatar
+                currentAvatar.traverse((child) => {
+                    if (child.isMesh && child.name.includes('garment')) {
+                        currentGarment = child;
+                    }
+                });
+            }
+
+            if (!currentGarment) {
+                console.warn('No garment found to apply texture');
+                return;
+            }
+
+            // Load ColorFlex pattern texture
+            const textureLoader = new THREE.TextureLoader();
+            const texturePath = `https://so-animation.com/colorflex/data/collections/${collectionName}/thumbnails/${patternName}.jpg`;
+
+            textureLoader.load(
+                texturePath,
+                (texture) => {
+                    texture.wrapS = THREE.RepeatWrapping;
+                    texture.wrapT = THREE.RepeatWrapping;
+                    texture.repeat.set(2, 2);
+
+                    currentGarment.material.map = texture;
+                    currentGarment.material.needsUpdate = true;
+
+                    document.getElementById('patternName').textContent = patternName;
+                    document.getElementById('collectionName').textContent = collectionName;
+
+                    console.log('✅ Pattern applied:', patternName);
+                },
+                undefined,
+                (error) => {
+                    console.error('❌ Error loading texture:', error);
+                }
+            );
+        };
+
+        // View controls
+        window.rotateAvatar = function() {
+            if (currentAvatar) {
+                currentAvatar.rotation.y += Math.PI / 4;
+            }
+        };
+
+        window.resetCamera = function() {
+            camera.position.set(0, 1.5, 3);
+            controls.target.set(0, 1, 0);
+            controls.update();
+        };
+
+        window.toggleWireframe = function() {
+            isWireframe = !isWireframe;
+            scene.traverse((child) => {
+                if (child.isMesh) {
+                    child.material.wireframe = isWireframe;
+                }
+            });
+        };
+
+        // Export functions
+        window.captureScreenshot = function() {
+            renderer.render(scene, camera);
+            const dataURL = renderer.domElement.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'colorflex-avatar-preview.png';
+            link.href = dataURL;
+            link.click();
+            console.log('📸 Screenshot captured');
+        };
+
+        window.exportGLB = function() {
+            console.log('💾 GLB export would happen here (requires GLTFExporter)');
+            alert('GLB export feature - requires GLTFExporter implementation');
+        };
+
+        // Animation loop
+        function animate() {
+            requestAnimationFrame(animate);
+            controls.update();
+            renderer.render(scene, camera);
+        }
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            camera.aspect = (window.innerWidth - 350) / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth - 350, window.innerHeight);
+        });
+
+        // Start animation
+        animate();
+
+        // Load placeholder avatar on start
+        createPlaceholderAvatar();
+    </script>
+</body>
+</html>

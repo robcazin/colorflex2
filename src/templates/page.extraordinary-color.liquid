@@ -1,0 +1,295 @@
+<!-- Extraordinary Color Landing Page -->
+<!-- Created: January 10, 2026 -->
+<!-- Landing page for ColorFlex Furniture and Clothing -->
+
+<!-- Font imports -->
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Island+Moments&family=Special+Elite&display=swap" rel="stylesheet">
+
+<style>
+  /* Hide Christmas promo banner */
+  #christmas-promo-banner {
+    display: none !important;
+  }
+
+
+  .header-wrapper, .header__heading-logo, .header-logo, header .logo, .site-header__logo {
+    display: none !important;
+    .header-wrapper {
+    display: none !important;
+
+    }
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    background: #1a202c;
+    color: white;
+    font-family: 'Special Elite', monospace;
+  }
+
+  .hero-section {
+    text-align: center;
+    padding: 4rem 2rem 3rem 2rem;
+    background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+  }
+
+  .hero-title {
+    font-family: 'Island Moments', cursive;
+    font-size: 5rem;
+    margin: 0 0 1rem 0;
+    background: linear-gradient(135deg, #8b4513 0%, #4a90e2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-subtitle {
+    font-size: 1.5rem;
+    color: #cbd5e0;
+    margin: 0 0 0.5rem 0;
+    font-weight: normal;
+  }
+
+  .hero-description {
+    font-size: 1.1rem;
+    color: #a0aec0;
+    max-width: 800px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+
+  .collections-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 3rem;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 3rem 2rem;
+  }
+
+  .collection-card {
+    background: #2d3748;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    border: 3px solid transparent;
+    cursor: pointer;
+  }
+
+  .collection-card:hover {
+    transform: translateY(-8px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .collection-card.furniture:hover {
+    border-color: #8b4513;
+    box-shadow: 0 20px 40px rgba(139, 69, 19, 0.3);
+  }
+
+  .collection-card.clothing:hover {
+    border-color: #4a90e2;
+    box-shadow: 0 20px 40px rgba(74, 144, 226, 0.3);
+  }
+
+  .collection-image {
+    width: 100%;
+    height: 400px;
+    object-fit: cover;
+    background: #1a202c;
+  }
+
+  .collection-content {
+    padding: 2rem;
+  }
+
+  .collection-title {
+    font-family: 'Island Moments', cursive;
+    font-size: 3rem;
+    margin: 0 0 1rem 0;
+  }
+
+  .collection-card.furniture .collection-title {
+    color: #8b4513;
+  }
+
+  .collection-card.clothing .collection-title {
+    color: #4a90e2;
+  }
+
+  .collection-description {
+    font-size: 1.1rem;
+    color: #cbd5e0;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  .collection-features {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1.5rem 0;
+  }
+
+  .collection-features li {
+    padding: 0.5rem 0;
+    color: #a0aec0;
+    border-bottom: 1px solid rgba(160, 174, 192, 0.2);
+  }
+
+  .collection-features li:last-child {
+    border-bottom: none;
+  }
+
+  .collection-cta {
+    display: inline-block;
+    padding: 1rem 2rem;
+    font-size: 1.2rem;
+    font-weight: bold;
+    border-radius: 8px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    font-family: 'Special Elite', monospace;
+  }
+
+  .collection-card.furniture .collection-cta {
+    background: linear-gradient(135deg, #8b4513 0%, #a0612f 100%);
+    color: white;
+  }
+
+  .collection-card.furniture .collection-cta:hover {
+    background: linear-gradient(135deg, #a0612f 0%, #8b4513 100%);
+    transform: scale(1.05);
+  }
+
+  .collection-card.clothing .collection-cta {
+    background: linear-gradient(135deg, #4a90e2 0%, #357abd 100%);
+    color: white;
+  }
+
+  .collection-card.clothing .collection-cta:hover {
+    background: linear-gradient(135deg, #357abd 0%, #4a90e2 100%);
+    transform: scale(1.05);
+  }
+
+  .footer-section {
+    text-align: center;
+    padding: 2rem;
+    background: #1a202c;
+    color: #a0aec0;
+    font-size: 0.9rem;
+  }
+
+  @media (max-width: 768px) {
+    .hero-title {
+      font-size: 3rem;
+    }
+
+    .hero-subtitle {
+      font-size: 1.2rem;
+    }
+
+    .collections-grid {
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      padding: 2rem 1rem;
+    }
+
+    .collection-image {
+      height: 300px;
+    }
+
+    .collection-title {
+      font-size: 2.5rem;
+    }
+  }
+</style>
+
+<div class="hero-section">
+      <h3 id="colorLayersHeading" style="font-family:'Island Moments',cursive; font-size:4rem; margin-bottom:1rem; margin-top:-0.5rem; text-align:center; line-height:0.9;">
+        <span style="color:rgba(255,255,255,0.75);">Extraordinary </span><span style="color:#ff0000;">C</span><span style="color:#ff8800;">o</span><span style="color:#ffff00;">l</span><span style="color:#00ff00;">o</span><span style="color:#0088ff;">r</span>
+      </h3>
+  <p class="hero-description">
+    Visualize custom patterns on furniture upholstery and clothing before you order.
+    Choose your perfect colors, see them come to life, and create something extraordinary.
+  </p>
+</div>
+
+<div class="collections-grid">
+
+  <!-- Furniture Card -->
+  <a href="/pages/extraordinary-color-furniture" style="text-decoration: none; color: inherit;">
+    <div class="collection-card furniture">
+      <img
+        src="https://so-animation.com/colorflex/img/ec-landing-furniture.png"
+        alt="Furniture Collection"
+        class="collection-image"
+      >
+      <div class="collection-content">
+        <h2 class="collection-title">Furniture Collection</h2>
+        <p class="collection-description">
+          Transform your space with custom upholstery. Visualize patterns on sofas and chairs
+          before ordering fabric.
+        </p>
+        <ul class="collection-features">
+          <li>🛋️ Multiple furniture styles</li>
+          <li>🎨 Hundreds of pattern options</li>
+          <li>🌈 Customize wall colors</li>
+          <li>📏 5-yard minimum order</li>
+        </ul>
+        <span class="collection-cta">Explore Furniture →</span>
+      </div>
+    </div>
+  </a>
+
+  <!-- Clothing Card -->
+  <a href="/pages/extraordinary-color-clothing" style="text-decoration: none; color: inherit;">
+    <div class="collection-card clothing">
+      <img
+        src="https://so-animation.com/colorflex/img/ec-landing-clothing.jpg"
+        alt="Clothing Collection"
+        class="collection-image"
+      >
+      <div class="collection-content">
+        <h2 class="collection-title">Clothing Collection</h2>
+        <p class="collection-description">
+          Design custom apparel with unique patterns. See your fabric on dress or pantsuit
+          mockups at multiple scales.
+        </p>
+        <ul class="collection-features">
+          <li>👗 Dress and pantsuit options</li>
+          <li>🎨 Coordinate matching pieces</li>
+          <li>📐 Adjustable pattern scales</li>
+          <li>✨ Gloss and shadow effects</li>
+        </ul>
+        <span class="collection-cta">Explore Clothing →</span>
+      </div>
+    </div>
+  </a>
+
+</div>
+
+<div class="footer-section">
+  <p style="margin: 0 0 0.5rem 0;">
+    <strong style="color: white;">Questions?</strong> Contact us at
+    <a href="mailto:support@saffroncottage.shop" style="color: #8b4513; text-decoration: underline;">
+      support@saffroncottage.shop
+    </a>
+  </p>
+  <p style="margin: 0; font-size: 0.85rem;">
+    © {{ 'now' | date: "%Y" }} Saffron Cottage. All rights reserved.
+  </p>
+</div>
+
+<!-- Make cards fully clickable -->
+<script>
+  document.querySelectorAll('.collection-card').forEach(card => {
+    card.addEventListener('click', function(e) {
+      if (e.target.tagName !== 'A') {
+        const link = this.closest('a');
+        if (link) {
+          window.location.href = link.href;
+        }
+      }
+    });
+  });
+</script>

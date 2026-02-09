@@ -1,0 +1,6 @@
+{% comment %} Stub: replace with content from previous theme. {% endcomment %}
+{% if product.media.size > 0 %}
+  {% for media in product.media %}
+    <img src="{{ media | image_url: width: 600 }}" alt="{{ media.alt | escape }}" loading="lazy">
+  {% endfor %}
+{% endif %}

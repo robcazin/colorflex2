@@ -1,0 +1,638 @@
+{% comment %}
+  ColorFlex Cart Item Display Snippet
+  Use this in your cart template to show custom pattern previews and color information
+  
+  Usage in cart template:
+  {% for item in cart.items %}
+    {% if item.properties['ColorFlex Design'] == 'Yes' %}
+      {% render 'colorflex-cart-item', item: item %}
+    {% else %}
+      <!-- Normal cart item display -->
+    {% endif %}
+  {% endfor %}
+{% endcomment %}
+
+{% if item.properties['ColorFlex Design'] == 'Yes' %}
+<div class="colorflex-cart-item" style="border: 2px solid #d4af37; border-radius: 8px; padding: 16px; margin: 12px 0; background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);">
+  
+  <!-- ColorFlex Header -->
+  <div style="text-align: left; margin-bottom: 12px;">
+    <span style="background: #d4af37; color: #1a202c; padding: 4px 12px; border-radius: 4px; font-size: 11px; font-weight: bold;">🎨 COLORFLEX</span>
+  </div>
+
+  <!-- Pattern Name in Island Moments Font -->
+  {% assign pattern_name = item.properties['Custom Pattern'] | default: item.properties['Pattern Name'] | default: item.properties['pattern_name'] %}
+  {% if pattern_name %}
+    <div style="text-align: center !important; margin-bottom: 12px; width: 100%; display: flex; justify-content: center;">
+      <span class="pattern-name-island-moments colorflex-pattern-name" style="font-family: 'Island Moments', cursive !important; font-size: 4rem !important; font-weight: 400 !important; color: #e2e8f0 !important; text-align: center !important; display: block !important; width: 100% !important; line-height: 1.2 !important;">{{ pattern_name }}</span>
+    </div>
+  {% endif %}
+
+  <div style="display: flex; gap: 16px; align-items: flex-start;">
+    
+    <!-- Pattern Preview Placeholder -->
+    <div style="flex-shrink: 0;">
+      <div style="width: 120px; height: 120px; border-radius: 8px; overflow: hidden; border: 2px solid #4a5568; background: #374151; display: flex; align-items: center; justify-content: center;">
+        <div style="text-align: center; color: #9ca3af; font-size: 12px;">
+          🎨<br>Custom<br>Pattern
+        </div>
+      </div>
+      <div style="text-align: center; margin-top: 4px; color: #a0aec0; font-size: 11px;">
+        ColorFlex Design
+      </div>
+    </div>
+
+    <!-- Pattern Details -->
+    <div style="flex: 1; color: #e2e8f0;">
+      
+      <!-- Pattern Information -->
+      <div style="margin-bottom: 12px;">
+        <h4 style="margin: 0 0 8px 0; color: #f7fafc; font-size: 16px; font-weight: 600;">
+          {{ item.product.title }}
+        </h4>
+        
+        {% if item.properties['Collection'] %}
+        <p style="margin: 0 0 4px 0; font-size: 14px; color: #cbd5e0;">
+          <strong>Collection:</strong> {{ item.properties['Collection'] | capitalize }}
+        </p>
+        {% endif %}
+        
+        {% if item.properties['Material'] %}
+        <p style="margin: 0 0 4px 0; font-size: 14px; color: #cbd5e0;">
+          <strong>Material:</strong> {{ item.properties['Material'] }}
+        </p>
+        {% endif %}
+      </div>
+
+      <!-- Custom Colors with Color Circles (Enhanced property detection) -->
+      {% comment %} Check multiple property name variations {% endcomment %}
+      {% assign custom_colors = item.properties['Custom Colors'] | default: item.properties['custom_colors'] | default: item.properties['Colors'] | default: item.properties['Custom Pattern Colors'] %}
+      {% if custom_colors and custom_colors != 'Default' and custom_colors != 'Default Colors' and custom_colors != blank %}
+      <div style="margin-bottom: 12px;" data-debug-colors="{{ custom_colors }}">
+        <p style="margin: 0 0 6px 0; font-weight: 600; color: #f7fafc; font-size: 14px;">
+          🎨 Custom Colors:
+        </p>
+
+        <!-- Enhanced Color Circles Display -->
+        <div class="colorflex-color-circles" data-colors="{{ custom_colors }}" style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; min-height: 24px;">
+          <!-- Color circles will be populated by JavaScript -->
+        </div>
+
+        <div style="background: rgba(255, 255, 255, 0.1); padding: 8px; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+          {{ custom_colors }}
+        </div>
+
+        {% assign colors_used = item.properties.colors %}
+        {% if colors_used and colors_used != blank %}
+        <p style="margin: 4px 0 0 0; font-size: 11px; color: #a0aec0;">
+          {{ colors_used }} custom colors applied
+        </p>
+        {% endif %}
+      </div>
+      {% endif %}
+
+      <!-- Additional Properties -->
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 12px; color: #a0aec0;">
+        
+        {% if item.properties['Save Date'] %}
+        <div>
+          <strong>Designed:</strong> {{ item.properties['Save Date'] }}
+        </div>
+        {% endif %}
+        
+        {% if item.properties['Pattern ID'] %}
+        <div>
+          <strong>ID:</strong> {{ item.properties['Pattern ID'] }}
+        </div>
+        {% endif %}
+        
+        <!-- Configuration Properties (if present) -->
+        {% if item.properties['Square Footage'] %}
+        <div>
+          <strong>Sq Ft:</strong> {{ item.properties['Square Footage'] }}
+        </div>
+        {% endif %}
+        
+        {% if item.properties['Wall Width'] and item.properties['Wall Height'] %}
+        <div>
+          <strong>Dimensions:</strong> {{ item.properties['Wall Width'] }}" × {{ item.properties['Wall Height'] }}"
+        </div>
+        {% endif %}
+      </div>
+
+      <!-- Special Instructions -->
+      {% if item.properties['Special Instructions'] %}
+      <div style="margin-top: 12px; padding: 8px; background: rgba(56, 178, 172, 0.1); border-left: 3px solid #38b2ac; border-radius: 4px;">
+        <p style="margin: 0; font-size: 13px; color: #e2e8f0;">
+          <strong>Instructions:</strong> {{ item.properties['Special Instructions'] }}
+        </p>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+
+  <!-- Footer Actions -->
+  <div style="margin-top: 16px; padding-top: 12px; border-top: 1px solid #4a5568; display: flex; justify-content: space-between; align-items: center;">
+    <div style="color: #a0aec0; font-size: 12px;">
+      ✨ This item includes custom ColorFlex design work
+    </div>
+    
+    <!-- Standard cart controls (quantity, remove) -->
+    <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+      <label style="color: #cbd5e0; font-size: 12px;">
+        Qty:
+        <input type="number"
+               value="{{ item.quantity }}"
+               min="1"
+               style="width: 50px; padding: 4px; margin-left: 4px; border: 1px solid #4a5568; border-radius: 4px; background: #2d3748; color: #e2e8f0;">
+      </label>
+
+      <!-- Edit in ColorFlex Button -->
+      {% assign pattern_name = item.properties['Custom Pattern'] | default: item.properties['Pattern Name'] %}
+      {% assign collection_name = item.properties['Pattern Collection'] | default: 'unknown' %}
+      {% assign pattern_id = item.properties['Pattern ID'] %}
+      {% assign custom_colors = item.properties['Custom Colors'] %}
+
+      <!-- DEBUG: Log all available properties -->
+      <div style="font-size: 10px; color: #888; margin: 4px 0; border: 1px solid #ddd; padding: 4px;">
+        <strong>DEBUG - Available Properties:</strong><br>
+        {% for property in item.properties %}
+          {{ property[0] }}: {{ property[1] }}<br>
+        {% endfor %}
+        <strong>Pattern vars:</strong> name="{{ pattern_name }}", collection="{{ collection_name }}", id="{{ pattern_id }}", colors="{{ custom_colors }}"
+      </div>
+
+      {% if pattern_name %}
+        <button onclick="editPatternFromCart('{{ pattern_name | escape }}', '{{ collection_name }}', '{{ pattern_id | escape }}', '{{ custom_colors | escape }}')"
+           style="background: #d4af37; color: #1a202c; padding: 6px 12px; border-radius: 4px; border: none; font-size: 12px; font-weight: bold; transition: background 0.2s; cursor: pointer;"
+           onmouseover="this.style.background='#b8941f';"
+           onmouseout="this.style.background='#d4af37';">
+          🎨 Edit in ColorFlex
+        </button>
+      {% endif %}
+
+      <a href="/cart/change?id={{ item.variant_id }}&quantity=0"
+         style="color: #f56565; background: none; border: none; cursor: pointer; font-size: 12px; text-decoration: underline;">
+        Remove
+      </a>
+    </div>
+  </div>
+
+</div>
+
+<!-- Enhanced JavaScript for ColorFlex Cart Item -->
+<script>
+(function() {
+    'use strict';
+
+    console.log('🛒 ColorFlex Cart Item: Initializing enhanced features...');
+
+    // Font Loading Function
+    function loadIslandMomentsFont() {
+        const existingFont = document.querySelector('link[href*="Island+Moments"]');
+        if (!existingFont) {
+            console.log('🔤 Loading Island Moments font...');
+            const fontLink = document.createElement('link');
+            fontLink.href = 'https://fonts.googleapis.com/css2?family=Island+Moments:wght@400&display=swap';
+            fontLink.rel = 'stylesheet';
+            document.head.appendChild(fontLink);
+
+            // Apply font after loading
+            setTimeout(() => {
+                const patternNames = document.querySelectorAll('.pattern-name-island-moments');
+                patternNames.forEach(name => {
+                    name.style.fontFamily = "'Island Moments', cursive";
+                    name.style.fontSize = "5rem";
+                    name.style.fontWeight = "400";
+                    name.style.color = "#e2e8f0";
+                    name.style.textAlign = "center";
+                    name.style.display = "block";
+                    name.style.width = "100%";
+                    name.style.lineHeight = "1.2";
+                });
+            }, 500);
+        }
+    }
+
+    // Enhanced Color Mapping Database
+    const colorMap = {
+        'distance': 'SW6243',
+        'sleepy hollow': 'SW9145',
+        'greenfields': 'SW6242',
+        'quietude': 'SW6212',
+        'underseas': 'SW6214',
+        'snowbound': 'SW7004',
+        'pure white': 'SW7005',
+        'accessible beige': 'SW7036',
+        'balanced beige': 'SW7037',
+        'natural choice': 'SW7011',
+        'agreeable gray': 'SW7029',
+        'repose gray': 'SW7015',
+        'mindful gray': 'SW7016',
+        'worldly gray': 'SW7043',
+        'storm cloud': 'SW6240',
+        'naval': 'SW6244',
+        'distance': 'SW6243',
+        'oceanside': 'SW6496',
+        'watery': 'SW6478',
+        'tidewater': 'SW6477',
+        'refuge': 'SW6228',
+        'anchors aweigh': 'SW9179',
+        'loyal blue': 'SW6510',
+        'distance': 'SW6243'
+    };
+
+    // Normalize color name for lookup
+    function normalizeColorName(colorName) {
+        if (!colorName) return '';
+        return colorName.toLowerCase().replace(/[^a-z0-9\s]/g, '').trim();
+    }
+
+    // Extract SW number from color text
+    function extractSWNumber(colorText) {
+        if (!colorText) return null;
+        const swMatch = colorText.match(/SW\s?(\d{4})/i);
+        return swMatch ? swMatch[1] : null;
+    }
+
+    // Get formatted color display
+    function getFormattedColorName(colorText) {
+        if (!colorText) return 'Unknown Color';
+
+        // If already has SW number, return as-is (but clean up format)
+        const existingSW = extractSWNumber(colorText);
+        if (existingSW) {
+            const cleanName = colorText.replace(/SW\s?\d{4}/i, '').trim().toUpperCase();
+            return `SW${existingSW} ${cleanName}`;
+        }
+
+        // Look up SW number for plain color name
+        const normalizedName = normalizeColorName(colorText);
+        const swNumber = colorMap[normalizedName];
+
+        if (swNumber) {
+            const cleanName = colorText.trim().toUpperCase();
+            return `${swNumber} ${cleanName}`;
+        }
+
+        // Return original text if no SW number found
+        return colorText.trim().toUpperCase();
+    }
+
+    // Color lookup function
+    function lookupColor(colorName) {
+        const colorDatabase = {
+            'sw7004': '#F7F5F1', // Snowbound
+            'sw7005': '#FFFFFF', // Pure White
+            'sw6212': '#A8AEA9', // Quietude
+            'sw6214': '#5B7C8D', // Underseas
+            'sw6243': '#9BB0A9', // Distance
+            'sw6242': '#7A9471', // Greenfields
+            'sw9145': '#798A7E', // Sleepy Hollow
+            'sw7036': '#E8E0D5', // Accessible Beige
+            'sw7037': '#E0D5C7', // Balanced Beige
+            'sw7011': '#A58965', // Natural Choice
+            'sw7029': '#8B8680', // Agreeable Gray
+            'sw7015': '#8D8B83', // Repose Gray
+            'sw7016': '#8F9190', // Mindful Gray
+            'sw7043': '#7A7B76', // Worldly Gray
+            'sw6240': '#5A5F67', // Storm Cloud
+            'sw6244': '#2B4562', // Naval
+            'sw6496': '#5A9AB0', // Oceanside
+            'sw6478': '#88B5C7', // Watery
+            'sw6477': '#A0CCDB', // Tidewater
+            'sw6228': '#8DA399', // Refuge
+            'sw9179': '#5B8FA8', // Anchors Aweigh
+            'sw6510': '#4472A1'  // Loyal Blue
+        };
+
+        if (!colorName) return '#CCCCCC';
+
+        // Try exact SW number lookup first
+        const swNumber = extractSWNumber(colorName);
+        if (swNumber) {
+            const swKey = `sw${swNumber}`;
+            if (colorDatabase[swKey]) {
+                return colorDatabase[swKey];
+            }
+        }
+
+        // Try normalized name lookup
+        const normalizedName = normalizeColorName(colorName);
+        const swFromMap = colorMap[normalizedName];
+        if (swFromMap) {
+            const swKey = swFromMap.toLowerCase();
+            if (colorDatabase[swKey]) {
+                return colorDatabase[swKey];
+            }
+        }
+
+        // Default fallback
+        return '#CCCCCC';
+    }
+
+    // Enhanced color circles creation with comprehensive debugging
+    function createColorCircles() {
+        console.log('🎨 ColorFlex Cart: Starting color circles creation...');
+
+        // Try multiple selectors to find color containers
+        const selectors = [
+            '.colorflex-color-circles',
+            '.color-circles-container',
+            '[data-colors]'
+        ];
+
+        let colorCircleContainers = [];
+        selectors.forEach(selector => {
+            const found = document.querySelectorAll(selector);
+            if (found.length > 0) {
+                console.log(`🔍 Found ${found.length} containers with selector: ${selector}`);
+                colorCircleContainers = [...colorCircleContainers, ...Array.from(found)];
+            }
+        });
+
+        if (colorCircleContainers.length === 0) {
+            console.log('❌ No color circle containers found');
+            return;
+        }
+
+        console.log(`🎯 Processing ${colorCircleContainers.length} color circle containers`);
+
+        colorCircleContainers.forEach((container, index) => {
+            console.log(`🔵 Processing container ${index + 1}:`);
+
+            // Try multiple methods to get color data
+            let customColorsText = '';
+
+            // Method 1: data-colors attribute
+            const dataColors = container.getAttribute('data-colors');
+            if (dataColors) {
+                customColorsText = dataColors;
+                console.log(`  ✅ Found colors in data-colors: "${dataColors}"`);
+            }
+
+            // Method 2: Find colors in parent cart item
+            if (!customColorsText) {
+                const cartItem = container.closest('.colorflex-cart-item');
+                if (cartItem) {
+                    const customColorsDiv = cartItem.querySelector('[style*="background: rgba(255, 255, 255, 0.1)"]');
+                    if (customColorsDiv) {
+                        customColorsText = customColorsDiv.textContent.trim();
+                        console.log(`  ✅ Found colors in text div: "${customColorsText}"`);
+                    }
+
+                    // Method 3: debug-colors attribute
+                    const debugColors = cartItem.querySelector('[data-debug-colors]');
+                    if (debugColors && !customColorsText) {
+                        customColorsText = debugColors.getAttribute('data-debug-colors');
+                        console.log(`  ✅ Found colors in debug-colors: "${customColorsText}"`);
+                    }
+                }
+            }
+
+            if (!customColorsText) {
+                console.log(`  ❌ No color data found for container ${index + 1}`);
+                return;
+            }
+
+            console.log(`  🎨 Processing colors: "${customColorsText}"`);
+
+            // Parse colors from text
+            const colors = customColorsText.split(',').map(c => c.trim()).filter(c => c.length > 0);
+            console.log(`  📋 Parsed ${colors.length} colors:`, colors);
+
+            // Clear existing circles
+            container.innerHTML = '';
+
+            // Create circles for each color
+            colors.forEach((colorName, colorIndex) => {
+                const formattedName = getFormattedColorName(colorName);
+                const colorHex = lookupColor(colorName);
+
+                const circle = document.createElement('div');
+                circle.style.cssText = `
+                    width: 24px;
+                    height: 24px;
+                    border-radius: 50%;
+                    background-color: ${colorHex};
+                    border: 2px solid #d4af37;
+                    display: inline-block;
+                    margin-right: 4px;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.3);
+                    cursor: help;
+                `;
+                circle.title = formattedName;
+                container.appendChild(circle);
+
+                console.log(`    🔵 Created circle ${colorIndex + 1}: ${formattedName} -> ${colorHex}`);
+            });
+
+            console.log(`  ✅ Container ${index + 1} completed with ${colors.length} circles`);
+        });
+
+        console.log('✅ ColorFlex Cart: Color circles creation completed');
+    }
+
+    // Simple cart thumbnail restoration
+    function simpleCartRestore() {
+        console.log('🔧 ColorFlex Cart Item: Simple cart restore triggered');
+
+        const colorflexItems = document.querySelectorAll('.colorflex-cart-item');
+
+        colorflexItems.forEach((item, index) => {
+            const img = item.querySelector('img');
+            if (img) {
+                const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+
+                if (savedPatterns.length > 0) {
+                    // Try to match by pattern name or use latest
+                    const patternNameElement = item.querySelector('.pattern-name-island-moments');
+                    const patternName = patternNameElement ? patternNameElement.textContent.trim() : '';
+
+                    let targetPattern = savedPatterns.find(p => p.patternName === patternName);
+                    if (!targetPattern) {
+                        targetPattern = savedPatterns[savedPatterns.length - 1];
+                    }
+
+                    if (targetPattern && targetPattern.thumbnail) {
+                        console.log(`🖼️ Restoring thumbnail for: ${targetPattern.patternName}`);
+                        img.src = targetPattern.thumbnail;
+                        img.alt = `Custom Pattern: ${targetPattern.patternName}`;
+                        img.style.borderRadius = '8px';
+                    }
+                }
+            }
+        });
+    }
+
+    // Force pattern name styling
+    function forcePatternNameStyling() {
+        const patternNames = document.querySelectorAll('.colorflex-cart-item .pattern-name-island-moments, .colorflex-cart-item .colorflex-pattern-name');
+        patternNames.forEach(name => {
+            // Force inline styles to override CSS
+            name.style.setProperty('font-family', "'Island Moments', cursive", 'important');
+            name.style.setProperty('font-size', '5rem', 'important');
+            name.style.setProperty('font-weight', '400', 'important');
+            name.style.setProperty('color', '#e2e8f0', 'important');
+            name.style.setProperty('text-align', 'center', 'important');
+            name.style.setProperty('display', 'block', 'important');
+            name.style.setProperty('width', '100%', 'important');
+            name.style.setProperty('line-height', '1.2', 'important');
+            name.style.setProperty('margin', '0', 'important');
+            name.style.setProperty('padding', '0', 'important');
+
+            console.log('🔤 Forced pattern name styling for:', name.textContent);
+        });
+    }
+
+    // Emergency restoration with aggressive timing
+    function emergencyRestore() {
+        console.log('🚨 ColorFlex Cart Item: Emergency restoration triggered');
+        simpleCartRestore();
+        createColorCircles();
+        forcePatternNameStyling();
+    }
+
+    // Edit pattern from cart (like unified modal)
+    function editPatternFromCart(patternName, collectionName, patternId, customColors) {
+        console.log('🎨 Edit pattern from cart:', patternName, collectionName);
+
+        // Create pattern data structure similar to unified modal
+        const patternData = {
+            patternName: patternName,
+            collectionName: collectionName,
+            id: patternId,
+            customColors: customColors ? customColors.split(',').map(c => c.trim()) : [],
+            saveDate: new Date().toISOString(),
+            source: 'cart_edit'
+        };
+
+        console.log('💾 Storing cart pattern data for ColorFlex:', patternData);
+
+        // Store pattern data in sessionStorage (same as unified modal)
+        sessionStorage.setItem('pendingDirectPatternLoad', JSON.stringify(patternData));
+
+        // Navigate to ColorFlex page
+        window.location.href = '/pages/colorflex?source=cart_edit';
+    }
+
+    // Make function globally available
+    window.editPatternFromCart = editPatternFromCart;
+
+    // Initialize everything
+    function initializeColorFlexCartItem() {
+        loadIslandMomentsFont();
+
+        // Multiple restoration attempts with different timings
+        setTimeout(simpleCartRestore, 100);
+        setTimeout(createColorCircles, 200);
+        setTimeout(emergencyRestore, 500);
+        setTimeout(emergencyRestore, 1000);
+        setTimeout(emergencyRestore, 2000);
+
+        console.log('✅ ColorFlex Cart Item: Initialization complete');
+    }
+
+    // Run initialization when DOM is ready
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeColorFlexCartItem);
+    } else {
+        initializeColorFlexCartItem();
+    }
+
+})();
+</script>
+
+<!-- Override Conflicting Styles -->
+<style>
+/* Ultra-high specificity override for ColorFlex cart pattern names */
+div.colorflex-cart-item div span.colorflex-pattern-name.pattern-name-island-moments,
+div.colorflex-cart-item div span.pattern-name-island-moments.colorflex-pattern-name,
+.colorflex-cart-item .colorflex-pattern-name,
+.colorflex-cart-item .pattern-name-island-moments {
+    font-family: 'Island Moments', cursive !important;
+    font-size: 5rem !important;
+    font-weight: 400 !important;
+    color: #e2e8f0 !important;
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Override any existing pattern name styles with ultra-high specificity */
+div.colorflex-cart-item div [style*="font-family: 'Island Moments'"],
+.colorflex-cart-item [style*="font-family: 'Island Moments'"] {
+    font-family: 'Island Moments', cursive !important;
+    font-size: 5rem !important;
+    font-weight: 400 !important;
+    color: #e2e8f0 !important;
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+    line-height: 1.2 !important;
+}
+
+/* Nuclear option - target by exact element structure */
+.colorflex-cart-item > div:nth-child(3) > span,
+.colorflex-cart-item span[class*="pattern-name"],
+.colorflex-cart-item span[class*="island-moments"] {
+    font-family: 'Island Moments', cursive !important;
+    font-size: 5rem !important;
+    font-weight: 400 !important;
+    color: #e2e8f0 !important;
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+    line-height: 1.2 !important;
+}
+
+/* Ultimate override with maximum specificity */
+html body div.colorflex-cart-item div span.pattern-name-island-moments,
+html body div.colorflex-cart-item div span.colorflex-pattern-name,
+html body .colorflex-cart-item .pattern-name-island-moments,
+html body .colorflex-cart-item .colorflex-pattern-name {
+    font-family: 'Island Moments', cursive !important;
+    font-size: 5rem !important;
+    font-weight: 400 !important;
+    color: #e2e8f0 !important;
+    text-align: center !important;
+    display: block !important;
+    width: 100% !important;
+    line-height: 1.2 !important;
+    margin: 0 !important;
+    padding: 0 !important;
+}
+
+/* Ensure ColorFlex cart items maintain proper styling */
+.colorflex-cart-item {
+    position: relative !important;
+    z-index: 1 !important;
+}
+
+/* Enhanced color circles styling */
+.colorflex-cart-item .colorflex-color-circles,
+.colorflex-cart-item .color-circles-container {
+    display: flex !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    margin-bottom: 8px !important;
+    flex-wrap: wrap !important;
+    min-height: 24px !important;
+}
+
+.colorflex-cart-item .colorflex-color-circles > div,
+.colorflex-cart-item .color-circles-container > div {
+    width: 24px !important;
+    height: 24px !important;
+    border-radius: 50% !important;
+    border: 2px solid #d4af37 !important;
+    display: inline-block !important;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.3) !important;
+    cursor: help !important;
+}
+</style>
+{% endif %}

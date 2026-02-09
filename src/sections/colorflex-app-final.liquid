@@ -1,0 +1,489 @@
+<!-- Font imports -->
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Island+Moments&family=Special+Elite&display=swap" rel="stylesheet">
+
+<!-- Complete ColorFlex Styling Restoration -->
+<style>
+/* CSS Custom Properties */
+:root {
+    --preview-size: 700px;
+}
+
+/* Collection Header Font */
+#collectionHeader {
+    font-family: 'IM Fell English', serif !important;
+    font-size: 1.2rem !important;
+    font-weight: normal !important;
+    text-transform: uppercase !important;
+    color: white !important;
+}
+
+/* Font fallback */
+@font-face {
+    font-family: 'IM Fell English';
+    font-style: normal;
+    font-weight: 400;
+    src: url('https://fonts.gstatic.com/s/imfellenglish/v15/Ktk7ALSLclQ8po5LY2hvEIjEVN2Y5H9RLyTu.woff2') format('woff2');
+}
+
+/* Font smoothing */
+#patternName {
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+    text-rendering: optimizeLegibility !important;
+}
+
+/* ==============================================
+   CURATED COLOR CIRCLES
+   ============================================== */
+.curated-color-circle {
+    width: 50px !important;
+    height: 50px !important;
+    border-radius: 50% !important;
+    border: 2px solid #d4af37 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    display: inline-block !important;
+    margin: 0.25rem !important;
+    text-align: center !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.curated-color-circle:hover {
+    transform: scale(1.1) !important;
+    border-color: #f0e6d2 !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+.curated-color-circle span {
+    font-size: 0.7rem !important;
+    font-weight: bold !important;
+    line-height: 1.1 !important;
+    text-align: center !important;
+    white-space: pre-line !important;
+    font-family: 'Special Elite', monospace !important;
+}
+
+/* ==============================================
+   COLOR LAYER INPUT CIRCLES
+   ============================================== */
+.circle-input {
+    width: 40px !important;
+    height: 40px !important;
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    border-radius: 50% !important;
+    border: 2px solid #d4af37 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3) !important;
+    margin-right: 0.5rem !important;
+    display: inline-block !important;
+    vertical-align: middle !important;
+    flex-shrink: 0 !important;
+    box-sizing: border-box !important;
+}
+
+.circle-input:hover {
+    transform: scale(1.1) !important;
+    border-color: #f0e6d2 !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Layer input containers */
+.layer-input-container {
+    display: flex !important;
+    align-items: center !important;
+    margin-bottom: 0.75rem !important;
+    padding: 0.5rem !important;
+    background: rgba(255, 255, 255, 0.05) !important;
+    border-radius: 4px !important;
+    border: 1px solid rgba(212, 175, 55, 0.2) !important;
+    gap: 0.5rem !important;
+}
+
+.layer-label {
+    color: #d4af37 !important;
+    font-weight: 500 !important;
+    font-size: 0.85rem !important;
+    font-family: 'Special Elite', monospace !important;
+    flex: 1 !important;
+    min-width: 80px !important;
+}
+
+.layer-input {
+    flex: 2 !important;
+    padding: 0.25rem 0.5rem !important;
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    border-radius: 3px !important;
+    color: white !important;
+    font-size: 0.8rem !important;
+}
+
+/* ==============================================
+   BUTTON STYLING (TRANSPARENT WITH BORDERS)
+   ============================================== */
+#printButton, #saveToListButton {
+    padding: 0.5rem 1rem !important;
+    font-size: 0.85rem !important;
+    background: transparent !important;
+    border: 2px solid #d4af37 !important;
+    border-radius: 4px !important;
+    color: #d4af37 !important;
+    position: relative !important;
+    z-index: 150 !important;
+    pointer-events: auto !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 0.5rem !important;
+    font-family: 'Special Elite', monospace !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+}
+
+#printButton:hover, #saveToListButton:hover {
+    background: rgba(212, 175, 55, 0.1) !important;
+    border-color: #f0e6d2 !important;
+    transform: translateY(-1px) !important;
+}
+
+/* Scale control buttons */
+button[data-multiplier] {
+    margin: 0 0.25rem !important;
+    padding: 0.4rem 0.8rem !important;
+    background: #e2e8f0 !important;
+    border: none !important;
+    border-radius: 4px !important;
+    font-size: 0.85rem !important;
+    cursor: pointer !important;
+}
+
+/* ==============================================
+   COORDINATE IMAGES LAYOUT (STAGGERED & CENTERED)
+   ============================================== */
+#coordinatesContainer {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    position: relative !important;
+    width: 100% !important;
+    min-height: 300px !important;
+    overflow: visible !important;
+    max-width: 600px !important;
+    margin: 3rem auto !important;
+}
+
+.coordinate-image {
+    width: 120px !important;
+    height: 120px !important;
+    max-width: 120px !important;
+    max-height: 120px !important;
+    object-fit: cover !important;
+    border-radius: 8px !important;
+    border: 2px solid #d4af37 !important;
+    cursor: pointer !important;
+    transition: all 0.3s ease !important;
+    position: absolute !important;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* Staggered positioning for coordinate images */
+.coordinate-image:nth-child(1) {
+    top: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+}
+
+.coordinate-image:nth-child(2) {
+    top: 60px !important;
+    left: 30% !important;
+    transform: translateX(-50%) !important;
+}
+
+.coordinate-image:nth-child(3) {
+    top: 60px !important;
+    right: 30% !important;
+    transform: translateX(50%) !important;
+}
+
+.coordinate-image:nth-child(4) {
+    bottom: 0 !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+}
+
+/* Coordinate hover effects with positioning preserved */
+.coordinate-image:nth-child(1):hover {
+    transform: translateX(-50%) scale(1.05) !important;
+    border-color: #f0e6d2 !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+.coordinate-image:nth-child(2):hover {
+    transform: translateX(-50%) scale(1.05) !important;
+    border-color: #f0e6d2 !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+.coordinate-image:nth-child(3):hover {
+    transform: translateX(50%) scale(1.05) !important;
+    border-color: #f0e6d2 !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+.coordinate-image:nth-child(4):hover {
+    transform: translateX(-50%) scale(1.05) !important;
+    border-color: #f0e6d2 !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.4) !important;
+}
+
+.coordinate-image.selected {
+    border-color: #f0e6d2 !important;
+    border-width: 3px !important;
+}
+
+/* ==============================================
+   COLLECTION THUMBNAILS
+   ============================================== */
+#collectionThumbnails {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 0.5rem !important;
+}
+
+#collectionThumbnails img {
+    width: 100% !important;
+    max-width: 120px !important;
+    height: 80px !important;
+    object-fit: cover !important;
+    border-radius: 4px !important;
+    cursor: pointer !important;
+    margin-bottom: 0.5rem !important;
+    border: 1px solid rgba(212, 175, 55, 0.3) !important;
+    transition: all 0.3s ease !important;
+}
+
+#collectionThumbnails img:hover {
+    border-color: #d4af37 !important;
+    transform: scale(1.02) !important;
+}
+
+#collectionThumbnails img.active {
+    border-color: #d4af37 !important;
+    border-width: 2px !important;
+}
+
+/* ==============================================
+   PREVIEW CONTAINERS
+   ============================================== */
+#preview {
+    border: 2px solid #d4af37 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+#roomMockup {
+    border: 2px solid #d4af37 !important;
+    border-radius: 8px !important;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3) !important;
+}
+
+/* ==============================================
+   TYPOGRAPHY
+   ============================================== */
+.font-special-elite {
+    font-family: 'Special Elite', monospace !important;
+    -webkit-font-smoothing: antialiased !important;
+    -moz-osx-font-smoothing: grayscale !important;
+}
+
+.font-island-moments {
+    font-family: 'Island Moments', cursive !important;
+}
+
+/* ==============================================
+   RESPONSIVE ADJUSTMENTS
+   ============================================== */
+@media (max-width: 1200px) {
+    .curated-color-circle {
+        width: 45px !important;
+        height: 45px !important;
+    }
+    
+    .circle-input {
+        width: 35px !important;
+        height: 35px !important;
+    }
+    
+    .coordinate-image {
+        width: 100px !important;
+        height: 100px !important;
+    }
+    
+    #collectionThumbnails img {
+        max-width: 100px !important;
+        height: 70px !important;
+    }
+}
+</style>
+
+<div class="colorflex-section" {{ section.shopify_attributes }}>
+  <div style="background: #1a202c; color: white; padding: 0.5rem; border-radius: 8px; margin: 0.25rem 0;">
+    
+    <!-- Hidden main title -->
+    <h2 style="display: none;">{{ section.settings.title }}</h2>
+    
+    <!-- ColorFlex App -->
+    <div id="mainContainer" style="position: relative; min-height: 70vh;">
+      
+      <div style="display: grid; grid-template-columns: 1fr 280px 1fr; gap: 2rem; max-width: 1500px; margin: 0 auto; margin-left: 160px; padding: 0 1rem; position: relative; z-index: 1;">
+        
+        <!-- MOVED: Curated Colors Section - Compact Version -->
+        <div style="grid-column: 1 / -1; margin-bottom: 0;">
+          <section id="curatedColorsSection" style="width: 100%; padding: 0.125rem 0 0 0; text-align: center;">
+            <div id="curatedColorsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 1300px; margin: 0 auto; min-height: 30px;"></div>
+          </section>
+        </div>
+        
+        <!-- Pattern Preview -->
+        <div style="text-align: center; margin-top: -22px;">
+          <h3 style="margin-bottom: 0.5rem; font-size: 2.4rem; font-family: 'Island Moments', cursive !important;">Pattern Preview</h3>
+          <div id="preview" style="max-width: 700px; min-height: 200px; background: #434341; margin: 0 auto; display: flex; justify-content: center; align-items: center;"></div>
+          <h3 id="patternName" style="margin: 0.5rem .5rem; font-size: 1.4rem; font-family: 'Special Elite', monospace !important;">Pattern Name</h3>
+          <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.5rem; margin-bottom: 3rem; padding-bottom: 2rem; position: relative; z-index: 150;">
+            <button id="printButton" class="py-4" aria-label="Print Pattern" data-tooltip="Click to print this pattern" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: #e2e8f0; border: none; border-radius: 4px; position: relative; z-index: 150; pointer-events: auto !important; display: flex; align-items: center; gap: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6,9 6,2 18,2 18,9"></polyline>
+                <path d="m6,18 h4"></path>
+                <path d="m10,18 h4"></path>
+                <rect x="3" y="14" width="18" height="4"></rect>
+                <path d="m14,18 h4"></path>
+              </svg>
+              Print Pattern
+            </button>
+            <button id="saveToListButton" class="py-4" aria-label="Save to List" data-tooltip="Save this pattern to your custom list" onclick="alert('Save to List functionality will be implemented soon! This will allow you to create custom lists and save patterns for later use.')" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: #e2e8f0; border: none; border-radius: 4px; position: relative; z-index: 150; pointer-events: auto !important; display: flex; align-items: center; gap: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                <path d="M12 11h4"></path>
+                <path d="M12 16h4"></path>
+                <path d="M8 11h.01"></path>
+                <path d="M8 16h.01"></path>
+              </svg>
+              Save to my list
+            </button>
+          </div>
+        </div>
+        
+        <!-- Color Controls -->
+        <div id="colorControls" style="display: flex; flex-direction: column; width: 100%; margin-left: -1rem;">
+          <h3 style="text-align: center; color: #d4af37; font-size: 1.5rem; font-family: 'Special Elite', monospace !important;">Color Layers</h3>
+
+          <div id="layerInputsContainer" style="width: 100%; min-width: 280px;"></div>
+        </div>
+        
+        <!-- Room Mockup -->
+        <div style="text-align: center; margin-top: -15px;">
+          <h3 style="margin-bottom: 0.5rem; font-size: 1.8rem; font-family: 'Island Moments', cursive !important;">Room Mockup Preview</h3>
+          <div id="roomMockup" style="width: 550px; height: 400px; background: #434341; margin: 0 auto;"></div>
+          
+          <div id="scaleControls" style="margin-top: 0.75rem;">
+            <button data-multiplier="1" onclick="setPatternScale(1)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">Normal</button>
+            <button data-multiplier="0.5" onclick="setPatternScale(0.5)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">2X</button>
+            <button data-multiplier="0.25" onclick="setPatternScale(0.25)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">3X</button>
+            <button data-multiplier="0.125" onclick="setPatternScale(0.125)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">4X</button>
+          </div>
+          <div style="text-align: center;">
+            <h3 style="margin-top: 1.9rem; font-size: 2rem; font-family: 'Island Moments', cursive !important;">Matching Coordinates</h3>
+            <div id="coordinatesContainer" style="margin-top: 3rem; min-height: 100px; max-width: 550px; margin-left: auto; margin-right: auto;"></div>
+          </div>
+          
+        </div>
+        
+      </div>
+      
+      <!-- Left Sidebar - Fixed Position -->
+      <div id="leftSidebar" style="position: fixed; left: 0; top: 120px; width: 140px; background: #2d3748; padding: 0.75rem; z-index: 25; border-radius: 0 8px 8px 0; overflow-y: auto; max-height: calc(100vh - 140px); scrollbar-width: none; -ms-overflow-style: none;">
+        <h6 id="collectionHeader" style="background: #2d3748; margin-bottom: 0.75rem; font-family: 'IM Fell English', serif !important; font-size: 1.2rem !important; color: white !important; font-weight: normal !important; text-transform: uppercase !important;">BOTANICALS Collection</h6>
+        <div id="collectionThumbnails"></div>
+      </div>
+      
+    </div>
+    
+    <div id="colorPopup" style="display: none;">
+      <div>
+        <p>🎨 Click a curated color to set this background color.</p>
+        <label><input type="checkbox" id="disablePopup"> Don't show this message again</label>
+        <button id="popupOkButton">OK</button>
+      </div>
+    </div>
+    
+  </div>
+</div>
+
+  {{ 'color-flex-core.min.css' | asset_url | stylesheet_tag }}
+  <script src="{{ 'color-flex-core.min.js' | asset_url }}"></script>
+<script>
+// Set up asset URLs for ColorFlex to use
+window.ColorFlexAssets = {
+  colorsUrl: "{{ 'colors.json' | asset_url }}",
+  collectionsUrl: "{{ 'collections.json' | asset_url }}",
+  furnitureConfigUrl: "{{ 'furniture-config.json' | asset_url }}"
+};
+
+// Clean initialization - load app once DOM is ready
+document.addEventListener('DOMContentLoaded', function() {
+  console.log('🎨 ColorFlex DOM ready');
+  console.log('📁 Asset URLs configured:', window.ColorFlexAssets);
+  
+  // Wait for CFM.js to load
+  if (typeof window.startApp === 'function') {
+    console.log('✅ Starting ColorFlex immediately');
+    window.startApp();
+  } else {
+    console.log('⏳ Waiting for CFM.js to load...');
+    // Check every 100ms for startApp to become available
+    const checkInterval = setInterval(function() {
+      if (typeof window.startApp === 'function') {
+        console.log('✅ CFM.js loaded, starting app');
+        clearInterval(checkInterval);
+        window.startApp();
+      }
+    }, 100);
+    
+    // Safety timeout after 5 seconds
+    setTimeout(function() {
+      clearInterval(checkInterval);
+      if (typeof window.startApp !== 'function') {
+        console.error('❌ CFM.js failed to load within 5 seconds');
+      }
+    }, 5000);
+  }
+});
+</script>
+
+{% schema %}
+{
+  "name": "ColorFlex App",
+  "settings": [
+    {
+      "type": "text", 
+      "id": "title",
+      "label": "Section Title",
+      "default": "ColorFlex Pattern Customizer"
+    }
+  ],
+  "presets": [
+    {
+      "name": "ColorFlex App"
+    }
+  ]
+}
+{% endschema %}

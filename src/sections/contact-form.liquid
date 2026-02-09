@@ -1,0 +1,12 @@
+<div class="page-width">
+  {% form 'contact' %}
+    {% if form.posted_successfully? %}<p>{{ 'templates.contact.form.post_success' | t }}</p>{% endif %}
+    <input type="text" name="contact[name]" placeholder="Name">
+    <input type="email" name="contact[email]" placeholder="Email">
+    <textarea name="contact[body]" placeholder="Message"></textarea>
+    <button type="submit">{{ 'templates.contact.form.send' | t }}</button>
+  {% endform %}
+</div>
+{% schema %}
+{ "name": "Contact form", "tag": "section", "settings": [] }
+{% endschema %}

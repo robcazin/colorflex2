@@ -1,0 +1,460 @@
+/**
+ * ColorFlex Shopify API Server
+ * Express server for handling customer metafield operations
+ */
+
+// Load environment variables from .env file
+require('dotenv').config();
+
+const express = require('express');
+const cors = require('cors');
+const rateLimit = require('express-rate-limit');
+const { 
+    savePatternToCustomer, 
+    getCustomerSavedPatterns, 
+    deleteCustomerPattern 
+} = require('./shopify-metafields');
+
+const app = express();
+const PORT = process.env.PORT || 3001;
+
+// Trust proxy (needed for rate limiter when behind ngrok/proxy)
+// Only trust the first proxy (ngrok) to prevent IP spoofing
+// Set to 1 to only trust the first proxy hop
+app.set('trust proxy', 1);
+
+// Middleware
+app.use(express.json({ limit: '10mb' }));
+app.use(cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['https://your-shopify-store.myshopify.com'],
+    credentials: true
+}));
+
+// Rate limiting - configure to work with proxy
+const limiter = rateLimit({
+    windowMs: 15 * 60 * 1000, // 15 minutes
+    max: 100, // limit each IP to 100 requests per windowMs
+    message: 'Too many requests from this IP',
+    // Use standardHeaders for better proxy compatibility
+    standardHeaders: true,
+    legacyHeaders: false,
+    // Skip validation warnings in development (ngrok/proxy setup)
+    skip: (req) => {
+        // In development, we're behind ngrok, so skip validation
+        return process.env.NODE_ENV === 'development';
+    }
+});
+app.use('/api/', limiter);
+
+/**
+ * Save pattern to customer metafields
+ * POST /api/colorFlex/save-pattern
+ */
+app.post('/api/colorFlex/save-pattern', async (req, res) => {
+    try {
+        const { customerId, patternData } = req.body;
+        const customerAccessToken = req.headers['x-shopify-customer-access-token'];
+
+        // Validate required fields
+        if (!customerId || !patternData || !customerAccessToken) {
+            return res.status(400).json({
+                error: 'Missing required fields: customerId, patternData, or access token'
+            });
+        }
+
+        // Validate pattern data structure
+        if (!patternData.pattern || !patternData.pattern.name || !patternData.pattern.collection) {
+            return res.status(400).json({
+                error: 'Invalid pattern data structure'
+            });
+        }
+
+        // Save to Shopify
+        const result = await savePatternToCustomer(customerId, patternData, customerAccessToken);
+
+        res.json({
+            success: true,
+            message: 'Pattern saved successfully',
+            data: result
+        });
+
+    } catch (error) {
+        console.error('Save pattern error:', error);
+        res.status(500).json({
+            error: 'Failed to save pattern',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * Get customer's saved patterns
+ * GET /api/colorFlex/patterns/:customerId
+ */
+app.get('/api/colorFlex/patterns/:customerId', async (req, res) => {
+    try {
+        const { customerId } = req.params;
+        const customerAccessToken = req.headers['x-shopify-customer-access-token'];
+
+        if (!customerAccessToken) {
+            return res.status(401).json({
+                error: 'Customer access token required'
+            });
+        }
+
+        const patterns = await getCustomerSavedPatterns(customerId, customerAccessToken);
+
+        res.json({
+            success: true,
+            patterns: patterns,
+            count: patterns.length
+        });
+
+    } catch (error) {
+        console.error('Get patterns error:', error);
+        res.status(500).json({
+            error: 'Failed to retrieve patterns',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * Delete a specific pattern
+ * DELETE /api/colorFlex/patterns/:customerId/:patternId
+ */
+app.delete('/api/colorFlex/patterns/:customerId/:patternId', async (req, res) => {
+    try {
+        const { customerId, patternId } = req.params;
+        const customerAccessToken = req.headers['x-shopify-customer-access-token'];
+
+        if (!customerAccessToken) {
+            return res.status(401).json({
+                error: 'Customer access token required'
+            });
+        }
+
+        const result = await deleteCustomerPattern(customerId, parseInt(patternId), customerAccessToken);
+
+        res.json({
+            success: true,
+            message: 'Pattern deleted successfully',
+            data: result
+        });
+
+    } catch (error) {
+        console.error('Delete pattern error:', error);
+        res.status(500).json({
+            error: 'Failed to delete pattern',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * Extract thumbnails from order (webhook handler)
+ * POST /api/orders/thumbnail-extract
+ * 
+ * Set up as Shopify webhook: orders/create
+ * Webhook URL: https://your-api-server.com/api/orders/thumbnail-extract
+ */
+app.post('/api/orders/thumbnail-extract', async (req, res) => {
+    try {
+        const orderData = req.body;
+        
+        if (!orderData || !orderData.order) {
+            return res.status(400).json({
+                error: 'Invalid order data'
+            });
+        }
+
+        const { extractThumbnailFromOrder } = require('./order-thumbnail-handler');
+        const thumbnails = await extractThumbnailFromOrder(orderData);
+
+        // Return success even if no thumbnails found (not all orders have ColorFlex items)
+        res.status(200).json({
+            success: true,
+            orderId: orderData.order.id,
+            orderNumber: orderData.order.order_number || orderData.order.order_name,
+            thumbnailsExtracted: thumbnails.length,
+            thumbnails: thumbnails
+        });
+
+    } catch (error) {
+        console.error('Extract thumbnail error:', error);
+        // Return 200 to prevent webhook retries for processing errors
+        res.status(200).json({
+            success: false,
+            error: 'Failed to extract thumbnails',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * Upload thumbnail to Shopify Files and return URL
+ * POST /api/upload-thumbnail
+ * Body: { thumbnail: "data:image/jpeg;base64,...", filename: "pattern-thumbnail.jpg" }
+ */
+app.post('/api/upload-thumbnail', async (req, res) => {
+    try {
+        const { thumbnail, filename } = req.body;
+        
+        if (!thumbnail) {
+            return res.status(400).json({
+                error: 'Missing thumbnail data'
+            });
+        }
+
+        // Extract base64 data from data URL if present
+        let base64Data = thumbnail.replace(/^data:image\/\w+;base64,/, '');
+        // Trim any whitespace
+        base64Data = base64Data.trim();
+        
+        // Get Shopify credentials from environment
+        const SHOPIFY_STORE = process.env.SHOPIFY_STORE || process.env.SHOPIFY_STORE_URL;
+        const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
+        // Force 2025-01 to match cf-dl.js which works - Files API may not work in newer versions
+        const API_VERSION = '2025-01';
+        
+        if (!SHOPIFY_STORE || !SHOPIFY_ACCESS_TOKEN) {
+            console.error('❌ Missing Shopify credentials:', {
+                hasStore: !!SHOPIFY_STORE,
+                hasToken: !!SHOPIFY_ACCESS_TOKEN
+            });
+            return res.status(500).json({
+                error: 'Shopify credentials not configured'
+            });
+        }
+
+        // Clean store name (remove https:// and .myshopify.com if present)
+        const cleanStore = SHOPIFY_STORE.replace(/^https?:\/\//, '').replace(/\.myshopify\.com$/, '').trim();
+        const cleanToken = SHOPIFY_ACCESS_TOKEN.trim();
+        
+        // Generate filename - sanitize to remove spaces and special characters
+        const sanitizeFilename = (name) => {
+            if (!name) return `colorflex-thumbnail-${Date.now()}.jpg`;
+            // Remove path separators and keep only safe characters
+            return name
+                .replace(/[^a-zA-Z0-9._-]/g, '-')
+                .replace(/-+/g, '-')
+                .replace(/^-|-$/g, '')
+                .substring(0, 255) || `colorflex-thumbnail-${Date.now()}.jpg`;
+        };
+        const finalFilename = sanitizeFilename(filename) || `colorflex-thumbnail-${Date.now()}.jpg`;
+        
+        // Try GraphQL fileCreate mutation first (Files API REST endpoint returns 406)
+        // Fallback to REST API if GraphQL fails
+        const graphqlUrl = `https://${cleanStore}.myshopify.com/admin/api/${API_VERSION}/graphql.json`;
+        
+        console.log('📤 Uploading to Shopify Files via GraphQL:', {
+            store: cleanStore,
+            apiVersion: API_VERSION,
+            filename: finalFilename,
+            base64Length: base64Data.length,
+            tokenPrefix: cleanToken.substring(0, 10) + '...'
+        });
+        
+        // GraphQL mutation for fileCreate
+        const graphqlMutation = `
+            mutation fileCreate($files: [FileCreateInput!]!) {
+                fileCreate(files: $files) {
+                    files {
+                        id
+                        fileStatus
+                        ... on MediaImage {
+                            id
+                            image {
+                                url
+                                altText
+                            }
+                        }
+                        ... on GenericFile {
+                            id
+                            url
+                        }
+                    }
+                    userErrors {
+                        field
+                        message
+                    }
+                }
+            }
+        `;
+        
+        const graphqlVariables = {
+            files: [{
+                originalSource: `data:image/jpeg;base64,${base64Data}`,
+                alt: finalFilename
+            }]
+        };
+        
+        let response;
+        let shopifyUrl;
+        
+        try {
+            // Try GraphQL first
+            response = await fetch(graphqlUrl, {
+                method: 'POST',
+                headers: {
+                    'X-Shopify-Access-Token': cleanToken,
+                    'Content-Type': 'application/json',
+                    'Accept': 'application/json'
+                },
+                body: JSON.stringify({
+                    query: graphqlMutation,
+                    variables: graphqlVariables
+                })
+            });
+            
+            if (response.ok) {
+                const graphqlData = await response.json();
+                
+                if (graphqlData.errors) {
+                    console.error('❌ GraphQL errors:', graphqlData.errors);
+                    throw new Error(`GraphQL errors: ${JSON.stringify(graphqlData.errors)}`);
+                }
+                
+                const fileCreate = graphqlData.data?.fileCreate;
+                if (fileCreate?.userErrors?.length > 0) {
+                    console.error('❌ GraphQL user errors:', fileCreate.userErrors);
+                    throw new Error(`GraphQL user errors: ${JSON.stringify(fileCreate.userErrors)}`);
+                }
+                
+                const file = fileCreate?.files?.[0];
+                if (file) {
+                    // Extract URL from GraphQL response
+                    if (file.image?.url) {
+                        shopifyUrl = file.image.url;
+                    } else if (file.url) {
+                        shopifyUrl = file.url;
+                    }
+                    
+                    if (shopifyUrl) {
+                        console.log('✅ Shopify Files upload successful via GraphQL!');
+                        console.log('✅ File URL:', shopifyUrl);
+                        console.log('✅ File ID:', file.id);
+                        
+                        return res.json({
+                            success: true,
+                            url: shopifyUrl
+                        });
+                    }
+                }
+            }
+            
+            // If GraphQL failed, fall back to REST API
+            console.log('⚠️ GraphQL upload failed, trying REST API fallback...');
+            console.log('GraphQL response status:', response.status);
+            
+        } catch (graphqlError) {
+            console.error('⚠️ GraphQL upload error, trying REST API fallback:', graphqlError.message);
+        }
+        
+        // Fallback to REST API (original method)
+        const restUrl = `https://${cleanStore}.myshopify.com/admin/api/${API_VERSION}/files.json`;
+        const requestBody = {
+            file: {
+                attachment: base64Data,
+                filename: finalFilename,
+                content_type: 'image/jpeg'
+            }
+        };
+        
+        console.log('📤 Trying REST API fallback:', {
+            url: restUrl,
+            filename: finalFilename
+        });
+        
+        response = await fetch(restUrl, {
+            method: 'POST',
+            headers: {
+                'X-Shopify-Access-Token': cleanToken,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(requestBody)
+        });
+
+        // Log response details
+        console.log('📥 Response details:', {
+            status: response.status,
+            statusText: response.statusText,
+            headers: Object.fromEntries(response.headers.entries())
+        });
+
+        if (!response.ok) {
+            let errorText = '';
+            try {
+                errorText = await response.text();
+            } catch (e) {
+                errorText = 'Could not read error response';
+            }
+            
+            console.error('❌ Shopify REST API error:', {
+                status: response.status,
+                statusText: response.statusText,
+                error: errorText,
+                errorLength: errorText.length,
+                url: restUrl,
+                responseHeaders: Object.fromEntries(response.headers.entries())
+            });
+            throw new Error(`Shopify API error ${response.status}: ${errorText || 'No error message'}`);
+        }
+
+        const data = await response.json();
+        shopifyUrl = data.file.url;
+
+        console.log('✅ Shopify Files upload successful via REST API!');
+        console.log('✅ File URL:', shopifyUrl);
+        console.log('✅ File ID:', data.file.id);
+        console.log('✅ File size:', data.file.size);
+
+        res.json({
+            success: true,
+            url: shopifyUrl
+        });
+
+    } catch (error) {
+        console.error('Upload thumbnail error:', error);
+        res.status(500).json({
+            error: 'Failed to upload thumbnail',
+            message: error.message
+        });
+    }
+});
+
+/**
+ * Health check endpoint
+ */
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        timestamp: new Date().toISOString(),
+        service: 'ColorFlex Shopify API'
+    });
+});
+
+// Error handling middleware
+app.use((error, req, res, next) => {
+    console.error('API Error:', error);
+    res.status(500).json({
+        error: 'Internal server error',
+        message: process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'
+    });
+});
+
+// 404 handler
+app.use('*', (req, res) => {
+    res.status(404).json({
+        error: 'Endpoint not found'
+    });
+});
+
+// Start server
+app.listen(PORT, () => {
+    console.log(`🚀 ColorFlex API server running on port ${PORT}`);
+    console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
+});
+
+module.exports = app;

@@ -1,0 +1,124 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "main": {
+      "type": "main-product",
+      "blocks": {
+        "vendor": {
+          "type": "text",
+          "settings": {
+            "text": "{{ product.vendor }}",
+            "text_style": "uppercase"
+          }
+        },
+        "title": {
+          "type": "title",
+          "settings": {}
+        },
+        "free_shipping": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<style>.quantity__input, .quantity__button, quantity-input, .quantity { display: block !important; visibility: visible !important; opacity: 1 !important; }</style><div class=\"product-form__free-shipping\" style=\"margin: 1.6rem 0 1rem; display: flex; align-items: center; gap: 0.8rem; padding: 1.2rem 1.6rem; border-radius: 8px; font-size: 1.4rem; line-height: 1.4; background: rgba(34, 197, 94, 0.1); color: rgb(34, 197, 94); border: 0.1rem solid rgba(34, 197, 94, 0.2);\"><svg width=\"16\" height=\"16\" viewBox=\"0 0 20 20\" fill=\"currentColor\" style=\"width: 1.6rem; height: 1.6rem; flex-shrink: 0;\"><path fill-rule=\"evenodd\" d=\"M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z\" clip-rule=\"evenodd\"/></svg>FREE shipping on all orders!</div>"
+          }
+        },
+        "quantity_field": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "<div class=\"product-form__input product-form__quantity\" style=\"margin: 1rem 0;\"><label class=\"quantity__label form__label\" style=\"display: block; margin-bottom: 8px; font-weight: bold;\">Rolls</label><div style=\"display: flex; align-items: center; gap: 8px;\"><button type=\"button\" onclick=\"changeQty(-1)\" style=\"background: #000; color: white; border: none; width: 44px; height: 44px; cursor: pointer; border-radius: 4px; font-size: 18px;\">−</button><input type=\"number\" id=\"customQuantity\" class=\"quantity-input\" min=\"5\" max=\"100\" value=\"1\" style=\"width: 80px; height: 44px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;\"><button type=\"button\" onclick=\"changeQty(1)\" style=\"background: #000; color: white; border: none; width: 44px; height: 44px; cursor: pointer; border-radius: 4px; font-size: 18px;\">+</button></div></div><script>function changeQty(change) { const input = document.getElementById('customQuantity'); const newVal = Math.max(1, Math.min(10, parseInt(input.value) + change)); input.value = newVal; console.log('🔢 Custom quantity changed to:', newVal); syncQuantityToForms(newVal); } function syncQuantityToForms(qty) { const forms = document.querySelectorAll('form[action*=\"/cart/add\"]'); console.log('🔄 Syncing quantity to', forms.length, 'forms'); forms.forEach((form, index) => { let qtyInput = form.querySelector('input[name=\"quantity\"]'); if (!qtyInput) { qtyInput = document.createElement('input'); qtyInput.type = 'hidden'; qtyInput.name = 'quantity'; form.appendChild(qtyInput); console.log(`✅ Created quantity input for form ${index + 1}`); } qtyInput.value = qty; console.log(`✅ Set form ${index + 1} quantity to:`, qty); }); } document.addEventListener('DOMContentLoaded', function() { syncQuantityToForms(1); setTimeout(() => syncQuantityToForms(1), 1000); }); console.log('✅ Enhanced quantity field loaded');</script>"
+          }
+        },
+        "colorflex_button": {
+          "type": "custom_liquid",
+          "settings": {
+            "custom_liquid": "{% render 'shopify-product-colorflex-button' %}"
+          }
+        },
+        "buy_buttons": {
+          "type": "buy_buttons",
+          "settings": {
+            "show_dynamic_checkout": false,
+            "show_gift_card_recipient": true
+          }
+        },
+        "description": {
+          "type": "description",
+          "settings": {}
+        },
+        "price": {
+          "type": "price",
+          "settings": {}
+        },
+        "variant_picker": {
+          "type": "variant_picker",
+          "settings": {
+            "picker_type": "button",
+            "swatch_shape": "circle"
+          }
+        },
+        "share": {
+          "type": "share",
+          "settings": {
+            "share_label": "Share"
+          }
+        }
+      },
+      "block_order": [
+        "vendor",
+        "title",
+        "free_shipping",
+        "quantity_field",
+        "colorflex_button",
+        "buy_buttons",
+        "description",
+        "price",
+        "variant_picker",
+        "share"
+      ],
+      "settings": {
+        "enable_sticky_info": true,
+        "color_scheme": "scheme-a376e3c8-54ce-4a7e-81b7-0240553ed194",
+        "media_size": "medium",
+        "constrain_to_viewport": true,
+        "media_fit": "contain",
+        "gallery_layout": "stacked",
+        "mobile_thumbnails": "hide",
+        "media_position": "left",
+        "image_zoom": "lightbox",
+        "hide_variants": false,
+        "enable_video_looping": false,
+        "padding_top": 24,
+        "padding_bottom": 24
+      }
+    },
+    "related-products": {
+      "type": "related-products",
+      "settings": {
+        "heading": "You may also like",
+        "heading_size": "h2",
+        "products_to_show": 4,
+        "columns_desktop": 4,
+        "columns_mobile": "2",
+        "color_scheme": "scheme-7",
+        "image_ratio": "adapt",
+        "image_shape": "default",
+        "show_secondary_image": false,
+        "show_vendor": false,
+        "show_rating": false,
+        "padding_top": 36,
+        "padding_bottom": 68
+      }
+    }
+  },
+  "order": [
+    "main",
+    "related-products"
+  ]
+}

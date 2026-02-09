@@ -1,0 +1,20 @@
+{
+  "type": "header",
+  "name": "Header",
+  "sections": {
+    "header": {
+      "type": "header",
+      "settings": {
+        "menu": "main-menu",
+        "menu_type_desktop": "dropdown",
+        "logo_position": "middle-center",
+        "mobile_logo_position": "left",
+        "sticky_header_type": "on-scroll-up",
+        "show_line_separator": true,
+        "color_scheme": "scheme-1",
+        "menu_color_scheme": "scheme-1"
+      }
+    }
+  },
+  "order": ["header"]
+}

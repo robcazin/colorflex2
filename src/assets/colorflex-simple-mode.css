@@ -1,0 +1,82 @@
+/**
+ * ColorFlex Simple Mode Styles
+ *
+ * Purpose: Override default ColorFlex styles for simple mode pages
+ * - Force horizontal thumbnail layout
+ * - Hide ONLY curated colors section (keep layer color inputs!)
+ * - Optimize for 600x600 preview sizes with color controls
+ *
+ * Load order: MUST load AFTER color-flex-core.min.css
+ */
+
+/* CRITICAL: Force main container visible - something is hiding it */
+#colorflexMainContainer {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+}
+
+/* Override core CSS variable for preview size */
+:root {
+  --preview-size: 600px !important;
+}
+
+/* Hide unused sections in simple mode */
+#curatedColorsSection,
+#curatedColorsContainer,
+#collectionThumbnails,
+#thumbnailsWrapper {
+  display: none !important;
+}
+
+/* Note: Pattern thumbnails in simple mode are displayed in:
+   - #patternThumbnailsSidebar (vertical sidebar)
+   - #layerThumbnailsContainer (horizontal layer thumbnails at bottom) */
+
+/* Ensure pattern preview container is proper size (with color controls) */
+/* Width is fixed at 600px, height matches canvas (not stretched to 700px) */
+#preview {
+  width: 600px !important;
+  max-width: 600px !important;
+  height: auto !important;
+  min-height: 600px !important;
+  max-height: 700px !important;
+}
+
+/* Force canvas to not be stretched beyond container - reset any core CSS overrides */
+#preview canvas {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  max-height: 100% !important;
+  display: block !important;
+}
+
+/* Reduce vertical spacing between layer inputs for compact layout */
+.layer-input-container {
+  margin-bottom: 0.5rem !important;
+  padding: 0.35rem !important;
+}
+
+/* Hide Christmas promo banner on simple mode pages */
+#christmas-promo-banner {
+  display: none !important;
+}
+
+/* Mockup container sizing for simple mode */
+/* ✅ FIX: Furniture simple mode uses 800x600 (not 600x600) */
+#roomMockup {
+  width: 800px !important;
+  height: 600px !important;
+  overflow: visible !important; /* Allow full couch to be visible */
+}
+
+/* Furniture simple mode: canvas fills container */
+#roomMockup canvas {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* CLOTHING MODE: Canvas uses 4K render + CSS transform for zoom
+   DO NOT constrain canvas size - let JS handle it via transform: scale() */
+/* The clothing template will set specific canvas styles via JS */

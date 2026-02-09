@@ -1,0 +1,4271 @@
+<product-info
+  id="MainProduct-{{ section.id }}"
+  class="section-{{ section.id }}-padding gradient color-{{ section.settings.color_scheme }}"
+  data-section="{{ section.id }}"
+  data-product-id="{{ product.id }}"
+  data-update-url="true"
+  data-url="{{ product.url }}"
+  {% if section.settings.image_zoom == 'hover' %}
+    data-zoom-on-hover
+  {% endif %}
+>
+  {{ 'section-main-product.css' | asset_url | stylesheet_tag }}
+  {{ 'component-accordion.css' | asset_url | stylesheet_tag }}
+  {{ 'component-price.css' | asset_url | stylesheet_tag }}
+  {{ 'component-slider.css' | asset_url | stylesheet_tag }}
+  {{ 'component-rating.css' | asset_url | stylesheet_tag }}
+  {{ 'component-deferred-media.css' | asset_url | stylesheet_tag }}
+
+  {% unless product.has_only_default_variant %}
+    {{ 'component-product-variant-picker.css' | asset_url | stylesheet_tag }}
+    {{ 'component-swatch-input.css' | asset_url | stylesheet_tag }}
+    {{ 'component-swatch.css' | asset_url | stylesheet_tag }}
+  {% endunless %}
+  {%- if product.quantity_price_breaks_configured? -%}
+    {{ 'component-volume-pricing.css' | asset_url | stylesheet_tag }}
+  {%- endif -%}
+
+  {%- style -%}
+    .section-{{ section.id }}-padding {
+      padding-top: {{ section.settings.padding_top | times: 0.75 | round: 0 }}px;
+      padding-bottom: {{ section.settings.padding_bottom | times: 0.75 | round: 0 }}px;
+    }
+
+    @media screen and (min-width: 750px) {
+      .section-{{ section.id }}-padding {
+        padding-top: {{ section.settings.padding_top }}px;
+        padding-bottom: {{ section.settings.padding_bottom }}px;
+      }
+    }
+  {%- endstyle -%}
+
+  <script src="{{ 'product-info.js' | asset_url }}" defer="defer"></script>
+  <script src="{{ 'product-form.js' | asset_url }}" defer="defer"></script>
+  
+  <!-- Multi-Step Product Configuration Flow Integration - REMOVED to prevent duplicates (loaded in product.liquid template) -->
+  
+  <!-- Set up ColorFlex asset URLs for JavaScript -->
+  <script>
+    window.ColorFlexAssets = {
+      colorsUrl: '{{ "colors.json" | asset_url }}',
+      collectionsUrl: '{{ "collections.json" | asset_url }}'
+    };
+  </script>
+  {%- if product.quantity_price_breaks_configured? -%}
+    <script src="{{ 'show-more.js' | asset_url }}" defer="defer"></script>
+    <script src="{{ 'price-per-item.js' | asset_url }}" defer="defer"></script>
+  {%- endif -%}
+
+  {% if section.settings.image_zoom == 'hover' %}
+    <script id="EnableZoomOnHover-main" src="{{ 'magnify.js' | asset_url }}" defer="defer"></script>
+  {% endif %}
+  {%- if request.design_mode -%}
+    <script src="{{ 'theme-editor.js' | asset_url }}" defer="defer"></script>
+  {%- endif -%}
+
+  {%- assign first_3d_model = product.media | where: 'media_type', 'model' | first -%}
+  {%- if first_3d_model -%}
+    {{ 'component-product-model.css' | asset_url | stylesheet_tag }}
+    <link
+      id="ModelViewerStyle"
+      rel="stylesheet"
+      href="https://cdn.shopify.com/shopifycloud/model-viewer-ui/assets/v1.0/model-viewer-ui.css"
+      media="print"
+      onload="this.media='all'"
+    >
+    <link
+      id="ModelViewerOverride"
+      rel="stylesheet"
+      href="{{ 'component-model-viewer-ui.css' | asset_url }}"
+      media="print"
+      onload="this.media='all'"
+    >
+  {%- endif -%}
+
+  {% assign variant_images = product.images | where: 'attached_to_variant?', true | map: 'src' %}
+  <div class="page-width">
+    <div class="product product--{{ section.settings.media_size }} product--{{ section.settings.media_position }} product--{{ section.settings.gallery_layout }} product--mobile-{{ section.settings.mobile_thumbnails }} grid grid--1-col {% if product.media.size > 0 %}grid--2-col-tablet{% else %}product--no-media{% endif %}">
+      <div class="grid__item product__media-wrapper">
+        {% render 'product-media-gallery', variant_images: variant_images %}
+      </div>
+      <div class="product__info-wrapper grid__item{% if settings.page_width > 1400 and section.settings.media_size == "small" %} product__info-wrapper--extra-padding{% endif %}{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}">
+        <section
+          id="ProductInfo-{{ section.id }}"
+          class="product__info-container{% if section.settings.enable_sticky_info %} product__column-sticky{% endif %}"
+        >
+          {%- assign product_form_id = 'product-form-' | append: section.id -%}
+
+          {%- for block in section.blocks -%}
+            {%- case block.type -%}
+              {%- when '@app' -%}
+                {% render block %}
+              {%- when 'text' -%}
+                <p
+                  class="product__text inline-richtext{% if block.settings.text_style == 'uppercase' %} caption-with-letter-spacing{% elsif block.settings.text_style == 'subtitle' %} subtitle{% endif %}"
+                  {{ block.shopify_attributes }}
+                >
+                  {{- block.settings.text -}}
+                </p>
+              {%- when 'title' -%}
+                <div class="product__title" {{ block.shopify_attributes }}>
+                  <h1>{{ product.title | escape }}</h1>
+                  <a href="{{ product.url }}" class="product__title">
+                    <h2 class="h1">
+                      {{ product.title | escape }}
+                    </h2>
+                  </a>
+                </div>
+              {%- when 'price' -%}
+                <div id="price-{{ section.id }}" role="status" {{ block.shopify_attributes }}>
+                  {%- render 'price',
+                    product: product,
+                    use_variant: true,
+                    show_badges: true,
+                    price_class: 'price--large'
+                  -%}
+                </div>
+                {%- if product.quantity_price_breaks_configured? -%}
+                  <div class="volume-pricing-note" id="Volume-Note-{{ section.id }}">
+                    <span>{{ 'products.product.volume_pricing.note' | t }}</span>
+                  </div>
+                {%- endif -%}
+                {%- if cart.taxes_included or cart.duties_included or shop.shipping_policy.body != blank -%}
+                  <div class="product__tax caption rte">
+                    {%- if cart.duties_included and cart.taxes_included -%}
+                      {{ 'products.product.duties_and_taxes_included' | t }}
+                    {%- elsif cart.taxes_included -%}
+                      {{ 'products.product.taxes_included' | t }}
+                    {%- elsif cart.duties_included -%}
+                      {{ 'products.product.duties_included' | t }}
+                    {%- endif -%}
+                    {%- if shop.shipping_policy.body != blank -%}
+                      {{ 'products.product.shipping_policy_html' | t: link: shop.shipping_policy.url }}
+                    {%- endif -%}
+                  </div>
+                {%- endif -%}
+                <div {{ block.shopify_attributes }}>
+                  {%- assign product_form_installment_id = 'product-form-installment-' | append: section.id -%}
+                  {%- form 'product', product, id: product_form_installment_id, class: 'installment caption-large' -%}
+                    <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
+                    {{ form | payment_terms }}
+                  {%- endform -%}
+                </div>
+
+                            <!-- ColorFlex Button Integration -->
+              {%- assign layer_count = product.metafields.color_flex.layer_count -%}
+              {%- assign pattern_name = product.metafields.custom.pattern.value -%}
+              {%- assign collection_name = product.metafields.custom.collection.value -%}
+              
+              {%- comment -%}
+              Show ColorFlex button for ALL patterns that should be viewable in ColorFlex:
+              1. ColorFlex customizable patterns (layer_count > 0) 
+              2. Standard patterns (layer_count 0/null) for scaling/mockup viewing
+              Check for pattern and collection metafields instead of just layer_count
+              {%- endcomment -%}
+              {%- if pattern_name and collection_name -%}
+              <div class="product__colorlex-button" style="margin: 2rem 0; text-align: left;">
+                <button id="openColorFlexBtn" style="
+                  background: #4a5568;
+                  color: white;
+                  padding: 1rem 2rem;
+                  border: none;
+                  border-radius: 8px;
+                  font-size: 1.1rem;
+                  cursor: pointer;
+                  transition: background 0.3s;
+                ">
+                  🎨 Customize
+                </button>
+              </div>
+              {%- endif -%}
+
+              
+              {%- when 'inventory' -%}
+                <p
+                  class="product__inventory{% if block.settings.text_style == 'uppercase' %} caption-with-letter-spacing{% elsif block.settings.text_style == 'subtitle' %} subtitle{% endif %}{% if product.selected_or_first_available_variant.inventory_management != 'shopify' %} visibility-hidden{% endif %}"
+                  {{ block.shopify_attributes }}
+                  id="Inventory-{{ section.id }}"
+                  role="status"
+                >
+                  {%- if product.selected_or_first_available_variant.inventory_management == 'shopify' -%}
+                    {%- if product.selected_or_first_available_variant.inventory_quantity > 0 -%}
+                      {%- if product.selected_or_first_available_variant.inventory_quantity
+                          <= block.settings.inventory_threshold
+                      -%}
+                        <span class="svg-wrapper" style="color: rgb(238, 148, 65)">
+                          {{- 'icon-inventory-status.svg' | inline_asset_content -}}
+                        </span>
+                        {%- if block.settings.show_inventory_quantity -%}
+                          {{-
+                            'products.product.inventory_low_stock_show_count'
+                            | t: quantity: product.selected_or_first_available_variant.inventory_quantity
+                          -}}
+                        {%- else -%}
+                          {{- 'products.product.inventory_low_stock' | t -}}
+                        {%- endif -%}
+                      {%- else -%}
+                        <span class="svg-wrapper" style="color: rgb(62, 214, 96)">
+                          {{- 'icon-inventory-status.svg' | inline_asset_content -}}
+                        </span>
+                        {%- if block.settings.show_inventory_quantity -%}
+                          {{-
+                            'products.product.inventory_in_stock_show_count'
+                            | t: quantity: product.selected_or_first_available_variant.inventory_quantity
+                          -}}
+                        {%- else -%}
+                          {{- 'products.product.inventory_in_stock' | t -}}
+                        {%- endif -%}
+                      {%- endif -%}
+                    {%- else -%}
+                      {%- if product.selected_or_first_available_variant.inventory_policy == 'continue' -%}
+                        <span class="svg-wrapper" style="color: rgb(62, 214, 96)">
+                          {{- 'icon-inventory-status.svg' | inline_asset_content -}}
+                        </span>
+                        {{- 'products.product.inventory_out_of_stock_continue_selling' | t -}}
+                      {%- else -%}
+                        <span class="svg-wrapper" style="color: rgb(200, 200, 200)">
+                          {{- 'icon-inventory-status.svg' | inline_asset_content -}}
+                        </span>
+                        {{- 'products.product.inventory_out_of_stock' | t -}}
+                      {%- endif -%}
+                    {%- endif -%}
+                  {%- endif -%}
+                </p>
+              {%- when 'description' -%}
+                {%- if product.description != blank -%}
+                  <div class="product__description rte quick-add-hidden" {{ block.shopify_attributes }}>
+                    {{ product.description }}
+                  </div>
+                {%- endif -%}
+
+              
+              
+              <script>
+document.getElementById('openColorFlexBtn').addEventListener('click', function() {
+  console.log('🎨 Launching ColorFlex...');
+  
+  // Gather product information
+  const productType = '{{ product.type }}';
+  const productCollection = '{{ collection.handle }}';
+  const productTags = '{{ product.tags | join: "," }}';
+  const productTitle = '{{ product.title }}';
+  
+  console.log('📊 Product info:', { productType, productCollection, productTags, productTitle });
+  
+  // Use product metafields directly - no mapping needed!
+  const metaCollection = '{{ product.metafields.custom.collection.value }}';
+  const metaPattern = '{{ product.metafields.custom.pattern.value }}';
+  
+  console.log('📋 Product metafields:', {
+    collection: metaCollection,
+    pattern: metaPattern,
+    all_custom: {{ product.metafields.custom | json }},
+    all_metafields: {{ product.metafields | json }}
+  });
+  
+  // Use metafield data directly if available
+  let colorFlexCollection = metaCollection || 'english-cottage'; // Use metafield or fallback to first collection
+  let colorFlexPattern = metaPattern || null; // Use metafield pattern if available
+  
+  // FALLBACK: If no pattern metafield, extract from product title
+  if (!colorFlexPattern || colorFlexPattern === '') {
+    // Extract pattern name from title (remove "Wallpaper" etc)
+    const cleanTitle = productTitle
+      .replace(/\s*(wallpaper|wall\s*paper)\s*/gi, '')
+      .trim();
+    colorFlexPattern = cleanTitle;
+    console.log(`🔄 No pattern metafield, extracted from title: "${cleanTitle}"`);
+  }
+  
+  if (metaCollection && metaCollection !== '') {
+    console.log(`✅ Using metafield collection directly: "${metaCollection}"`);
+    console.log(`🚨 METAFIELD OVERRIDE: Product title "${productTitle}" has metafield collection="${metaCollection}"`);
+  } else {
+    console.log('ℹ️ No metafield collection found, using fallback pattern matching');
+    console.log(`🔍 PATTERN MATCHING: Will analyze title "${productTitle}" for collection`);
+  }
+  
+  // PRIORITY 2: Pattern matching fallback (only if no metadata collection)
+  if (!metaCollection || metaCollection === '') {
+    // Enhanced mapping logic
+    const title = productTitle.toLowerCase();
+    const type = productType.toLowerCase();
+    const tags = productTags.toLowerCase();
+    const collection = productCollection.toLowerCase();
+  
+  // Check in order of specificity - COMPREHENSIVE PATTERN MAPPING
+  // BOMBAY COLLECTION - Indian city patterns
+  if (title.includes('etawah') || title.includes('delhi') || title.includes('mumbai') || 
+      title.includes('pune') || title.includes('calcutta') || title.includes('bangalore') ||
+      title.includes('morena') || title.includes('arcot') || title.includes('darjeeling') ||
+      title.includes('agra') || title.includes('jaipur') || title.includes('lucknow') || 
+      title.includes('kanpur') || title.includes('bombay') || title.includes('diamond harbour')) {
+    colorFlexCollection = 'bombay';
+  }
+  // ENGLISH COTTAGE COLLECTION - British cottage patterns
+  else if (title.includes('keswick') || title.includes('lyme regis') || title.includes('maidstone') ||
+           title.includes('yarmouth') || title.includes('penzance') || title.includes('crowborough') ||
+           title.includes('ashbourn') || title.includes('chippendale') || title.includes('canterbury') ||
+           title.includes('dartmouth') || title.includes('cheltenham') || title.includes('northwich') ||
+           title.includes('chelmsford') || title.includes('daisey in the middle') || title.includes('baythorn') ||
+           title.includes('newton') || title.includes('chester') || title.includes('aye lassie') ||
+           title.includes('avesbury')) {
+    colorFlexCollection = 'english-cottage';
+    console.log('🏠 AVESBURY DETECTED: Setting collection to english-cottage');
+  }
+  // FARMHOUSE COLLECTION - American farmhouse patterns
+  else if (title.includes('cottage') || title.includes('english') || title.includes('manor') ||
+           title.includes('farmhouse') || title.includes('chicken') || title.includes('lancaster') ||
+           title.includes('root vegetables') || title.includes('farm toile') ||
+           type.includes('farmhouse') || collection === 'farmhouse' || tags.includes('farmhouse')) {
+    colorFlexCollection = 'farmhouse';
+  }
+  // BOTANICALS COLLECTION
+  else if (title.includes('flowering fern') || title.includes('key largo') || title.includes('shadow dance') ||
+           title.includes('tall lilly') || title.includes('dutch stripe') || title.includes('billings') ||
+           type.includes('botanical') || collection === 'botanicals' || tags.includes('botanical')) {
+    colorFlexCollection = 'botanicals';
+  }
+  // COORDINATES COLLECTION
+  else if (title.includes('coordinate') || title.includes('plaid') || title.includes('check') ||
+           title.includes('gingham') || title.includes('tartan') || title.includes('stripe') ||
+           title.includes('dakota') || title.includes('baythorn') || title.includes('dottie') ||
+           type.includes('coordinate') || tags.includes('coordinate')) {
+    colorFlexCollection = 'coordinates';
+  }
+  // OTHER COLLECTIONS
+  else if (title.includes('abundance') || type.includes('abundance') || tags.includes('abundance')) {
+    colorFlexCollection = 'abundance';
+  }
+  else if (title.includes('coverlet') || title.includes('piqua') || title.includes('oxford') ||
+           title.includes('franklin') || title.includes('charleston') || title.includes('rosemount')) {
+    colorFlexCollection = 'coverlets';
+  }
+  else if (title.includes('tradition') || title.includes('florencia') || title.includes('agnes') ||
+           title.includes('madeline') || title.includes('rosemary') || title.includes('esperanza')) {
+    colorFlexCollection = 'traditions';
+  }
+  else if (title.includes('geometry') || title.includes('riparian') || title.includes('fluvial') ||
+           title.includes('meander') || title.includes('oxbow') || title.includes('rapids') ||
+           title.includes('allurium')) {
+    colorFlexCollection = 'geometry';
+  }
+  else if (title.includes('concordia') || type.includes('concordia') || tags.includes('concordia')) {
+    colorFlexCollection = 'concordia';
+  }
+  // FOLKSIE COLLECTION - Folk art and primitive patterns
+  else if (title.includes('folksie') || title.includes('folk') || title.includes('primitive') ||
+           title.includes('handmade') || title.includes('artisan') || title.includes('craft') ||
+           title.includes('naive') || title.includes('flame tree') || title.includes('flame') ||
+           type.includes('folksie') || tags.includes('folk')) {
+    colorFlexCollection = 'folksie';
+  }
+  // ANCIENT TILES COLLECTION - Historical tile patterns
+  else if (title.includes('tripoli') || title.includes('amsterdam') || title.includes('hastings') ||
+           title.includes('plymouth') || title.includes('algiers') || title.includes('corsica') ||
+           title.includes('izmir') || title.includes('tangier') || title.includes('monaco') ||
+           title.includes('harwich') || title.includes('marseille') || title.includes('torquay') ||
+           title.includes('osaka') || title.includes('valencia') || title.includes('ancient') ||
+           type.includes('ancient-tiles') || tags.includes('ancient') || collection === 'ancient-tiles') {
+    colorFlexCollection = 'ancient-tiles';
+  }
+  // DISHED UP COLLECTION - Colorful patterns
+  else if (title.includes('purple') || title.includes('orange') || title.includes('green') ||
+           title.includes('red') || title.includes('blue') || title.includes('pink') ||
+           title.includes('yellow') || title.includes('burgundy') || title.includes('brown') ||
+           title.includes('teal') || title.includes('lime') || title.includes('olive') ||
+           title.includes('dished') || title.includes('slate') || title.includes('sage') ||
+           title.includes('terra cotta') || type.includes('dished-up') || tags.includes('dished') || 
+           collection === 'dished-up') {
+    colorFlexCollection = 'dished-up';
+  }
+  // PAGES COLLECTION - Historical document patterns
+  else if (title.includes('page') || title.includes('document') || title.includes('manuscript') ||
+           title.includes('parchment') || title.includes('scroll') || type.includes('pages') || 
+           tags.includes('pages') || collection === 'pages') {
+    colorFlexCollection = 'pages';
+  }
+  // GALLERIA COLLECTION - Art gallery patterns
+  else if (title.includes('galleria') || title.includes('gallery') || title.includes('artistic') ||
+           type.includes('galleria') || tags.includes('galleria') || collection === 'galleria') {
+    colorFlexCollection = 'galleria';
+  }
+  } // End of pattern matching fallback
+  
+  console.log(`🎯 Detected collection: ${colorFlexCollection}`);
+  
+  // DEBUG: Log specific pattern mappings for verification
+  const titleForDebug = productTitle.toLowerCase();
+  if (titleForDebug.includes('keswick')) {
+    console.log(`✅ KESWICK FIX: Keswick pattern mapped to ${colorFlexCollection} collection`);
+  }
+  if (titleForDebug.includes('etawah')) {
+    console.log('✅ ETAWAH FIX: Etawah pattern correctly mapped to bombay collection');
+  }
+  if (titleForDebug.includes('morena')) {
+    console.log('✅ MORENA FIX: Morena pattern correctly mapped to bombay collection');
+  }
+  
+  // Build the URL
+  const baseUrl = '/pages/colorflex';
+  const params = new URLSearchParams({
+    variant_id: '{{ product.selected_or_first_available_variant.id }}',
+    collection: colorFlexCollection,
+    product_title: '{{ product.title | url_param_escape }}',
+    source: 'product_page'
+  });
+  
+  // Add pattern parameter if available from metafields
+  if (colorFlexPattern && colorFlexPattern !== '') {
+    params.set('pattern', colorFlexPattern);
+    console.log(`✅ Adding pattern parameter: "${colorFlexPattern}"`);
+  }
+  
+  const fullUrl = `${baseUrl}?${params.toString()}`;
+  console.log('🔗 Opening URL:', fullUrl);
+  
+  // Open ColorFlex window - reuse same window if it exists  
+  console.log('🪟 Opening ColorFlex in same window (ColorFlexApp)');
+  const colorFlexWindow = window.open(
+    fullUrl,
+    'ColorFlexApp',
+    'width=1920,height=1080,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no'
+  );
+  
+  if (colorFlexWindow) {
+    colorFlexWindow.focus();
+    console.log('✅ ColorFlex window opened successfully');
+    
+    // Optional: Listen for messages from the ColorFlex window
+    window.addEventListener('message', function(event) {
+      if (event.source === colorFlexWindow) {
+        console.log('📨 Message from ColorFlex:', event.data);
+        
+        // Handle different message types
+        if (event.data.type === 'cart_add_success') {
+          // Refresh cart or show notification
+          console.log('🛒 Item added to cart successfully');
+          
+          // Optional: Close the ColorFlex window
+          if (event.data.closeWindow) {
+            colorFlexWindow.close();
+          }
+          
+          // Optional: Refresh the current page's cart
+          if (typeof window.updateCartCount === 'function') {
+            window.updateCartCount();
+          }
+        }
+      }
+    });
+    
+  } else {
+    console.warn('⚠️ Popup blocked, trying fallback...');
+    
+    // Fallback: open in same window
+    if (confirm('Pop-up was blocked. Open ColorFlex in this window instead?')) {
+      window.location.href = fullUrl;
+    }
+  }
+});
+              </script>
+              
+              
+                            
+
+              {%- when 'sku' -%}
+                <p
+                  class="product__sku{% if block.settings.text_style == 'uppercase' %} caption-with-letter-spacing{% elsif block.settings.text_style == 'subtitle' %} subtitle{% endif %}{% if product.selected_or_first_available_variant.sku.size == 0 %} visibility-hidden{% endif %}"
+                  id="Sku-{{ section.id }}"
+                  role="status"
+                  {{ block.shopify_attributes }}
+                >
+                  <span class="visually-hidden">{{ 'products.product.sku' | t }}:</span>
+                  {{- product.selected_or_first_available_variant.sku -}}
+                </p>
+              {%- when 'custom_liquid' -%}
+                {{ block.settings.custom_liquid }}
+              {%- when 'collapsible_tab' -%}
+                <div class="product__accordion accordion quick-add-hidden" {{ block.shopify_attributes }}>
+                  <details id="Details-{{ block.id }}-{{ section.id }}">
+                    <summary>
+                      <div class="summary__title">
+                        {% render 'icon-accordion', icon: block.settings.icon %}
+                        <h2 class="h4 accordion__title inline-richtext">
+                          {{ block.settings.heading | default: block.settings.page.title | escape }}
+                        </h2>
+                      </div>
+                      {{- 'icon-caret.svg' | inline_asset_content -}}
+                    </summary>
+                    <div class="accordion__content rte" id="ProductAccordion-{{ block.id }}-{{ section.id }}">
+                      {{ block.settings.content }}
+                      {{ block.settings.page.content }}
+                    </div>
+                  </details>
+                </div>
+              {%- when 'quantity_selector' -%}
+                <div
+                  id="Quantity-Form-{{ section.id }}"
+                  class="product-form__input product-form__quantity{% if settings.inputs_shadow_vertical_offset != 0 and settings.inputs_shadow_vertical_offset < 0 %} product-form__quantity-top{% endif %}"
+                  {{ block.shopify_attributes }}
+                >
+                  {% comment %} TODO: enable theme-check once `item_count_for_variant` is accepted as valid filter {% endcomment %}
+                  {% # theme-check-disable %}
+                  {%- assign cart_qty = cart
+                    | item_count_for_variant: product.selected_or_first_available_variant.id
+                  -%}
+                  {% # theme-check-enable %}
+                  <label class="quantity__label form__label" for="Quantity-{{ section.id }}">
+                    {{ 'products.product.quantity.label' | t }}
+                    <span class="quantity__rules-cart{% if cart_qty == 0 %} hidden{% endif %}">
+                      {%- render 'loading-spinner' -%}
+                      <span
+                        >(
+                        {{- 'products.product.quantity.in_cart_html' | t: quantity: cart_qty -}}
+                        )</span
+                      >
+                    </span>
+                  </label>
+                  <div class="price-per-item__container">
+                    <quantity-input class="quantity" data-url="{{ product.url }}" data-section="{{ section.id }}">
+                      <button class="quantity__button" name="minus" type="button">
+                        <span class="visually-hidden">
+                          {{- 'products.product.quantity.decrease' | t: product: product.title | escape -}}
+                        </span>
+                        <span class="svg-wrapper">
+                          {{- 'icon-minus.svg' | inline_asset_content -}}
+                        </span>
+                      </button>
+                      <input
+                        class="quantity__input"
+                        type="number"
+                        name="quantity"
+                        id="Quantity-{{ section.id }}"
+                        data-cart-quantity="{{ cart_qty }}"
+                        data-min="{{ product.selected_or_first_available_variant.quantity_rule.min }}"
+                        min="{{ product.selected_or_first_available_variant.quantity_rule.min }}"
+                        {% if product.selected_or_first_available_variant.quantity_rule.max != null %}
+                          data-max="{{ product.selected_or_first_available_variant.quantity_rule.max }}"
+                          max="{{ product.selected_or_first_available_variant.quantity_rule.max }}"
+                        {% endif %}
+                        step="{{ product.selected_or_first_available_variant.quantity_rule.increment }}"
+                        value="{{ product.selected_or_first_available_variant.quantity_rule.min }}"
+                        form="{{ product_form_id }}"
+                      >
+                      <button class="quantity__button" name="plus" type="button">
+                        <span class="visually-hidden">
+                          {{- 'products.product.quantity.increase' | t: product: product.title | escape -}}
+                        </span>
+                        <span class="svg-wrapper">
+                          {{- 'icon-plus.svg' | inline_asset_content -}}
+                        </span>
+                      </button>
+                    </quantity-input>
+                    {%- liquid
+                      assign volume_pricing_array = product.selected_or_first_available_variant.quantity_price_breaks | sort: 'quantity' | reverse
+                      assign current_qty_for_volume_pricing = cart_qty | plus: product.selected_or_first_available_variant.quantity_rule.min
+                      if cart_qty > 0
+                        assign current_qty_for_volume_pricing = cart_qty | plus: product.selected_or_first_available_variant.quantity_rule.increment
+                      endif
+                    -%}
+                    {%- if product.quantity_price_breaks_configured? -%}
+                      <price-per-item
+                        id="Price-Per-Item-{{ section.id }}"
+                        data-section-id="{{ section.id }}"
+                        data-variant-id="{{ product.selected_or_first_available_variant.id }}"
+                      >
+                        {%- if product.selected_or_first_available_variant.quantity_price_breaks.size > 0 -%}
+                          {%- assign variant_price_compare = product.selected_or_first_available_variant.compare_at_price -%}
+                          <div class="price-per-item">
+                            {%- if variant_price_compare -%}
+                              <dl class="price-per-item--current">
+                                <dt class="visually-hidden">
+                                  {{ 'products.product.price.regular_price' | t }}
+                                </dt>
+                                <dd>
+                                  <s class="variant-item__old-price">
+                                    {{ variant_price_compare | money_with_currency }}
+                                  </s>
+                                </dd>
+                              </dl>
+                            {%- endif -%}
+                            {%- if current_qty_for_volume_pricing < volume_pricing_array.last.minimum_quantity -%}
+                              {%- assign variant_price = product.selected_or_first_available_variant.price
+                                | money_with_currency
+                              -%}
+                              <span class="price-per-item--current">
+                                {{- 'products.product.volume_pricing.price_at_each_html' | t: price: variant_price -}}
+                              </span>
+                            {%- else -%}
+                              {%- for price_break in volume_pricing_array -%}
+                                {%- if current_qty_for_volume_pricing >= price_break.minimum_quantity -%}
+                                  {%- assign price_break_price = price_break.price | money_with_currency -%}
+                                  <span class="price-per-item--current">
+                                    {{-
+                                      'products.product.volume_pricing.price_at_each_html'
+                                      | t: price: price_break_price
+                                    -}}
+                                  </span>
+                                  {%- break -%}
+                                {%- endif -%}
+                              {%- endfor -%}
+                            {%- endif -%}
+                          </div>
+                        {%- else -%}
+                          {%- assign variant_price = product.selected_or_first_available_variant.price
+                            | money_with_currency
+                          -%}
+                          {%- assign variant_price_compare = product.selected_or_first_available_variant.compare_at_price -%}
+                          <div class="price-per-item">
+                            {%- if variant_price_compare -%}
+                              <dl class="price-per-item--current">
+                                <dt class="visually-hidden">
+                                  {{ 'products.product.price.regular_price' | t }}
+                                </dt>
+                                <dd>
+                                  <s class="variant-item__old-price">
+                                    {{ variant_price_compare | money_with_currency }}
+                                  </s>
+                                </dd>
+                                <dt class="visually-hidden">
+                                  {{ 'products.product.price.sale_price' | t }}
+                                </dt>
+                                <dd>
+                                  <span class="price-per-item--current">
+                                    {{- 'products.product.volume_pricing.price_at_each_html' | t: price: variant_price -}}
+                                  </span>
+                                </dd>
+                              </dl>
+                            {%- else -%}
+                              <span class="price-per-item--current">
+                                {{- 'products.product.volume_pricing.price_at_each_html' | t: price: variant_price -}}
+                              </span>
+                            {%- endif -%}
+                          </div>
+                        {%- endif -%}
+                      </price-per-item>
+                    {%- endif -%}
+                  </div>
+                  <div class="quantity__rules caption" id="Quantity-Rules-{{ section.id }}">
+                    {%- if product.selected_or_first_available_variant.quantity_rule.increment > 1 -%}
+                      <span class="divider">
+                        {{-
+                          'products.product.quantity.multiples_of'
+                          | t: quantity: product.selected_or_first_available_variant.quantity_rule.increment
+                        -}}
+                      </span>
+                    {%- endif -%}
+                    {%- if product.selected_or_first_available_variant.quantity_rule.min > 1 -%}
+                      <span class="divider">
+                        {{-
+                          'products.product.quantity.minimum_of'
+                          | t: quantity: product.selected_or_first_available_variant.quantity_rule.min
+                        -}}
+                      </span>
+                    {%- endif -%}
+                    {%- if product.selected_or_first_available_variant.quantity_rule.max != null -%}
+                      <span class="divider">
+                        {{-
+                          'products.product.quantity.maximum_of'
+                          | t: quantity: product.selected_or_first_available_variant.quantity_rule.max
+                        -}}
+                      </span>
+                    {%- endif -%}
+                  </div>
+                  {%- if product.quantity_price_breaks_configured? -%}
+                    <volume-pricing class="parent-display" id="Volume-{{ section.id }}">
+                      {%- if product.selected_or_first_available_variant.quantity_price_breaks.size > 0 -%}
+                        <span class="caption-large">{{ 'products.product.volume_pricing.title' | t }}</span>
+                        <ul class="list-unstyled">
+                          <li>
+                            <span>{{ product.selected_or_first_available_variant.quantity_rule.min }}+</span>
+                            {%- assign price = product.selected_or_first_available_variant.price
+                              | money_with_currency
+                            -%}
+                            <span data-text="{{ 'products.product.volume_pricing.price_at_each_html' | t: price: variant_price }}">
+                              {{- 'sections.quick_order_list.each' | t: money: price -}}
+                            </span>
+                          </li>
+                          {%- for price_break in product.selected_or_first_available_variant.quantity_price_breaks -%}
+                            {%- assign price_break_price = price_break.price | money_with_currency -%}
+                            <li class="{%- if forloop.index >= 3 -%}show-more-item hidden{%- endif -%}">
+                              <span>
+                                {{- price_break.minimum_quantity -}}
+                                <span aria-hidden="true">+</span></span
+                              >
+                              <span data-text="{{ 'products.product.volume_pricing.price_at_each_html' | t: price: price_break_price }}">
+                                {{- 'sections.quick_order_list.each' | t: money: price_break_price -}}
+                              </span>
+                            </li>
+                          {%- endfor -%}
+                        </ul>
+                        {%- if product.selected_or_first_available_variant.quantity_price_breaks.size >= 3 -%}
+                          <show-more-button>
+                            <button
+                              class="button-show-more link underlined-link"
+                              id="Show-More-{{ section.id }}"
+                              type="button"
+                            >
+                              <span class="label-show-more label-text"
+                                ><span aria-hidden="true">+ </span>{{ 'products.facets.show_more' | t }}
+                              </span>
+                            </button>
+                          </show-more-button>
+                        {%- endif -%}
+                      {%- endif -%}
+                    </volume-pricing>
+                  {%- endif -%}
+                </div>
+              {%- when 'popup' -%}
+                <modal-opener
+                  class="product-popup-modal__opener quick-add-hidden"
+                  data-modal="#PopupModal-{{ block.id }}"
+                  {{ block.shopify_attributes }}
+                >
+                  <button
+                    id="ProductPopup-{{ block.id }}"
+                    class="product-popup-modal__button link"
+                    type="button"
+                    aria-haspopup="dialog"
+                  >
+                    {{ block.settings.text | default: block.settings.page.title | escape }}
+                  </button>
+                </modal-opener>
+              {%- when 'share' -%}
+                {% liquid
+                  assign share_url = product.selected_variant.url | default: product.url | prepend: request.origin
+                  render 'share-button', block: block, share_link: share_url
+                %}
+
+              {%- when 'variant_picker' -%}
+                {% render 'product-variant-picker', product: product, block: block, product_form_id: product_form_id %}
+              {%- when 'buy_buttons' -%}
+                <!-- ColorFlex Integration: Detect URL parameters -->
+                <script>
+                  // Check if this is a ColorFlex-configured product
+                  const urlParams = new URLSearchParams(window.location.search);
+                  const isColorFlexProduct = urlParams.get('source') === 'colorflex_saved_patterns';
+                  
+                  if (isColorFlexProduct) {
+                    console.log('🎨 ColorFlex product detected - setting up custom properties');
+                    
+                    // Replace main product image and show ColorFlex indicator
+                    document.addEventListener('DOMContentLoaded', function() {
+                      if (typeof window.replaceMainProductImage === 'function') {
+                        window.replaceMainProductImage(urlParams);
+                      } else {
+                        console.warn('⚠️ replaceMainProductImage function not found');
+                      }
+                      if (typeof populateColorFlexProperties === 'function') {
+                        populateColorFlexProperties(urlParams);
+                      }
+                    });
+                  }
+                </script>
+
+                {%- render 'buy-buttons',
+                  block: block,
+                  product: product,
+                  product_form_id: product_form_id,
+                  section_id: section.id,
+                  show_pickup_availability: true
+                -%}
+              {%- when 'rating' -%}
+                {%- if product.metafields.reviews.rating.value != blank -%}
+                  <div class="rating-wrapper">
+                    {% liquid
+                      assign rating_decimal = 0
+                      assign decimal = product.metafields.reviews.rating.value.rating | modulo: 1
+                      if decimal >= 0.3 and decimal <= 0.7
+                        assign rating_decimal = 0.5
+                      elsif decimal > 0.7
+                        assign rating_decimal = 1
+                      endif
+                    %}
+                    <div
+                      class="rating"
+                      role="img"
+                      aria-label="{{ 'accessibility.star_reviews_info' | t: rating_value: product.metafields.reviews.rating.value, rating_max: product.metafields.reviews.rating.value.scale_max }}"
+                    >
+                      <span
+                        aria-hidden="true"
+                        class="rating-star"
+                        style="--rating: {{ product.metafields.reviews.rating.value.rating | floor }}; --rating-max: {{ product.metafields.reviews.rating.value.scale_max }}; --rating-decimal: {{ rating_decimal }};"
+                      ></span>
+                    </div>
+                    <p class="rating-text caption">
+                      <span aria-hidden="true">
+                        {{- product.metafields.reviews.rating.value }} /
+                        {{ product.metafields.reviews.rating.value.scale_max -}}
+                      </span>
+                    </p>
+                    <p class="rating-count caption">
+                      <span aria-hidden="true">({{ product.metafields.reviews.rating_count }})</span>
+                      <span class="visually-hidden">
+                        {{- product.metafields.reviews.rating_count }}
+                        {{ 'accessibility.total_reviews' | t -}}
+                      </span>
+                    </p>
+                  </div>
+                {%- endif -%}
+              {%- when 'complementary' -%}
+                <product-recommendations
+                  class="complementary-products quick-add-hidden{% if block.settings.make_collapsible_row %} is-accordion{% endif %}{% if block.settings.enable_quick_add %} complementary-products-contains-quick-add{% endif %}"
+                  data-url="{{ routes.product_recommendations_url }}?limit={{ block.settings.product_list_limit }}&intent=complementary"
+                  data-section-id="{{ section.id }}"
+                  data-product-id="{{ product.id }}"
+                >
+                  {%- if recommendations.performed and recommendations.products_count > 0 -%}
+                    <aside
+                      aria-label="{{ 'accessibility.complementary_products' | t }}"
+                      {{ block.shopify_attributes -}}
+                      {% if block.settings.make_collapsible_row %}
+                        class="product__accordion accordion"
+                      {% endif %}
+                    >
+                      <div class="complementary-products__container">
+                        {%- if block.settings.make_collapsible_row -%}
+                          <details id="Details-{{ block.id }}-{{ section.id }}" open>
+                            <summary>
+                        {%- endif %}
+                        <div class="summary__title">
+                          {%- if block.settings.make_collapsible_row -%}
+                            {% render 'icon-accordion', icon: block.settings.icon %}
+                            <h2 class="h4 accordion__title">{{ block.settings.block_heading }}</h2>
+                          {%- else -%}
+                            <h2 class="h3 accordion__title">{{ block.settings.block_heading }}</h2>
+                          {%- endif -%}
+                        </div>
+                        {%- if block.settings.make_collapsible_row -%}
+                          {{- 'icon-caret.svg' | inline_asset_content -}}
+                          </summary>
+                        {%- endif -%}
+                        <slideshow-component class="slider-mobile-gutter">
+                          {%- assign number_of_slides = recommendations.products_count
+                            | plus: 0.0
+                            | divided_by: block.settings.products_per_page
+                            | ceil
+                          -%}
+                          <div
+                            id="Slider-{{ block.id }}"
+                            class="contains-card contains-card--product complementary-slider grid grid--1-col slider slider--everywhere"
+                            role="list"
+                            {% if number_of_slides > 1 %}
+                              aria-label="{{ 'general.slider.name' | t }}"
+                            {% endif %}
+                          >
+                            {% assign skip_card_product_styles = false %}
+                            {%- for i in (1..number_of_slides) -%}
+                              <div
+                                id="Slide-{{ block.id }}-{{ forloop.index }}"
+                                class="complementary-slide complementary-slide--{{ settings.card_style }} grid__item slider__slide slideshow__slide"
+                                tabindex="-1"
+                                role="group"
+                                {% if number_of_slides > 1 %}
+                                  aria-roledescription="{{ 'sections.slideshow.slide' | t }}"
+                                  aria-label="{{ forloop.index }} {{ 'general.slider.of' | t }} {{ forloop.length }}"
+                                {% endif %}
+                              >
+                                <ul class="list-unstyled" role="list">
+                                  {%- for product in recommendations.products
+                                    limit: block.settings.products_per_page
+                                    offset: continue
+                                  -%}
+                                    <li>
+                                      {%- if block.settings.enable_quick_add -%}
+                                        {% assign quick_add = 'standard' %}
+                                      {%- else -%}
+                                        {% assign quick_add = 'none' %}
+                                      {%- endif -%}
+                                      {% render 'card-product',
+                                        card_product: product,
+                                        media_aspect_ratio: block.settings.image_ratio,
+                                        show_secondary_image: false,
+                                        lazy_load: false,
+                                        skip_styles: skip_card_product_styles,
+                                        quick_add: quick_add,
+                                        section_id: section.id,
+                                        horizontal_class: true,
+                                        horizontal_quick_add: true
+                                      %}
+                                    </li>
+                                    {%- assign skip_card_product_styles = true -%}
+                                  {%- endfor -%}
+                                </ul>
+                              </div>
+                            {%- endfor -%}
+                          </div>
+                          {%- if number_of_slides > 1 -%}
+                            <div class="slider-buttons">
+                              <button
+                                type="button"
+                                class="slider-button slider-button--prev"
+                                name="previous"
+                                aria-label="{{ 'general.slider.previous_slide' | t }}"
+                              >
+                                <span class="svg-wrapper">
+                                  {{- 'icon-caret.svg' | inline_asset_content -}}
+                                </span>
+                              </button>
+                              <div class="slider-counter slider-counter--{{ block.settings.pagination_style }}{% if block.settings.pagination_style == 'counter' or block.settings.pagination_style == 'numbers' %} caption{% endif %}">
+                                {%- if block.settings.pagination_style == 'counter' -%}
+                                  <span class="slider-counter--current">1</span>
+                                  <span aria-hidden="true"> / </span>
+                                  <span class="visually-hidden">{{ 'general.slider.of' | t }}</span>
+                                  <span class="slider-counter--total">{{ number_of_slides }}</span>
+                                {%- else -%}
+                                  <div class="slideshow__control-wrapper">
+                                    {%- for i in (1..number_of_slides) -%}
+                                      <button
+                                        class="slider-counter__link slider-counter__link--{{ block.settings.pagination_style }} link"
+                                        aria-label="{{ 'sections.slideshow.load_slide' | t }} {{ forloop.index }} {{ 'general.slider.of' | t }} {{ forloop.length }}"
+                                        aria-controls="Slider-{{ block.id }}"
+                                      >
+                                        {%- if block.settings.pagination_style == 'numbers' -%}
+                                          {{ forloop.index -}}
+                                        {%- else -%}
+                                          <span class="dot"></span>
+                                        {%- endif -%}
+                                      </button>
+                                    {%- endfor -%}
+                                  </div>
+                                {%- endif -%}
+                              </div>
+                              <button
+                                type="button"
+                                class="slider-button slider-button--next"
+                                name="next"
+                                aria-label="{{ 'general.slider.next_slide' | t }}"
+                              >
+                                <span class="svg-wrapper">
+                                  {{- 'icon-caret.svg' | inline_asset_content -}}
+                                </span>
+                              </button>
+                            </div>
+                          {%- endif -%}
+                        </slideshow-component>
+                        {%- if block.settings.make_collapsible_row -%}
+                          </details>
+                        {%- endif -%}
+                      </div>
+                    </aside>
+                  {%- endif -%}
+                  {{ 'component-card.css' | asset_url | stylesheet_tag }}
+                  {{ 'component-complementary-products.css' | asset_url | stylesheet_tag }}
+                  {%- if block.settings.enable_quick_add -%}
+                    {{ 'quick-add.css' | asset_url | stylesheet_tag }}
+                    <script src="{{ 'quick-add.js' | asset_url }}" defer="defer"></script>
+                  {%- endif -%}
+                </product-recommendations>
+              {%- when 'icon-with-text' -%}
+                {% render 'icon-with-text', block: block %}
+            {%- endcase -%}
+          {%- endfor -%}
+          <a href="{{ product.url }}" class="link product__view-details animate-arrow">
+            {{ 'products.product.view_full_details' | t }}
+            {{- 'icon-arrow.svg' | inline_asset_content -}}
+          </a>
+        </section>
+      </div>
+    </div>
+
+    {% render 'product-media-modal', variant_images: variant_images %}
+
+    {% assign popups = section.blocks | where: 'type', 'popup' %}
+    {%- for block in popups -%}
+      <modal-dialog id="PopupModal-{{ block.id }}" class="product-popup-modal" {{ block.shopify_attributes }}>
+        <div
+          role="dialog"
+          aria-label="{{ block.settings.text }}"
+          aria-modal="true"
+          class="product-popup-modal__content"
+          tabindex="-1"
+        >
+          <button
+            id="ModalClose-{{ block.id }}"
+            type="button"
+            class="product-popup-modal__toggle"
+            aria-label="{{ 'accessibility.close' | t }}"
+          >
+            {{- 'icon-close.svg' | inline_asset_content -}}
+          </button>
+          <div class="product-popup-modal__content-info">
+            <h1 class="h2">{{ block.settings.page.title | escape }}</h1>
+            {{ block.settings.page.content }}
+          </div>
+        </div>
+      </modal-dialog>
+    {%- endfor -%}
+
+    {%- if product.media.size > 0 -%}
+      <script src="{{ 'product-modal.js' | asset_url }}" defer="defer"></script>
+      <script src="{{ 'media-gallery.js' | asset_url }}" defer="defer"></script>
+    {%- endif -%}
+
+    {%- if first_3d_model -%}
+      <script type="application/json" id="ProductJSON-{{ product.id }}">
+        {{ product.media | where: 'media_type', 'model' | json }}
+      </script>
+      <script src="{{ 'product-model.js' | asset_url }}" defer></script>
+    {%- endif -%}
+
+    {%- liquid
+      if product.selected_or_first_available_variant.featured_media
+        assign seo_media = product.selected_or_first_available_variant.featured_media
+      else
+        assign seo_media = product.featured_media
+      endif
+    -%}
+
+    <script type="application/ld+json">
+      {{ product | structured_data }}
+    </script>
+  </div>
+
+    {% comment %} CUSTOM WALLPAPER ENHANCEMENTS {% endcomment %}
+  <script>
+  // Only run on Custom Wallpaper products or when URL contains pattern parameters
+  const urlParams = new URLSearchParams(window.location.search);
+  const isCustomWallpaper = window.location.pathname.includes('custom-wallpaper')
+  ||
+                           urlParams.get('source') === 'colorflex_saved_patterns'
+  ||
+                           urlParams.get('pattern_name');
+
+  if (isCustomWallpaper) {
+    console.log('🎨 CUSTOM WALLPAPER PAGE DETECTED');
+    console.log('URL:', window.location.href);
+    console.log('Pattern Name:', urlParams.get('pattern_name'));
+    
+    // AGGRESSIVE Download Proof Button Removal
+    function removeDownloadButtons() {
+      console.log('🔍 Scanning for download proof buttons...');
+      
+      const buttons = document.querySelectorAll('button, input[type="button"], 
+  input[type="submit"], a[class*="button"]');
+      let removed = 0;
+      
+      buttons.forEach(button => {
+        const text = (button.textContent || button.innerText || button.value || 
+  '').toLowerCase();
+        
+        if ((text.includes('download') && (text.includes('proof') || 
+  text.includes('resolution'))) ||
+            text.includes('full-resolution') ||
+            text.trim() === 'download full-resolution proof') {
+          
+          console.log('🗑️ REMOVING BUTTON:', button.textContent || button.value);
+          button.style.display = 'none';
+          button.style.visibility = 'hidden';
+          button.style.opacity = '0';
+          button.remove();
+          removed++;
+        }
+      });
+      
+      console.log('✅ Removed', removed, 'download buttons');
+      return removed;
+    }
+
+    // HOVER PREVIEWS for texture buttons
+    function setupHoverPreviews() {
+      console.log('🖼️ Setting up hover previews...');
+      
+      // Create preview container
+      const preview = document.createElement('div');
+      preview.id = 'texturePreview';
+      preview.style.cssText = `
+        position: fixed;
+        top: 50%;
+        right: 20px;
+        transform: translateY(-50%);
+        width: 300px;
+        height: 300px;
+        background: white;
+        border: 3px solid #667eea;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+        display: none;
+        z-index: 10000;
+        overflow: hidden;
+      `;
+      
+      const img = document.createElement('canvas');
+      img.width = 300;
+      img.height = 300;
+      img.style.cssText = 'width: 100%; height: 100%; display: block;';
+      
+      const label = document.createElement('div');
+      label.style.cssText = `
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 10px;
+        text-align: center;
+        font-weight: bold;
+      `;
+      
+      preview.appendChild(img);
+      preview.appendChild(label);
+      document.body.appendChild(preview);
+      
+      // Find ALL buttons and check their text
+      const allButtons = document.querySelectorAll('button, .btn, 
+  [class*="button"], [role="button"]');
+      console.log('🔍 Found', allButtons.length, 'total buttons');
+      
+      allButtons.forEach((btn, i) => {
+        const text = (btn.textContent || btn.innerText || '').trim();
+        console.log(`Button ${i}: "${text}"`);
+        
+        if (text.toLowerCase() === 'smooth' || text.toLowerCase() === 'rough' || 
+  text.toLowerCase() === 'textured' || 
+            text.toLowerCase().includes('texture') || 
+  text.toLowerCase().includes('material')) {
+          
+          console.log('✅ Adding hover to:', text);
+          
+          btn.addEventListener('mouseenter', (e) => {
+            console.log('🖱️ Hover started:', text);
+            showPreview(text, img, label, preview);
+          });
+          
+          btn.addEventListener('mouseleave', () => {
+            preview.style.display = 'none';
+          });
+        }
+      });
+    }
+
+    function showPreview(text, canvas, label, preview) {
+      const ctx = canvas.getContext('2d');
+      
+      // Clear canvas
+      ctx.clearRect(0, 0, 300, 300);
+      
+      // Color based on texture
+      let color = '#667eea';
+      if (text.toLowerCase().includes('smooth')) color = '#48bb78';
+      if (text.toLowerCase().includes('rough')) color = '#ed8936'; 
+      if (text.toLowerCase().includes('textured')) color = '#805ad5';
+      
+      // Create gradient background
+      const gradient = ctx.createLinearGradient(0, 0, 300, 300);
+      gradient.addColorStop(0, color);
+      gradient.addColorStop(1, adjustColor(color, -30));
+      
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, 300, 300);
+      
+      // Add texture pattern
+      ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+      ctx.lineWidth = 2;
+      
+      if (text.toLowerCase().includes('smooth')) {
+        // Horizontal lines for smooth
+        for (let y = 0; y < 300; y += 30) {
+          ctx.beginPath();
+          ctx.moveTo(0, y);
+          ctx.lineTo(300, y);
+          ctx.stroke();
+        }
+      } else if (text.toLowerCase().includes('rough')) {
+        // Random lines for rough
+        for (let i = 0; i < 25; i++) {
+          ctx.beginPath();
+          ctx.moveTo(Math.random() * 300, Math.random() * 300);
+          ctx.lineTo(Math.random() * 300, Math.random() * 300);
+          ctx.stroke();
+        }
+      } else if (text.toLowerCase().includes('textured')) {
+        // Grid for textured
+        for (let x = 0; x < 300; x += 25) {
+          for (let y = 0; y < 300; y += 25) {
+            ctx.strokeRect(x, y, 25, 25);
+          }
+        }
+      }
+      
+      label.textContent = text.toUpperCase();
+      preview.style.display = 'block';
+    }
+
+    function adjustColor(hex, percent) {
+      const num = parseInt(hex.replace('#', ''), 16);
+      const amt = Math.round(2.55 * percent);
+      const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+      const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+      const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+      return '#' + ((1 << 24) + (R << 16) + (G << 8) + B).toString(16).slice(1);
+    }
+
+    // Run everything when page loads
+    function initCustomWallpaperFixes() {
+      console.log('🚀 CUSTOM WALLPAPER FIXES STARTING...');
+      
+      // Remove download buttons immediately
+      removeDownloadButtons();
+      
+      // Set up hover previews
+      setupHoverPreviews();
+      
+      // Check again after 2 seconds for late-loading buttons
+      setTimeout(() => {
+        console.log('🔄 Secondary scan for late-loading buttons...');
+        removeDownloadButtons();
+      }, 2000);
+      
+      // Set up mutation observer to catch dynamically added buttons
+      const observer = new MutationObserver(() => {
+        removeDownloadButtons();
+      });
+      
+      observer.observe(document.body, { 
+        childList: true, 
+        subtree: true 
+      });
+    }
+
+    // Start everything
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initCustomWallpaperFixes);
+    } else {
+      initCustomWallpaperFixes();
+    }
+
+    console.log('✅ Custom Wallpaper fixes script loaded');
+  }
+  </script>
+
+  {% comment %} ENHANCED CUSTOM WALLPAPER FIXES - Comprehensive Version {% endcomment %}
+  <script>
+  console.log('🎨 ENHANCED CUSTOM WALLPAPER FIXES LOADING...');
+  console.log('URL:', window.location.href);
+  
+  // AGGRESSIVE Download Proof Button Removal - RUN UNCONDITIONALLY
+  function removeDownloadButtons() {
+    console.log('🔍 Searching for and removing download proof buttons...');
+    
+    const buttons = document.querySelectorAll('button, input[type="button"], input[type="submit"], a[class*="button"], [class*="btn"], [role="button"]');
+    
+    let removed = 0;
+    
+    buttons.forEach(button => {
+      const text = (button.textContent || button.innerText || button.value || '').toLowerCase();
+      
+      if ((text.includes('download') && (text.includes('proof') || text.includes('resolution'))) ||
+          text.includes('full-resolution') ||
+          text.trim() === 'download full-resolution proof' ||
+          text.includes('download proof') ||
+          button.getAttribute('data-action') === 'download-proof') {
+        
+        console.log('🗑️ Removing download proof button:', button.textContent || button.value || 'Button');
+        button.style.display = 'none !important';
+        button.style.visibility = 'hidden !important';
+        button.style.opacity = '0 !important';
+        button.style.position = 'absolute !important';
+        button.style.left = '-9999px !important';
+        button.disabled = true;
+        removed++;
+        
+        // Try to remove from DOM after hiding
+        setTimeout(() => {
+          if (button.parentNode) {
+            button.parentNode.removeChild(button);
+          }
+        }, 100);
+      }
+    });
+    
+    console.log('✅ Removed ' + removed + ' download proof buttons and set up monitoring');
+    return removed;
+  }
+
+  // HOVER PREVIEWS for texture/variant buttons - Enhanced targeting
+  function setupHoverPreviews() {
+    console.log('🖼️ Setting up texture hover previews...');
+    
+    // Remove existing preview if it exists
+    const existingPreview = document.getElementById('textureHoverPreview');
+    if (existingPreview) {
+      existingPreview.remove();
+    }
+    
+    // Create preview container
+    const preview = document.createElement('div');
+    preview.id = 'textureHoverPreview';
+    preview.style.cssText = `
+      position: fixed;
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+      width: 300px;
+      height: 350px;
+      background: white;
+      border: 3px solid #667eea;
+      border-radius: 15px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 10000;
+      overflow: hidden;
+      pointer-events: none;
+    `;
+    
+    // Canvas for texture preview
+    const canvas = document.createElement('canvas');
+    canvas.width = 300;
+    canvas.height = 300;
+    canvas.style.cssText = 'width: 100%; height: calc(100% - 50px); display: block;';
+    
+    // Label for texture name
+    const label = document.createElement('div');
+    label.style.cssText = `
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 50px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-weight: bold;
+      font-size: 14px;
+      line-height: 20px;
+    `;
+    
+    preview.appendChild(canvas);
+    preview.appendChild(label);
+    document.body.appendChild(preview);
+    
+    // Enhanced button selector - target ALL possible variant/texture buttons
+    const allButtons = document.querySelectorAll('fieldset button, [class*="texture"] button, [class*="variant"] button, [class*="option"] button, [class*="material"] button, [class*="finish"] button, button[data-variant], button[data-value], button[data-option], .product-form button, .variant-input button, .option-button, .texture-option, .material-option, input[type="radio"] + label, button:not([class*="add"]):not([class*="buy"]):not([class*="cart"])');
+    console.log('🔍 Found ' + allButtons.length + ' potential variant buttons to check');
+    
+    let hoverCount = 0;
+    
+    allButtons.forEach((button, index) => {
+      const text = (button.textContent || button.innerText || button.getAttribute('title') || button.getAttribute('data-value') || '').trim().toLowerCase();
+      
+      console.log('🔍 Element ' + index + ': {tag: "' + button.tagName + '", text: "' + text.substring(0, 20) + '", hasPreview: ' + (text.includes('smooth') || text.includes('rough') || text.includes('textured') || text.includes('texture') || text.includes('material') || text.includes('finish')) + '}');
+      
+      // Check for texture/material related terms
+      if (text.includes('smooth') || text.includes('rough') || text.includes('textured') ||
+          text.includes('texture') || text.includes('material') || text.includes('finish') ||
+          text.includes('matte') || text.includes('glossy') || text.includes('satin')) {
+        
+        console.log('🎯 Setting up hover for: "' + text + '"');
+        hoverCount++;
+        
+        button.addEventListener('mouseenter', () => {
+          console.log('🖱️ Hover started for: ' + text);
+          showTexturePreview(text, preview, canvas, label);
+        });
+        
+        button.addEventListener('mouseleave', () => {
+          console.log('🖱️ Hover ended for: ' + text);
+          preview.style.display = 'none';
+        });
+      }
+    });
+    
+    console.log('✅ Variant hover previews set up for ' + hoverCount + ' elements');
+    return hoverCount;
+  }
+
+  // Generate texture preview on canvas
+  function showTexturePreview(text, preview, canvas, label) {
+    console.log('🖼️ Creating placeholder for: ' + text);
+    
+    const ctx = canvas.getContext('2d');
+    
+    // Determine color based on texture type
+    let backgroundColor = '#e2e8f0'; // Default light gray
+    let textColor = '#1e293b';
+    
+    if (text.includes('smooth')) {
+      backgroundColor = '#10b981'; // Green
+      textColor = '#ffffff';
+    } else if (text.includes('rough')) {
+      backgroundColor = '#f97316'; // Orange
+      textColor = '#ffffff';
+    } else if (text.includes('textured')) {
+      backgroundColor = '#8b5cf6'; // Purple
+      textColor = '#ffffff';
+    } else if (text.includes('matte')) {
+      backgroundColor = '#64748b'; // Gray
+      textColor = '#ffffff';
+    } else if (text.includes('glossy')) {
+      backgroundColor = '#3b82f6'; // Blue
+      textColor = '#ffffff';
+    } else if (text.includes('satin')) {
+      backgroundColor = '#ec4899'; // Pink
+      textColor = '#ffffff';
+    }
+    
+    // Clear and fill background
+    ctx.fillStyle = backgroundColor;
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    
+    // Generate texture pattern
+    ctx.strokeStyle = adjustColor(backgroundColor, -25);
+    ctx.lineWidth = 2;
+    
+    if (text.includes('smooth')) {
+      // Clean horizontal lines for smooth texture
+      for (let y = 30; y < canvas.height; y += 20) {
+        ctx.beginPath();
+        ctx.moveTo(20, y);
+        ctx.lineTo(canvas.width - 20, y);
+        ctx.stroke();
+      }
+    } else if (text.includes('rough')) {
+      // Jagged random lines for rough texture
+      ctx.lineWidth = 3;
+      for (let i = 0; i < 30; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.lineTo(Math.random() * canvas.width, Math.random() * canvas.height);
+        ctx.stroke();
+      }
+    } else if (text.includes('textured')) {
+      // Grid pattern for textured surface
+      for (let x = 20; x < canvas.width - 20; x += 30) {
+        for (let y = 20; y < canvas.height - 20; y += 30) {
+          ctx.strokeRect(x, y, 25, 25);
+        }
+      }
+    } else {
+      // Default diagonal pattern
+      for (let x = 0; x < canvas.width; x += 20) {
+        ctx.beginPath();
+        ctx.moveTo(x, 0);
+        ctx.lineTo(x + canvas.height, canvas.height);
+        ctx.stroke();
+      }
+    }
+    
+    // Add text overlay
+    ctx.fillStyle = textColor;
+    ctx.font = 'bold 16px Arial';
+    ctx.textAlign = 'center';
+    ctx.fillText('PREVIEW', canvas.width / 2, canvas.height / 2 - 10);
+    ctx.font = '14px Arial';
+    ctx.fillText('Texture Sample', canvas.width / 2, canvas.height / 2 + 15);
+    
+    // Update label and show preview
+    label.textContent = text.toUpperCase() + ' TEXTURE';
+    preview.style.display = 'block';
+  }
+
+  // Color adjustment utility
+  function adjustColor(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+    const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+    const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+    return '#' + ((1 << 24) + (R << 16) + (G << 8) + B).toString(16).slice(1);
+  }
+
+  // Initialize all enhancements
+  function initEnhancedCustomWallpaperFixes() {
+    console.log('🚀 Initializing Enhanced Custom Wallpaper Fixes...');
+    
+    // Remove download buttons immediately
+    const removedCount = removeDownloadButtons();
+    
+    // Set up hover previews
+    const hoverCount = setupHoverPreviews();
+    
+    console.log('📊 Summary: ' + removedCount + ' buttons removed, ' + hoverCount + ' hover previews set up');
+    
+    // Secondary scan for late-loading elements
+    setTimeout(() => {
+      console.log('🔄 Secondary scan for late-loading elements...');
+      removeDownloadButtons();
+    }, 3000);
+    
+    // Monitor for dynamic content with mutation observer
+    const observer = new MutationObserver((mutations) => {
+      let shouldRescan = false;
+      mutations.forEach(mutation => {
+        if (mutation.addedNodes.length > 0) {
+          mutation.addedNodes.forEach(node => {
+            if (node.nodeType === 1) { // Element node
+              const text = node.textContent || '';
+              if (text.includes('download') || text.includes('button') || text.includes('proof')) {
+                shouldRescan = true;
+              }
+            }
+          });
+        }
+      });
+      
+      if (shouldRescan) {
+        console.log('🔄 Content changed, rescanning for download buttons...');
+        removeDownloadButtons();
+      }
+    });
+    
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true,
+      attributes: false,
+      characterData: false
+    });
+    
+    console.log('✅ Mutation observer active for dynamic content monitoring');
+  }
+
+  // Start enhanced fixes
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initEnhancedCustomWallpaperFixes);
+  } else {
+    initEnhancedCustomWallpaperFixes();
+  }
+
+  console.log('✅ Enhanced Custom Wallpaper Fixes Script Loaded');
+  </script>
+
+  <!-- SIMPLE DEBUG SCRIPT - WILL ALWAYS RUN -->
+  <script>
+  console.log('🚨 SIMPLE DEBUG SCRIPT RUNNING - This should ALWAYS appear!');
+  console.log('🌐 Current URL:', window.location.href);
+  console.log('📍 Page pathname:', window.location.pathname);
+  
+  // Simple immediate button scan
+  setTimeout(() => {
+    console.log('🔍 SIMPLE BUTTON SCAN STARTING...');
+    const allButtons = document.querySelectorAll('button');
+    console.log('📊 Found ' + allButtons.length + ' total buttons on page');
+    
+    let downloadButtons = 0;
+    allButtons.forEach((btn, i) => {
+      const text = (btn.textContent || '').toLowerCase();
+      console.log('Button ' + i + ': "' + text.substring(0, 30) + '"');
+      
+      if (text.includes('download') && text.includes('proof')) {
+        downloadButtons++;
+        console.log('🎯 FOUND DOWNLOAD PROOF BUTTON ' + downloadButtons + ': "' + text + '"');
+        // Try to hide it
+        btn.style.display = 'none';
+        btn.style.visibility = 'hidden';
+        console.log('🗑️ Attempted to hide button');
+      }
+    });
+    
+    console.log('📈 Total download proof buttons found: ' + downloadButtons);
+  }, 2000);
+  
+  console.log('✅ Simple debug script loaded');
+  </script>
+
+  <!-- MINIMAL TEST SCRIPT - ABSOLUTELY NOTHING CAN STOP THIS -->
+  <script>
+  (function() {
+    console.log('🟢 MINIMAL TEST SCRIPT - DEFINITELY RUNNING!');
+    
+    // Test if our script location is correct
+    console.log('📍 Script location: After product-info scripts');
+    console.log('⏰ Timestamp:', new Date().toISOString());
+    
+    // Immediate download button check
+    var buttons = document.getElementsByTagName('button');
+    console.log('🔍 Found ' + buttons.length + ' buttons immediately');
+    
+    for (var i = 0; i < buttons.length; i++) {
+      var btn = buttons[i];
+      var text = (btn.textContent || btn.innerText || '').toLowerCase();
+      if (text.indexOf('download') !== -1 && text.indexOf('proof') !== -1) {
+        console.log('🎯 IMMEDIATE DOWNLOAD BUTTON FOUND: "' + text + '"');
+        btn.style.display = 'none';
+        console.log('🗑️ HIDDEN IMMEDIATELY');
+      }
+    }
+    
+    // Delayed scan
+    setTimeout(function() {
+      console.log('🕐 DELAYED SCAN (2 seconds later)...');
+      var buttons2 = document.getElementsByTagName('button');
+      console.log('🔍 Found ' + buttons2.length + ' buttons after delay');
+      
+      for (var j = 0; j < buttons2.length; j++) {
+        var btn2 = buttons2[j];
+        var text2 = (btn2.textContent || btn2.innerText || '').toLowerCase();
+        console.log('Button ' + j + ': "' + text2.substring(0, 30) + '"');
+        
+        if (text2.indexOf('download') !== -1 && text2.indexOf('proof') !== -1) {
+          console.log('🎯 DELAYED DOWNLOAD BUTTON FOUND: "' + text2 + '"');
+          btn2.style.display = 'none';
+          btn2.style.visibility = 'hidden';
+          btn2.style.opacity = '0';
+          console.log('🗑️ HIDDEN WITH MULTIPLE METHODS');
+        }
+      }
+    }, 2000);
+    
+    console.log('✅ MINIMAL SCRIPT COMPLETED SUCCESSFULLY');
+  })();
+  </script>
+
+</product-info>
+
+{% schema %}
+{
+  "name": "t:sections.main-product.name",
+  "tag": "section",
+  "class": "section",
+  "blocks": [
+    {
+      "type": "@app"
+    },
+    {
+      "type": "text",
+      "name": "t:sections.main-product.blocks.text.name",
+      "settings": [
+        {
+          "type": "inline_richtext",
+          "id": "text",
+          "default": "t:sections.main-product.blocks.text.settings.text.default",
+          "label": "t:sections.main-product.blocks.text.settings.text.label"
+        },
+        {
+          "type": "select",
+          "id": "text_style",
+          "options": [
+            {
+              "value": "body",
+              "label": "t:sections.main-product.blocks.text.settings.text_style.options__1.label"
+            },
+            {
+              "value": "subtitle",
+              "label": "t:sections.main-product.blocks.text.settings.text_style.options__2.label"
+            },
+            {
+              "value": "uppercase",
+              "label": "t:sections.main-product.blocks.text.settings.text_style.options__3.label"
+            }
+          ],
+          "default": "body",
+          "label": "t:sections.main-product.blocks.text.settings.text_style.label"
+        }
+      ]
+    },
+    {
+      "type": "title",
+      "name": "t:sections.main-product.blocks.title.name",
+      "limit": 1
+    },
+    {
+      "type": "price",
+      "name": "t:sections.main-product.blocks.price.name",
+      "limit": 1
+    },
+    {
+      "type": "sku",
+      "name": "t:sections.main-product.blocks.sku.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "text_style",
+          "options": [
+            {
+              "value": "body",
+              "label": "t:sections.main-product.blocks.sku.settings.text_style.options__1.label"
+            },
+            {
+              "value": "subtitle",
+              "label": "t:sections.main-product.blocks.sku.settings.text_style.options__2.label"
+            },
+            {
+              "value": "uppercase",
+              "label": "t:sections.main-product.blocks.sku.settings.text_style.options__3.label"
+            }
+          ],
+          "default": "body",
+          "label": "t:sections.main-product.blocks.sku.settings.text_style.label"
+        }
+      ]
+    },
+    {
+      "type": "inventory",
+      "name": "t:sections.main-product.blocks.inventory.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "text_style",
+          "options": [
+            {
+              "value": "body",
+              "label": "t:sections.main-product.blocks.inventory.settings.text_style.options__1.label"
+            },
+            {
+              "value": "subtitle",
+              "label": "t:sections.main-product.blocks.inventory.settings.text_style.options__2.label"
+            },
+            {
+              "value": "uppercase",
+              "label": "t:sections.main-product.blocks.inventory.settings.text_style.options__3.label"
+            }
+          ],
+          "default": "body",
+          "label": "t:sections.main-product.blocks.inventory.settings.text_style.label"
+        },
+        {
+          "type": "range",
+          "id": "inventory_threshold",
+          "label": "t:sections.main-product.blocks.inventory.settings.inventory_threshold.label",
+          "min": 0,
+          "max": 100,
+          "step": 1,
+          "default": 10
+        },
+        {
+          "type": "checkbox",
+          "id": "show_inventory_quantity",
+          "label": "t:sections.main-product.blocks.inventory.settings.show_inventory_quantity.label",
+          "default": true
+        }
+      ]
+    },
+    {
+      "type": "quantity_selector",
+      "name": "t:sections.main-product.blocks.quantity_selector.name",
+      "limit": 1
+    },
+    {
+      "type": "variant_picker",
+      "name": "t:sections.main-product.blocks.variant_picker.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "select",
+          "id": "picker_type",
+          "options": [
+            {
+              "value": "dropdown",
+              "label": "t:sections.main-product.blocks.variant_picker.settings.picker_type.options__1.label"
+            },
+            {
+              "value": "button",
+              "label": "t:sections.main-product.blocks.variant_picker.settings.picker_type.options__2.label"
+            }
+          ],
+          "default": "button",
+          "label": "t:sections.main-product.blocks.variant_picker.settings.picker_type.label"
+        },
+        {
+          "id": "swatch_shape",
+          "label": "t:sections.main-product.blocks.variant_picker.settings.swatch_shape.label",
+          "type": "select",
+          "info": "t:sections.main-product.blocks.variant_picker.settings.swatch_shape.info",
+          "options": [
+            {
+              "value": "circle",
+              "label": "t:sections.main-product.blocks.variant_picker.settings.swatch_shape.options__1.label"
+            },
+            {
+              "value": "square",
+              "label": "t:sections.main-product.blocks.variant_picker.settings.swatch_shape.options__2.label"
+            },
+            {
+              "value": "none",
+              "label": "t:sections.main-product.blocks.variant_picker.settings.swatch_shape.options__3.label"
+            }
+          ],
+          "default": "circle"
+        }
+      ]
+    },
+    {
+      "type": "buy_buttons",
+      "name": "t:sections.main-product.blocks.buy_buttons.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "checkbox",
+          "id": "show_dynamic_checkout",
+          "default": true,
+          "label": "t:sections.main-product.blocks.buy_buttons.settings.show_dynamic_checkout.label",
+          "info": "t:sections.main-product.blocks.buy_buttons.settings.show_dynamic_checkout.info"
+        },
+        {
+          "type": "checkbox",
+          "id": "show_gift_card_recipient",
+          "default": true,
+          "label": "t:sections.main-product.blocks.buy_buttons.settings.show_gift_card_recipient.label",
+          "info": "t:sections.main-product.blocks.buy_buttons.settings.show_gift_card_recipient.info"
+        }
+      ]
+    },
+    {
+      "type": "description",
+      "name": "t:sections.main-product.blocks.description.name",
+      "limit": 1
+    },
+    {
+      "type": "share",
+      "name": "t:sections.main-product.blocks.share.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "text",
+          "id": "share_label",
+          "label": "t:sections.main-product.blocks.share.settings.text.label",
+          "default": "t:sections.main-product.blocks.share.settings.text.default"
+        }
+      ]
+    },
+    {
+      "type": "custom_liquid",
+      "name": "t:sections.custom-liquid.name",
+      "settings": [
+        {
+          "type": "liquid",
+          "id": "custom_liquid",
+          "label": "t:sections.custom-liquid.settings.custom_liquid.label",
+          "info": "t:sections.custom-liquid.settings.custom_liquid.info"
+        }
+      ]
+    },
+    {
+      "type": "collapsible_tab",
+      "name": "t:sections.main-product.blocks.collapsible_tab.name",
+      "settings": [
+        {
+          "type": "text",
+          "id": "heading",
+          "default": "t:sections.main-product.blocks.collapsible_tab.settings.heading.default",
+          "label": "t:sections.main-product.blocks.collapsible_tab.settings.heading.label"
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__1.label"
+            },
+            {
+              "value": "apple",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__2.label"
+            },
+            {
+              "value": "banana",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__3.label"
+            },
+            {
+              "value": "bottle",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__4.label"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__5.label"
+            },
+            {
+              "value": "carrot",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__6.label"
+            },
+            {
+              "value": "chat_bubble",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__7.label"
+            },
+            {
+              "value": "check_mark",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__8.label"
+            },
+            {
+              "value": "clipboard",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__9.label"
+            },
+            {
+              "value": "dairy",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__10.label"
+            },
+            {
+              "value": "dairy_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__11.label"
+            },
+            {
+              "value": "dryer",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__12.label"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__13.label"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__14.label"
+            },
+            {
+              "value": "gluten_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__15.label"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__16.label"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__17.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__18.label"
+            },
+            {
+              "value": "leather",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__19.label"
+            },
+            {
+              "value": "lightning_bolt",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__20.label"
+            },
+            {
+              "value": "lipstick",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__21.label"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__22.label"
+            },
+            {
+              "value": "map_pin",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__23.label"
+            },
+            {
+              "value": "nut_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__24.label"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__25.label"
+            },
+            {
+              "value": "paw_print",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__26.label"
+            },
+            {
+              "value": "pepper",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__27.label"
+            },
+            {
+              "value": "perfume",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__28.label"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__29.label"
+            },
+            {
+              "value": "plant",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__30.label"
+            },
+            {
+              "value": "price_tag",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__31.label"
+            },
+            {
+              "value": "question_mark",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__32.label"
+            },
+            {
+              "value": "recycle",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__33.label"
+            },
+            {
+              "value": "return",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__34.label"
+            },
+            {
+              "value": "ruler",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__35.label"
+            },
+            {
+              "value": "serving_dish",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__36.label"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__37.label"
+            },
+            {
+              "value": "shoe",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__38.label"
+            },
+            {
+              "value": "silhouette",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__39.label"
+            },
+            {
+              "value": "snowflake",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__40.label"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__41.label"
+            },
+            {
+              "value": "stopwatch",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__42.label"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__43.label"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__44.label"
+            }
+          ],
+          "default": "check_mark",
+          "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.label"
+        },
+        {
+          "type": "richtext",
+          "id": "content",
+          "label": "t:sections.main-product.blocks.collapsible_tab.settings.content.label"
+        },
+        {
+          "type": "page",
+          "id": "page",
+          "label": "t:sections.main-product.blocks.collapsible_tab.settings.page.label"
+        }
+      ]
+    },
+    {
+      "type": "popup",
+      "name": "t:sections.main-product.blocks.popup.name",
+      "settings": [
+        {
+          "type": "text",
+          "id": "text",
+          "default": "t:sections.main-product.blocks.popup.settings.link_label.default",
+          "label": "t:sections.main-product.blocks.popup.settings.link_label.label"
+        },
+        {
+          "id": "page",
+          "type": "page",
+          "label": "t:sections.main-product.blocks.popup.settings.page.label"
+        }
+      ]
+    },
+    {
+      "type": "rating",
+      "name": "t:sections.main-product.blocks.rating.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.main-product.blocks.rating.settings.paragraph.content"
+        }
+      ]
+    },
+    {
+      "type": "complementary",
+      "name": "t:sections.main-product.blocks.complementary_products.name",
+      "limit": 1,
+      "settings": [
+        {
+          "type": "paragraph",
+          "content": "t:sections.main-product.blocks.complementary_products.settings.paragraph.content"
+        },
+        {
+          "type": "text",
+          "id": "block_heading",
+          "default": "t:sections.main-product.blocks.complementary_products.settings.heading.default",
+          "label": "t:sections.main-product.blocks.complementary_products.settings.heading.label"
+        },
+        {
+          "type": "checkbox",
+          "id": "make_collapsible_row",
+          "default": false,
+          "label": "t:sections.main-product.blocks.complementary_products.settings.make_collapsible_row.label"
+        },
+        {
+          "type": "select",
+          "id": "icon",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__1.label"
+            },
+            {
+              "value": "apple",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__2.label"
+            },
+            {
+              "value": "banana",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__3.label"
+            },
+            {
+              "value": "bottle",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__4.label"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__5.label"
+            },
+            {
+              "value": "carrot",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__6.label"
+            },
+            {
+              "value": "chat_bubble",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__7.label"
+            },
+            {
+              "value": "check_mark",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__8.label"
+            },
+            {
+              "value": "clipboard",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__9.label"
+            },
+            {
+              "value": "dairy",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__10.label"
+            },
+            {
+              "value": "dairy_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__11.label"
+            },
+            {
+              "value": "dryer",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__12.label"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__13.label"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__14.label"
+            },
+            {
+              "value": "gluten_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__15.label"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__16.label"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__17.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__18.label"
+            },
+            {
+              "value": "leather",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__19.label"
+            },
+            {
+              "value": "lightning_bolt",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__20.label"
+            },
+            {
+              "value": "lipstick",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__21.label"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__22.label"
+            },
+            {
+              "value": "map_pin",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__23.label"
+            },
+            {
+              "value": "nut_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__24.label"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__25.label"
+            },
+            {
+              "value": "paw_print",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__26.label"
+            },
+            {
+              "value": "pepper",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__27.label"
+            },
+            {
+              "value": "perfume",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__28.label"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__29.label"
+            },
+            {
+              "value": "plant",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__30.label"
+            },
+            {
+              "value": "price_tag",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__31.label"
+            },
+            {
+              "value": "question_mark",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__32.label"
+            },
+            {
+              "value": "recycle",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__33.label"
+            },
+            {
+              "value": "return",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__34.label"
+            },
+            {
+              "value": "ruler",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__35.label"
+            },
+            {
+              "value": "serving_dish",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__36.label"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__37.label"
+            },
+            {
+              "value": "shoe",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__38.label"
+            },
+            {
+              "value": "silhouette",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__39.label"
+            },
+            {
+              "value": "snowflake",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__40.label"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__41.label"
+            },
+            {
+              "value": "stopwatch",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__42.label"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__43.label"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__44.label"
+            }
+          ],
+          "default": "price_tag",
+          "info": "t:sections.main-product.blocks.complementary_products.settings.icon.info",
+          "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.label"
+        },
+        {
+          "type": "range",
+          "id": "product_list_limit",
+          "min": 1,
+          "max": 10,
+          "step": 1,
+          "default": 10,
+          "label": "t:sections.main-product.blocks.complementary_products.settings.product_list_limit.label"
+        },
+        {
+          "type": "range",
+          "id": "products_per_page",
+          "min": 1,
+          "max": 4,
+          "step": 1,
+          "default": 3,
+          "label": "t:sections.main-product.blocks.complementary_products.settings.products_per_page.label"
+        },
+        {
+          "type": "select",
+          "id": "pagination_style",
+          "options": [
+            {
+              "value": "dots",
+              "label": "t:sections.main-product.blocks.complementary_products.settings.pagination_style.options.option_1"
+            },
+            {
+              "value": "counter",
+              "label": "t:sections.main-product.blocks.complementary_products.settings.pagination_style.options.option_2"
+            },
+            {
+              "value": "numbers",
+              "label": "t:sections.main-product.blocks.complementary_products.settings.pagination_style.options.option_3"
+            }
+          ],
+          "label": "t:sections.main-product.blocks.complementary_products.settings.pagination_style.label",
+          "default": "counter"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.main-product.blocks.complementary_products.settings.product_card.heading"
+        },
+        {
+          "type": "select",
+          "id": "image_ratio",
+          "options": [
+            {
+              "value": "portrait",
+              "label": "t:sections.main-product.blocks.complementary_products.settings.image_ratio.options.option_1"
+            },
+            {
+              "value": "square",
+              "label": "t:sections.main-product.blocks.complementary_products.settings.image_ratio.options.option_2"
+            }
+          ],
+          "label": "t:sections.main-product.blocks.complementary_products.settings.image_ratio.label",
+          "default": "square"
+        },
+        {
+          "type": "checkbox",
+          "id": "enable_quick_add",
+          "label": "t:sections.main-product.blocks.complementary_products.settings.enable_quick_add.label",
+          "default": false
+        }
+      ]
+    },
+    {
+      "type": "icon-with-text",
+      "name": "t:sections.main-product.blocks.icon_with_text.name",
+      "settings": [
+        {
+          "type": "select",
+          "id": "layout",
+          "options": [
+            {
+              "value": "horizontal",
+              "label": "t:sections.main-product.blocks.icon_with_text.settings.layout.options__1.label"
+            },
+            {
+              "value": "vertical",
+              "label": "t:sections.main-product.blocks.icon_with_text.settings.layout.options__2.label"
+            }
+          ],
+          "default": "horizontal",
+          "label": "t:sections.main-product.blocks.icon_with_text.settings.layout.label"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.main-product.blocks.icon_with_text.settings.pairing_1.label",
+          "info": "t:sections.main-product.blocks.icon_with_text.settings.pairing_1.info"
+        },
+        {
+          "type": "select",
+          "id": "icon_1",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__1.label"
+            },
+            {
+              "value": "apple",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__2.label"
+            },
+            {
+              "value": "banana",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__3.label"
+            },
+            {
+              "value": "bottle",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__4.label"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__5.label"
+            },
+            {
+              "value": "carrot",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__6.label"
+            },
+            {
+              "value": "chat_bubble",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__7.label"
+            },
+            {
+              "value": "check_mark",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__8.label"
+            },
+            {
+              "value": "clipboard",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__9.label"
+            },
+            {
+              "value": "dairy",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__10.label"
+            },
+            {
+              "value": "dairy_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__11.label"
+            },
+            {
+              "value": "dryer",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__12.label"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__13.label"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__14.label"
+            },
+            {
+              "value": "gluten_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__15.label"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__16.label"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__17.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__18.label"
+            },
+            {
+              "value": "leather",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__19.label"
+            },
+            {
+              "value": "lightning_bolt",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__20.label"
+            },
+            {
+              "value": "lipstick",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__21.label"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__22.label"
+            },
+            {
+              "value": "map_pin",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__23.label"
+            },
+            {
+              "value": "nut_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__24.label"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__25.label"
+            },
+            {
+              "value": "paw_print",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__26.label"
+            },
+            {
+              "value": "pepper",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__27.label"
+            },
+            {
+              "value": "perfume",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__28.label"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__29.label"
+            },
+            {
+              "value": "plant",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__30.label"
+            },
+            {
+              "value": "price_tag",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__31.label"
+            },
+            {
+              "value": "question_mark",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__32.label"
+            },
+            {
+              "value": "recycle",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__33.label"
+            },
+            {
+              "value": "return",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__34.label"
+            },
+            {
+              "value": "ruler",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__35.label"
+            },
+            {
+              "value": "serving_dish",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__36.label"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__37.label"
+            },
+            {
+              "value": "shoe",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__38.label"
+            },
+            {
+              "value": "silhouette",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__39.label"
+            },
+            {
+              "value": "snowflake",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__40.label"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__41.label"
+            },
+            {
+              "value": "stopwatch",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__42.label"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__43.label"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__44.label"
+            }
+          ],
+          "default": "heart",
+          "label": "t:sections.main-product.blocks.icon_with_text.settings.icon_1.label"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_1",
+          "label": "t:sections.main-product.blocks.icon_with_text.settings.image_1.label"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "heading_1",
+          "default": "t:sections.main-product.blocks.icon_with_text.settings.heading_1.default",
+          "label": "t:sections.main-product.blocks.icon_with_text.settings.heading_1.label",
+          "info": "t:sections.main-product.blocks.icon_with_text.settings.heading.info"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.main-product.blocks.icon_with_text.settings.pairing_2.label"
+        },        
+        {
+          "type": "select",
+          "id": "icon_2",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__1.label"
+            },
+            {
+              "value": "apple",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__2.label"
+            },
+            {
+              "value": "banana",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__3.label"
+            },
+            {
+              "value": "bottle",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__4.label"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__5.label"
+            },
+            {
+              "value": "carrot",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__6.label"
+            },
+            {
+              "value": "chat_bubble",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__7.label"
+            },
+            {
+              "value": "check_mark",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__8.label"
+            },
+            {
+              "value": "clipboard",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__9.label"
+            },
+            {
+              "value": "dairy",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__10.label"
+            },
+            {
+              "value": "dairy_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__11.label"
+            },
+            {
+              "value": "dryer",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__12.label"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__13.label"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__14.label"
+            },
+            {
+              "value": "gluten_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__15.label"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__16.label"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__17.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__18.label"
+            },
+            {
+              "value": "leather",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__19.label"
+            },
+            {
+              "value": "lightning_bolt",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__20.label"
+            },
+            {
+              "value": "lipstick",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__21.label"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__22.label"
+            },
+            {
+              "value": "map_pin",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__23.label"
+            },
+            {
+              "value": "nut_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__24.label"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__25.label"
+            },
+            {
+              "value": "paw_print",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__26.label"
+            },
+            {
+              "value": "pepper",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__27.label"
+            },
+            {
+              "value": "perfume",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__28.label"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__29.label"
+            },
+            {
+              "value": "plant",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__30.label"
+            },
+            {
+              "value": "price_tag",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__31.label"
+            },
+            {
+              "value": "question_mark",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__32.label"
+            },
+            {
+              "value": "recycle",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__33.label"
+            },
+            {
+              "value": "return",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__34.label"
+            },
+            {
+              "value": "ruler",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__35.label"
+            },
+            {
+              "value": "serving_dish",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__36.label"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__37.label"
+            },
+            {
+              "value": "shoe",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__38.label"
+            },
+            {
+              "value": "silhouette",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__39.label"
+            },
+            {
+              "value": "snowflake",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__40.label"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__41.label"
+            },
+            {
+              "value": "stopwatch",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__42.label"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__43.label"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__44.label"
+            }
+          ],
+          "default": "return",
+          "label": "t:sections.main-product.blocks.icon_with_text.settings.icon_2.label"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_2",
+          "label": "t:sections.main-product.blocks.icon_with_text.settings.image_2.label"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "heading_2",
+          "default": "t:sections.main-product.blocks.icon_with_text.settings.heading_2.default",
+          "label": "t:sections.main-product.blocks.icon_with_text.settings.heading_2.label",
+          "info": "t:sections.main-product.blocks.icon_with_text.settings.heading.info"
+        },
+        {
+          "type": "header",
+          "content": "t:sections.main-product.blocks.icon_with_text.settings.pairing_3.label"
+        },        
+        {
+          "type": "select",
+          "id": "icon_3",
+          "options": [
+            {
+              "value": "none",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__1.label"
+            },
+            {
+              "value": "apple",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__2.label"
+            },
+            {
+              "value": "banana",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__3.label"
+            },
+            {
+              "value": "bottle",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__4.label"
+            },
+            {
+              "value": "box",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__5.label"
+            },
+            {
+              "value": "carrot",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__6.label"
+            },
+            {
+              "value": "chat_bubble",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__7.label"
+            },
+            {
+              "value": "check_mark",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__8.label"
+            },
+            {
+              "value": "clipboard",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__9.label"
+            },
+            {
+              "value": "dairy",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__10.label"
+            },
+            {
+              "value": "dairy_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__11.label"
+            },
+            {
+              "value": "dryer",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__12.label"
+            },
+            {
+              "value": "eye",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__13.label"
+            },
+            {
+              "value": "fire",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__14.label"
+            },
+            {
+              "value": "gluten_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__15.label"
+            },
+            {
+              "value": "heart",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__16.label"
+            },
+            {
+              "value": "iron",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__17.label"
+            },
+            {
+              "value": "leaf",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__18.label"
+            },
+            {
+              "value": "leather",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__19.label"
+            },
+            {
+              "value": "lightning_bolt",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__20.label"
+            },
+            {
+              "value": "lipstick",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__21.label"
+            },
+            {
+              "value": "lock",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__22.label"
+            },
+            {
+              "value": "map_pin",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__23.label"
+            },
+            {
+              "value": "nut_free",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__24.label"
+            },
+            {
+              "value": "pants",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__25.label"
+            },
+            {
+              "value": "paw_print",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__26.label"
+            },
+            {
+              "value": "pepper",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__27.label"
+            },
+            {
+              "value": "perfume",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__28.label"
+            },
+            {
+              "value": "plane",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__29.label"
+            },
+            {
+              "value": "plant",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__30.label"
+            },
+            {
+              "value": "price_tag",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__31.label"
+            },
+            {
+              "value": "question_mark",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__32.label"
+            },
+            {
+              "value": "recycle",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__33.label"
+            },
+            {
+              "value": "return",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__34.label"
+            },
+            {
+              "value": "ruler",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__35.label"
+            },
+            {
+              "value": "serving_dish",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__36.label"
+            },
+            {
+              "value": "shirt",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__37.label"
+            },
+            {
+              "value": "shoe",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__38.label"
+            },
+            {
+              "value": "silhouette",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__39.label"
+            },
+            {
+              "value": "snowflake",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__40.label"
+            },
+            {
+              "value": "star",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__41.label"
+            },
+            {
+              "value": "stopwatch",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__42.label"
+            },
+            {
+              "value": "truck",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__43.label"
+            },
+            {
+              "value": "washing",
+              "label": "t:sections.main-product.blocks.collapsible_tab.settings.icon.options__44.label"
+            }
+          ],
+          "default": "truck",
+          "label": "t:sections.main-product.blocks.icon_with_text.settings.icon_3.label"
+        },
+        {
+          "type": "image_picker",
+          "id": "image_3",
+          "label": "t:sections.main-product.blocks.icon_with_text.settings.image_3.label"
+        },
+        {
+          "type": "inline_richtext",
+          "id": "heading_3",
+          "default": "t:sections.main-product.blocks.icon_with_text.settings.heading_3.default",
+          "label": "t:sections.main-product.blocks.icon_with_text.settings.heading_3.label",
+          "info": "t:sections.main-product.blocks.icon_with_text.settings.heading.info"
+        }
+      ]
+    }
+  ],
+  "settings": [
+    {
+      "type": "checkbox",
+      "id": "enable_sticky_info",
+      "default": true,
+      "label": "t:sections.main-product.settings.enable_sticky_info.label"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "label": "t:sections.all.colors.label",
+      "default": "scheme-1"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.main-product.settings.header.content"
+    },
+    {
+      "type": "select",
+      "id": "media_size",
+      "options": [
+        {
+          "value": "small",
+          "label": "t:sections.main-product.settings.media_size.options__1.label"
+        },
+        {
+          "value": "medium",
+          "label": "t:sections.main-product.settings.media_size.options__2.label"
+        },
+        {
+          "value": "large",
+          "label": "t:sections.main-product.settings.media_size.options__3.label"
+        }
+      ],
+      "default": "large",
+      "label": "t:sections.main-product.settings.media_size.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "constrain_to_viewport",
+      "default": true,
+      "label": "t:sections.main-product.settings.constrain_to_viewport.label"
+    },
+    {
+      "type": "select",
+      "id": "media_fit",
+      "options": [
+        {
+          "value": "contain",
+          "label": "t:sections.main-product.settings.media_fit.options__1.label"
+        },
+        {
+          "value": "cover",
+          "label": "t:sections.main-product.settings.media_fit.options__2.label"
+        }
+      ],
+      "default": "contain",
+      "label": "t:sections.main-product.settings.media_fit.label"
+    },
+    {
+      "type": "select",
+      "id": "gallery_layout",
+      "options": [
+        {
+          "value": "stacked",
+          "label": "t:sections.main-product.settings.gallery_layout.options__1.label"
+        },
+        {
+          "value": "columns",
+          "label": "t:sections.main-product.settings.gallery_layout.options__2.label"
+        },
+        {
+          "value": "thumbnail",
+          "label": "t:sections.main-product.settings.gallery_layout.options__3.label"
+        },
+        {
+          "value": "thumbnail_slider",
+          "label": "t:sections.main-product.settings.gallery_layout.options__4.label"
+        }
+      ],
+      "default": "stacked",
+      "label": "t:sections.main-product.settings.gallery_layout.label"
+    },
+    {
+      "type": "select",
+      "id": "mobile_thumbnails",
+      "options": [
+        {
+          "value": "columns",
+          "label": "t:sections.main-product.settings.mobile_thumbnails.options__1.label"
+        },
+        {
+          "value": "show",
+          "label": "t:sections.main-product.settings.mobile_thumbnails.options__2.label"
+        },
+        {
+          "value": "hide",
+          "label": "t:sections.main-product.settings.mobile_thumbnails.options__3.label"
+        }
+      ],
+      "default": "hide",
+      "label": "t:sections.main-product.settings.mobile_thumbnails.label"
+    },    
+    {
+      "type": "select",
+      "id": "media_position",
+      "options": [
+        {
+          "value": "left",
+          "label": "t:sections.main-product.settings.media_position.options__1.label"
+        },
+        {
+          "value": "right",
+          "label": "t:sections.main-product.settings.media_position.options__2.label"
+        }
+      ],
+      "default": "left",
+      "label": "t:sections.main-product.settings.media_position.label"
+    },
+    {
+      "type": "select",
+      "id": "image_zoom",
+      "options": [
+        {
+          "value": "lightbox",
+          "label": "t:sections.main-product.settings.image_zoom.options__1.label"
+        },
+        {
+          "value": "hover",
+          "label": "t:sections.main-product.settings.image_zoom.options__2.label"
+        },
+        {
+          "value": "none",
+          "label": "t:sections.main-product.settings.image_zoom.options__3.label"
+        }
+      ],
+      "default": "lightbox",
+      "label": "t:sections.main-product.settings.image_zoom.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "hide_variants",
+      "default": false,
+      "label": "t:sections.main-product.settings.hide_variants.label"
+    },
+    {
+      "type": "checkbox",
+      "id": "enable_video_looping",
+      "default": false,
+      "label": "t:sections.main-product.settings.enable_video_looping.label"
+    },
+    {
+      "type": "header",
+      "content": "t:sections.all.padding.section_padding_heading"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_top",
+      "default": 36
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "unit": "px",
+      "label": "t:sections.all.padding.padding_bottom",
+      "default": 36
+    }
+  ]
+}
+{% endschema %}
+
+<!-- ColorFlex Hidden Form Fields -->
+<div id="colorflexFormFields" style="display: none;">
+  <input type="hidden" name="properties[Pattern Name]" id="colorflex-pattern-name">
+  <input type="hidden" name="properties[Collection]" id="colorflex-collection">
+  <input type="hidden" name="properties[Custom Colors]" id="colorflex-custom-colors">
+  <input type="hidden" name="properties[Material Type]" id="colorflex-material-type">
+  <input type="hidden" name="properties[ColorFlex Design]" value="Yes" id="colorflex-design">
+  <input type="hidden" name="properties[Pattern ID]" id="colorflex-pattern-id">
+  <input type="hidden" name="properties[Save Date]" id="colorflex-save-date">
+  <input type="hidden" name="properties[Source]" value="ColorFlex Saved Pattern" id="colorflex-source">
+</div>
+
+<script>
+// ColorFlex Product Page Integration
+window.replaceMainProductImage = function(urlParams) {
+  const patternName = urlParams.get('pattern_name');
+  const collection = urlParams.get('collection');
+  const material = urlParams.get('material');
+  const customColors = urlParams.get('custom_colors');
+  let thumbnail = urlParams.get('thumbnail');
+  
+  // If no thumbnail in URL, check localStorage
+  if (!thumbnail || thumbnail.trim() === '') {
+    thumbnail = localStorage.getItem('colorflexCurrentThumbnail');
+    if (thumbnail) {
+      console.log('🖼️ Retrieved thumbnail from localStorage');
+      // Clear it after use to prevent it from showing on wrong products
+      localStorage.removeItem('colorflexCurrentThumbnail');
+    }
+  }
+  
+  // Debug logging
+  console.log('🎨 ColorFlex Debug:', {
+    patternName,
+    collection,
+    material,
+    customColors,
+    thumbnail: thumbnail ? 'Present (' + thumbnail.length + ' chars)' : 'None',
+    customColorsType: typeof customColors,
+    customColorsLength: customColors ? customColors.length : 'null',
+    allParams: Object.fromEntries(urlParams.entries())
+  });
+  
+  if (!patternName) return;
+  
+  // Find the main product image to replace
+  const mainImage = document.querySelector('.product__media img, .product-single__photo img, [data-product-image] img, .product__media-wrapper img');
+  
+  if (mainImage && thumbnail && thumbnail.trim() !== '') {
+    console.log('🖼️ Replacing main product image with custom pattern thumbnail');
+    
+    // Replace the src with our custom thumbnail
+    mainImage.src = thumbnail;
+    mainImage.alt = `Custom ${patternName} pattern from ${collection} collection`;
+    
+    // Update any srcset attributes to prevent fallback to original images
+    if (mainImage.srcset) {
+      mainImage.srcset = thumbnail + ' 1x';
+    }
+    
+    // Add custom colors display under product name instead of overlay
+    addCustomColorsDisplay(patternName, collection, material, customColors);
+    
+    // Keep the "Customize" button visible for additional options
+    showCustomizeButton();
+    
+    console.log('✅ Main product image replaced with custom pattern thumbnail');
+  } else if (!thumbnail || thumbnail.trim() === '') {
+    console.log('⚠️ No thumbnail available - showing custom colors display without thumbnail');
+    
+    // Still show custom colors display even without thumbnail
+    addCustomColorsDisplay(patternName, collection, material, customColors);
+    
+    // Keep the customize button visible for additional options  
+    showCustomizeButton();
+    
+  } else {
+    console.warn('❌ Could not find main product image to replace');
+  }
+}
+
+// Add custom colors display under product name
+function addCustomColorsDisplay(patternName, collection, material, customColors) {
+  // Parse custom colors
+  let colorArray = [];
+  if (customColors && customColors.trim() !== '') {
+    colorArray = customColors.split(',').map(c => c.trim()).filter(c => c);
+  }
+  
+  // Find product title area
+  const productTitle = document.querySelector('.product__title, h1, .product-single__title');
+  if (!productTitle || document.getElementById('colorflexCustomColors')) return;
+  
+  // Create custom colors display
+  const colorsDisplay = document.createElement('div');
+  colorsDisplay.id = 'colorflexCustomColors';
+  colorsDisplay.style.cssText = `
+    margin: 12px 0;
+    padding: 12px 16px;
+    background: #2d3748;
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    border: 1px solid #4a5568;
+  `;
+  
+  let displayHTML = `
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
+      <img src="https://so-animation.com/colorflex/img/camelion-sm-r.jpg" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(212, 175, 55, 0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.3);" alt="ColorFlex">
+      <div>
+        <strong>${patternName}</strong> from ${collection} collection
+        ${material ? ' • ' + material.charAt(0).toUpperCase() + material.slice(1) : ''}
+      </div>
+    </div>
+  `;
+  
+  if (colorArray.length > 0) {
+    displayHTML += `
+      <div style="margin-top: 8px;">
+        <div style="font-size: 12px; margin-bottom: 6px; opacity: 0.9;">Your Custom Colors:</div>
+        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+    `;
+    
+    // Set initial HTML structure
+    colorsDisplay.innerHTML = displayHTML + `</div></div>`;
+    
+    // Load colors data and render badge
+    fetch(window.ColorFlexAssets.colorsUrl)
+      .then(response => response.json())
+      .then(colorsData => {
+        console.log('✅ Loaded colors data for badge:', colorsData.length, 'colors');
+        
+        // CFM.js color lookup function
+        const lookupColor = (colorName) => {
+          if (!colorName || typeof colorName !== "string") {
+            console.warn(`Invalid colorName: ${colorName}, defaulting to #FFFFFF`);
+            return "#FFFFFF";
+          }
+          const cleanedColorName = colorName.replace(/^(SW|SC)\d+\s*/i, "").toLowerCase().trim();
+          if (/^#[0-9A-F]{6}$/i.test(cleanedColorName)) {
+            return cleanedColorName;
+          }
+          const colorEntry = colorsData.find(c => c && typeof c.color_name === 'string' && c.color_name.toLowerCase() === cleanedColorName);
+          if (!colorEntry) {
+            console.warn(`Color '${cleanedColorName}' not found in colorsData, defaulting to #FFFFFF`);
+            return "#FFFFFF";
+          }
+          return colorEntry.hex ? `#${colorEntry.hex}` : "#FFFFFF";
+        };
+        
+        // CFM.js toInitialCaps function
+        const toInitialCaps = (str) => {
+          if (!str || typeof str !== 'string') {
+            return '';
+          }
+          return str
+            .toLowerCase()
+            .split(' ')
+            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(' ');
+        };
+        
+        // CFM.js getCleanColorName function
+        const getCleanColorName = (colorName) => {
+          if (!colorName || typeof colorName !== "string") {
+            return colorName;
+          }
+          return colorName.replace(/^(SW|SC)\d+\s*/i, "").trim();
+        };
+
+        colorArray.forEach(color => {
+          const cleanColor = getCleanColorName(color);
+          const displayName = toInitialCaps(cleanColor);
+          const hexColor = lookupColor(color);
+          
+          displayHTML += `
+            <div style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 4px;
+              margin-right: 8px;
+            ">
+              <div style="
+                width: 28px; 
+                height: 28px; 
+                border-radius: 50%; 
+                background-color: ${hexColor}; 
+                border: 2px solid rgba(255,255,255,0.5);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+                cursor: pointer;
+                transition: transform 0.2s ease;
+              " 
+              title="${displayName}"
+              onmouseover="this.style.transform='scale(1.1)'" 
+              onmouseout="this.style.transform='scale(1)'">
+              </div>
+              <div style="
+                font-size: 10px;
+                text-align: center;
+                opacity: 0.8;
+                max-width: 60px;
+                word-wrap: break-word;
+                line-height: 1.1;
+                color: #e2e8f0;
+              ">${displayName}</div>
+            </div>
+          `;
+        });
+        
+        // Complete the HTML and insert into DOM
+        displayHTML += `
+            </div>
+          </div>
+        `;
+        
+        colorsDisplay.innerHTML = displayHTML;
+      })
+      .catch(error => {
+        console.error('❌ Failed to load colors data for badge:', error);
+        // Fallback to simple display without color conversion
+        colorArray.forEach(color => {
+          displayHTML += `
+            <div style="
+              display: flex;
+              flex-direction: column;
+              align-items: center;
+              gap: 4px;
+              margin-right: 8px;
+            ">
+              <div style="
+                width: 28px; 
+                height: 28px; 
+                border-radius: 50%; 
+                background-color: ${color}; 
+                border: 2px solid rgba(255,255,255,0.5);
+                box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+                cursor: pointer;
+                transition: transform 0.2s ease;
+              " 
+              title="${color}"
+              onmouseover="this.style.transform='scale(1.1)'" 
+              onmouseout="this.style.transform='scale(1)'">
+              </div>
+              <div style="
+                font-size: 10px;
+                text-align: center;
+                opacity: 0.8;
+                max-width: 60px;
+                word-wrap: break-word;
+                line-height: 1.1;
+                color: #e2e8f0;
+              ">${color}</div>
+            </div>
+          `;
+        });
+        
+        displayHTML += `
+            </div>
+          </div>
+        `;
+        
+        colorsDisplay.innerHTML = displayHTML;
+      });
+  }
+  
+  // Add download proof button
+  displayHTML += `
+    <div style="margin-top: 12px; text-align: center;">
+      <button onclick="downloadFullResolutionProof('${patternName}', '${collection}', '${material}')" style="
+        background: #d4af37;
+        color: #1a202c;
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        font-size: 13px;
+        font-weight: bold;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      " 
+      onmouseover="this.style.background='#e6c555'" 
+      onmouseout="this.style.background='#d4af37'">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+          <polyline points="7,10 12,15 17,10"></polyline>
+          <line x1="12" y1="15" x2="12" y2="3"></line>
+        </svg>
+        Download Full-Resolution Proof
+      </button>
+    </div>
+  `;
+  
+  colorsDisplay.innerHTML = displayHTML;
+  
+  // Insert after product title
+  productTitle.parentNode.insertBefore(colorsDisplay, productTitle.nextSibling);
+  
+  console.log('✅ Custom colors display added under product title');
+}
+
+// Show the Customize button and enhance it for ColorFlex products
+function showCustomizeButton() {
+  // Find and enhance the customize button since user has a ColorFlex pattern
+  const customizeBtn = document.querySelector('#openColorFlexBtn');
+  
+  if (customizeBtn) {
+    customizeBtn.style.display = '';
+    customizeBtn.textContent = '🎨 Customize Options';
+    customizeBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+    customizeBtn.style.color = 'white';
+    console.log('✅ Customize button enhanced');
+  } else {
+    // Try finding buttons by text content and enhance them
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(btn => {
+      const btnText = btn.textContent.toLowerCase();
+      if (btnText.includes('customize') || btnText.includes('colors') || btnText.includes('patterns')) {
+        btn.style.display = '';
+        btn.textContent = '🎨 Customize Options';
+        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
+        btn.style.color = 'white';
+        btn.style.border = 'none';
+        btn.style.borderRadius = '6px';
+        btn.style.padding = '12px 20px';
+        console.log('✅ Customize button found and enhanced:', btn.textContent);
+      }
+    });
+  }
+}
+
+// Download full-resolution proof of custom pattern
+function downloadFullResolutionProof(patternName, collection, material) {
+  console.log('📄 Downloading full-resolution print-ready proof for:', patternName, collection, material);
+  console.log('🔧 PARAM DEBUG: patternName type:', typeof patternName, 'value:', patternName);
+  console.log('🔧 PARAM DEBUG: collection type:', typeof collection, 'value:', collection);
+  console.log('🔧 PARAM DEBUG: material type:', typeof material, 'value:', material);
+  
+  // Fix parameter types if needed
+  const fixedPatternName = Array.isArray(patternName) ? patternName[0] : patternName;
+  const fixedCollection = collection || 'unknown';
+  
+  console.log('🔧 FIXED PARAMS: patternName:', fixedPatternName, 'collection:', fixedCollection);
+  
+  // Get all URL parameters for debugging
+  const urlParams = new URLSearchParams(window.location.search);
+  console.log('🔍 ALL URL PARAMS:', Object.fromEntries(urlParams.entries()));
+  
+  // Get custom colors from URL parameters
+  const customColors = urlParams.get('custom_colors');
+  const patternNameFromURL = urlParams.get('pattern_name');
+  const collectionFromURL = urlParams.get('collection');
+  
+  console.log('🔍 URL parameter values:');
+  console.log('  - custom_colors:', customColors);
+  console.log('  - pattern_name:', patternNameFromURL);
+  console.log('  - collection:', collectionFromURL);
+  
+  // Use URL parameters as fallback if function parameters are invalid
+  const finalPatternName = fixedPatternName || patternNameFromURL || 'unknown';
+  const finalCollection = fixedCollection !== 'unknown' ? fixedCollection : (collectionFromURL || 'unknown');
+  
+  console.log('🎯 FINAL PARAMS: patternName:', finalPatternName, 'collection:', finalCollection);
+  
+  if (!customColors) {
+    alert('No custom colors found. Please try again from the ColorFlex customizer.');
+    return;
+  }
+  
+  // Parse the custom colors with proper URL decoding
+  const colorArray = decodeURIComponent(customColors).split(',').map(c => c.trim()).filter(c => c);
+  console.log('🎨 PROOF DEBUG: Raw custom colors:', customColors);
+  console.log('🎨 PROOF DEBUG: Decoded custom colors:', decodeURIComponent(customColors));
+  console.log('🎨 PROOF DEBUG: Parsed custom colors array:', colorArray);
+  console.log('🔧 PROOF DEBUG: Number of colors:', colorArray.length);
+  
+  // Test color parsing for each color
+  colorArray.forEach((color, index) => {
+    const parsed = parseColorEnhanced(color);
+    console.log(`🎨 PROOF DEBUG: Color ${index + 1}: "${color}" -> RGB:`, parsed);
+    if (!parsed) {
+      console.error(`❌ PROOF DEBUG: Failed to parse color ${index + 1}: "${color}"`);
+    }
+  });
+  
+  
+  console.log('🚀 Starting pattern proof generation...');
+  console.log('🔧 DEBUG: Checking if generatePatternProof is available:', typeof window.generatePatternProof);
+  console.log('🔧 DEBUG: window object keys containing "generate":', Object.keys(window).filter(k => k.includes('generate')));
+  
+  if (typeof window.generatePatternProof !== 'function') {
+    console.error('❌ window.generatePatternProof is not available! Type:', typeof window.generatePatternProof);
+    console.log('⏳ Waiting for ColorFlex script to load...');
+    
+    // Show loading message
+    const loadingAlert = 'ColorFlex script is loading... Please wait a moment and try again.';
+    alert(loadingAlert);
+    
+    // Try to wait for the script to load
+    let retryCount = 0;
+    const maxRetries = 10;
+    const retryInterval = setInterval(() => {
+      retryCount++;
+      console.log(`🔄 Retry ${retryCount}/${maxRetries} - Checking for generatePatternProof...`);
+      
+      if (typeof window.generatePatternProof === 'function') {
+        console.log('✅ Function now available! Retrying proof generation...');
+        clearInterval(retryInterval);
+        
+        // Retry the proof generation
+        window.generatePatternProof(finalPatternName, finalCollection, colorArray).then(canvas => {
+          console.log('✅ Pattern proof generation complete, downloading...');
+          window.downloadPatternProof(canvas, `${finalPatternName}_${finalCollection}_proof.jpg`);
+        }).catch(error => {
+          console.error('❌ Error in proof generation:', error);
+          alert('Error generating proof. Check console for details.');
+        });
+        
+      } else if (retryCount >= maxRetries) {
+        console.error('❌ Script failed to load after', maxRetries, 'attempts');
+        clearInterval(retryInterval);
+        alert('ColorFlex script failed to load. Please refresh the page and try again.');
+      }
+    }, 500);
+    
+    return;
+  }
+  
+  // Use the CFM.js proof generation function with fixed parameters
+  window.generatePatternProof(finalPatternName, finalCollection, colorArray).then(canvas => {
+    console.log('✅ Pattern proof generation complete, downloading...');
+    // Download the clean pattern proof using CFM.js function
+    window.downloadPatternProof(canvas, `${finalPatternName}_${finalCollection}_proof.jpg`);
+  }).catch(error => {
+    console.error('❌ Error in proof generation:', error);
+    alert('Error generating proof. Check console for details.');
+  });
+}
+
+// Proof generation now handled by CFM.js - removed duplicate function
+/*
+async function generatePatternProof(canvas, ctx, patternName, collection, colorArray) {
+  console.log('🔧 Generating pattern proof with custom colors...');
+  
+  try {
+    // Fetch collections data using the same URL as ColorFlex app
+    console.log('🔄 Fetching collections data...');
+    const collectionsUrl = '{{ "collections.json" | asset_url }}';
+    console.log('📁 Collections URL:', collectionsUrl);
+    
+    const collectionsResponse = await fetch(collectionsUrl);
+    if (!collectionsResponse.ok) {
+      throw new Error(`Failed to load collections.json: ${collectionsResponse.status} ${collectionsResponse.statusText}`);
+    }
+    
+    const collectionsData = await collectionsResponse.json();
+    console.log('✅ Collections data loaded successfully');
+    
+    console.log('📊 Collections data loaded, searching for:', {
+      patternName: patternName,
+      collection: collection,
+      totalCollections: collectionsData.collections?.length || 0
+    });
+    
+    // Find the specific pattern
+    let targetPattern = null;
+    let foundCollectionName = null;
+    
+    for (const coll of collectionsData.collections || []) {
+      console.log(`🔍 Checking collection: ${coll.name} (has ${coll.patterns?.length || 0} patterns)`);
+      if (coll.name === collection) {
+        foundCollectionName = coll.name;
+        console.log('✅ Found target collection:', foundCollectionName);
+        
+        if (coll.patterns && coll.patterns.length > 0) {
+          // Log all pattern names for debugging
+          console.log('📋 Available patterns:', coll.patterns.map(p => p.name));
+          
+          targetPattern = coll.patterns.find(p => p.name === patternName);
+          if (targetPattern) {
+            console.log('✅ Found target pattern:', targetPattern.name);
+            console.log('🔧 Pattern has layers:', targetPattern.layers?.length || 0);
+            break;
+          } else {
+            console.warn(`❌ Pattern "${patternName}" not found in collection "${collection}"`);
+          }
+        } else {
+          console.warn(`❌ Collection "${collection}" has no patterns`);
+        }
+      }
+    }
+    
+    if (!targetPattern) {
+      console.error('❌ Pattern not found in collections data');
+      console.log('🔧 Available collections:', collectionsData.collections?.map(c => c.name) || []);
+      // Fill with solid color as fallback
+      ctx.fillStyle = colorArray[0] || '#cccccc';
+      ctx.fillRect(0, 0, 2400, 2400);
+      return;
+    }
+    
+    console.log('✅ Found pattern:', targetPattern);
+    
+    if (!targetPattern.layers || targetPattern.layers.length === 0) {
+      console.warn('⚠️ No layers found for pattern, creating solid background');
+      ctx.fillStyle = colorArray[0] || '#cccccc';
+      ctx.fillRect(0, 0, 2400, 2400);
+      return;
+    }
+    
+    console.log(`🔧 Pattern has ${targetPattern.layers.length} layers to process`);
+    
+    // Fill with white background first (to ensure we don't get black)
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, 2400, 2400);
+    console.log('⚪ Canvas filled with white background');
+    
+    // Then add colored background if specified
+    const backgroundIndex = targetPattern.layers.findIndex(layer => layer.isBackground) || 0;
+    const backgroundColor = colorArray[backgroundIndex] || colorArray[0] || '#ffffff';
+    
+    if (backgroundColor !== '#ffffff') {
+      // Background color parsing now handled by CFM.js
+      const bgRgb = null; // Disabled - using CFM.js functions instead
+      if (bgRgb) {
+        ctx.fillStyle = `rgb(${bgRgb.r}, ${bgRgb.g}, ${bgRgb.b})`;
+        ctx.fillRect(0, 0, 2400, 2400);
+        console.log('🎨 Background filled with color:', backgroundColor, bgRgb);
+      }
+    }
+    
+    // Process each layer with custom colors
+    console.log('🔧 PROOF DEBUG: Starting layer processing');
+    console.log('📊 Pattern has', targetPattern.layers.length, 'layers');
+    console.log('🎨 Color array has', colorArray.length, 'colors:', colorArray);
+    
+    for (let i = 0; i < targetPattern.layers.length; i++) {
+      const layer = targetPattern.layers[i];
+      const layerColor = colorArray[i] || '#000000';
+      
+      console.log(`🔧 PROOF DEBUG: Processing layer ${i + 1}/${targetPattern.layers.length}`);
+      console.log('📁 Layer path:', layer.proofPath || layer.path);
+      console.log('🎨 Layer color (raw):', `"${layerColor}"`);
+      console.log('🎨 Layer color (trimmed/lowercase):', `"${layerColor.toLowerCase().trim()}"`);
+      console.log('📄 Full layer object:', layer);
+      
+      // Test parse immediately here
+      // Test parse - using CFM.js function (commented out to avoid async issues)
+      // const testParse = await parseColorEnhanced(layerColor);
+      console.log('🧪 Immediate parse test: disabled to avoid async issues');
+      
+      // Use high-resolution proof path if available, otherwise fall back to regular path
+      const layerImageUrl = layer.proofPath || layer.path;
+      
+      if (layerImageUrl) {
+        console.log(`✅ Processing layer ${i + 1} with URL: ${layerImageUrl}`);
+        // Process all layers - don't skip based on isBackground since pattern layers aren't backgrounds
+        await processHighResLayer(ctx, layerImageUrl, layerColor, 2400, 2400);
+        console.log(`✅ Completed layer ${i + 1}`);
+      } else {
+        console.error(`❌ No URL for layer ${i + 1}:`, layer);
+      }
+    }
+    
+    console.log('🔧 PROOF DEBUG: All layers processed');
+    
+    console.log('✅ Pattern proof generation complete');
+    
+    // Final verification - check if canvas has any content
+    const imageData = ctx.getImageData(0, 0, 100, 100); // Sample top-left corner
+    const data = imageData.data;
+    let nonWhitePixels = 0;
+    let nonBlackPixels = 0;
+    
+    for (let i = 0; i < data.length; i += 4) {
+      const r = data[i], g = data[i + 1], b = data[i + 2], a = data[i + 3];
+      if (!(r === 255 && g === 255 && b === 255)) nonWhitePixels++;
+      if (!(r === 0 && g === 0 && b === 0)) nonBlackPixels++;
+    }
+    
+    console.log('🔍 Canvas verification:', {
+      sampleSize: '100x100 pixels',
+      nonWhitePixels: nonWhitePixels,
+      nonBlackPixels: nonBlackPixels,
+      canvasSize: `${canvas.width}x${canvas.height}`
+    });
+    
+    if (nonWhitePixels === 0 && nonBlackPixels > 0) {
+      console.warn('⚠️ Canvas appears to be all white - no pattern content loaded');
+    } else if (nonBlackPixels === 0) {
+      console.warn('⚠️ Canvas appears to be all black - pattern processing failed');
+    } else {
+      console.log('✅ Canvas has varied content - proof should be good');
+    }
+    
+  } catch (error) {
+    console.error('❌ Error generating pattern proof:', error);
+    // Fallback: create a solid color background
+    const fallbackColor = parseColorEnhanced(colorArray[0]) || { r: 204, g: 204, b: 204 };
+    ctx.fillStyle = `rgb(${fallbackColor.r}, ${fallbackColor.g}, ${fallbackColor.b})`;
+    ctx.fillRect(0, 0, 2400, 2400);
+    console.log('🔧 Applied fallback color:', fallbackColor);
+  }
+}
+*/
+
+// Process high-resolution layer with color replacement - COMMENTED OUT (using CFM.js instead)
+/*
+async function processHighResLayer(ctx, imageUrl, targetColor, canvasWidth, canvasHeight) {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    
+    img.onload = function() {
+      console.log(`📸 Processing high-res layer: ${imageUrl} (${img.width}x${img.height}) with color: ${targetColor}`);
+      
+      // Create temporary canvas for color processing
+      const tempCanvas = document.createElement('canvas');
+      const tempCtx = tempCanvas.getContext('2d');
+      tempCanvas.width = img.width;
+      tempCanvas.height = img.height;
+      
+      // Draw original image
+      tempCtx.drawImage(img, 0, 0);
+      
+      // Get image data for color replacement
+      const imageData = tempCtx.getImageData(0, 0, tempCanvas.width, tempCanvas.height);
+      const data = imageData.data;
+      
+          // Parse target color with enhanced parsing
+      console.log('🔧 COLOR DEBUG: Parsing color:', targetColor);
+      // Color parsing now handled by CFM.js
+      let targetRgb = null; // Disabled - using CFM.js functions instead
+      console.log('🔧 COLOR DEBUG: Parsed result:', targetRgb);
+      
+      if (!targetRgb) {
+        console.warn('❌ Could not parse color:', targetColor);
+        // Generate a random color instead of gray fallback
+        const layerIndex = Math.floor(Math.random() * 6);
+        const fallbackColors = [
+          {r: 188, g: 127, b: 132}, // rose
+          {r: 157, g: 171, b: 137}, // green
+          {r: 158, g: 148, b: 127}, // beige
+          {r: 179, g: 191, b: 168}, // sage
+          {r: 121, g: 64, b: 115},  // purple
+          {r: 91, g: 94, b: 100}    // gray-blue
+        ];
+        targetRgb = fallbackColors[layerIndex % fallbackColors.length];
+        console.log('🔧 Using fallback color:', targetRgb);
+      }
+      
+      console.log('🎨 Target RGB:', targetRgb);
+      
+      // Enhanced color replacement - replace ALL non-transparent pixels
+      let pixelsChanged = 0;
+      let totalPixels = data.length / 4;
+      
+      console.log('🔧 COLOR DEBUG: Starting color replacement on', totalPixels, 'pixels');
+      console.log('🔧 COLOR DEBUG: Target RGB:', targetRgb);
+      
+      for (let i = 0; i < data.length; i += 4) {
+        const r = data[i];
+        const g = data[i + 1];
+        const b = data[i + 2];
+        const a = data[i + 3];
+        
+        // Only process pixels with some opacity
+        if (a > 10) {
+          // Calculate luminance for detail preservation
+          const luminance = 0.299 * r + 0.587 * g + 0.114 * b;
+          const factor = luminance / 255;
+          
+          // Apply target color while preserving luminance variation
+          data[i] = Math.round(targetRgb.r * factor);
+          data[i + 1] = Math.round(targetRgb.g * factor);
+          data[i + 2] = Math.round(targetRgb.b * factor);
+          // Keep original alpha: data[i + 3] = a;
+          
+          pixelsChanged++;
+        }
+      }
+      
+      console.log('🔧 COLOR DEBUG: Changed', pixelsChanged, 'out of', totalPixels, 'pixels');
+      
+      console.log(`🔧 Changed ${pixelsChanged} pixels in layer`);
+      
+      // Put processed data back
+      tempCtx.putImageData(imageData, 0, 0);
+      
+      // Draw processed layer onto main canvas, scaled to fit with proper blending
+      ctx.globalCompositeOperation = 'source-over'; // Ensure normal layering
+      ctx.drawImage(tempCanvas, 0, 0, canvasWidth, canvasHeight);
+      resolve();
+    };
+    
+    img.onerror = function() {
+      console.error('❌ Failed to load layer image:', imageUrl);
+      resolve();
+    };
+    
+    // Handle proof-layers path resolution
+    if (imageUrl.startsWith('./')) {
+      // Check if this is a proof-layers path - these load from server, not Shopify CDN
+      if (imageUrl.includes('proof-layers/')) {
+        // Convert to server URL for proof layers
+        img.src = 'https://so-animation.com/colorflex/' + imageUrl.substring(2);
+      } else {
+        // Convert relative path to Shopify CDN path for other assets
+        img.src = '/cdn/shop/files/' + imageUrl.substring(2);
+      }
+    } else if (imageUrl.startsWith('/')) {
+      img.src = imageUrl;
+    } else {
+      // Check if this is a proof-layers path
+      if (imageUrl.includes('proof-layers/')) {
+        img.src = 'https://so-animation.com/colorflex/' + imageUrl;
+      } else {
+        img.src = '/cdn/shop/files/' + imageUrl;
+      }
+    }
+    
+    console.log('🔄 Loading layer image from:', img.src);
+  });
+}
+*/
+
+// Enhanced color parsing function that handles various color formats
+async function parseColorEnhanced(colorStr) {
+  if (!colorStr) return null;
+  
+  console.log('🔍 Parsing color:', `"${colorStr}"`);
+  
+  // Handle hex colors
+  if (colorStr.startsWith('#')) {
+    const hex = colorStr.slice(1);
+    if (hex.length === 6) {
+      const result = {
+        r: parseInt(hex.slice(0, 2), 16),
+        g: parseInt(hex.slice(2, 4), 16),
+        b: parseInt(hex.slice(4, 6), 16)
+      };
+      console.log('✅ Parsed hex color:', result);
+      return result;
+    }
+  }
+  
+  // Load colors from colors.json if not already loaded
+  if (!window.colorFlexColors) {
+    try {
+      console.log('🔄 Loading colors from colors.json...');
+      const response = await fetch('{{ "colors.json" | asset_url }}');
+      const colorsData = await response.json();
+      
+      // Create lookup object for fast access
+      window.colorFlexColors = {};
+      colorsData.forEach(color => {
+        const baseName = color.color_name.toLowerCase().trim();
+        const rgb = { r: color.red, g: color.green, b: color.blue };
+        
+        // Add multiple variations for flexible matching
+        window.colorFlexColors[baseName] = rgb;
+        if (color.sw_number) {
+          window.colorFlexColors[color.sw_number.toLowerCase() + ' ' + baseName] = rgb;
+          window.colorFlexColors[color.sw_number.toLowerCase()] = rgb;
+        }
+      });
+      console.log('✅ Loaded', Object.keys(window.colorFlexColors).length, 'color variations');
+    } catch (error) {
+      console.error('❌ Failed to load colors.json:', error);
+      window.colorFlexColors = {}; // Fallback to empty object
+    }
+  }
+  
+  // Handle named colors
+  const colorName = colorStr.toLowerCase().trim();
+  
+  // Check loaded colors first
+  if (window.colorFlexColors && window.colorFlexColors[colorName]) {
+    const result = window.colorFlexColors[colorName];
+    console.log('✅ Parsed dynamic color:', `"${colorStr}" -> "${colorName}"`, result);
+    return result;
+  }
+  
+  // Fallback to hardcoded colors for backwards compatibility
+  const namedColors = {
+    'honorable blue': { r: 104, g: 131, b: 149 },  // SW6811
+    'sw6811 honorable blue': { r: 104, g: 131, b: 149 },
+    'alchemy': { r: 189, g: 179, b: 141 },  // SW6395
+    'sw6395 alchemy': { r: 189, g: 179, b: 141 },
+    'greenfield': { r: 107, g: 122, b: 93 },  // SW6439
+    'sw6439 greenfield': { r: 107, g: 122, b: 93 },
+    'iron ore': { r: 91, g: 94, b: 100 },  // SW7069
+    'sw7069 iron ore': { r: 91, g: 94, b: 100 },
+    // New colors for Flowering Fern pattern
+    'rembrandt ruby': { r: 115, g: 45, b: 50 },  // SW0033
+    'sw0033 rembrandt ruby': { r: 115, g: 45, b: 50 },
+    'artifact': { r: 168, g: 146, b: 121 },  // SW6138
+    'sw6138 artifact': { r: 168, g: 146, b: 121 },
+    'messenger bag': { r: 87, g: 88, b: 93 },  // SW7740
+    'sw7740 messenger bag': { r: 87, g: 88, b: 93 },
+    // Additional missing colors
+    'cordial': { r: 177, g: 44, b: 56 },  // Common cordial color
+    'perfect periwinkle': { r: 192, g: 200, b: 220 },  // SW9065
+    'sw9065 perfect periwinkle': { r: 192, g: 200, b: 220 },
+    'plummy': { r: 121, g: 64, b: 115 },  // SW6558
+    'sw6558 plummy': { r: 121, g: 64, b: 115 },
+    // Key Largo botanicals colors
+    'cottage linen': { r: 248, g: 244, b: 237 },  // SC0001
+    'sc0001 cottage linen': { r: 248, g: 244, b: 237 },
+    'roycroft rose': { r: 188, g: 127, b: 132 },  // SW2830
+    'sw2830 roycroft rose': { r: 188, g: 127, b: 132 },
+    'sleepy hollow': { r: 157, g: 171, b: 137 },  // SW6430
+    'sw6430 sleepy hollow': { r: 157, g: 171, b: 137 },
+    'jasper stone': { r: 158, g: 148, b: 127 },  // SW9133
+    'sw9133 jasper stone': { r: 158, g: 148, b: 127 },
+    'halcyon green': { r: 179, g: 191, b: 168 },  // SW6213
+    'sw6213 halcyon green': { r: 179, g: 191, b: 168 },
+    'quietude': { r: 188, g: 195, b: 179 },  // SW6212
+    'sw6212 quietude': { r: 188, g: 195, b: 179 },
+    'rainwashed': { r: 199, g: 205, b: 192 },  // SW6211
+    'sw6211 rainwashed': { r: 199, g: 205, b: 192 },
+    // Flowering Fern colors
+    'caviar': { r: 52, g: 52, b: 52 },  // SW6990
+    'sw6990 caviar': { r: 52, g: 52, b: 52 },
+    'bracing blue': { r: 82, g: 125, b: 151 },  // SW6242
+    'sw6242 bracing blue': { r: 82, g: 125, b: 151 },
+    'ecru': { r: 239, g: 231, b: 218 },  // SW6115
+    'sw6115 ecru': { r: 239, g: 231, b: 218 },
+    // Bombay collection colors
+    'lupine': { r: 98, g: 105, b: 154 },  // SW6810
+    'sw6810 lupine': { r: 98, g: 105, b: 154 },
+    // Basic colors
+    'black': { r: 0, g: 0, b: 0 },
+    'white': { r: 255, g: 255, b: 255 },
+    'red': { r: 255, g: 0, b: 0 },
+    'green': { r: 0, g: 255, b: 0 },
+    'blue': { r: 0, g: 0, b: 255 }
+  };
+  
+  if (namedColors[colorName]) {
+    const result = namedColors[colorName];
+    console.log('✅ Parsed named color:', `"${colorStr}" -> "${colorName}"`, result);
+    return result;
+  }
+  
+  // Handle rgb() format
+  const rgbMatch = colorStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+  if (rgbMatch) {
+    const result = {
+      r: parseInt(rgbMatch[1]),
+      g: parseInt(rgbMatch[2]),
+      b: parseInt(rgbMatch[3])
+    };
+    console.log('✅ Parsed RGB color:', result);
+    return result;
+  }
+  
+  console.warn('❌ Could not parse color:', colorStr);
+  // Fallback to a default color
+  return { r: 128, g: 128, b: 128 };
+}
+
+// Legacy color parsing function (kept for compatibility)
+function parseColor(colorStr) {
+  return parseColorEnhanced(colorStr);
+}
+
+// Helper function to download the proof image
+function downloadProofImage(canvas, filename) {
+  canvas.toBlob(function(blob) {
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+    console.log('✅ Proof downloaded:', filename);
+  }, 'image/jpeg', 0.98);
+}
+
+
+function populateColorFlexProperties(urlParams) {
+  // Populate hidden form fields with ColorFlex data
+  const fields = {
+    'colorflex-pattern-name': urlParams.get('pattern_name'),
+    'colorflex-collection': urlParams.get('collection'),
+    'colorflex-custom-colors': urlParams.get('custom_colors') || '',
+    'colorflex-material-type': urlParams.get('application') || urlParams.get('material'),
+    'colorflex-pattern-id': urlParams.get('pattern_id'),
+    'colorflex-save-date': urlParams.get('save_date')
+  };
+  
+  // Move hidden fields into the product form
+  const productForm = document.querySelector('form[action*="/cart/add"]');
+  const hiddenFieldsContainer = document.getElementById('colorflexFormFields');
+  
+  if (productForm && hiddenFieldsContainer) {
+    // Move each hidden field into the product form
+    const hiddenFields = hiddenFieldsContainer.querySelectorAll('input[type="hidden"]');
+    hiddenFields.forEach(field => {
+      // Set the value if we have data for it
+      const value = fields[field.id];
+      if (value) {
+        field.value = decodeURIComponent(value);
+      }
+      
+      // Move field into the product form
+      productForm.appendChild(field);
+    });
+    
+    console.log('✅ ColorFlex properties added to product form');
+    console.log('📋 Pattern:', fields['colorflex-pattern-name']);
+    console.log('📁 Collection:', fields['colorflex-collection']);
+    console.log('🎨 Colors:', fields['colorflex-custom-colors']);
+    console.log('📦 Material:', fields['colorflex-material-type']);
+  } else {
+    console.warn('⚠️ Could not find product form or hidden fields container');
+  }
+}
+  <script>
+  console.log('🔧 DIRECT SHOPIFY TEMPLATE - Download button removal starting...');
+
+  // AGGRESSIVE Download Proof Button Removal
+  function removeDownloadButtons() {
+    console.log('🔍 Scanning for download proof buttons...');
+
+    const buttons = document.querySelectorAll('button, input[type="button"],
+  input[type="submit"], a[class*="button"]');
+    let removed = 0;
+    
+    buttons.forEach(button => {
+      const text = (button.textContent || button.innerText || button.value || 
+  '').toLowerCase();
+      
+      if ((text.includes('download') && (text.includes('proof') || 
+  text.includes('resolution'))) ||
+          text.includes('full-resolution') ||
+          text.trim() === 'download full-resolution proof') {
+        
+        console.log('🗑️ REMOVING BUTTON:', button.textContent || button.value);
+        button.style.display = 'none';
+        button.style.visibility = 'hidden';
+        button.style.opacity = '0';
+        button.remove();
+        removed++;
+      }
+    });
+    
+    console.log('✅ Removed', removed, 'download buttons');
+    return removed;
+  }
+
+  // HOVER PREVIEWS for texture buttons
+  function setupHoverPreviews() {
+    console.log('🖼️ Setting up hover previews...');
+    
+    // Create preview container
+    const preview = document.createElement('div');
+    preview.id = 'texturePreview';
+    preview.style.cssText = `
+      position: fixed;
+      top: 50%;
+      right: 20px;
+      transform: translateY(-50%);
+      width: 300px;
+      height: 300px;
+      background: white;
+      border: 3px solid #667eea;
+      border-radius: 12px;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+      display: none;
+      z-index: 10000;
+      overflow: hidden;
+    `;
+    
+    const img = document.createElement('canvas');
+    img.width = 300;
+    img.height = 300;
+    img.style.cssText = 'width: 100%; height: 100%; display: block;';
+    
+    const label = document.createElement('div');
+    label.style.cssText = `
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      padding: 10px;
+      text-align: center;
+      font-weight: bold;
+    `;
+    
+    preview.appendChild(img);
+    preview.appendChild(label);
+    document.body.appendChild(preview);
+    
+    // Find ALL buttons and check their text
+    const allButtons = document.querySelectorAll('button, .btn, [class*="button"],
+   [role="button"]');
+    console.log('🔍 Found', allButtons.length, 'total buttons');
+
+    allButtons.forEach((btn, i) => {
+      const text = (btn.textContent || btn.innerText || '').trim().toLowerCase();
+      console.log(`Button ${i}: "${text}"`);
+
+      if (text === 'smooth' || text === 'rough' || text === 'textured' ||
+          text.includes('texture') || text.includes('material')) {
+
+        console.log('✅ Adding hover to:', text);
+
+        btn.addEventListener('mouseenter', (e) => {
+          console.log('🖱️ Hover started:', text);
+          showPreview(text, img, label, preview);
+        });
+
+        btn.addEventListener('mouseleave', () => {
+          preview.style.display = 'none';
+        });
+      }
+    });
+  }
+
+  function showPreview(text, canvas, label, preview) {
+    const ctx = canvas.getContext('2d');
+
+    // Clear canvas
+    ctx.clearRect(0, 0, 300, 300);
+
+    // Color based on texture
+    let color = '#667eea';
+    if (text.includes('smooth')) color = '#48bb78';
+    if (text.includes('rough')) color = '#ed8936';
+    if (text.includes('textured')) color = '#805ad5';
+
+    // Create gradient background
+    const gradient = ctx.createLinearGradient(0, 0, 300, 300);
+    gradient.addColorStop(0, color);
+    gradient.addColorStop(1, adjustColor(color, -30));
+
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, 300, 300);
+
+    // Add texture pattern
+    ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+    ctx.lineWidth = 2;
+
+    if (text.includes('smooth')) {
+      // Horizontal lines for smooth
+      for (let y = 0; y < 300; y += 30) {
+        ctx.beginPath();
+        ctx.moveTo(0, y);
+        ctx.lineTo(300, y);
+        ctx.stroke();
+      }
+    } else if (text.includes('rough')) {
+      // Random lines for rough
+      for (let i = 0; i < 25; i++) {
+        ctx.beginPath();
+        ctx.moveTo(Math.random() * 300, Math.random() * 300);
+        ctx.lineTo(Math.random() * 300, Math.random() * 300);
+        ctx.stroke();
+      }
+    } else if (text.includes('textured')) {
+      // Grid for textured
+      for (let x = 0; x < 300; x += 25) {
+        for (let y = 0; y < 300; y += 25) {
+          ctx.strokeRect(x, y, 25, 25);
+        }
+      }
+    }
+
+    label.textContent = text.toUpperCase();
+    preview.style.display = 'block';
+  }
+
+  function adjustColor(hex, percent) {
+    const num = parseInt(hex.replace('#', ''), 16);
+    const amt = Math.round(2.55 * percent);
+    const R = Math.min(255, Math.max(0, (num >> 16) + amt));
+    const G = Math.min(255, Math.max(0, (num >> 8 & 0x00FF) + amt));
+    const B = Math.min(255, Math.max(0, (num & 0x0000FF) + amt));
+    return '#' + ((1 << 24) + (R << 16) + (G << 8) + B).toString(16).slice(1);
+  }
+
+  // Run everything when page loads
+  function initCustomWallpaperFixes() {
+    console.log('🚀 CUSTOM WALLPAPER FIXES STARTING...');
+    
+    // Remove download buttons immediately
+    removeDownloadButtons();
+    
+    // Set up hover previews
+    setupHoverPreviews();
+    
+    // Check again after 2 seconds for late-loading buttons
+    setTimeout(() => {
+      console.log('🔄 Secondary scan for late-loading buttons...');
+      removeDownloadButtons();
+    }, 2000);
+    
+    // Set up mutation observer to catch dynamically added buttons
+    const observer = new MutationObserver(() => {
+      removeDownloadButtons();
+    });
+    
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true 
+    });
+  }
+
+  // Start everything
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCustomWallpaperFixes);
+  } else {
+    initCustomWallpaperFixes();
+  }
+
+  console.log('✅ Custom Wallpaper fixes script loaded');
+  </script>
+</script>

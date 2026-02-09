@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Image to Sherwin-Williams Color Matcher</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    img { max-width: 300px; display: block; margin-top: 10px; }
+    .color { display: flex; align-items: center; margin: 10px 0; }
+    .swatch { width: 30px; height: 30px; margin-right: 10px; border: 1px solid #ccc; }
+    #output { margin-top: 20px; }
+  </style>
+</head>
+<body>
+  <h2>🎨 Match Image Colors to Sherwin-Williams</h2>
+  <input type="file" id="imgInput" accept="image/*">
+  <canvas id="canvas" style="display:none;"></canvas>
+  <img id="preview">
+  <div id="output"></div>
+
+  <script>
+    let swColors = [];
+
+    async function loadColorDatabase() {
+      const res = await fetch('colors.json');
+      swColors = await res.json();
+    }
+
+    function rgbDist(a, b) {
+      return Math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2);
+    }
+
+    function findClosestColor(rgb) {
+      return swColors.reduce((closest, color) => {
+        const swRGB = [color.red, color.green, color.blue];
+        const dist = rgbDist(rgb, swRGB);
+        return dist < closest.dist ? { ...color, dist } : closest;
+      }, { dist: Infinity });
+    }
+
+    function getDominantColors(image, ctx, width, height, topN = 5) {
+      const data = ctx.getImageData(0, 0, width, height).data;
+      const colorCounts = {};
+      for (let i = 0; i < data.length; i += 4) {
+        const rgb = [data[i], data[i+1], data[i+2]];
+        const key = rgb.join(',');
+        colorCounts[key] = (colorCounts[key] || 0) + 1;
+      }
+      return Object.entries(colorCounts)
+        .sort((a,b) => b[1]-a[1])
+        .slice(0, topN)
+        .map(([k]) => k.split(',').map(Number));
+    }
+
+    document.getElementById('imgInput').addEventListener('change', async (e) => {
+      await loadColorDatabase();
+
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const img = document.getElementById('preview');
+      const canvas = document.getElementById('canvas');
+      const ctx = canvas.getContext('2d');
+      const output = document.getElementById('output');
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        img.src = event.target.result;
+        img.onload = () => {
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+
+          const colors = getDominantColors(img, ctx, img.width, img.height);
+          output.innerHTML = '<h3>Top Matched Sherwin-Williams Colors</h3>';
+
+          colors.forEach(rgb => {
+            const match = findClosestColor(rgb);
+            const hexSample = `rgb(${rgb.join(',')})`;
+            const matchHex = `#${match.hex}`;
+            output.innerHTML += `
+              <div class="color">
+                <div class="swatch" style="background: ${hexSample}"></div>
+                Matched: <strong>${match.color_name.toUpperCase()}</strong> (${match.sw_number}) 
+                <div style="margin-left:10px; color:#666;">→ ${matchHex.toUpperCase()}</div>
+              </div>
+            `;
+          });
+        };
+      };
+      reader.readAsDataURL(file);
+    });
+  </script>
+</body>
+</html>
