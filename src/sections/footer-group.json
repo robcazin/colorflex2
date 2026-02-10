@@ -1,11 +1,60 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
 {
+  "name": "t:sections.footer.name",
   "type": "footer",
-  "name": "Footer",
   "sections": {
+    "newsletter": {
+      "type": "newsletter",
+      "blocks": {
+        "heading": {
+          "type": "heading",
+          "settings": {
+            "heading": "Subscribe to our emails",
+            "heading_size": "h1"
+          }
+        },
+        "paragraph": {
+          "type": "paragraph",
+          "settings": {
+            "text": "<p>Join our email list for exclusive offers and the latest news. </p>"
+          }
+        },
+        "email-form": {
+          "type": "email_form",
+          "settings": {}
+        }
+      },
+      "block_order": [
+        "heading",
+        "paragraph",
+        "email-form"
+      ],
+      "settings": {
+        "color_scheme": "scheme-a376e3c8-54ce-4a7e-81b7-0240553ed194",
+        "full_width": true,
+        "padding_top": 44,
+        "padding_bottom": 8
+      }
+    },
     "footer": {
       "type": "footer",
+      "custom_css": [
+        "/* For headings */h1, h2, h3 {font-family: 'Special Elite', monospace;}",
+        "/* For body or specific elements */.your-class-here {font-family: 'Island Moments', cursive;}"
+      ],
       "settings": {}
     }
   },
-  "order": ["footer"]
+  "order": [
+    "newsletter",
+    "footer"
+  ]
 }

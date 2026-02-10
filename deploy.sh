@@ -6,14 +6,22 @@
 # Deploys ColorFlex application and collection data to production server
 # Based on your original deploy script with collections support
 
-# SSH key path
-SSH_KEY="../code-build/deploy_key"
+# SSH key path (override with COLORFLEX_DEPLOY_KEY)
+# Fallback: grab from colorFlex-shopify dev folder (saffron/code-build)
+SSH_KEY="${COLORFLEX_DEPLOY_KEY:-../code-build/deploy_key}"
+if [ ! -f "$SSH_KEY" ] && [ -z "${COLORFLEX_DEPLOY_KEY}" ]; then
+    DEV_KEY="/Volumes/K3/jobs/saffron/code-build/deploy_key"
+    if [ -f "$DEV_KEY" ]; then
+        SSH_KEY="$DEV_KEY"
+    fi
+fi
 
 # Check if SSH key exists
 if [ ! -f "$SSH_KEY" ]; then
     echo -e "${YELLOW}⚠️  SSH key not found at: $SSH_KEY${NC}"
     echo -e "${YELLOW}⚠️  Skipping server deployment (no password prompts)${NC}"
-    echo -e "${YELLOW}💡 Set COLORFLEX_SKIP_DEPLOY=true to suppress this message${NC}"
+    echo -e "${YELLOW}💡 Set COLORFLEX_DEPLOY_KEY=/path/to/key to use your key${NC}"
+    echo -e "${YELLOW}   Or COLORFLEX_SKIP_DEPLOY=true to suppress this message${NC}"
     if [ "${COLORFLEX_SKIP_DEPLOY}" != "true" ]; then
         exit 0
     fi
@@ -23,6 +31,7 @@ fi
 SCP="scp -P 2222 -i $SSH_KEY"
 DEST="soanimat@162.241.24.65:/home4/soanimat/public_html/colorflex/"
 DATA_DEST="soanimat@162.241.24.65:/home4/soanimat/public_html/colorflex/data/"
+IMG_DEST="soanimat@162.241.24.65:/home4/soanimat/public_html/colorflex/img/"
 COLLECTIONS_DEST="soanimat@162.241.24.65:/home4/soanimat/public_html/colorflex/data/collections/"
 
 # Colors for output
@@ -44,13 +53,17 @@ if [ $# -eq 0 ]; then
     echo "  -css     Deploy CSS files only"
     echo ""
     echo "📊 Data Deployment:"
-    echo "  -data    Deploy server data files (colors.json, furniture-config.json)"
-    echo "  -csv     Deploy Shopify CSV files"  
-    echo "  -shopify Upload collections.json to Shopify assets (manual step required)"
+    echo "  -data       Deploy server data files (colors.json, furniture-config.json)"
+    echo "  -collections Deploy collections.json from src/assets/ to server (colorFlex data)"
+    echo "  -csv        Deploy Shopify CSV files"  
+    echo "  -shopify    Upload collections.json to Shopify assets (manual step required)"
     echo ""
     echo "🖼️  Collections Deployment:"
     echo "  -images  Deploy all collection images and assets"
     echo "  -collection <name>  Deploy specific collection images"
+    echo ""
+    echo "🖼️  ColorFlex img (so-animation.com/colorflex/img/):"
+    echo "  -img     Deploy src/img/ folder (e.g. modal-tiled-bg.png) to server"
     echo ""
     echo "🔧 Utility Options:"
     echo "  -build   Build application before deployment"
@@ -60,7 +73,9 @@ if [ $# -eq 0 ]; then
     echo "💡 Examples:"
     echo "  $0 -build -app     # Build and deploy application"
     echo "  $0 -collection botanicals  # Deploy botanicals images only"
-    echo "  $0 -all            # Full deployment"
+    echo "  $0 -img           # Deploy src/img/ (tiled background, etc.) to server"
+    echo "  $0 -collections   # Deploy collections.json (standard/colorFlex pattern fixes) to server"
+    echo "  $0 -all           # Full deployment"
     exit 1
 fi
 
@@ -185,6 +200,30 @@ deploy_collection() {
     echo -e "${GREEN}✅ Collection '${collection_name}' deployed${NC}"
 }
 
+# Function to deploy collections.json from theme assets to server
+deploy_collections_json() {
+    echo -e "${YELLOW}📋 Deploying collections.json to server (so-animation.com/colorflex/data/)...${NC}"
+    if [ ! -f "src/assets/collections.json" ]; then
+        echo -e "${RED}❌ src/assets/collections.json not found.${NC}"
+        exit 1
+    fi
+    $SCP src/assets/collections.json "$DATA_DEST"
+    echo -e "${GREEN}✅ collections.json deployed${NC}"
+}
+
+# Function to deploy src/img/ folder to server (modal tiles, chameleon, etc.)
+deploy_img() {
+    echo -e "${YELLOW}🖼️  Deploying src/img/ to server (so-animation.com/colorflex/img/)...${NC}"
+    if [ ! -d "src/img" ]; then
+        echo -e "${RED}❌ Local src/img/ folder not found. Create it and add files (e.g. modal-tiled-bg.png).${NC}"
+        exit 1
+    fi
+    rsync -avz --progress -e "ssh -p 2222 -i $SSH_KEY" \
+          src/img/ \
+          "$IMG_DEST"
+    echo -e "${GREEN}✅ src/img/ deployed${NC}"
+}
+
 # Function to prepare collections.json for Shopify assets upload
 prepare_shopify_upload() {
     echo -e "${YELLOW}📤 Preparing collections.json for Shopify assets upload...${NC}"
@@ -234,12 +273,20 @@ while [[ $# -gt 0 ]]; do
             deploy_data
             shift
             ;;
+        -collections)
+            deploy_collections_json
+            shift
+            ;;
         -csv)
             deploy_csv
             shift
             ;;
         -images)
             deploy_all_images
+            shift
+            ;;
+        -img)
+            deploy_img
             shift
             ;;
         -collection)

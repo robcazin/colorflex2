@@ -23,6 +23,7 @@ echo ""
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
 # Read store from config file
@@ -54,6 +55,8 @@ show_usage() {
     echo "  locales         - Push only locales (translations, fixes 'Translation missing')"
     echo "  sections        - Push only sections"
     echo "  snippets        - Push only snippets"
+    echo "  changed         - Push only modified/staged theme files under src/ (what you're working on)"
+    echo "  only <path>      - Push a single file (path relative to src/, e.g. templates/page.colorflex.liquid)"
     echo "  furniture       - Deploy furniture mode (assets + template + snippet)"
     echo "  clothing        - Deploy clothing mode (assets + template)"
     echo "  all             - Push all local files, keep remote-only files (--nodelete)"
@@ -66,6 +69,8 @@ show_usage() {
     echo "  ./deploy-shopify-cli.sh templates  # Upload index.json + simple mode pages"
     echo "  ./deploy-shopify-cli.sh layout      # Upload layout/theme.liquid"
     echo "  ./deploy-shopify-cli.sh sections    # Upload main-product.liquid"
+    echo "  ./deploy-shopify-cli.sh changed     # Upload only modified/staged files (say n to cancel; use cfo <path> for one file)"
+    echo "  ./deploy-shopify-cli.sh only templates/page.colorflex.liquid   # Upload one file only"
     echo "  ./deploy-shopify-cli.sh furniture   # Deploy furniture mode"
     echo "  ./deploy-shopify-cli.sh clothing    # Deploy clothing mode"
     echo "  ./deploy-shopify-cli.sh all         # Push entire theme (safe: --nodelete)"
@@ -269,6 +274,59 @@ case "$DEPLOY_MODE" in
         fi
         ;;
 
+    changed)
+        echo "🔬 Deploying only the theme files you've been working on (modified or staged)..."
+        echo ""
+        if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+            echo -e "${RED}❌ Not a git repository. Run from project root or use another option (e.g. templates, sections, all).${NC}"
+            exit 1
+        fi
+        CHANGED_FILES=$( { git diff --name-only HEAD -- src/; git diff --name-only --cached -- src/; } 2>/dev/null | sort -u)
+        if [[ -z "$CHANGED_FILES" ]]; then
+            echo -e "${YELLOW}No modified or staged files under src/.${NC}"
+            echo "To deploy one file: ./deploy-shopify-cli.sh only sections/main-product.liquid  (or cfo sections/main-product.liquid)"
+            exit 0
+        fi
+        THEME_PATHS=""
+        for f in $CHANGED_FILES; do
+            [[ -f "$f" ]] || continue
+            case "$f" in
+                src/sections/*)   THEME_PATHS="${THEME_PATHS} ${f#src/}";;
+                src/templates/*)  THEME_PATHS="${THEME_PATHS} ${f#src/}";;
+                src/snippets/*)   THEME_PATHS="${THEME_PATHS} ${f#src/}";;
+                src/layout/*)     THEME_PATHS="${THEME_PATHS} ${f#src/}";;
+                src/assets/*)     THEME_PATHS="${THEME_PATHS} ${f#src/}";;
+                src/locales/*)    THEME_PATHS="${THEME_PATHS} ${f#src/}";;
+                *) ;;
+            esac
+        done
+        THEME_PATHS=$(echo "$THEME_PATHS" | tr ' ' '\n' | grep -v '^$' | sort -u)
+        if [[ -z "$THEME_PATHS" ]]; then
+            echo -e "${YELLOW}No theme files in that set (only sections, templates, snippets, layout, assets, locales).${NC}"
+            exit 0
+        fi
+        echo "Files to deploy (modified or staged):"
+        echo "$THEME_PATHS" | sed 's/^/  - src\//'
+        echo ""
+        if [[ "$2" == "--yes" ]]; then
+            SKIP_CONFIRM=1
+        else
+            read -p "Continue? (y/n) " -n 1 -r
+            echo
+            [[ $REPLY =~ ^[Yy]$ ]] && SKIP_CONFIRM=1
+        fi
+        if [[ -n "$SKIP_CONFIRM" ]]; then
+            COUNT=0
+            while IFS= read -r relpath; do
+                [[ -z "$relpath" ]] && continue
+                shopify theme push ${THEME_FLAG} --path src --only "$relpath" --nodelete --allow-live
+                echo "  ✓ $relpath"
+                ((COUNT++)) || true
+            done <<< "$THEME_PATHS"
+            echo -e "${GREEN}✅ Deployed $COUNT file(s) successfully${NC}"
+        fi
+        ;;
+
     furniture)
         echo "🪑 Deploying FURNITURE MODE..."
         echo ""
@@ -381,6 +439,24 @@ case "$DEPLOY_MODE" in
             shopify theme push ${THEME_FLAG} --path src --nodelete
             echo -e "${GREEN}✅ Theme deployed successfully${NC}"
         fi
+        ;;
+
+    only)
+        ONEPATH="$2"
+        if [[ -z "$ONEPATH" ]]; then
+            echo -e "${RED}❌ Usage: ./deploy-shopify-cli.sh only <path>${NC}"
+            echo "Path is relative to src/, e.g. templates/page.colorflex.liquid or sections/header.liquid"
+            exit 1
+        fi
+        if [[ ! -f "src/$ONEPATH" ]]; then
+            echo -e "${RED}❌ File not found: src/$ONEPATH${NC}"
+            exit 1
+        fi
+        echo "📤 Deploying single file (no Git)..."
+        echo "  → src/$ONEPATH"
+        echo ""
+        shopify theme push ${THEME_FLAG} --path src --only "$ONEPATH" --nodelete --allow-live
+        echo -e "${GREEN}✅ Deployed $ONEPATH${NC}"
         ;;
 
     pull)

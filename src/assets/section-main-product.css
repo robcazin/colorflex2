@@ -8,7 +8,7 @@ product-info {
 
 .product.grid {
   gap: 0;
-  align-items: stretch;
+  align-items: start;
 }
 
 .product--no-media {
@@ -33,10 +33,12 @@ product-info {
   display: none;
 }
 
+/* Let the single main image fill the left column (override .product--stacked 50% limit) */
 .product__media-wrapper .product__media-container .product__media-item {
   flex: 1;
   min-width: 0;
   min-height: 0;
+  max-width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -577,8 +579,9 @@ a.product__text {
 }
 
 @media screen and (min-width: 990px) {
-  .product--stacked .product__media-item {
-    max-width: calc(50% - var(--grid-desktop-horizontal-spacing) / 2);
+  /* Don’t limit our single main image to 50%; only limit items in product__media-list (slider) */
+  .product--stacked .product__media-list .product__media-item {
+    max-width: calc(50% - var(--grid-desktop-horizontal-spacing) / 1);
   }
 
   .product:not(.product--columns) .product__media-list .product__media-item:first-child,

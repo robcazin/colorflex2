@@ -43,9 +43,11 @@ export function getPatternType(pattern, collection) {
         return "element-coloring";
     }
 
-    // 🔧 CRITICAL FIX: Check for ColorFlex patterns before defaulting to standard
-    if (pattern?.colorFlex === true || (pattern?.layers && pattern.layers.length > 0)) {
-        console.log("🔒 PROTECTED: Detected colorflex pattern");
+    // 🔧 CRITICAL: Only treat as ColorFlex when explicitly flagged (colorFlex === true).
+    // Patterns with layers but no flag (e.g. Farmhouse "Folkart Floral On Black") are standard
+    // and must not go through color compositing.
+    if (pattern?.colorFlex === true && pattern?.layers && pattern.layers.length > 0) {
+        console.log("🔒 PROTECTED: Detected colorflex pattern (explicit colorFlex: true)");
         return "colorflex";
     }
 

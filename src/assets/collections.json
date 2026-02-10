@@ -6014,8 +6014,9 @@
           "repeat": "yes",
           "layers": [
             {
-              "path": "./data/collections/botanicals/layers/shadow-dance_shadow_layer-1.jpg",
-              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_shadow_layer-1.jpg"
+              "path": "./data/collections/botanicals/layers/shadow-dance_isshadow_layer-1.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_isshadow_layer-1.jpg",
+              "isShadow": true
             },
             {
               "path": "./data/collections/botanicals/layers/shadow-dance_flower_layer-2.jpg",
@@ -6953,8 +6954,9 @@
           ],
           "layers": [
             {
-              "path": "./data/collections/botanicals/layers/shadow-dance_shadow_layer-1.jpg",
-              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_shadow_layer-1.jpg"
+              "path": "./data/collections/botanicals/layers/shadow-dance_isshadow_layer-1.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_isshadow_layer-1.jpg",
+              "isShadow": true
             },
             {
               "path": "./data/collections/botanicals/layers/shadow-dance_flower_layer-2.jpg",
@@ -8549,7 +8551,8 @@
             },
             {
               "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_shadow_layer-2.jpg",
-              "proofPath": "./data/collections/coordinates/proof-layers/bamboo-latice-full-color_shadow_layer-2.jpg"
+              "proofPath": "./data/collections/coordinates/proof-layers/bamboo-latice-full-color_shadow_layer-2.jpg",
+              "isShadow": true
             },
             {
               "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_outline_layer-3.jpg",
@@ -10739,7 +10742,8 @@
             },
             {
               "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_shadow_layer-2.jpg",
-              "proofPath": "./data/collections/coordinates/proof-layers/bamboo-latice-full-color_shadow_layer-2.jpg"
+              "proofPath": "./data/collections/coordinates/proof-layers/bamboo-latice-full-color_shadow_layer-2.jpg",
+              "isShadow": true
             },
             {
               "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_outline_layer-3.jpg",
@@ -18259,7 +18263,8 @@
             },
             {
               "path": "./data/collections/english-cottage/layers/staffordshire_dish-shadow_layer-2.jpg",
-              "proofPath": "./data/collections/english-cottage/proof-layers/staffordshire_dish-shadow_layer-2.jpg"
+              "proofPath": "./data/collections/english-cottage/proof-layers/staffordshire_dish-shadow_layer-2.jpg",
+              "isShadow": true
             },
             {
               "path": "./data/collections/english-cottage/layers/staffordshire_dish-background_layer-3.jpg",
@@ -21564,7 +21569,8 @@
             },
             {
               "path": "./data/collections/english-cottage/layers/staffordshire_dish-shadow_layer-2.jpg",
-              "proofPath": "./data/collections/english-cottage/proof-layers/staffordshire_dish-shadow_layer-2.jpg"
+              "proofPath": "./data/collections/english-cottage/proof-layers/staffordshire_dish-shadow_layer-2.jpg",
+              "isShadow": true
             },
             {
               "path": "./data/collections/english-cottage/layers/staffordshire_dish-background_layer-3.jpg",
@@ -22719,7 +22725,8 @@
           "layers": [
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg"
+              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg",
+              "isShadow": true
             },
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_scraps_layer-2.jpg",
@@ -24183,7 +24190,8 @@
           "layers": [
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg"
+              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg",
+              "isShadow": true
             },
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_scraps_layer-2.jpg",
@@ -24402,7 +24410,7 @@
           "name": "Folkart Floral On Black",
           "slug": "folkart-floral-on-black",
           "displayName": "Folkart Floral On Black",
-          "colorFlex": true,
+          "colorFlex": false,
           "tilingType": "half-drop",
           "size": [
             24,
@@ -24472,7 +24480,7 @@
           "name": "Sewing Daze Version 2",
           "slug": "sewing-daze-version-2",
           "displayName": "Sewing Daze Version 2",
-          "colorFlex": true,
+          "colorFlex": false,
           "tilingType": "half-drop",
           "size": [
             24,
@@ -24542,7 +24550,7 @@
           "name": "Sewing Daze Version 1",
           "slug": "sewing-daze-version-1",
           "displayName": "Sewing Daze Version 1",
-          "colorFlex": true,
+          "colorFlex": false,
           "tilingType": "half-drop",
           "size": [
             24,
@@ -47014,8 +47022,9 @@
           ],
           "layers": [
             {
-              "path": "./data/collections/botanicals/layers/shadow-dance_shadow_layer-1.jpg",
-              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_shadow_layer-1.jpg"
+              "path": "./data/collections/botanicals/layers/shadow-dance_isshadow_layer-1.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_isshadow_layer-1.jpg",
+              "isShadow": true
             },
             {
               "path": "./data/collections/botanicals/layers/shadow-dance_flower_layer-2.jpg",
@@ -54177,7 +54186,8 @@
             },
             {
               "path": "./data/collections/english-cottage/layers/staffordshire_dish-shadow_layer-2.jpg",
-              "proofPath": "./data/collections/english-cottage/proof-layers/staffordshire_dish-shadow_layer-2.jpg"
+              "proofPath": "./data/collections/english-cottage/proof-layers/staffordshire_dish-shadow_layer-2.jpg",
+              "isShadow": true
             },
             {
               "path": "./data/collections/english-cottage/layers/staffordshire_dish-background_layer-3.jpg",
@@ -56923,7 +56933,8 @@
           "layers": [
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg"
+              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg",
+              "isShadow": true
             },
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_scraps_layer-2.jpg",
