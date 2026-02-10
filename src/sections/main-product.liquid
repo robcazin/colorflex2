@@ -914,12 +914,25 @@
               <div class="product__media-item" data-media-id="{{ media.id }}">
                 {%- case media.media_type -%}
                   {%- when 'image' -%}
+                    {%- comment -%} Cap intrinsic size so large images (e.g. 2800x2800) don't blow up layout {%- endcomment -%}
+                    {%- assign img_w = media.width -%}
+                    {%- assign img_h = media.height -%}
+                    {%- assign img_max = 1100 -%}
+                    {%- if img_w > img_max or img_h > img_max -%}
+                      {%- if img_w >= img_h -%}
+                        {%- assign img_w = img_max -%}
+                        {%- assign img_h = media.height | times: img_max | divided_by: media.width | round -%}
+                      {%- else -%}
+                        {%- assign img_h = img_max -%}
+                        {%- assign img_w = media.width | times: img_max | divided_by: media.height | round -%}
+                      {%- endif -%}
+                    {%- endif -%}
                     <img
                       src="{{ media | image_url: width: 1100 }}"
                       alt="{{ media.alt | escape }}"
                       loading="{% if forloop.first %}eager{% else %}lazy{% endif %}"
-                      width="{{ media.width }}"
-                      height="{{ media.height }}"
+                      width="{{ img_w }}"
+                      height="{{ img_h }}"
                     >
                   {%- when 'external_video', 'video' -%}
                     {{ media | media_tag: image_size: '1100x' }}
@@ -937,6 +950,10 @@
           class="product__info-container{% if section.settings.enable_sticky_info %} product__column-sticky{% endif %}"
         >
           {%- assign product_form_id = 'product-form-' | append: section.id -%}
+
+          <product-form data-section-id="{{ section.id }}">
+            {%- form 'product', product, id: product_form_id, class: 'product-form', novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+              <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}" class="product-variant-id"{% if product.selected_or_first_available_variant.available == false %} disabled{% endif %}>
 
           <!-- ColorFlex Material Info Box - Always rendered, positioned by JavaScript -->
           <div id="colorflexMaterialInfo" style="display: none; margin: 20px 0; padding: 15px; background: rgb(204, 171, 108); border-radius: 6px; border: 1px solid rgb(204, 171, 108);">
@@ -1117,10 +1134,6 @@
                   {{- block.settings.text -}}
                 </div>
               {%- when 'richtext' -%}
-                <div class="product__text rte" {{ block.shopify_attributes }}>
-                  {{- block.settings.text -}}
-                </div>
-              {%- when 'rich-text' -%}
                 <div class="product__text rte" {{ block.shopify_attributes }}>
                   {{- block.settings.text -}}
                 </div>
@@ -2008,6 +2021,7 @@ if (colorFlexBtn) {
                     
                     // Replace main product image and show ColorFlex indicator
                     document.addEventListener('DOMContentLoaded', function() {
+                      var urlParams = new URLSearchParams(window.location.search);
                       if (typeof window.replaceMainProductImage === 'function') {
                         window.replaceMainProductImage(urlParams);
                       } else {
@@ -2215,6 +2229,8 @@ if (colorFlexBtn) {
                 {% render 'icon-with-text', block: block %}
             {%- endcase -%}
           {%- endfor -%}
+            {%- endform -%}
+          </product-form>
           <a href="{{ product.url }}" class="link product__view-details animate-arrow">
             {{ 'products.product.view_full_details' | t }}
             {{- 'icon-arrow.svg' | inline_asset_content -}}
@@ -2323,17 +2339,6 @@ if (colorFlexBtn) {
     },
     {
       "type": "richtext",
-      "name": "Rich text",
-      "settings": [
-        {
-          "type": "richtext",
-          "id": "text",
-          "label": "Content"
-        }
-      ]
-    },
-    {
-      "type": "rich-text",
       "name": "Rich text",
       "settings": [
         {
@@ -3954,6 +3959,13 @@ window.replaceMainProductImage = function(urlParams) {
     // Replace the src with our custom thumbnail
     mainImage.src = thumbnail;
     mainImage.alt = `Custom ${patternName} pattern from ${collection} collection`;
+
+    // Constrain size: ColorFlex thumbnails must not blow up layout (cap rendered size)
+    mainImage.style.maxWidth = 'min(100%, 800px)';
+    mainImage.style.maxHeight = 'min(80vh, 800px)';
+    mainImage.style.width = 'auto';
+    mainImage.style.height = 'auto';
+    mainImage.style.objectFit = 'contain';
 
     // Update any srcset attributes to prevent fallback to original images
     if (mainImage.srcset) {

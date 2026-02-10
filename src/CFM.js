@@ -3546,8 +3546,8 @@ function showMaterialSelectionModal(pattern) {
     var accordionContainer = document.createElement('div');
     accordionContainer.style.cssText = 'display: flex; flex-direction: column; gap: 10px;';
 
-    // Helper function to create accordion section
-    function createAccordionSection(title, icon, options, isOpen) {
+    // Helper function to create accordion section (scrollContainer: modal content to autoscroll after choice)
+    function createAccordionSection(title, icon, options, isOpen, scrollContainer) {
         var section = document.createElement('div');
         section.style.cssText = 'border: 2px solid #4a5568; border-radius: 8px; overflow: hidden;';
 
@@ -3652,6 +3652,12 @@ function showMaterialSelectionModal(pattern) {
                         }
                     }
                 });
+                // Autoscroll modal down so "Proceed to Cart" is visible
+                if (scrollContainer) {
+                    setTimeout(function() {
+                        scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
+                    }, 200);
+                }
             });
 
             optionsContainer.appendChild(optionDiv);
@@ -3684,9 +3690,9 @@ function showMaterialSelectionModal(pattern) {
         return section;
     }
 
-    // Create wallpaper and fabric sections (both collapsed by default)
-    var wallpaperSection = createAccordionSection('Wallpaper', '🗂️', wallpaperOptions, false);
-    var fabricSection = createAccordionSection('Fabric', '🧵', fabricOptions, false);
+    // Create wallpaper and fabric sections (both collapsed by default); pass modalContent for autoscroll after choice
+    var wallpaperSection = createAccordionSection('Wallpaper', '🗂️', wallpaperOptions, false, modalContent);
+    var fabricSection = createAccordionSection('Fabric', '🧵', fabricOptions, false, modalContent);
 
     accordionContainer.appendChild(wallpaperSection);
     accordionContainer.appendChild(fabricSection);
@@ -5389,24 +5395,17 @@ function loadSavedPatternToUI(pattern) {
         // Apply saved colors to layers if they exist (support both formats)
         const colorsToApply = pattern.colors || (pattern.customColors ? pattern.customColors.map(c => ({color: c})) : []);
         if (colorsToApply && colorsToApply.length > 0) {
-            // Wait for layer inputs to be created, then apply colors
             setTimeout(function() {
                 colorsToApply.forEach(function(savedColor, index) {
                     if (appState.currentLayers[index]) {
-                        // Handle both formats: {color: "SW1234"} or just "SW1234"
                         const colorValue = savedColor.color || savedColor;
                         appState.currentLayers[index].color = colorValue;
                         const colorHex = lookupColor(colorValue);
-                        
-                        // Update via appState.layerInputs (primary method)
-                        if (appState.layerInputs[index]) {
-                            const layerInput = appState.layerInputs[index];
-                            if (layerInput.input) {
-                                layerInput.input.value = getCleanColorName(colorValue);
-                            }
-                            if (layerInput.circle) {
-                                layerInput.circle.style.backgroundColor = colorHex;
-                            }
+                        const layerLabel = appState.currentLayers[index].label;
+                        const layerInput = appState.layerInputs.find(function(li) { return li.label === layerLabel; });
+                        if (layerInput) {
+                            if (layerInput.input) layerInput.input.value = getCleanColorName(colorValue);
+                            if (layerInput.circle) layerInput.circle.style.backgroundColor = colorHex;
                         }
 
                         // Fallback to DOM selector approach
@@ -5541,7 +5540,10 @@ function loadSavedPatternToUI(pattern) {
 // Path normalization function to fix ./data/ vs data/ inconsistencies
 function normalizePath(path) {
     if (!path || typeof path !== 'string') return path;
-    
+    // Correct known wrong server filenames (e.g. old collections.json on Shopify)
+    if (path.includes('shadow-dance_shadow_layer-1')) {
+        path = path.replace(/shadow-dance_shadow_layer-1/g, 'shadow-dance_isshadow_layer-1');
+    }
     // If it's already a full URL, return as-is
     if (path.startsWith('http://') || path.startsWith('https://')) {
         return path;
@@ -9135,8 +9137,8 @@ function populateCuratedColors(colors) {
     return;
   }
 
-  // ⚠️ Don't show curated colors for standard patterns (no layers)
-  const isStandardPattern = !appState.currentPattern?.layers || appState.currentPattern.layers.length === 0;
+  // ⚠️ Standard = not explicitly ColorFlex (colorFlex: true + layers)
+  const isStandardPattern = !(appState.currentPattern?.colorFlex === true && appState.currentPattern?.layers && appState.currentPattern.layers.length > 0);
   console.log("🔍 CURATED COLORS CHECK:");
   console.log("  Pattern:", appState.currentPattern?.name);
   console.log("  Has layers:", appState.currentPattern?.layers?.length || 0);
@@ -9425,7 +9427,9 @@ function runTheTicket(baseColor) {
     }
 
     scored.forEach((ticketColor, idx) => {
-        const inputSet = appState.layerInputs[idx];
+        if (!appState.currentLayers[idx]) return;
+        const layerLabel = appState.currentLayers[idx].label;
+        const inputSet = appState.layerInputs.find(li => li.label === layerLabel);
         if (!inputSet || !inputSet.input || !inputSet.circle) {
             console.warn(`âŒ Missing input or circle at index ${idx}`);
             return;
@@ -11047,8 +11051,8 @@ function populateLayerInputs(pattern = appState.currentPattern) {
       return;
     }
 
-    // ⚡ PERFORMANCE: Early exit for standard patterns (no layers)
-    const isStandardPattern = !pattern.layers || pattern.layers.length === 0;
+    // ⚡ Standard = not explicitly ColorFlex (colorFlex: true + layers)
+    const isStandardPattern = !(pattern.colorFlex === true && pattern.layers && pattern.layers.length > 0);
 
     // 🎨 SIMPLE MODE: Render into layerThumbnailsContainer with thumbnail images
     const thumbnailContainer = document.getElementById('layerThumbnailsContainer');
@@ -11294,7 +11298,7 @@ function populateLayerInputs(pattern = appState.currentPattern) {
     // Show "Color Layers" heading only for ColorFlex patterns (not standard patterns)
     const colorLayersHeading = document.getElementById('colorLayersHeading');
     if (colorLayersHeading) {
-      const isStandardPattern = !pattern.layers || pattern.layers.length === 0;
+      const isStandardPattern = !(pattern.colorFlex === true && pattern.layers && pattern.layers.length > 0);
       colorLayersHeading.style.display = isStandardPattern ? 'none' : '';
       console.log(`📋 Color Layers heading: ${isStandardPattern ? 'hidden' : 'shown'} for pattern type`);
     }
@@ -11459,8 +11463,8 @@ function handlePatternSelection(patternName, preserveColors = false, colorLockBu
     }
     appState.currentPattern = pattern;
 
-    // ⚡ PERFORMANCE: Early exit for standard patterns - skip all color/layer setup
-    const isStandardPattern = !pattern.layers || pattern.layers.length === 0;
+    // ⚡ Standard = not explicitly ColorFlex (colorFlex: true + layers). Avoids compositing standard thumbnails.
+    const isStandardPattern = !(pattern.colorFlex === true && pattern.layers && pattern.layers.length > 0);
     if (isStandardPattern) {
         // Standard patterns don't need layer management, just set minimal state
         appState.currentLayers = [{
@@ -11522,8 +11526,18 @@ function handlePatternSelection(patternName, preserveColors = false, colorLockBu
         overlayLayers.forEach((layer, index) => {
             const layerPath = layer.path || "";
             const label = pattern.layerLabels[index] || `Layer ${index + 1}`;
-            const isShadow = layer.isShadow === true;
-            if (!isShadow) {
+            const pathStr = (layer.path || layer.proofPath) || "";
+            const isShadow = layer.isShadow === true ||
+                (pathStr && (String(pathStr).toUpperCase().includes("_SHADOW_") || String(pathStr).toUpperCase().includes("SHADOW_LAYER") || String(pathStr).toUpperCase().includes("ISSHADOW")));
+            if (isShadow) {
+                appState.currentLayers.push({
+                    imageUrl: layerPath,
+                    color: null,
+                    label: `Shadow ${index + 1}`,
+                    isShadow: true
+                });
+                colorIndex++;
+            } else {
                 const layerColor = colorSource[colorIndex] || "#000000";
                 appState.currentLayers.push({
                     imageUrl: layerPath,
@@ -11610,18 +11624,19 @@ function applyColorsToLayerInputs(colors, curatedColors = []) {
                 "Layer inputs length:", appState.layerInputs.length,
                 "Current layers length:", appState.currentLayers.length);
     appState.layerInputs.forEach((layer, index) => {
-        if (index >= appState.currentLayers.length) {
-            console.warn(`Skipping input ${layer.label} at index ${index}: no corresponding currentLayer`);
+        const clIdx = appState.currentLayers.findIndex(l => l.label === layer.label);
+        if (clIdx === -1) {
+            console.warn(`Skipping input ${layer.label}: no matching currentLayer`);
             return;
         }
-        const color = colors[index] || curatedColors[index] || (layer.isBackground ? "#FFFFFF" : "Snowbound");
-        const cleanColor = color.replace(/^(SW|SC)\d+\s*/i, "").trim();
+        const color = (colors.length > clIdx && colors[clIdx] != null) ? colors[clIdx] : (curatedColors[index] || (layer.isBackground ? "#FFFFFF" : "Snowbound"));
+        const cleanColor = (color || "").replace(/^(SW|SC)\d+\s*/i, "").trim();
         const hex = lookupColor(color) || "#FFFFFF";
         layer.input.value = getCleanColorName(color);
         layer.circle.style.backgroundColor = hex;
-        console.log(`Applied ${cleanColor} (${hex}) to ${layer.label} input (index ${index})`);
+        console.log(`Applied ${cleanColor} (${hex}) to ${layer.label} input (currentLayers[${clIdx}])`);
         
-        appState.currentLayers[index].color = cleanColor;
+        appState.currentLayers[clIdx].color = cleanColor;
     });
     console.log("Inputs after apply:", 
                 appState.layerInputs.map(l => ({ id: l.input.id, label: l.label, value: l.input.value })));
@@ -12319,21 +12334,15 @@ async function loadPatternData(collection, patternId) {
         if (appState.colorsLocked && savedColorBuffer && savedColorBuffer.length > 0) {
             console.log('🔒 Color lock: Restoring colors from buffer to', appState.layerInputs.length, 'layers');
             appState.layerInputs.forEach((layer, index) => {
-                // Cycle through saved colors if new pattern has more layers
                 const colorIndex = index % savedColorBuffer.length;
                 const savedColor = savedColorBuffer[colorIndex];
 
-                // Update the input field
                 layer.input.value = savedColor;
-
-                // Update the color circle
                 const hex = lookupColor(savedColor) || "#FFFFFF";
                 layer.circle.style.backgroundColor = hex;
 
-                // Update the currentLayers data
-                if (appState.currentLayers[index]) {
-                    appState.currentLayers[index].color = savedColor;
-                }
+                const clIdx = appState.currentLayers.findIndex(l => l.label === layer.label);
+                if (clIdx !== -1) appState.currentLayers[clIdx].color = savedColor;
 
                 console.log(`  Restored layer ${index} (${layer.label}): ${savedColor} (cycling from buffer[${colorIndex}])`);
             });
@@ -12704,14 +12713,17 @@ function buildLayerModel(pattern, designerColors = [], options = {}) {
 
     // ✅ PATTERN LAYERS (shared by both furniture and standard)
     console.log("  🎨 Processing pattern layers:");
-    let patternLabelIndex = 0;
 
     for (let i = 0; i < patternLayers.length; i++) {
         const layer = patternLayers[i];
-        const isTrueShadow = layer.isShadow === true;
+        // JSON "isShadow": true is the source of truth for compositing (no UI input, fixed multiply/opacity). Path-based is fallback only.
+        const pathStr = (layer && (layer.path || layer.proofPath)) ? (layer.path || layer.proofPath) : '';
+        const isTrueShadow = layer.isShadow === true ||
+            (pathStr && (pathStr.toUpperCase().includes('_SHADOW_') || pathStr.toUpperCase().includes('SHADOW_LAYER') || pathStr.toUpperCase().includes('ISSHADOW')));
 
         if (!isTrueShadow) {
-            const originalLabel = layerLabels[patternLabelIndex] || `Pattern Layer ${patternLabelIndex + 1}`;
+            // Use label for THIS pattern layer index i so shadow layers don't steal the next layer's name
+            const originalLabel = layerLabels[i] || `Pattern Layer ${i + 1}`;
             
             const layerObj = {
                 label: originalLabel,
@@ -12727,10 +12739,11 @@ function buildLayerModel(pattern, designerColors = [], options = {}) {
 
             allLayers.push(layerObj);
             console.log(`    ✅ Added pattern layer: "${originalLabel}" (designer color ${colorIndex - 1})`);
-            patternLabelIndex++;
         
-    } else {
-            // Shadow layers (no input needed)
+        } else {
+            // Shadow layers: no UI input, fixed in compositing (e.g. Iron Ore). Skip their slot in designer_colors
+            // so the next layer gets the correct color (e.g. Flower gets PeriStyle Brass, not Iron Ore).
+            colorIndex++;
             const layerObj = {
                 label: `Shadow ${i + 1}`,
                 color: null,
@@ -12744,7 +12757,7 @@ function buildLayerModel(pattern, designerColors = [], options = {}) {
             };
 
             allLayers.push(layerObj);
-            console.log(`    ✅ Added shadow layer: "Shadow ${i + 1}" (no color index used)`);
+            console.log(`    ✅ Added shadow layer: "Shadow ${i + 1}" (skipped color slot)`);
         }
     }
 
@@ -12841,7 +12854,9 @@ if (appState.currentPattern) {
       }
     );
 
-    appState.layerInputs = appState.currentLayers.map(layer => {
+    // Create inputs ONLY for non-shadow layers (shadows are fixed, not exposed in UI)
+    const inputLayers = appState.currentLayers.filter(layer => !layer.isShadow);
+    appState.layerInputs = inputLayers.map(layer => {
       const layerData = createColorInput(
         layer.label,
         layer.inputId,
@@ -12912,9 +12927,8 @@ let updatePreview = async () => {
             console.log(`   Pattern has ${patternToRender.layers.length} layers for color customization`);
         }
 
-        // ✅ FIXED: Handle standard patterns by displaying thumbnail directly
-        // Standard patterns have NO layers or colorFlex is explicitly false
-        const isStandardPattern = !patternToRender.layers || patternToRender.layers.length === 0;
+        // ✅ Standard = not explicitly ColorFlex (colorFlex: true + layers)
+        const isStandardPattern = !(patternToRender.colorFlex === true && patternToRender.layers && patternToRender.layers.length > 0);
         if (isStandardPattern) {
             console.log("📋 Rendering standard pattern with thumbnail:", appState.currentPattern.name);
             
@@ -13048,7 +13062,7 @@ let updatePreview = async () => {
                 dom.preview.appendChild(previewCanvas);
                 dom.preview.style.width = `${canvasSize}px`;
                 dom.preview.style.height = `${canvasSize}px`;
-                dom.preview.style.backgroundColor = "rgba(17, 24, 39, 1)";
+                dom.preview.style.backgroundColor = "#000";
 
                 if (appState.currentPattern.name && dom.patternName) {
                     dom.patternName.innerHTML = appState.currentPattern.name + formatPatternInfo(appState.currentPattern);
@@ -13122,11 +13136,9 @@ let updatePreview = async () => {
             const backgroundLayer = appState.currentLayers[backgroundLayerIndex];
 
             // Skip color lookup for standard patterns - use fixed dark background
-            // Check for both colorFlex flag and presence of layers (botanicals have layers but no colorFlex flag)
-            const hasLayers = appState.currentPattern.layers && appState.currentPattern.layers.length > 0;
-            const isStandardPattern = !appState.currentPattern.colorFlex && !hasLayers;
+            const isStandardPattern = !(appState.currentPattern.colorFlex === true && appState.currentPattern.layers && appState.currentPattern.layers.length > 0);
             if (isStandardPattern) {
-                backgroundColor = "#434341"; // Dark background for standard patterns
+                backgroundColor = "#000"; // Black background for standard patterns
                 console.log(`📋 Standard pattern using fixed dark background (no color lookup)`);
             } else {
                 backgroundColor = lookupColor(backgroundLayer?.color || "Snowbound");
@@ -13200,7 +13212,13 @@ let updatePreview = async () => {
             });
             
         } else if (patternToRender.layers?.length) {
-            const firstLayer = patternToRender.layers.find(l => !l.isShadow);
+            const isLayerShadow = (l) => {
+                if (!l) return true;
+                const path = typeof l === 'string' ? l : (l.path || l.proofPath || '');
+                return l && typeof l === 'object' && l.isShadow === true ||
+                    (path && (String(path).toUpperCase().includes('_SHADOW_') || String(path).toUpperCase().includes('SHADOW_LAYER') || String(path).toUpperCase().includes('ISSHADOW')));
+            };
+            const firstLayer = patternToRender.layers.find(l => !isLayerShadow(l));
             if (firstLayer) {
                 const tempImg = new Image();
                 tempImg.crossOrigin = "Anonymous";
@@ -13249,30 +13267,27 @@ let updatePreview = async () => {
                 }).then(async (patternBounds) => {
                     if (!patternBounds) return;
                     
-                    // Render each layer with correct color mapping
+                    // Render each layer with correct color mapping (including shadow layers at fixed opacity)
                     for (let layerIndex = 0; layerIndex < patternToRender.layers.length; layerIndex++) {
                         const layer = patternToRender.layers[layerIndex];
-                        // Handle both string layers and object layers
-                        const isShadow = typeof layer === 'object' && layer.isShadow === true;
-                        
+                        const layerPath = typeof layer === 'string' ? layer : (layer && (layer.path || layer.proofPath));
+                        // JSON isShadow controls compositing; path-based fallback when flag missing
+                        const isShadow = (typeof layer === 'object' && layer.isShadow === true) ||
+                            (layerPath && (String(layerPath).toUpperCase().includes('_SHADOW_') || String(layerPath).toUpperCase().includes('SHADOW_LAYER') || String(layerPath).toUpperCase().includes('ISSHADOW')));
                         let layerColor = null;
                         if (!isShadow) {
                             // ✅ FIX: For furniture collections, pattern layers start at patternStartIndex (2)
-                            // This applies to ALL furniture collections, not just botanical
                             if (isFurnitureCollection) {
                                 const furnitureInputIndex = layerMapping.patternStartIndex + layerIndex;
-                                
-                                // ✅ Bounds check
                                 if (furnitureInputIndex >= (appState.currentLayers?.length || 0)) {
                                     console.error(`  ❌ Pattern preview: furnitureInputIndex ${furnitureInputIndex} out of bounds for layer ${layerIndex}`);
-                                    layerColor = lookupColor("Snowbound"); // Fallback
+                                    layerColor = lookupColor("Snowbound");
                                 } else {
                                     layerColor = lookupColor(appState.currentLayers[furnitureInputIndex]?.color || "Snowbound");
                                     const inputLayer = appState.currentLayers[furnitureInputIndex];
                                     console.log(`🪑 Furniture pattern preview layer ${layerIndex} → input ${furnitureInputIndex} (${inputLayer?.label}) → ${layerColor}`);
                                 }
                             } else {
-                                // Standard/wallpaper mapping - pattern layers start at index 1
                                 const inputIndex = layerMapping.patternStartIndex + layerIndex;
                                 layerColor = lookupColor(appState.currentLayers[inputIndex]?.color || "Snowbound");
                                 console.log(`🏠 Standard layer ${layerIndex} → input ${inputIndex} → ${layerColor}`);
@@ -13280,9 +13295,8 @@ let updatePreview = async () => {
                         }
 
                         await new Promise((resolve) => {
-                            // Handle both string layers and object layers
-                            const layerPath = typeof layer === 'string' ? layer : layer.path;
-                            processImage(layerPath, (processedCanvas) => {
+                            const pathForLoad = typeof layer === 'string' ? layer : (layer && (layer.path || layer.proofPath));
+                            processImage(pathForLoad, (processedCanvas) => {
                                 if (!(processedCanvas instanceof HTMLCanvasElement)) {
                                     return resolve();
                                 }
@@ -13348,7 +13362,7 @@ let updatePreview = async () => {
         dom.preview.innerHTML = "";
         dom.preview.appendChild(previewCanvas);
         // Allow container to size naturally based on canvas content
-        dom.preview.style.backgroundColor = "rgba(17, 24, 39, 1)";
+        dom.preview.style.backgroundColor = "#000";
 
         if (patternToRender.name) {
             dom.patternName.innerHTML = toInitialCaps(appState.currentPattern.name) + formatPatternInfo(appState.currentPattern);
@@ -13578,8 +13592,7 @@ let updateRoomMockup = async () => {
     ctx.imageSmoothingQuality = "high";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS px
 
-    const isStandardPattern =
-      !appState.currentPattern.layers || appState.currentPattern.layers.length === 0;
+    const isStandardPattern = !(appState.currentPattern.colorFlex === true && appState.currentPattern.layers && appState.currentPattern.layers.length > 0);
 
     // ✅ CORE FUNCTION PROTECTION: updateRoomMockup() is WALLPAPER ONLY
     // If clothing or furniture mode detected, exit early - routing happens in callers
@@ -13620,7 +13633,7 @@ let updateRoomMockup = async () => {
 
       roomImg.onload = () => {
         // bg
-        ctx.fillStyle = "#434341";
+        ctx.fillStyle = "#000";
         ctx.fillRect(0, 0, cssW, cssH);
 
         const patternImg = new Image();
@@ -13732,12 +13745,11 @@ let updateRoomMockup = async () => {
 
         for (let i = 0; i < appState.currentPattern.layers.length; i++) {
           const layer = appState.currentPattern.layers[i];
-          const isShadow = !!layer.isShadow;
-
+          const pathStr = layer && (layer.path || layer.proofPath) ? (layer.path || layer.proofPath) : '';
+          const isShadow = !!layer.isShadow || (pathStr && (String(pathStr).toUpperCase().includes('_SHADOW_') || String(pathStr).toUpperCase().includes('SHADOW_LAYER') || String(pathStr).toUpperCase().includes('ISSHADOW')));
           let layerColor = null;
           if (!isShadow) {
-            const input = inputLayers[inputIdx + 1]; // skip bg
-            layerColor = lookupColor(input?.color || "Snowbound");
+            layerColor = lookupColor(inputLayers[inputIdx + 1]?.color || "Snowbound");
             inputIdx++;
           }
 
@@ -13854,12 +13866,11 @@ let updateRoomMockup = async () => {
 
         for (let i = 0; i < appState.currentPattern.layers.length; i++) {
           const layer = appState.currentPattern.layers[i];
-          const isShadow = !!layer.isShadow;
-
+          const pathStr = layer && (layer.path || layer.proofPath) ? (layer.path || layer.proofPath) : '';
+          const isShadow = !!layer.isShadow || (pathStr && (String(pathStr).toUpperCase().includes('_SHADOW_') || String(pathStr).toUpperCase().includes('SHADOW_LAYER') || String(pathStr).toUpperCase().includes('ISSHADOW')));
           let layerColor = null;
           if (!isShadow) {
-            const input = inputLayers[inputIdx + 1]; // skip bg
-            layerColor = lookupColor(input?.color || "Snowbound");
+            layerColor = lookupColor(inputLayers[inputIdx + 1]?.color || "Snowbound");
             inputIdx++;
           }
 
@@ -13967,7 +13978,7 @@ let updateRoomMockup = async () => {
             const isFurnitureSimpleMode = isSimpleMode && isFurnitureMode;
             const mockupW = isFurnitureSimpleMode ? '800px' : (isFurnitureMode ? '600px' : (isClothingMode ? '500px' : '700px'));
             const mockupH = isFurnitureSimpleMode ? '600px' : (isFurnitureMode ? '450px' : (isClothingMode ? '500px' : '600px'));
-            dom.roomMockup.style.cssText = `width: ${mockupW}; height: ${mockupH}; position: relative; background-color: #434341;`;
+            dom.roomMockup.style.cssText = `width: ${mockupW}; height: ${mockupH}; position: relative; background-color: #000;`;
           }
           ensureButtonsAfterUpdate();
           return;
@@ -13986,7 +13997,7 @@ let updateRoomMockup = async () => {
       const isSimpleMode = window.COLORFLEX_SIMPLE_MODE === true;
       if (!isSimpleMode) {
         // Standard wallpaper mode - use default wallpaper dimensions
-        dom.roomMockup.style.cssText = `width: 700px; height: 600px; position: relative; background: #434341;`;
+        dom.roomMockup.style.cssText = `width: 700px; height: 600px; position: relative; background: #000;`;
       }
       ensureButtonsAfterUpdate();
     };
@@ -15389,22 +15400,21 @@ const updateFurniturePreview = async () => {
                 const currentColors = appState.layerInputs.map(layer => layer.input.value);
                 console.log("Preserving colors:", currentColors);
         
-                // Restore layer inputs with preserved colors
+                // Restore layer inputs with preserved colors (only non-shadow layers get inputs)
                 appState.layerInputs = [];
                 if (dom.layerInputsContainer) dom.layerInputsContainer.innerHTML = "";
-                appState.currentLayers.forEach((layer, index) => {
-                const id = `layer-${index}`;
+                const layersToInput = appState.currentLayers.filter(l => !l.isShadow);
+                layersToInput.forEach((layer, index) => {
+                const clIdx = appState.currentLayers.findIndex(l => l.label === layer.label);
+                const id = layer.inputId || `layer-${clIdx}`;
                 const isBackground = layer.label === "Background";
-                const initialColor = currentColors[index] || (isBackground ? "#FFFFFF" : "Snowbound");
+                const initialColor = (clIdx >= 0 && currentColors[clIdx] != null) ? currentColors[clIdx] : (isBackground ? "#FFFFFF" : "Snowbound");
                 const layerData = createColorInput(layer.label, id, initialColor, isBackground);
                 layerData.input.value = getCleanColorName(initialColor);
                 layerData.circle.style.backgroundColor = lookupColor(initialColor) || "#FFFFFF";
-                
-                // ✅ ADD THIS LINE - append to DOM
                 dom.layerInputsContainer.appendChild(layerData.container);
-                
-                appState.layerInputs[index] = layerData;
-                console.log(`Set ${layer.label} input to ${layerData.input.value}, circle to ${layerData.circle.style.backgroundColor}, id=${id}`);
+                appState.layerInputs.push({ ...layerData, color: layer.color, hex: lookupColor(layer.color) || "#FFFFFF" });
+                console.log(`Set ${layer.label} input to ${layerData.input.value}, id=${id}`);
             });
 
         
@@ -15737,15 +15747,19 @@ const generatePrintPreview = () => {
         let canvasInitialized = false;
 
         if (isTintWhite && appState.currentPattern?.baseComposite) {        } else if (appState.currentPattern?.layers?.length) {
-            layerLabels = appState.currentPattern.layers.map((l, i) => ({
-                label: appState.currentPattern.layerLabels?.[i] || `Layer ${i + 1}`,
-                color: appState.layerInputs[i + (isWall ? 2 : 1)]?.input?.value || "Snowbound"
-            }));
-            
-            // Add background color to the beginning of the color list
-            layerLabels.unshift({
-                label: "Background",
-                color: backgroundInput.value || "Snowbound"
+            // Build layerLabels in pattern order; only non-shadow layers get color from layerInputs
+            layerLabels = [{ label: "Background", color: backgroundInput.value || "Snowbound" }];
+            let nonShadowInputIdx = 1;
+            appState.currentPattern.layers.forEach((l, i) => {
+                const pathStr = (l && (l.path || l.proofPath)) ? (l.path || l.proofPath) : '';
+                const isShadow = l.isShadow === true || (pathStr && (String(pathStr).toUpperCase().includes('_SHADOW_') || String(pathStr).toUpperCase().includes('SHADOW_LAYER') || String(pathStr).toUpperCase().includes('ISSHADOW')));
+                const label = appState.currentPattern.layerLabels?.[i] || `Layer ${i + 1}`;
+                if (isShadow) {
+                    layerLabels.push({ label, color: null });
+                } else {
+                    layerLabels.push({ label, color: appState.layerInputs[nonShadowInputIdx]?.input?.value || "Snowbound" });
+                    nonShadowInputIdx++;
+                }
             });
 
             // 🔍 COLOR MAPPING DEBUG - Log background color
@@ -15756,11 +15770,9 @@ const generatePrintPreview = () => {
             const shadowLayers = [];
             const nonShadowLayers = [];
             appState.currentPattern.layers.forEach((layer, index) => {
-                // ⚠️ CRITICAL: Account for background at layerLabels[0]
-                // layerLabels = ["Background", "Layer 1", "Layer 2", ...]
-                // currentPattern.layers[0] should map to layerLabels[1], not [0]
+                const pathStr = (layer && (layer.path || layer.proofPath)) ? (layer.path || layer.proofPath) : '';
+                const isShadow = layer.isShadow === true || (pathStr && (String(pathStr).toUpperCase().includes('_SHADOW_') || String(pathStr).toUpperCase().includes('SHADOW_LAYER') || String(pathStr).toUpperCase().includes('ISSHADOW')));
                 const label = layerLabels[index + 1].label;
-                const isShadow = layer.isShadow === true;
                 (isShadow ? shadowLayers : nonShadowLayers).push({ layer, index, label });
             });
 
@@ -15822,21 +15834,15 @@ const generatePrintPreview = () => {
 
             for (const { layer, index, label } of nonShadowLayers) {
                 // ⚠️ CRITICAL: Use proofPath (high-res ~3600px) NOT path (preview ~1400px)
-                // proofPath: ./data/collections/{collection}/proof-layers/*.jpg (3600px)
-                // path: ./data/collections/{collection}/layers/*.jpg (1400px)
                 const layerPath = layer.proofPath || layer.path || "";
                 const layerInput = appState.layerInputs[nonShadowInputIndex];
                 const layerColor = lookupColor(layerInput?.input?.value || "Snowbound");
 
-                // 🔍 COLOR MAPPING DEBUG - Investigating color mismatch issue
                 console.log(`🎨 PRINT PATTERN - Non-shadow layer ${index}:`);
                 console.log(`  - Label: "${label}"`);
                 console.log(`  - Input index: ${nonShadowInputIndex}`);
                 console.log(`  - layerInput exists:`, !!layerInput);
                 console.log(`  - Color name from input: "${layerInput?.input?.value}"`);
-                console.log(`  - Color RGB lookup:`, layerColor);
-                console.log(`  - Layer path:`, layer.proofPath ? 'PROOF PATH (high-res)' : 'preview path (fallback)');
-                console.log(`  - Expected from layerLabels[${index + 1}]:`, layerLabels[index + 1]?.color);
 
                 await new Promise((resolve) => {
                     processImage(
@@ -16456,8 +16462,10 @@ if (document.readyState === "loading") {
 
 function getPatternType(pattern, collection) {
     if (collection?.name === "wall-panels") return "wall-panel";
-    if (pattern?.tintWhite) return "tint-white"; 
+    if (pattern?.tintWhite) return "tint-white";
     if (collection?.elements?.length) return "element-coloring";
+    // Only treat as ColorFlex when explicitly flagged; patterns with layers but no flag are standard
+    if (pattern?.colorFlex === true && pattern?.layers && pattern.layers.length > 0) return "colorflex";
     return "standard";
 }
 
@@ -16466,10 +16474,10 @@ function getColorMapping(patternType, currentLayers, layerIndex) {
         case "wall-panel":
             return currentLayers[layerIndex + 2]; // Skip wall + background
         case "standard":
+        case "colorflex":
             const inputLayers = currentLayers.filter(layer => !layer.isShadow);
             return inputLayers[layerIndex + 1]; // Skip background
         case "element-coloring":
-            // Future: element-specific color mapping
             const inputLayersElement = currentLayers.filter(layer => !layer.isShadow);
             return inputLayersElement[layerIndex + 1];
         default:
@@ -17131,7 +17139,7 @@ async function renderFabricMockup() {
             } else if (layer.imageUrl) {
                 layerPath = layer.imageUrl;
             }
-            const isShadowPath = layerPath.toUpperCase().includes('ISSHADOW');
+            const isShadowPath = layerPath && (layerPath.toUpperCase().includes('ISSHADOW') || layerPath.toUpperCase().includes('_SHADOW_') || layerPath.toUpperCase().includes('SHADOW_LAYER'));
             
             const isShadow = isShadowFlag || isShadowPath;
             

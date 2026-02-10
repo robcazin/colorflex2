@@ -58,6 +58,19 @@
         style="--ratio-percent: {{ 1 | divided_by: ratio | times: 100 }}%;"
       >
         {%- if card_product.featured_media -%}
+          {%- comment -%} Cap intrinsic size so large images (e.g. ColorFlex 2800x2800) don't blow up layout {%- endcomment -%}
+          {%- assign card_img_w = card_product.featured_media.width -%}
+          {%- assign card_img_h = card_product.featured_media.height -%}
+          {%- assign card_img_max = 800 -%}
+          {%- if card_img_w > card_img_max or card_img_h > card_img_max -%}
+            {%- if card_img_w >= card_img_h -%}
+              {%- assign card_img_w = card_img_max -%}
+              {%- assign card_img_h = card_product.featured_media.height | times: card_img_max | divided_by: card_product.featured_media.width | round -%}
+            {%- else -%}
+              {%- assign card_img_h = card_img_max -%}
+              {%- assign card_img_w = card_product.featured_media.width | times: card_img_max | divided_by: card_product.featured_media.height | round -%}
+            {%- endif -%}
+          {%- endif -%}
           <div class="card__media{% if image_shape and image_shape != 'default' %} shape--{{ image_shape }} color-{{ settings.card_color_scheme }} gradient{% endif %}">
             <div class="media media--transparent media--hover-effect">
               {% comment %}theme-check-disable ImgLazyLoading{% endcomment %}
@@ -78,12 +91,23 @@
                 {% unless lazy_load == false %}
                   loading="lazy"
                 {% endunless %}
-                width="{{ card_product.featured_media.width }}"
-                height="{{ card_product.featured_media.height }}"
+                width="{{ card_img_w }}"
+                height="{{ card_img_h }}"
               >
               {% comment %}theme-check-enable ImgLazyLoading{% endcomment %}
 
               {%- if card_product.media[1] != null and show_secondary_image -%}
+                {%- assign card_img2_w = card_product.media[1].width -%}
+                {%- assign card_img2_h = card_product.media[1].height -%}
+                {%- if card_img2_w > card_img_max or card_img2_h > card_img_max -%}
+                  {%- if card_img2_w >= card_img2_h -%}
+                    {%- assign card_img2_w = card_img_max -%}
+                    {%- assign card_img2_h = card_product.media[1].height | times: card_img_max | divided_by: card_product.media[1].width | round -%}
+                  {%- else -%}
+                    {%- assign card_img2_h = card_img_max -%}
+                    {%- assign card_img2_w = card_product.media[1].width | times: card_img_max | divided_by: card_product.media[1].height | round -%}
+                  {%- endif -%}
+                {%- endif -%}
                 <img
                   srcset="
                     {%- if card_product.media[1].width >= 165 -%}{{ card_product.media[1] | image_url: width: 165 }} 165w,{%- endif -%}
@@ -99,8 +123,8 @@
                   alt="{{ card_product.media[1].alt | escape }}"
                   class="motion-reduce"
                   loading="lazy"
-                  width="{{ card_product.media[1].width }}"
-                  height="{{ card_product.media[1].height }}"
+                  width="{{ card_img2_w }}"
+                  height="{{ card_img2_h }}"
                 >
               {%- endif -%}
             </div>
@@ -469,6 +493,18 @@
                     <div class="quick-add__content-info__media">
                       <div class="quick-add__info">
                         {%- if card_product.featured_media -%}
+                          {%- assign qa_img_w = card_product.featured_media.width -%}
+                          {%- assign qa_img_h = card_product.featured_media.height -%}
+                          {%- assign qa_img_max = 800 -%}
+                          {%- if qa_img_w > qa_img_max or qa_img_h > qa_img_max -%}
+                            {%- if qa_img_w >= qa_img_h -%}
+                              {%- assign qa_img_w = qa_img_max -%}
+                              {%- assign qa_img_h = card_product.featured_media.height | times: qa_img_max | divided_by: card_product.featured_media.width | round -%}
+                            {%- else -%}
+                              {%- assign qa_img_h = qa_img_max -%}
+                              {%- assign qa_img_w = card_product.featured_media.width | times: qa_img_max | divided_by: card_product.featured_media.height | round -%}
+                            {%- endif -%}
+                          {%- endif -%}
                           <div
                             class="quick-add__product-media"
                           >
@@ -491,8 +527,8 @@
                                 {% unless lazy_load == false %}
                                   loading="lazy"
                                 {% endunless %}
-                                width="{{ card_product.featured_media.width }}"
-                                height="{{ card_product.featured_media.height }}"
+                                width="{{ qa_img_w }}"
+                                height="{{ qa_img_h }}"
                               >
                               {% comment %}theme-check-enable ImgLazyLoading{% endcomment %}
                             </div>
