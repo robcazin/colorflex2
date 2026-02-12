@@ -17,6 +17,79 @@
       padding-bottom: {{ section.settings.padding_bottom }}px;
     }
   }
+
+  /* Cart table: balanced thumbnail vs product info (thumbnail not dominant) */
+  .cart-items {
+    table-layout: fixed;
+  }
+  .cart-items .cart-item__media {
+    width: 28%;
+    min-width: 140px;
+  }
+  .cart-items .cart-item__details {
+    width: 38%;
+  }
+  .cart-items .cart-item__media .cart-item__image-container {
+    max-width: 100%;
+  }
+  .cart-items .cart-item__media .cart-item__image-container img {
+    max-width: 100%;
+    height: auto;
+  }
+
+  /* Quantity controls: visible border so input/buttons are readable */
+  .cart-items .quantity__button,
+  .cart-items .quantity__input {
+    border: 1px solid rgba(212, 175, 55, 0.5);
+    border-radius: 4px;
+  }
+  .cart-items .quantity__input {
+    min-width: 3rem;
+    text-align: center;
+  }
+
+  /* Quantity cell: single container, centered horizontally and vertically to thumbnail/description */
+  .cart-items .cart-item__quantity {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+  }
+  .cart-items .cart-item__quantity quantity-popover {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  .cart-items .cart-item__quantity .cart-item__quantity-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .cart-items .cart-item__quantity .quantity-popover-container,
+  .cart-items .cart-item__quantity quantity-input {
+    display: flex;
+    align-items: center;
+  }
+
+  /* Wallpaper: total sq ft under quantity */
+  .cart-item__quantity-sqft {
+    margin-top: 6px !important;
+    margin-bottom: 0 !important;
+    color: #9ca3af;
+    font-size: 12px;
+  }
+  .colorflex-cart-item .cart-item__quantity-sqft {
+    color: #d4af37;
+  }
+
+  /* Cart empty vs has items: show one block, hide the other (cart.js toggles is-empty on cart-items) */
+  cart-items.is-empty .cart__warnings { display: block !important; }
+  cart-items.is-empty .cart__contents { display: none !important; }
+  cart-items:not(.is-empty) .cart__warnings { display: none !important; visibility: hidden !important; height: 0 !important; overflow: hidden !important; margin: 0 !important; padding: 0 !important; }
+  cart-items:not(.is-empty) .cart__contents,
+  cart-items:not(.is-empty) .cart__contents.critical-hidden { display: block !important; visibility: visible !important; }
   
   /* ColorFlex Cart Item Styles */
   .colorflex-cart-item {
@@ -36,7 +109,7 @@
   /* Enhanced Cart Item Details Styling */
   .colorflex-cart-item .cart-item__details {
     position: relative;
-    padding: 12px !important;
+    padding: 8px !important;
   }
 
   /* Style the product title link - but not the ColorFlex badge */
@@ -44,7 +117,7 @@
     color: #d4af37 !important;
     text-decoration: none !important;
     font-weight: 600 !important;
-    margin-bottom: 12px !important;
+    margin-bottom: 6px !important;
     transition: color 0.3s ease;
   }
 
@@ -72,7 +145,7 @@
   .colorflex-cart-item .pattern-name-island-moments,
   .colorflex-cart-item .colorflex-pattern-name {
     font-family: 'Island Moments', cursive !important;
-    font-size: 8rem !important;
+    font-size: 2.25rem !important;
     font-weight: 400 !important;
     color: #e2e8f0 !important;
     text-align: center !important;
@@ -83,20 +156,20 @@
     padding: 0 !important;
   }
 
-  /* Clean up the product options list */
+  /* Clean up the product options list (compact) */
   .colorflex-cart-item .product-option {
     background: rgba(212, 175, 55, 0.1) !important;
     border: 1px solid rgba(212, 175, 55, 0.3) !important;
     border-radius: 4px !important;
-    padding: 6px 8px !important;
-    margin: 4px 0 !important;
+    padding: 4px 6px !important;
+    margin: 2px 0 !important;
     font-size: 11px !important;
     color: #cbd5e0 !important;
   }
 
   /* Style the definition list */
   .colorflex-cart-item dl {
-    margin: 8px 0 !important;
+    margin: 4px 0 !important;
   }
 
   .colorflex-cart-item dt {
@@ -109,7 +182,7 @@
   .colorflex-cart-item dd {
     color: #e2e8f0 !important;
     font-size: 11px !important;
-    margin-bottom: 6px !important;
+    margin-bottom: 4px !important;
     word-break: break-word !important;
   }
 
@@ -120,7 +193,7 @@
 
   /* Improve spacing and organization */
   .colorflex-cart-item .discounts {
-    margin-top: 8px !important;
+    margin-top: 4px !important;
   }
   
   @media screen and (max-width: 749px) {
@@ -166,7 +239,7 @@
       {%- endif -%}
     </div>
 
-    <form action="{{ routes.cart_url }}" class="cart__contents critical-hidden" method="post" id="cart">
+    <form action="{{ routes.cart_url }}" class="cart__contents{% if cart == empty %} critical-hidden{% endif %}" method="post" id="cart">
       <div class="cart__items" id="main-cart-items" data-id="{{ section.id }}">
         <div class="js-contents">
           {%- if cart != empty -%}
@@ -288,25 +361,25 @@
                       
                       {% if item.properties['ColorFlex Design'] == 'Yes' %}
                         {% comment %} Enhanced ColorFlex pattern information {% endcomment %}
-                        <div style="background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); border: 1px solid #d4af37; border-radius: 6px; padding: 12px; margin: 8px 0; color: #e2e8f0;">
+                        <div style="background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%); border: 1px solid #d4af37; border-radius: 6px; padding: 8px; margin: 4px 0; color: #e2e8f0;">
                           
                           {% comment %} 1. ColorFlex Badge (left-aligned) {% endcomment %}
-                          <div style="text-align: left; margin-top: -7px;margin-left: -2px;margin-bottom: 12px;">
+                          <div style="text-align: left; margin-top: -4px; margin-left: -2px; margin-bottom: 6px;">
                             <span style="background: #d4af37; color: #1a202c; padding: 4px 8px; border-radius: 4px; font-size: 11px; font-weight: bold;">🎨 COLORFLEX</span>
                           </div>
 
                           {% comment %} 2. Pattern Name in Island Moments (check multiple property names) {% endcomment %}
                           {% assign pattern_name = item.properties['Custom Pattern'] | default: item.properties['Pattern Name'] | default: item.properties['pattern_name'] %}
                           {% if pattern_name %}
-                            <div style="text-align: center !important; margin-bottom: -32px; margin-top: 0px; width: 100%; display: flex; justify-content: center;">
-                              <span class="pattern-name-island-moments colorflex-pattern-name" style="font-family: 'Island Moments', cursive !important; font-size: 4rem !important; font-weight: 400 !important; color: #e2e8f0 !important; text-align: center !important; display: block !important; width: 100% !important; line-height: 1.2 !important;">{{ pattern_name }}</span>
+                            <div style="text-align: center !important; margin-bottom: 2px; margin-top: 0; width: 100%; display: flex; justify-content: center;">
+                              <span class="pattern-name-island-moments colorflex-pattern-name" style="font-family: 'Island Moments', cursive !important; font-size: 3rem !important; font-weight: 400 !important; color: #e2e8f0 !important; text-align: center !important; display: block !important; width: 100% !important; line-height: 1.2 !important;">{{ pattern_name }}</span>
                             </div>
                           {% endif %}
 
                           {% comment %} 3. Color Circles {% endcomment %}
                           {% assign custom_colors = item.properties['Custom Colors'] | default: item.properties['custom_colors'] | default: item.properties['Colors'] %}
                           {% if custom_colors and custom_colors != 'Default' and custom_colors != 'Default Colors' and custom_colors != blank %}
-                            <div style="margin-bottom: 12px;">
+                            <div style="margin-bottom: 6px;">
                               <div class="colorflex-color-circles" data-colors="{{ custom_colors }}" style="display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; min-height: 24px;">
                                 {% comment %} Color circles will be populated by JavaScript {% endcomment %}
                               </div>
@@ -316,7 +389,7 @@
                           {% comment %} 4. Scale/Repeat Information {% endcomment %}
                           {% assign pattern_scale = item.properties['Pattern Scale'] %}
                           {% if pattern_scale and pattern_scale != blank %}
-                            <div style="text-align: center; margin-bottom: 12px;">
+                            <div style="text-align: center; margin-bottom: 6px;">
                               <div style="background: rgba(212, 175, 55, 0.15); border: 1px solid #d4af37; border-radius: 4px; padding: 8px; display: inline-block;">
                                 <span style="color: #d4af37; font-weight: bold; font-size: 14px; font-family: 'Special Elite', monospace;">
                                   {% if pattern_scale == '0.5X' %}📏 0.5X
@@ -338,7 +411,7 @@
                           {% comment %} 4. Pattern ID Badge (styled like My Designs modal) - Now includes scale in the ID itself {% endcomment %}
                           {% assign pattern_id = item.properties['Pattern ID'] | default: item.properties['pattern_id'] | default: item.properties['colorflex-pattern-id'] %}
                           {% if pattern_id %}
-                            <div style="text-align: center; margin-bottom: 12px;">
+                            <div style="text-align: center; margin-bottom: 6px;">
                               <div style="color: #d4af37; font-size: 11px; font-family: 'Special Elite', monospace; font-weight: bold; word-break: break-all; line-height: 1.3;">
                                 ID: {{ pattern_id }}
                               </div>
@@ -346,7 +419,7 @@
                           {% endif %}
                           
                           {% comment %} Pattern details grid {% endcomment %}
-                          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: 11px; color: #a0aec0; margin-bottom: 8px;">
+                          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px; font-size: 11px; color: #a0aec0; margin-bottom: 4px;">
                             {% if item.properties['Collection'] %}
                               <div><strong>Collection:</strong> {{ item.properties['Collection'] | capitalize }}</div>
                             {% endif %}
@@ -501,6 +574,16 @@
                       endif
                     -%}
                     <td class="cart-item__quantity{% if has_qty_rules or has_vol_pricing %} cart-item__quantity--info{% endif %}">
+                      {%- comment -%} Wallpaper: sq ft per roll — Prepasted/Unpasted 60, Peel and stick/Grass cloth 54 {%- endcomment -%}
+                      {%- assign wallpaper_type = item.properties['Wallpaper Type'] | default: item.properties['wallpaper_type'] | downcase -%}
+                      {%- assign is_wallpaper = false -%}
+                      {%- assign sqft_per_roll = 60 -%}
+                      {%- if item.product.handle == 'custom-wallpaper' or item.product.title contains 'Wallpaper' or wallpaper_type != blank -%}
+                        {%- assign is_wallpaper = true -%}
+                        {%- if wallpaper_type contains 'peel' or wallpaper_type contains 'stick' or wallpaper_type contains 'grass' -%}
+                          {%- assign sqft_per_roll = 54 -%}
+                        {%- endif -%}
+                      {%- endif -%}
                       <quantity-popover>
                         <div class="cart-item__quantity-wrapper quantity-popover-wrapper">
                           <label class="visually-hidden" for="Quantity-{{ item.index | plus: 1 }}">
@@ -522,7 +605,12 @@
                                   {{- 'products.product.quantity.decrease' | t: product: item.product.title | escape -}}
                                 </span>
                                 <span class="svg-wrapper">
-                                  {{- 'icon-minus.svg' | inline_asset_content -}}
+                                  {%- assign minus_icon = 'icon-minus.svg' | inline_asset_content -%}
+                                  {%- if minus_icon contains 'Asset not found' or minus_icon == blank -%}
+                                    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" class="icon icon-minus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                  {%- else -%}
+                                    {{- minus_icon -}}
+                                  {%- endif -%}
                                 </span>
                               </button>
                               <input
@@ -549,7 +637,12 @@
                                   {{- 'products.product.quantity.increase' | t: product: item.product.title | escape -}}
                                 </span>
                                 <span class="svg-wrapper">
-                                  {{- 'icon-plus.svg' | inline_asset_content -}}
+                                  {%- assign plus_icon = 'icon-plus.svg' | inline_asset_content -%}
+                                  {%- if plus_icon contains 'Asset not found' or plus_icon == blank -%}
+                                    <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" class="icon icon-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                                  {%- else -%}
+                                    {{- plus_icon -}}
+                                  {%- endif -%}
                                 </span>
                               </button>
                             </quantity-input>
@@ -564,11 +657,22 @@
                               aria-label="{{ 'sections.cart.remove_title' | t: title: item.title | escape }}"
                             >
                               <span class="svg-wrapper">
-                                {{- 'icon-remove.svg' | inline_asset_content -}}
+                                {%- assign remove_icon = 'icon-remove.svg' | inline_asset_content -%}
+                                {%- if remove_icon contains 'Asset not found' or remove_icon == blank -%}
+                                  <svg xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false" class="icon icon-remove" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+                                {%- else -%}
+                                  {{- remove_icon -}}
+                                {%- endif -%}
                               </span>
                             </a>
                           </cart-remove-button>
                         </div>
+                        {%- if is_wallpaper and item.quantity > 0 -%}
+                          {%- assign total_sqft = item.quantity | times: sqft_per_roll -%}
+                          <p class="cart-item__quantity-sqft caption">
+                            {{ total_sqft }} sq ft total
+                          </p>
+                        {%- endif -%}
                         {%- if has_qty_rules or has_vol_pricing -%}
                           <button
                             type="button"

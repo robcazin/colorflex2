@@ -40,7 +40,39 @@
       assign ratio = 1
     endif
   -%}
-  <div class="card-wrapper product-card-wrapper underline-links-hover">
+  <div class="card-wrapper product-card-wrapper underline-links-hover" style="position: relative;">
+    {%- comment -%} Chameleon badge: must be inside card-wrapper so position:absolute is relative to the card {%- endcomment -%}
+    {%- if card_product.type == 'ColorFlex Pattern' and show_chameleon != false -%}
+      {%- liquid
+        assign cf_collection = card_product.metafields.color_flex.collection
+        assign cf_pattern = card_product.metafields.color_flex.pattern
+      -%}
+      <div style="position: absolute; top: 10px; right: 10px; z-index: 999;">
+        <a href="javascript:void(0)"
+           class="colorflex-chameleon-icon"
+           style="display: flex; background: rgba(255,255,255,0.9); border-radius: 50%; width: 50px; height: 50px; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; text-decoration: none; position: relative;"
+           onclick="(function(e) {
+             e.preventDefault();
+             const url = '/pages/colorflex?collection={{ cf_collection }}&pattern={{ cf_pattern }}&source=collection_page';
+             if (window.innerWidth === 1920 && window.innerHeight === 1080) {
+               console.log('✅ Chameleon: Current window is 1920x1080 - using current window');
+               window.location.href = url;
+             } else {
+               console.log('📐 Chameleon: Current window is not 1920x1080 - opening ColorFlexApp window');
+               window.open(url, 'ColorFlexApp', 'width=1920,height=1080,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no')?.focus();
+             }
+           })(event)"
+           onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.5)'; this.querySelector('.chameleon-tooltip').style.opacity='1'; this.querySelector('.chameleon-tooltip').style.visibility='visible';"
+           onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)'; this.querySelector('.chameleon-tooltip').style.opacity='0'; this.querySelector('.chameleon-tooltip').style.visibility='hidden';">
+          <img src="https://so-animation.com/colorflex/img/camelion-sm-r.jpg"
+               alt="ColorFlex Customize"
+               style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; pointer-events: none; ">
+          <span class="chameleon-tooltip" style="position: absolute; bottom: -35px; right: 0; background: rgba(0,0,0,0.9); color: white; padding: 6px 10px; border-radius: 4px; font-size: 12px; white-space: nowrap; opacity: 0; visibility: hidden; transition: opacity 0.3s 0.5s, visibility 0.3s 0.5s; pointer-events: none; font-family: 'Special Elite', monospace; z-index: 1000;">
+            Customize in ColorFlex
+          </span>
+        </a>
+      </div>
+    {%- endif -%}
     <div
       class="
         card card--{{ settings.card_style }}
@@ -606,38 +638,6 @@
       </div>
     </div>
   </div>
-  {%- comment -%} Add Chameleon Icon for ColorFlex Patterns - positioned outside card structure {%- endcomment -%}
-  {%- if card_product.type == 'ColorFlex Pattern' -%}
-    {%- liquid
-      assign cf_collection = card_product.metafields.color_flex.collection
-      assign cf_pattern = card_product.metafields.color_flex.pattern
-    -%}
-    <div style="position: absolute; top: 10px; right: 10px; z-index: 999;">
-      <a href="javascript:void(0)"
-         class="colorflex-chameleon-icon"
-         style="display: flex; background: rgba(255,255,255,0.9); border-radius: 50%; width: 50px; height: 50px; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.3); transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; text-decoration: none; position: relative;"
-         onclick="(function(e) {
-           e.preventDefault();
-           const url = '/pages/colorflex?collection={{ cf_collection }}&pattern={{ cf_pattern }}&source=collection_page';
-           if (window.innerWidth === 1920 && window.innerHeight === 1080) {
-             console.log('✅ Chameleon: Current window is 1920x1080 - using current window');
-             window.location.href = url;
-           } else {
-             console.log('📐 Chameleon: Current window is not 1920x1080 - opening ColorFlexApp window');
-             window.open(url, 'ColorFlexApp', 'width=1920,height=1080,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no')?.focus();
-           }
-         })(event)"
-         onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.5)'; this.querySelector('.chameleon-tooltip').style.opacity='1'; this.querySelector('.chameleon-tooltip').style.visibility='visible';"
-         onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)'; this.querySelector('.chameleon-tooltip').style.opacity='0'; this.querySelector('.chameleon-tooltip').style.visibility='hidden';">
-        <img src="https://so-animation.com/colorflex/img/camelion-sm-r.jpg"
-             alt="ColorFlex Customize"
-             style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; pointer-events: none; ">
-        <span class="chameleon-tooltip" style="position: absolute; bottom: -35px; right: 0; background: rgba(0,0,0,0.9); color: white; padding: 6px 10px; border-radius: 4px; font-size: 12px; white-space: nowrap; opacity: 0; visibility: hidden; transition: opacity 0.3s 0.5s, visibility 0.3s 0.5s; pointer-events: none; font-family: 'Special Elite', monospace; z-index: 1000;">
-          Customize in ColorFlex
-        </span>
-      </a>
-    </div>
-  {%- endif -%}
 {%- else -%}
   {%- liquid
     assign ratio = 1

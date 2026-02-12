@@ -6,6 +6,10 @@
 # Updated: January 15, 2026 - Added automatic backup system before deployment
 # Updated: February 2026 - Added --nodelete to full push; added layout option
 #
+# Theme root: theme files live under src/ (layout/, assets/, sections/, etc.),
+# so all shopify theme push commands use --path src. Do not change to --path .
+# unless the theme is moved to the repo root.
+#
 # Use this script for ALL theme deployments (not one-off shopify theme push).
 #
 # Backup System:
@@ -445,15 +449,17 @@ case "$DEPLOY_MODE" in
         ONEPATH="$2"
         if [[ -z "$ONEPATH" ]]; then
             echo -e "${RED}❌ Usage: ./deploy-shopify-cli.sh only <path>${NC}"
-            echo "Path is relative to src/, e.g. templates/page.colorflex.liquid or sections/header.liquid"
+            echo "Path relative to src/, e.g. sections/header.liquid or src/sections/header.liquid"
             exit 1
         fi
+        # Normalize: strip leading src/ so both "sections/foo" and "src/sections/foo" work
+        ONEPATH="${ONEPATH#src/}"
         if [[ ! -f "src/$ONEPATH" ]]; then
             echo -e "${RED}❌ File not found: src/$ONEPATH${NC}"
             exit 1
         fi
         echo "📤 Deploying single file (no Git)..."
-        echo "  → src/$ONEPATH"
+        echo "  → $ONEPATH"
         echo ""
         shopify theme push ${THEME_FLAG} --path src --only "$ONEPATH" --nodelete --allow-live
         echo -e "${GREEN}✅ Deployed $ONEPATH${NC}"

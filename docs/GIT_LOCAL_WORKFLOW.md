@@ -105,19 +105,25 @@ Restoring is still done locally with `git log` and `git checkout`; the remote is
 
 ## Short commands (run from any directory)
 
-Load the project’s short commands once per terminal, or add to your shell profile so they’re always available:
+Load the project’s short commands once per terminal, or add to your shell profile so they’re always available.
+
+**One-time setup (so they load in every new terminal):**
+
+```bash
+cd /Volumes/K3/jobs/colorflex2
+./scripts/cf-source-setup.sh
+source ~/.zshrc   # or  source ~/.bashrc  if you use bash
+```
+
+That script appends the correct `source` line to your `~/.zshrc` (or `~/.bashrc`) and avoids duplicates.
+
+**Or load manually in the current terminal only:**
 
 ```bash
 source /Volumes/K3/jobs/colorflex2/scripts/cf-aliases.sh
 ```
 
-To add to your profile (bash or zsh) so they work from any location:
-
-```bash
-echo 'source /Volumes/K3/jobs/colorflex2/scripts/cf-aliases.sh' >> ~/.zshrc
-# or for bash: >> ~/.bashrc
-# Then: source ~/.zshrc  (or open a new terminal)
-```
+**If aliases still don’t appear in new terminals:** Your shell may be reading a different file (e.g. bash on macOS often uses `~/.bash_profile` for login shells). Run `echo $SHELL` to see your shell; then ensure either `~/.zshrc` (zsh) or `~/.bashrc` (bash) is loaded—for bash on macOS, add `[ -f ~/.bashrc ] && source ~/.bashrc` to `~/.bash_profile` if it’s not there.
 
 | Command | What it does |
 |--------|----------------|

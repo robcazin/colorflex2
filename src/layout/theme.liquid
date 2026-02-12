@@ -664,12 +664,17 @@
 
     console.log('🎨 Theme.liquid using unified-pattern-modal.js only');
 
+    var isProductPage = {{ template.name | json }} === 'product';
+
     function updateMenuIcon() {
         console.log('🔄 Updating menu icon...');
 
         // Remove existing icon
         const existing = document.getElementById('colorflexMenuIcon');
         if (existing) existing.remove();
+
+        // Do not show floating chameleon on product pages (avoids clutter / layout issues)
+        if (isProductPage) return;
 
         // Check for patterns
         const patterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');

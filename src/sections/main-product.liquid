@@ -112,6 +112,23 @@
         padding-bottom: {{ section.settings.padding_bottom }}px;
       }
     }
+
+    /* Product form: transparent field backgrounds and visible borders */
+    #MainProduct-{{ section.id }} .product-form .field__input,
+    #MainProduct-{{ section.id }} .product-form .quantity__input,
+    #MainProduct-{{ section.id }} .product-form input[type="number"],
+    #MainProduct-{{ section.id }} .product-form .select__select,
+    #MainProduct-{{ section.id }} .product-form textarea.field__input {
+      background: rgba(var(--color-foreground), 0.05) !important;
+      border: 1px solid rgba(var(--color-foreground), 0.2);
+      border-radius: 4px;
+    }
+    #MainProduct-{{ section.id }} .product-form .field__input:focus,
+    #MainProduct-{{ section.id }} .product-form .quantity__input:focus,
+    #MainProduct-{{ section.id }} .product-form input[type="number"]:focus {
+      border-color: rgba(212, 175, 55, 0.6);
+      box-shadow: 0 0 0 1px rgba(212, 175, 55, 0.3);
+    }
   {%- endstyle -%}
 
   {% comment %} PERMANENTLY hide variant pickers for Custom Wallpaper/Custom Fabric - material selection happens in modal before reaching product page {% endcomment %}
@@ -2154,7 +2171,8 @@ if (colorFlexBtn) {
                                         quick_add: quick_add,
                                         section_id: section.id,
                                         horizontal_class: true,
-                                        horizontal_quick_add: true
+                                        horizontal_quick_add: true,
+                                        show_chameleon: false
                                       %}
                                     </li>
                                     {%- assign skip_card_product_styles = true -%}
@@ -4841,6 +4859,19 @@ function downloadProofImage(canvas, filename) {
 }
 
 
+function formatPreferredMaterial(pm) {
+  if (!pm) return '';
+  const map = {
+    'wallpaper-peel-stick': 'Peel & Stick Wallpaper',
+    'wallpaper-prepasted': 'Prepasted Wallpaper',
+    'wallpaper-unpasted': 'Unpasted Wallpaper',
+    'wallpaper-grasscloth': 'Grasscloth Wallpaper',
+    'wallpaper-traditional': 'Traditional Wallpaper',
+    'wallpaper-textured': 'Textured Wallpaper'
+  };
+  return map[pm] || pm.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+}
+
 function populateColorFlexProperties(urlParams) {
   // Get pattern data
   const patternName = urlParams.get('pattern_name');
@@ -5027,7 +5058,7 @@ function populateColorFlexProperties(urlParams) {
     'colorflex-collection': collection,
     'colorflex-custom-colors': customColors,
     'colorflex-thumbnail-key': cartThumbnailKey,
-    'colorflex-material-type': urlParams.get('application') || urlParams.get('material'),
+    'colorflex-material-type': urlParams.get('application') || urlParams.get('material') || formatPreferredMaterial(urlParams.get('preferred_material')),
     'colorflex-pattern-id': patternId, // Use generated ID instead of URL parameter
     'colorflex-save-date': new Date().toISOString(),
     'colorflex-pattern-scale': (() => {
@@ -5154,8 +5185,8 @@ function populateColorFlexProperties(urlParams) {
       console.log('  Pattern:', pattern);
       console.log('  Colors:', colors);
       
-      if (!quantity || quantity === '1') {
-        console.warn('⚠️ Quantity issue detected');
+      if (quantity === undefined || quantity === null || quantity === '' || (typeof quantity === 'string' && isNaN(parseInt(quantity, 10)))) {
+        console.warn('⚠️ Quantity issue detected (missing or invalid)');
       }
       if (!pattern) {
         console.warn('⚠️ No pattern data detected');
@@ -5306,6 +5337,9 @@ function protectColorFlexProperties() {
         return formData;
       };
 
+      // Only intercept fetch when thumbnail upload API is enabled (otherwise cart add can hang)
+      const THUMBNAIL_UPLOAD_API_ENABLED = false;
+      if (THUMBNAIL_UPLOAD_API_ENABLED) {
       // Intercept fetch requests to cart/add to ensure properties are included
       const originalFetch = window.fetch;
       window.fetch = async function(url, options) {
@@ -5318,6 +5352,8 @@ function protectColorFlexProperties() {
           console.log('🛡️ Body type:', typeof options.body, 'Is FormData:', options.body instanceof FormData);
           console.log('🛡️ Constructor name:', options.body?.constructor?.name);
           
+          {
+          // --- thumbnail upload block (commented out by flag above) ---
           // Upload thumbnail if needed before cart add
           // PRIORITY 1: Use MyDesigns method - capture thumbnail using capturePatternThumbnail()
           let thumbnail = null;
@@ -5401,8 +5437,12 @@ function protectColorFlexProperties() {
             console.log('📤 Uploading thumbnail via API server (fetch interceptor)...');
             console.log('📤 API URL:', apiUrl);
             
-            try {
-              const uploadResponse = await originalFetch(apiUrl, {
+            const UPLOAD_TIMEOUT_MS = 4000;
+            const uploadWithTimeout = () => new Promise((resolve, reject) => {
+              const timer = setTimeout(() => {
+                reject(new Error('Thumbnail upload timeout – proceeding without preview'));
+              }, UPLOAD_TIMEOUT_MS);
+              originalFetch(apiUrl, {
                 method: 'POST',
                 headers: {
                   'Content-Type': 'application/json'
@@ -5411,7 +5451,11 @@ function protectColorFlexProperties() {
                   thumbnail: thumbnail,
                   filename: filename
                 })
-              });
+              }).then(r => { clearTimeout(timer); resolve(r); }).catch(e => { clearTimeout(timer); reject(e); });
+            });
+            
+            try {
+              const uploadResponse = await uploadWithTimeout();
               
               console.log('📤 Upload response status:', uploadResponse.status);
               
@@ -5507,6 +5551,7 @@ function protectColorFlexProperties() {
               protectedProperties['properties[_pattern_preview]'] = thumbnailUrl;
             }
           }
+          } // end THUMBNAIL_UPLOAD_API_ENABLED
 
           // Handle different body types - use multiple detection methods for FormData
           const isFormData = options.body instanceof FormData ||
@@ -5588,6 +5633,7 @@ function protectColorFlexProperties() {
 
         return originalFetch.apply(this, arguments);
       };
+      } // end if (THUMBNAIL_UPLOAD_API_ENABLED) – fetch not replaced when disabled
 
       console.log('🛡️ ColorFlex property protection system activated');
       clearInterval(protectionInterval); // Stop checking once protection is set up
@@ -5950,7 +5996,7 @@ if (patternName && collection) {
       'properties[Custom Colors]': cleanedCustomColors,
       'properties[ColorFlex Source]': 'ColorFlex Saved Pattern',
       'properties[Thumbnail Key]': formCartThumbnailKey,
-      'properties[Material Type]': urlParams.get('application') || urlParams.get('material'),
+      'properties[Material Type]': urlParams.get('application') || urlParams.get('material') || formatPreferredMaterial(urlParams.get('preferred_material')),
       'properties[ColorFlex Design]': 'Yes',
       'properties[Pattern ID]': urlParams.get('pattern_id'),
       'properties[Save Date]': new Date().toISOString(),
@@ -6077,8 +6123,11 @@ if (patternName && collection) {
       console.warn('⚠️ No thumbnail available - capturePatternThumbnail() not available and localStorage empty');
     }
 
+    // Thumbnail upload on form submit – disabled until /api/upload-thumbnail is working (set true to re-enable)
+    const THUMBNAIL_UPLOAD_ON_SUBMIT_ENABLED = false;
     // Also ensure thumbnail is uploaded and added on form submit
     productForm.addEventListener('submit', async function(e) {
+      if (!THUMBNAIL_UPLOAD_ON_SUBMIT_ENABLED) return;
       console.log('📦 Form submitting - ensuring _pattern_preview is included');
       console.log('🔍 Debug - window.SHOPIFY_STORE:', window.SHOPIFY_STORE);
       console.log('🔍 Debug - window.SHOPIFY_ACCESS_TOKEN:', window.SHOPIFY_ACCESS_TOKEN ? 'SET (' + window.SHOPIFY_ACCESS_TOKEN.substring(0, 15) + '...)' : 'NOT SET');
@@ -6112,7 +6161,7 @@ if (patternName && collection) {
         }
         
         if (thumbnail && thumbnail.startsWith('data:image') && thumbnail.length > 255) {
-          // Prevent form submission temporarily
+          // Prevent form submission temporarily (product-form.js will still run and do AJAX cart add)
           e.preventDefault();
           
           const apiUrl = window.COLORFLEX_API_URL || '/api/upload-thumbnail';
@@ -6124,50 +6173,47 @@ if (patternName && collection) {
           
           console.log('📤 API URL:', apiUrl);
           
+          const uploadTimeoutMs = 4000;
+          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Upload timeout')), uploadTimeoutMs));
           try {
-            const response = await fetch(apiUrl, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                thumbnail: thumbnail,
-                filename: filename
-              })
-            });
+            const response = await Promise.race([
+              fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  thumbnail: thumbnail,
+                  filename: filename
+                })
+              }),
+              timeoutPromise
+            ]);
             
             if (response.ok) {
               const data = await response.json();
               if (data.success && data.url) {
-                // Add the Shopify URL as _pattern_preview
+                // Add the Shopify URL as _pattern_preview (cart add is done by product-form.js via fetch, do not submit again)
                 const thumbnailInput = document.createElement('input');
                 thumbnailInput.type = 'hidden';
                 thumbnailInput.name = 'properties[_pattern_preview]';
                 thumbnailInput.value = data.url;
                 productForm.appendChild(thumbnailInput);
                 console.log('✅ Uploaded thumbnail to Shopify Files:', data.url);
-                
-                // Now submit the form
-                productForm.submit();
               } else {
                 console.warn('⚠️ Upload succeeded but no URL returned:', data);
-                productForm.submit();
               }
             } else {
               const errorText = await response.text();
               console.error('❌ Thumbnail upload failed:', response.status, errorText);
-              console.error('❌ API server may not be running. Thumbnail will not appear in checkout.');
-              console.error('❌ To fix: Start the API server (see api/DEPLOYMENT.md) or deploy it to a hosting service.');
-              // Still submit the form - cart will work, just without thumbnail in checkout
-              productForm.submit();
             }
           } catch (error) {
-            console.error('❌ Error uploading thumbnail:', error);
-            console.error('❌ API server may not be running or unreachable.');
-            console.error('❌ To fix: Start the API server (see api/DEPLOYMENT.md) or deploy it to a hosting service.');
-            // Still submit the form - cart will work, just without thumbnail in checkout
-            productForm.submit();
+            console.error('❌ Error uploading thumbnail:', error.message || error);
+            if (error.message === 'Upload timeout') {
+              console.warn('⚠️ Thumbnail upload timed out – proceeding without preview');
+            }
           }
+          // Cart add is handled by product-form.js (AJAX) – do not call productForm.submit() or we double-add
         } else if (thumbnail) {
           // Small thumbnail or already a URL - add directly
           const thumbnailInput = document.createElement('input');

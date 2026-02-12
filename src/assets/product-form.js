@@ -25,8 +25,17 @@ if (!customElements.get('product-form')) {
 
         this.submitButton.setAttribute('aria-disabled', true);
         this.submitButton.classList.add('loading');
-        this.querySelector('.loading__spinner').classList.remove('hidden');
+        const loadingSpinner = this.querySelector('.loading__spinner');
+        if (loadingSpinner) loadingSpinner.classList.remove('hidden');
 
+        const resetButton = () => {
+          this.submitButton.classList.remove('loading');
+          if (!this.error) this.submitButton.removeAttribute('aria-disabled');
+          const s = this.querySelector('.loading__spinner');
+          if (s) s.classList.add('hidden');
+        };
+
+        try {
         const config = fetchConfig('javascript');
         config.headers['X-Requested-With'] = 'XMLHttpRequest';
         delete config.headers['Content-Type'];
@@ -56,8 +65,12 @@ if (!customElements.get('product-form')) {
         console.log('🚀 SHOPIFY FORM SUBMISSION DEBUG (product-form.js)');
         console.log('📝 Form action:', this.form.action);
         console.log('📋 Form data being submitted to Shopify cart:');
-        for (let [key, value] of formData.entries()) {
-          console.log(`  ${key}: ${value}`);
+        try {
+          for (let [key, value] of formData.entries()) {
+            console.log(`  ${key}: ${value}`);
+          }
+        } catch (e) {
+          console.warn('⚠️ FormData.entries() log failed:', e);
         }
         
         // Check specifically for quantity and ColorFlex properties
@@ -77,13 +90,18 @@ if (!customElements.get('product-form')) {
           console.warn('⚠️ No pattern data in Shopify submission');
         }
         
-        if (this.cart) {
-          formData.append(
-            'sections',
-            this.cart.getSectionsToRender().map((section) => section.id)
-          );
+        if (this.cart && typeof this.cart.getSectionsToRender === 'function') {
+          const sections = this.cart.getSectionsToRender();
+          if (Array.isArray(sections)) {
+            formData.append(
+              'sections',
+              sections.map((section) => section.id)
+            );
+          }
           formData.append('sections_url', window.location.pathname);
-          this.cart.setActiveElement(document.activeElement);
+          if (typeof this.cart.setActiveElement === 'function') {
+            this.cart.setActiveElement(document.activeElement);
+          }
         }
         config.body = formData;
 
@@ -148,10 +166,15 @@ if (!customElements.get('product-form')) {
             this.submitButton.classList.remove('loading');
             if (this.cart && this.cart.classList.contains('is-empty')) this.cart.classList.remove('is-empty');
             if (!this.error) this.submitButton.removeAttribute('aria-disabled');
-            this.querySelector('.loading__spinner').classList.add('hidden');
+            const spinner = this.querySelector('.loading__spinner');
+            if (spinner) spinner.classList.add('hidden');
 
             CartPerformance.measureFromEvent("add:user-action", evt);
           });
+        } catch (e) {
+          console.error('Product form submit error:', e);
+          resetButton();
+        }
       }
 
       handleErrorMessage(errorMessage = false) {
