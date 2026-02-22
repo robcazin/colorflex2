@@ -1,18 +1,23 @@
 #!/bin/bash
-# One-time setup: add ColorFlex aliases to your shell profile so they load in every terminal.
+# One-time setup: add ColorFlex aliases to your shell profile so they load automatically
+# when a terminal starts inside a CF worktree (main or bassett). No need to type
+# "source scripts/cf-aliases.sh" in each terminal.
 # Run from project root:  ./scripts/cf-source-setup.sh
-# Then run  source ~/.zshrc   (or  source ~/.bashrc)  or open a new terminal.
+# Then open a new terminal (or run  source ~/.zshrc).
 
 set -e
-CF_SCRIPT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)/cf-aliases.sh"
-SOURCE_LINE="source $CF_SCRIPT"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]:-$0}")/.." && pwd)"
+
+# Block that auto-sources based on current directory (so left=main, right=bassett work)
+CF_BLOCK='# ColorFlex: load aliases when shell starts in a CF worktree (main or bassett)
+[[ -f "./scripts/cf-aliases.sh" ]] && source ./scripts/cf-aliases.sh
+'
 
 # Detect profile file
 if [ -n "$ZSH_VERSION" ] || [ -n "$ZSH_NAME" ]; then
     PROFILE="${HOME}/.zshrc"
 elif [ -n "$BASH_VERSION" ]; then
     PROFILE="${HOME}/.bashrc"
-    # On macOS, bash often only reads .bash_profile for login shells
     if [[ "$(uname)" == Darwin ]] && [ -f "${HOME}/.bash_profile" ]; then
         if ! grep -q '\.bashrc' "${HOME}/.bash_profile" 2>/dev/null; then
             echo "Note: Add this to ~/.bash_profile so .bashrc is loaded:  [ -f ~/.bashrc ] && source ~/.bashrc"
@@ -28,16 +33,19 @@ if [ ! -f "$PROFILE" ]; then
     echo "Created $PROFILE"
 fi
 
+# Remove any old fixed-path source line so we don't load main everywhere
 if grep -q "cf-aliases.sh" "$PROFILE" 2>/dev/null; then
-    echo "✅ ColorFlex source line is already in $PROFILE"
-else
-    echo "$SOURCE_LINE" >> "$PROFILE"
-    echo "✅ Appended to $PROFILE:"
-    echo "   $SOURCE_LINE"
+    if grep -q "ColorFlex: load aliases when shell starts" "$PROFILE" 2>/dev/null; then
+        echo "✅ ColorFlex auto-source block is already in $PROFILE"
+        exit 0
+    fi
+    # Remove old "source ... cf-aliases.sh" line(s)
+    sed -i.bak '/source.*cf-aliases\.sh/d' "$PROFILE"
+    echo "Removed old ColorFlex source line from $PROFILE (backup: ${PROFILE}.bak)"
 fi
 
+echo "$CF_BLOCK" >> "$PROFILE"
+echo "✅ Added ColorFlex auto-source block to $PROFILE"
+echo "   Aliases load when a terminal starts in $REPO_ROOT or ${REPO_ROOT}-bassett"
 echo ""
-echo "To load in this terminal, run:"
-echo "  source $PROFILE"
-echo ""
-echo "Or open a new terminal tab/window."
+echo "Open a new terminal (or run: source $PROFILE)"

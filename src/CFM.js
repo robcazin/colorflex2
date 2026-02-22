@@ -502,6 +502,28 @@ const FURNITURE_BASE_INDEX = 1;
 const PATTERN_BASE_INDEX = 2;
 let isAppReady = false; // Flag to track if the app is fully initialized
 
+// Designer-requested order: sort collections by collection number (from tableName e.g. "22 - IKATS" -> 22)
+function getCollectionOrderNumber(c) {
+    if (c == null) return 999;
+    if (typeof c.collectionNumber === 'number' && !Number.isNaN(c.collectionNumber)) return c.collectionNumber;
+    const tableName = c.tableName || '';
+    const num = parseInt(tableName.split(' - ')[0], 10);
+    return Number.isNaN(num) ? 999 : num;
+}
+function sortCollectionsByNumber(collections) {
+    if (!Array.isArray(collections)) return collections;
+    return collections.slice().sort((a, b) => {
+        const na = getCollectionOrderNumber(a);
+        const nb = getCollectionOrderNumber(b);
+        if (na !== nb) return na - nb;
+        return (a.name || '').localeCompare(b.name || '');
+    });
+}
+if (typeof window !== 'undefined') {
+    window.ColorFlexSortCollectionsByNumber = sortCollectionsByNumber;
+    window.ColorFlexGetCollectionOrderNumber = getCollectionOrderNumber;
+}
+
 /**
  * =============================================================================
  * SECTION 2: CUSTOMER SAVE SYSTEM  
@@ -1549,7 +1571,7 @@ function addSaveButton() {
     `;
 
     viewSavedButton.innerHTML = `
-        <img src="https://so-animation.com/colorflex/img/camelion-sm-black.jpg" style="width: 100%; height: 100%; border-radius: 50%;">
+        <img src="${normalizePath('img/camelion-sm-black.jpg')}" style="width: 100%; height: 100%; border-radius: 50%;">
         <span style="
             background: #d4af37;
             color: #1a202c;
@@ -1878,7 +1900,7 @@ function createSavedPatternsModal(patterns) {
         emptyMessage.innerHTML = `
             <div style="text-align: center; padding: 40px; color: #a0aec0;">
                 <div style="font-size: 48px; margin-bottom: 20px;">
-                <img src="https://so-animation.com/colorflex/img/camelion-sm-black.jpg" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 20px;">
+                <img src="${normalizePath('img/camelion-sm-black.jpg')}" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 20px;">
                 <h3>No saved patterns yet</h3>
                 <div style="font-size: 24px; margin-bottom: 20px;">
                 <p>Start customizing patterns and save your favorites!</p>
@@ -2148,7 +2170,7 @@ function createSavedPatternItem(pattern, index) {
             width: 100%;
             height: 100%;
             background: #2d3748;
-            background-image: url('https://so-animation.com/colorflex/img/camelion-sm-black.jpg');
+            background-image: url('${normalizePath('img/camelion-sm-black.jpg')}');
             background-size: cover;
             background-position: center;
             display: flex;
@@ -3171,10 +3193,31 @@ const FABRIC_SPECIFICATIONS = {
         material: 'fabric'
     },
     'WALLPAPER': {
-        pricePerRoll: 89.99,
-        coverage: '56 sq ft',
+        pricePerRoll: 249,
+        coverage: '~60 sq ft',
         minimumRolls: 1,
-        description: 'Professional-grade removable wallpaper',
+        description: 'Prepasted wallpaper 24" x 30\' per roll',
+        material: 'wallpaper'
+    },
+    'WALLPAPER-PREPASTED': {
+        pricePerRoll: 249,
+        coverage: '~60 sq ft',
+        minimumRolls: 1,
+        description: 'Prepasted wallpaper 24" x 30\' per roll',
+        material: 'wallpaper'
+    },
+    'WALLPAPER-PEEL-STICK': {
+        pricePerRoll: 319,
+        coverage: '~54 sq ft',
+        minimumRolls: 1,
+        description: 'Peel & stick wallpaper 24" x 27\' per roll',
+        material: 'wallpaper'
+    },
+    'WALLPAPER-UNPASTED': {
+        pricePerRoll: 180,
+        coverage: '~60 sq ft',
+        minimumRolls: 1,
+        description: 'Unpasted wallpaper 24" x 30\' per roll',
         material: 'wallpaper'
     }
 };
@@ -3196,8 +3239,8 @@ const FABRIC_SPECIFICATIONS = {
  * - Default selection: Prepasted Wallpaper
  *
  * Wallpaper Options (24" wide):
- * - Prepasted Wallpaper: $180/roll, 30' long, 2-week turnaround
- * - Peel & Stick: $320/roll, 27' long, removable
+ * - Prepasted Wallpaper: $249/roll, 30' long, 2-week turnaround
+ * - Peel & Stick: $319/roll, 27' long, removable
  * - Unpasted: $180/roll, 30' long, professional grade
  * - Grasscloth: Contact pricing, 27' long, natural material
  *
@@ -3480,13 +3523,13 @@ function showMaterialSelectionModal(pattern) {
         {
             value: 'wallpaper-prepasted',
             label: 'Prepasted Wallpaper',
-            price: '$180/roll',
+            price: '$249/roll',
             description: 'Finest quality paper 24" wide x 30\' long • Custom-printed • 2-week turnaround'
         },
         {
             value: 'wallpaper-peel-stick',
             label: 'Peel & Stick Wallpaper',
-            price: '$320/roll',
+            price: '$319/roll',
             description: '24" wide x 27\' long • Easily removable • Perfect for apartments'
         },
         {
@@ -5537,34 +5580,55 @@ function loadSavedPatternToUI(pattern) {
     }
 }
 
-// Path normalization function to fix ./data/ vs data/ inconsistencies
+// Base URL for data/images: from theme (Backblaze) so main site never uses so-animation
+function getColorFlexDataBaseUrl() {
+    if (typeof window !== 'undefined' && window.COLORFLEX_DATA_BASE_URL) {
+        return String(window.COLORFLEX_DATA_BASE_URL).replace(/\/$/, '');
+    }
+    return 'https://so-animation.com/colorflex';
+}
+
+// Path normalization: use theme data base URL (Backblaze); no so-animation on main site
+var _colorFlexBaseUrlLogged = false;
+var _colorFlexLayerUrlLogCount = 0;
+var _colorFlexThumbUrlLogCount = 0;
+var _COLORFLEX_MAX_RESOLVED_LOGS = 8; // log first N layer/thumb URLs so you can verify Backblaze
 function normalizePath(path) {
     if (!path || typeof path !== 'string') return path;
+    var base = getColorFlexDataBaseUrl();
+    if (!_colorFlexBaseUrlLogged) {
+        _colorFlexBaseUrlLogged = true;
+        console.log('[ColorFlex] Data base URL:', base, base.indexOf('backblazeb2.com') !== -1 ? '(Backblaze ✓)' : '(other)');
+    }
     // Correct known wrong server filenames (e.g. old collections.json on Shopify)
     if (path.includes('shadow-dance_shadow_layer-1')) {
         path = path.replace(/shadow-dance_shadow_layer-1/g, 'shadow-dance_isshadow_layer-1');
     }
-    // If it's already a full URL, return as-is
+    var resolved;
+    // If it's already a full URL, rewrite so-animation to current data base (Backblaze)
     if (path.startsWith('http://') || path.startsWith('https://')) {
+        if (path.startsWith('https://so-animation.com/colorflex/')) {
+            var rest = path.slice(26);
+            resolved = base + '/' + rest;
+            if (window.COLORFLEX_DEBUG_URLS || (_colorFlexLayerUrlLogCount + _colorFlexThumbUrlLogCount < _COLORFLEX_MAX_RESOLVED_LOGS && (path.indexOf('layers/') !== -1 || path.indexOf('thumbnails/') !== -1))) {
+                console.log('[ColorFlex] resolved (rewritten):', path, '→', resolved);
+                if (path.indexOf('layers/') !== -1) _colorFlexLayerUrlLogCount++; else if (path.indexOf('thumbnails/') !== -1) _colorFlexThumbUrlLogCount++;
+            }
+            return resolved;
+        }
         return path;
     }
-    
-    // Convert "./data/" to "data/" for consistency
-    if (path.startsWith('./data/')) {
-        path = path.substring(2); // Remove the "./"
+    // Strip leading ./
+    if (path.startsWith('./')) path = path.substring(2);
+    // Single format: base URL + path (bucket has top-level data/ so path is data/collections/... or img/...)
+    resolved = base + '/' + path;
+    var isLayer = path.indexOf('layers/') !== -1;
+    var isThumb = path.indexOf('thumbnails/') !== -1;
+    if (window.COLORFLEX_DEBUG_URLS || ((isLayer || isThumb) && _colorFlexLayerUrlLogCount + _colorFlexThumbUrlLogCount < _COLORFLEX_MAX_RESOLVED_LOGS)) {
+        console.log('[ColorFlex] resolved:', path, '→', resolved);
+        if (isLayer) _colorFlexLayerUrlLogCount++; else if (isThumb) _colorFlexThumbUrlLogCount++;
     }
-    
-    // For any other relative paths, ensure they don't start with "./"
-    if (path.startsWith('./')) {
-        path = path.substring(2);
-    }
-    
-    // If it's a data/ path, convert to absolute URL
-    if (path.startsWith('data/')) {
-        return `https://so-animation.com/colorflex/${path}`;
-    }
-    
-    return path;
+    return resolved;
 }
 
 // Store furniture view settings globally for consistency
@@ -7165,7 +7229,8 @@ function getExpectedFiles(collectionName, patternName, furnitureId) {
     }
     
     const slug = createPatternSlug(patternName);
-    const folder = `https://so-animation.com/colorflex/data/furniture/${furnitureId}/patterns/${collectionName}/${slug}/`;
+    const base = getColorFlexDataBaseUrl();
+        const folder = `${base}/data/furniture/${furnitureId}/patterns/${collectionName}/${slug}/`;
     
     console.log(`📋 EXPECTED FILES for ${patternName} on ${furniture.name}:`);
     console.log(`📁 Folder: ${folder}`);
@@ -7636,7 +7701,7 @@ function addSavedPatternsMenuIcon() {
             `;
             
             menuIcon.innerHTML = `
-                <img src="https://so-animation.com/colorflex/img/camelion-sm-black.jpg" 
+                <img src="${normalizePath('img/camelion-sm-black.jpg')}"" 
                      style="width: 24px; height: 24px; border-radius: 50%;" 
                      alt="My ColorFlex Patterns">
                 <span style="
@@ -8956,6 +9021,13 @@ const createColorInput = (label, id, initialColor, isBackground = false) => {
             updatePreview(); // Update pattern preview
             renderFabricMockup();
         } else {
+            // ✅ BASSETT: clear room cache so next updateRoomMockup re-requests render with new blanket (Layer 1) color
+            if (window.COLORFLEX_MODE === 'BASSETT') {
+                appState.bassettResultUrl = null;
+                appState.bassettResultPatternId = null;
+                appState.bassettResultBlanketColor = null;
+                appState.bassettResultScale = null;
+            }
             // ✅ WALLPAPER MODE: Use updateRoomMockup()
             console.log("🖼️ Color changed in wallpaper mode - calling updateRoomMockup()");
             updatePreview();
@@ -9145,9 +9217,7 @@ function populateCuratedColors(colors) {
   console.log("  Is standard pattern:", isStandardPattern);
 
   if (isStandardPattern) {
-    console.log("⏭️ HIDING CURATED COLORS: This is a standard pattern (no layers)");
-    dom.curatedColorsContainer.innerHTML = "";
-    console.log("✅ Curated colors container cleared");
+    console.log("⏭️ Standard pattern: leaving curated colors in place (not used for this pattern)");
     return;
   }
 
@@ -9813,9 +9883,10 @@ async function initializeApp() {
                 }
             }
 
-            // Expose collections data to window for collections modal
+            // Expose collections data to window for collections modal (designer order: by collection number)
+            appState.collections = sortCollectionsByNumber(appState.collections);
             window.collectionsData = appState.collections;
-            console.log(`📤 Exposed ${appState.collections.length} collections to window.collectionsData`);
+            console.log(`📤 Exposed ${appState.collections.length} collections to window.collectionsData (sorted by collection number)`);
             
             // ✅ DEBUG: Log first few collection names to verify filtering
             if (appState.collections.length > 0) {
@@ -9863,7 +9934,8 @@ async function initializeApp() {
             if (finalFiltered > 0) {
                 console.error(`❌ FINAL SAFETY CHECK: Removed ${finalFiltered} non-ColorFlex collections!`);
                 console.error(`❌ FINAL SAFETY CHECK: Excluded: ${excludedInFinalCheck.join(', ')}`);
-                // Update window.collectionsData with filtered collections
+                // Update window.collectionsData with filtered collections (keep designer order by collection number)
+                appState.collections = sortCollectionsByNumber(appState.collections);
                 window.collectionsData = appState.collections;
                 console.log(`📤 Updated window.collectionsData: ${appState.collections.length} ColorFlex collections`);
             } else {
@@ -9958,9 +10030,11 @@ async function initializeApp() {
         // Priority 1: Use Shopify-detected collection (from product page integration)
         // Priority 2: Use URL collection parameter
         // Priority 3: Use auto-load collection (for saved pattern loading)
-        // Priority 4: Use mode-specific default (clothing or furniture page)
+        // Priority 4: Use mode-specific default (Bassett, clothing, or furniture page)
         let modeDefaultCollection = null;
-        if (window.COLORFLEX_MODE === 'CLOTHING') {
+        if (window.COLORFLEX_MODE === 'BASSETT') {
+            modeDefaultCollection = window.BASSETT_DEFAULT_COLLECTION || 'hip-to-be-square';
+        } else if (window.COLORFLEX_MODE === 'CLOTHING') {
             modeDefaultCollection = window.CLOTHING_DEFAULT_COLLECTION || 'bombay-clo';
         } else if (window.COLORFLEX_MODE === 'FURNITURE') {
             modeDefaultCollection = window.FURNITURE_DEFAULT_COLLECTION || 'botanicals-fur';
@@ -10063,8 +10137,21 @@ async function initializeApp() {
         console.log("  Is fallback collection:", selectedCollection === appState.collections[0] ? "YES" : "NO");
 
         if (!selectedCollection) {
-            console.error("X No valid collection found.");
-            return;
+            if (window.COLORFLEX_MODE === 'BASSETT') {
+                const launchName = window.BASSETT_DEFAULT_COLLECTION || 'hip-to-be-square';
+                selectedCollection = appState.collections.find(c => c && typeof c.name === 'string' && c.name.trim().toLowerCase() === launchName.toLowerCase());
+                if (selectedCollection) {
+                    console.log("Launching with default collection: " + selectedCollection.name);
+                }
+            }
+            if (!selectedCollection) {
+                selectedCollection = appState.collections[0];
+                if (selectedCollection) console.log("Using first collection as fallback: " + selectedCollection.name);
+            }
+            if (!selectedCollection) {
+                console.error("X No valid collection found.");
+                return;
+            }
         }
 
         // ✅ Step 5: Set collection in appState
@@ -10744,7 +10831,7 @@ function populatePatternThumbnails(patterns) {
         const img = document.createElement("img");
 
         // Lazy loading: Load first 3 thumbnails immediately, rest on scroll
-        const thumbnailUrl = normalizePath(pattern.thumbnail) || "https://so-animation.com/colorflex/data/collections/fallback.jpg";
+        const thumbnailUrl = normalizePath(pattern.thumbnail) || normalizePath("data/collections/fallback.jpg");
 
         if (index < 3) {
             // Load first 3 immediately for instant display
@@ -10761,8 +10848,8 @@ function populatePatternThumbnails(patterns) {
         img.className = "w-full h-auto";
         img.onerror = () => {
             console.warn(`Failed to load thumbnail for ${pattern.displayName}: ${img.src}`);
-            if (img.src !== "https://so-animation.com/colorflex/data/collections/fallback.jpg") {
-                img.src = "https://so-animation.com/colorflex/data/collections/fallback.jpg";
+            if (img.src !== normalizePath("data/collections/fallback.jpg")) {
+                img.src = normalizePath("data/collections/fallback.jpg");
                 img.onerror = () => {
                     console.warn(`Failed to load fallback for ${pattern.displayName}`);
                     const placeholder = document.createElement("div");
@@ -10950,7 +11037,7 @@ const populateCoordinates = () => {
         const img = document.createElement("img");
         const normalizedPath = normalizePath(coord.path);
         console.log(`🔍 Coordinate path: "${coord.path}" → normalized: "${normalizedPath}"`);
-        img.src = normalizedPath || "https://so-animation.com/colorflex/data/collections/default-coordinate.jpg";
+        img.src = normalizedPath || normalizePath("data/collections/default-coordinate.jpg");
         img.alt = coord.pattern || `Coordinate ${index + 1}`;
         img.className = "coordinate-image";
         img.dataset.filename = coord.path || "fallback";
@@ -10996,7 +11083,7 @@ function populatePatternSidebar(patterns) {
         `;
 
         const img = document.createElement("img");
-        const thumbnailUrl = normalizePath(pattern.thumbnail) || "https://so-animation.com/colorflex/data/collections/fallback.jpg";
+        const thumbnailUrl = normalizePath(pattern.thumbnail) || normalizePath("data/collections/fallback.jpg");
         img.src = thumbnailUrl;
         img.alt = pattern.name;
         img.style.cssText = `
@@ -11009,7 +11096,7 @@ function populatePatternSidebar(patterns) {
         `;
 
         img.onerror = () => {
-            img.src = "https://so-animation.com/colorflex/data/collections/fallback.jpg";
+            img.src = normalizePath("data/collections/fallback.jpg");
         };
 
         const label = document.createElement("div");
@@ -11122,7 +11209,9 @@ function populateLayerInputs(pattern = appState.currentPattern) {
           visualElement.className = "layer-thumbnail-img";
           const layerData = pattern.layers[layerImageIndex];
           const layerPath = typeof layerData === 'string' ? layerData : (layerData?.path || layerData);
-          visualElement.src = normalizePath(layerPath);
+          const layerUrl = normalizePath(layerPath);
+          visualElement.src = layerUrl;
+          console.log('[ColorFlex] Layer thumbnail URL:', layerUrl);
           visualElement.alt = layer.label;
           visualElement.onerror = () => {
             visualElement.style.background = '#1a202c';
@@ -12568,7 +12657,13 @@ async function loadPatternData(collection, patternId) {
             console.log("🧵 setPatternScale in fabric mode - calling renderFabricMockup()");
             await renderFabricMockup();
         } else {
-            // Update both pattern preview and room mockup for scale changes
+            // BASSETT: clear room cache so next updateRoomMockup re-requests with new scale
+            if (window.COLORFLEX_MODE === 'BASSETT') {
+                appState.bassettResultUrl = null;
+                appState.bassettResultPatternId = null;
+                appState.bassettResultBlanketColor = null;
+                appState.bassettResultScale = null;
+            }
             updatePreview();
             updateRoomMockup();
         }
@@ -13536,7 +13631,332 @@ function loadImage(src, highPriority = true) {
     });
 }
 
-    
+
+// Bassett: build a tiled pattern (like a mockup background), then composite with your
+// extracted PSD layers. Layers with DSPL get the pattern warped via displacement; others
+// are drawn as-is (image) or tinted (blanket = second ColorFlex color). Order = back to front.
+var BASSETT_LAYER_STACK = [
+  { id: 'background', file: 'Background.png', type: 'image', colorFlexIndex: null },
+  { id: 'sofa-displaced', displacementFile: 'SOFA-DSPL.png', type: 'pattern-displaced' },
+  { id: 'sofa-shadows', file: 'SOFA-SHADOWS.png', type: 'image' },
+  { id: 'blanket', file: 'BLANKET-BACKGROUND.png', type: 'solid-color', colorFlexIndex: 1 },
+  { id: 'pillow2', file: 'PILLOW-2.png', type: 'image' },
+  { id: 'pillow2-displaced', displacementFile: 'PILLOW-2-DSPL.png', type: 'pattern-displaced' },
+  { id: 'pillow2-shadows', file: 'PILLOW-2-SHADOWS.png', type: 'image' },
+  { id: 'pillow1', file: 'PILLOW-1.png', type: 'image' },
+  { id: 'pillow1-displaced', displacementFile: 'PILLOW-1-DSPL.png', type: 'pattern-displaced' },
+  { id: 'pillow1-shadows', file: 'PILLOW-1-SHADOWS.png', type: 'image' }
+];
+function getBassettLayersBaseUrl() {
+  return (typeof window !== 'undefined' && window.BASSETT_LAYERS_BASE_URL) || '/data/mockups/bassett/sofa-with-pillows-mockup-2';
+}
+function bassettDisplaceInWorker(patternBitmap, displacementMapBitmap, strength) {
+  strength = strength != null ? strength : 1;
+  var origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin.replace(/\/$/, '') : '';
+  var workerUrl = (typeof window !== 'undefined' && window.BASSETT_DISPLACE_WORKER_URL) || (origin + '/assets/workers/pattern-displace.worker.js');
+  return new Promise(function(resolve, reject) {
+    var w = new Worker(workerUrl);
+    var onMsg = function(e) {
+      w.removeEventListener('message', onMsg);
+      w.removeEventListener('error', onErr);
+      var d = e.data;
+      if (d && d.type === 'result' && d.bitmap) resolve(d.bitmap);
+      else if (d && d.type === 'error') reject(new Error(d.message || 'displace failed'));
+      else reject(new Error('displace worker unknown response'));
+    };
+    var onErr = function(err) {
+      w.removeEventListener('message', onMsg);
+      w.removeEventListener('error', onErr);
+      reject(err && err.message ? err : new Error('displace worker error'));
+    };
+    w.addEventListener('message', onMsg);
+    w.addEventListener('error', onErr);
+    w.postMessage({ type: 'displace', pattern: patternBitmap, displacementMap: displacementMapBitmap, strength: strength }, [patternBitmap, displacementMapBitmap]);
+  });
+}
+
+// Bassett room mockup: generate from layers + displacement (no PSD), or show uploaded result / fallback UI.
+async function updateBassettRoomMockup() {
+  if (!dom.roomMockup) return;
+  const cssW = 550, cssH = 400;
+  const dpr = window.devicePixelRatio || 1;
+  const resultUrl = appState.bassettResultUrl;
+  const resultPatternId = appState.bassettResultPatternId;
+  const resultBlanketColor = appState.bassettResultBlanketColor;
+  const resultScale = appState.bassettResultScale;
+  const currentId = appState.currentPattern ? (appState.currentPattern.id || appState.currentPattern.name) : null;
+  // Second ColorFlex color (index 1) for blanket
+  const blanketHex = (appState.currentLayers && appState.currentLayers[1] && appState.currentLayers[1].color) ? (lookupColor(appState.currentLayers[1].color) || "#336699") : "#336699";
+  function hexFromRgb(rgb) {
+    if (!rgb) return "#336699";
+    if (typeof rgb === "string" && rgb.startsWith("#")) return rgb;
+    if (typeof rgb === "object" && rgb.r != null) return "#" + [rgb.r, rgb.g, rgb.b].map(function(x) { return ("0" + Math.round(x).toString(16)).slice(-2); }).join("");
+    return "#336699";
+  }
+  function normalizeBlanketHex(h) {
+    var hex = (typeof h === "string" && h.startsWith("#")) ? h : hexFromRgb(h);
+    var six = hex.replace(/^#/, "").replace(/[^0-9A-Fa-f]/g, "").slice(0, 6);
+    if (six.length !== 6) return "#336699";
+    return "#" + six;
+  }
+  const currentBlanketColor = normalizeBlanketHex(blanketHex);
+  const currentScaleMultiplier = appState.scaleMultiplier != null ? appState.scaleMultiplier : 1;
+  const stale = resultUrl && (resultPatternId !== currentId || resultBlanketColor !== currentBlanketColor || resultScale !== currentScaleMultiplier);
+
+  const renderResult = (imageUrl) => {
+    const canvas = document.createElement("canvas");
+    canvas.width = Math.round(cssW * dpr);
+    canvas.height = Math.round(cssH * dpr);
+    canvas.style.width = cssW + "px";
+    canvas.style.height = cssH + "px";
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = "high";
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillRect(0, 0, cssW, cssH);
+
+    const img = new Image();
+    img.crossOrigin = "Anonymous";
+    img.onload = () => {
+      const scale = Math.min(cssW / img.width, cssH / img.height);
+      const dw = img.width * scale, dh = img.height * scale;
+      const x = (cssW - dw) / 2, y = (cssH - dh) / 2;
+      ctx.drawImage(img, x, y, dw, dh);
+      dom.roomMockup.innerHTML = "";
+      dom.roomMockup.appendChild(canvas);
+    };
+    img.onerror = () => {
+      dom.roomMockup.innerHTML = "";
+      dom.roomMockup.appendChild(canvas);
+    };
+    img.src = imageUrl;
+  };
+
+  if (resultUrl && !stale) {
+    renderResult(resultUrl);
+    return;
+  }
+
+  if (stale) {
+    appState.bassettResultUrl = null;
+    appState.bassettResultPatternId = null;
+    appState.bassettResultBlanketColor = null;
+    appState.bassettResultScale = null;
+  }
+
+  const apiBase = (window.ColorFlexApiBaseUrl || "").replace(/\/$/, "");
+  const renderUrl = apiBase ? apiBase + "/api/bassett/render" : "/api/bassett/render";
+  const uploadUrl = apiBase ? apiBase + "/api/bassett/upload-result" : "/api/bassett/upload-result";
+
+  // Try layer-stack composite first (no PSD): exported layers + displacement worker
+  if (appState.currentPattern && !appState.bassettRenderPending) {
+    const thumb = appState.currentPattern.thumbnail || "";
+    const patternUrl = thumb.startsWith("http") ? thumb : (window.location.origin + (thumb.startsWith("/") ? thumb : "/" + (thumb.replace(/^\.\//, ""))));
+    const blanketColor = currentBlanketColor;
+    const baseUrl = getBassettLayersBaseUrl();
+
+    appState.bassettRenderPending = true;
+    dom.roomMockup.innerHTML = "";
+    const loadingWrap = document.createElement("div");
+    loadingWrap.style.cssText = "width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#e2e8f0;padding:1rem;text-align:center;box-sizing:border-box;";
+    loadingWrap.innerHTML = "<p style='margin-bottom:0.5rem;'>Generating room preview…</p><p style='font-size:0.85rem;color:#94a3b8;'>Using layers + displacement</p>";
+    dom.roomMockup.appendChild(loadingWrap);
+
+    var layerCompositeOk = false;
+    try {
+      var layerUrl = function(path) {
+        var url = baseUrl + "/" + path;
+        if (typeof window !== "undefined" && window.BASSETT_LAYER_CACHE_BUST) {
+          url += (url.indexOf("?") >= 0 ? "&" : "?") + "v=" + (window.BASSETT_LAYER_CACHE_BUST === true ? Date.now() : window.BASSETT_LAYER_CACHE_BUST);
+        }
+        return url;
+      };
+      var loadImg = function(src) {
+        return new Promise(function(resolve, reject) {
+          var img = new Image();
+          img.crossOrigin = "anonymous";
+          img.onload = function() { resolve(img); };
+          img.onerror = function() { reject(new Error("Load " + src)); };
+          img.src = src;
+        });
+      };
+      var patternImg = await loadImg(patternUrl);
+      var bgUrl = layerUrl("Background.png");
+      var bgImg;
+      try {
+        bgImg = await loadImg(bgUrl);
+      } catch (e) {
+        console.error("Bassett: Background.png failed to load. URL:", bgUrl, e && e.message ? e.message : e);
+        throw e;
+      }
+      if (!bgImg.naturalWidth || !bgImg.naturalHeight) {
+        console.warn("Bassett: Background.png loaded but has zero size:", bgImg.naturalWidth, "x", bgImg.naturalHeight);
+      }
+      var cw = bgImg.naturalWidth || 1;
+      var ch = bgImg.naturalHeight || 1;
+      var compCanvas = document.createElement("canvas");
+      compCanvas.width = cw;
+      compCanvas.height = ch;
+      var ctx = compCanvas.getContext("2d");
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+
+      for (var li = 0; li < BASSETT_LAYER_STACK.length; li++) {
+        var layer = BASSETT_LAYER_STACK[li];
+        ctx.globalAlpha = 1;
+        ctx.globalCompositeOperation = "source-over";
+        if (layer.type === 'image' && layer.file) {
+          var limg = (li === 0 && layer.file === 'Background.png') ? bgImg : await loadImg(layerUrl(layer.file));
+          ctx.drawImage(limg, 0, 0);
+        } else if (layer.type === 'pattern-displaced' && layer.displacementFile) {
+          var dispImg = await loadImg(layerUrl(layer.displacementFile));
+          var dw = dispImg.naturalWidth;
+          var dh = dispImg.naturalHeight;
+          var tileCanvas = document.createElement("canvas");
+          tileCanvas.width = dw;
+          tileCanvas.height = dh;
+          var tctx = tileCanvas.getContext("2d");
+          tctx.imageSmoothingEnabled = true;
+          tctx.imageSmoothingQuality = "high";
+          var reps = 4;
+          var tw = dw / reps;
+          var th = dh / reps;
+          for (var tx = -tw; tx < dw + tw; tx += tw) {
+            for (var ty = -th; ty < dh + th; ty += th) {
+              tctx.drawImage(patternImg, tx, ty, tw, th);
+            }
+          }
+          var patternBmp = await createImageBitmap(tileCanvas);
+          var dispBmp = await createImageBitmap(dispImg);
+          var displaced = await bassettDisplaceInWorker(patternBmp, dispBmp, 0.5);
+          ctx.drawImage(displaced, 0, 0);
+          patternBmp.close();
+          dispBmp.close();
+          displaced.close();
+        } else if (layer.type === 'solid-color' && layer.file) {
+          var blimg = await loadImg(layerUrl(layer.file));
+          var blanketCanvas = document.createElement("canvas");
+          blanketCanvas.width = cw;
+          blanketCanvas.height = ch;
+          var bctx = blanketCanvas.getContext("2d");
+          bctx.drawImage(blimg, 0, 0);
+          bctx.globalCompositeOperation = "multiply";
+          var hex = blanketColor.replace(/^#/, "");
+          bctx.fillStyle = "#" + hex;
+          bctx.fillRect(0, 0, cw, ch);
+          bctx.globalCompositeOperation = "destination-in";
+          bctx.drawImage(blimg, 0, 0);
+          bctx.globalCompositeOperation = "source-over";
+          ctx.drawImage(blanketCanvas, 0, 0);
+        }
+      }
+
+      var dataUrl = compCanvas.toDataURL("image/png");
+      appState.bassettResultUrl = dataUrl;
+      appState.bassettResultPatternId = currentId;
+      appState.bassettResultBlanketColor = currentBlanketColor;
+      appState.bassettResultScale = currentScaleMultiplier;
+      layerCompositeOk = true;
+    } catch (e) {
+      console.warn("Bassett layer composite failed:", e);
+      if (e && e.message) console.warn("  Message:", e.message);
+    }
+    appState.bassettRenderPending = false;
+    if (layerCompositeOk) {
+      updateBassettRoomMockup();
+      return;
+    }
+  }
+
+  // Fallback: try API (PSD pipeline) if layer composite didn't run or failed
+  if (appState.currentPattern && !appState.bassettRenderPending) {
+    const thumb = appState.currentPattern.thumbnail || "";
+    const patternUrl = thumb.startsWith("http") ? thumb : (window.location.origin + (thumb.startsWith("/") ? thumb : "/" + (thumb.replace(/^\.\//, ""))));
+    const blanketColor = currentBlanketColor;
+
+    appState.bassettRenderPending = true;
+    dom.roomMockup.innerHTML = "";
+    const loadingWrap = document.createElement("div");
+    loadingWrap.style.cssText = "width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#e2e8f0;padding:1rem;text-align:center;box-sizing:border-box;";
+    loadingWrap.innerHTML = "<p style='margin-bottom:0.5rem;'>Generating room preview…</p><p style='font-size:0.85rem;color:#94a3b8;'>Using your selected pattern</p>";
+    dom.roomMockup.appendChild(loadingWrap);
+
+    try {
+      const body = { patternUrl: patternUrl, blanketColor: blanketColor };
+      if (currentScaleMultiplier != null && currentScaleMultiplier !== 1) body.scaleMultiplier = currentScaleMultiplier;
+      const res = await fetch(renderUrl, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body)
+      });
+      appState.bassettRenderPending = false;
+
+      if (res.ok && res.headers.get("content-type") && res.headers.get("content-type").indexOf("image/png") >= 0) {
+        const blob = await res.blob();
+        const prevUrl = appState.bassettResultUrl;
+        if (prevUrl && prevUrl.startsWith("blob:")) URL.revokeObjectURL(prevUrl);
+        appState.bassettResultUrl = URL.createObjectURL(blob);
+        appState.bassettResultPatternId = currentId;
+        appState.bassettResultBlanketColor = currentBlanketColor;
+        appState.bassettResultScale = currentScaleMultiplier;
+        updateBassettRoomMockup();
+        return;
+      }
+      const errBody = await res.json().catch(function() { return {}; });
+      if (res.status === 503) {
+        console.warn("Bassett render not available:", errBody.message || "server not configured");
+      }
+    } catch (e) {
+      appState.bassettRenderPending = false;
+      console.warn("Bassett render request failed:", e);
+    }
+  }
+
+  // Fallback: no pattern, API unavailable, or failed — show upload UI (copy-safe command: paths in quotes so paste won't break shell)
+  dom.roomMockup.innerHTML = "";
+  const wrap = document.createElement("div");
+  wrap.style.cssText = "width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#e2e8f0;padding:1rem;text-align:center;box-sizing:border-box;";
+  wrap.innerHTML = "<p style='margin-bottom:0.75rem;'>Preview couldn't be generated from layers. Check the browser console (F12) for errors.</p>" +
+    "<p style='font-size:0.9rem;color:#94a3b8;margin-bottom:0.75rem;'>Ensure layer images and the displacement worker are available, or upload a result image below.</p>" +
+    "<label style='cursor:pointer;display:inline-block;padding:0.5rem 1rem;background:#d4af37;color:#1a202c;border-radius:6px;font-weight:600;'>Upload Bassett result</label>" +
+    "<input type='file' accept='image/*' id='bassettUploadInput' style='display:none'>";
+  dom.roomMockup.appendChild(wrap);
+  const input = document.getElementById("bassettUploadInput");
+  if (input) {
+    input.onchange = async () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async () => {
+        const dataUrl = reader.result;
+        try {
+          const res = await fetch(uploadUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ image: dataUrl, filename: file.name || "bassett-room.png" })
+          });
+          const data = await res.json();
+          if (data.url) {
+            appState.bassettResultUrl = data.url;
+            appState.bassettResultPatternId = currentId;
+            appState.bassettResultBlanketColor = currentBlanketColor;
+            appState.bassettResultScale = currentScaleMultiplier;
+            updateBassettRoomMockup();
+          } else {
+            alert(data.error || "Upload failed");
+          }
+        } catch (e) {
+          alert("Upload failed: " + (e.message || e));
+        }
+        input.value = "";
+      };
+      reader.readAsDataURL(file);
+    };
+    wrap.querySelector("label").addEventListener("click", () => input.click());
+  }
+}
+
 //  room mockup
 let updateRoomMockup = async () => {
   try {
@@ -13549,6 +13969,12 @@ let updateRoomMockup = async () => {
     if (!dom.roomMockup) return console.error("roomMockup element not found in DOM");
     if (!appState.selectedCollection || !appState.currentPattern) {
       console.log("🔍 Skipping updateRoomMockup - no collection/pattern selected");
+      return;
+    }
+
+    // BASSETT: show Bassett result in room mockup (upload or pipeline result)
+    if (window.COLORFLEX_MODE === 'BASSETT') {
+      updateBassettRoomMockup();
       return;
     }
 
@@ -14981,7 +15407,7 @@ const updateFurniturePreview = async () => {
                             }
                             
                             // Build path using new format
-                            furnitureLayerPath = `https://so-animation.com/colorflex/data/collections/${collectionBaseName}-fur/layers/${furnitureType}/${finalFileName}`;
+                            furnitureLayerPath = normalizePath(`data/collections/${collectionBaseName}-fur/layers/${furnitureType}/${finalFileName}`);
                             console.log(`    🔄 Converted path (new format): ${layer.path} → ${furnitureLayerPath}`);
                         }
 
@@ -15941,7 +16367,7 @@ const generatePrintPreview = () => {
                            '1X';
 
         let textContent = `
-            <img src="https://so-animation.com/colorflex/img/SC-header-mage.jpg" alt="SC Logo" class="sc-logo">
+            <img src="${normalizePath('img/SC-header-mage.jpg')}" alt="SC Logo" class="sc-logo">
             <h2>${collectionName}</h2>
             <h3>${patternName}</h3>
             <p style="margin: 5px 0; font-size: 14px;"><strong>Tiling: ${tilingMethod} | Repeat: ${scaleDisplay}</strong></p>
@@ -16874,7 +17300,7 @@ async function renderFabricMockup() {
         await new Promise((resolve, reject) => {
             mockupBg.onload = resolve;
             mockupBg.onerror = reject;
-            mockupBg.src = `https://so-animation.com/colorflex/${fabricConfig.mockup}`;
+            mockupBg.src = normalizePath(fabricConfig.mockup.startsWith('data/') ? fabricConfig.mockup : 'data/' + fabricConfig.mockup);
         });
 
         // Set canvas size to NATIVE 4K image dimensions for full-resolution compositing
@@ -16900,7 +17326,7 @@ async function renderFabricMockup() {
             await new Promise((resolve, reject) => {
                 fabricBase.onload = resolve;
                 fabricBase.onerror = reject;
-                fabricBase.src = `https://so-animation.com/colorflex/${fabricConfig.base}`;
+                fabricBase.src = normalizePath(fabricConfig.base.startsWith('data/') ? fabricConfig.base : 'data/' + fabricConfig.base);
             });
 
             const fabricBaseWidth = fabricBase.naturalWidth || fabricBase.width;
@@ -17181,7 +17607,7 @@ async function renderFabricMockup() {
                 continue;
             }
 
-            console.log(`🔍 Loading pattern layer ${i}: ${layerPath}`);
+            console.log(`[ColorFlex] Layer image URL (pattern layer ${i}):`, layerPath);
             
             try {
                 const layerImg = new Image();
@@ -17362,7 +17788,7 @@ async function renderFabricMockup() {
                 await new Promise((resolve, reject) => {
                     glossImg.onload = resolve;
                     glossImg.onerror = reject;
-                    glossImg.src = `https://so-animation.com/colorflex/${glossPath}`;
+                    glossImg.src = glossPath.startsWith('http') ? glossPath : normalizePath(glossPath.startsWith('data/') ? glossPath : 'data/' + glossPath);
                 });
 
                 console.log(`📐 Gloss layer loaded: ${glossImg.width}x${glossImg.height}`);
@@ -17400,7 +17826,7 @@ async function renderFabricMockup() {
                         fabricGlossy.onerror = reject;
                         // Use fabric-glossy.png from the same directory as fabric-base.png
                         const glossyPath = fabricConfig.base.replace('fabric-base.png', 'fabric-glossy.png');
-                        fabricGlossy.src = `https://so-animation.com/colorflex/${glossyPath}`;
+                        fabricGlossy.src = glossyPath.startsWith('http') ? glossyPath : normalizePath(glossyPath.startsWith('data/') ? glossyPath : 'data/' + glossyPath);
                     });
 
                     console.log(`📐 Fabric glossy: ${fabricGlossy.width}x${fabricGlossy.height}`);
@@ -17776,7 +18202,7 @@ window.simpleFabricTest = function() {
         }
     };
     
-    img.src = "https://so-animation.com/colorflex/data/fabric/fabric-base.png";
+    img.src = normalizePath("data/fabric/fabric-base.png");
 };
 // Enhanced color parsing function for proof generation
 async function parseColorEnhanced(colorStr) {
@@ -18452,6 +18878,17 @@ function getFabricSpecByMaterialId(materialId) {
         return FABRIC_SPECIFICATIONS['WALLPAPER'];
     }
 
+    const wallpaperMap = {
+        'wallpaper-prepasted': 'WALLPAPER-PREPASTED',
+        'wallpaper-peel-stick': 'WALLPAPER-PEEL-STICK',
+        'wallpaper-unpasted': 'WALLPAPER-UNPASTED',
+        'wallpaper-grasscloth': 'WALLPAPER'
+    };
+    const wallpaperKey = wallpaperMap[materialId];
+    if (wallpaperKey && FABRIC_SPECIFICATIONS[wallpaperKey]) {
+        return FABRIC_SPECIFICATIONS[wallpaperKey];
+    }
+
     const fabricMap = {
         'fabric-soft-velvet': 'SOFT VELVET',
         'fabric-decorator-linen': 'DECORATOR LINEN',
@@ -18532,13 +18969,14 @@ function getMaterialPrice(materialId) {
 
     // Legacy fallback
     const prices = {
-        'wallpaper-peel-stick': '$89.99',
-        'wallpaper-traditional': '$79.99',
+        'wallpaper-prepasted': '$249.00',
+        'wallpaper-peel-stick': '$319.00',
+        'wallpaper-traditional': '$249.00',
         'wallpaper-textured': '$99.99',
         'fabric-cotton': '$69.99',
         'fabric-linen': '$79.99'
     };
-    return prices[materialId] || '$89.99';
+    return prices[materialId] || '$249.00';
 }
 
 // Update cart item via Shopify API

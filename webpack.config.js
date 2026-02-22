@@ -7,7 +7,7 @@ const webpack = require('webpack');
 const isProduction = process.env.NODE_ENV === 'production';
 
 // Multi-mode configuration support
-// Build modes: all (default), wallpaper, furniture, clothing, furniture-simple, clothing-simple
+// Build modes: all (default), wallpaper, furniture, clothing, bassett, furniture-simple, clothing-simple
 // Usage: npm run build -- --env mode=furniture
 module.exports = (env = {}) => {
   const buildMode = env.mode || 'all';
@@ -17,6 +17,10 @@ module.exports = (env = {}) => {
 
   if (buildMode === 'all' || buildMode === 'wallpaper') {
     entries['color-flex-core'] = './src/index.core.js';
+  }
+
+  if (buildMode === 'all' || buildMode === 'bassett') {
+    entries['color-flex-bassett'] = './src/index.core.js';
   }
 
   if (buildMode === 'all' || buildMode === 'furniture') {

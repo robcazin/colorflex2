@@ -20,6 +20,9 @@
     "build:simple": "NODE_ENV=production webpack --mode=production --env mode=simple",
     "build:all": "NODE_ENV=production webpack --mode=production --env mode=all",
     "build:protected": "./protect-css.sh",
+    "bassett-local:build": "node scripts/build-bassett-local-html.js",
+    "bassett-local": "node scripts/build-bassett-local-html.js && node bassett-local/server.js",
+    "bassett": "npm run build && npm run bassett-local",
     "clean": "rm -rf dist/*",
     "start": "npm run dev",
     "migrate:scan": "node migration/upload-assets.js",
@@ -79,6 +82,8 @@
   "dependencies": {
     "airtable": "^0.12.2",
     "dotenv": "^17.2.3",
+    "express": "^4.22.1",
+    "form-data": "^4.0.5",
     "lodash": "^4.17.21",
     "sharp": "^0.33.0"
   }

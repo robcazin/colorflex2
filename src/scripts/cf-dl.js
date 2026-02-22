@@ -1,15 +1,48 @@
-const Airtable = require('airtable');
+    const Airtable = require('airtable');
 const fsSync = require('fs');
 const https = require('https');
 const sharp = require('sharp');
 const path = require('path');
 const { execSync } = require('child_process');
 const fetch = require('node-fetch');
+const FormData = require('form-data');
 
 // Ensure paths are relative to project root, not script location
 const projectRoot = path.resolve(__dirname, '../..');
 process.chdir(projectRoot);
 console.log('Working directory set to:', process.cwd());
+
+// Load Shopify credentials from .env / config/local.env / api/.env (same as shopify-create-products.js)
+try {
+    require('dotenv').config();
+    if (!process.env.SHOPIFY_STORE || !process.env.SHOPIFY_ACCESS_TOKEN) {
+        const localEnv = path.join(projectRoot, 'config', 'local.env');
+        if (fsSync.existsSync(localEnv)) require('dotenv').config({ path: localEnv });
+        if ((!process.env.SHOPIFY_STORE || !process.env.SHOPIFY_ACCESS_TOKEN) && fsSync.existsSync(path.join(projectRoot, 'api', '.env'))) {
+            require('dotenv').config({ path: path.join(projectRoot, 'api', '.env') });
+        }
+    }
+} catch (e) { /* dotenv optional */ }
+
+// Data path: Synology cf-data (bucket root) or project ./data
+const DATA_PATH = process.env.COLORFLEX_DATA_PATH
+    ? path.resolve(process.env.COLORFLEX_DATA_PATH)
+    : path.join(projectRoot, 'data');
+// With a top-level data/ folder: cf-data/data/ has collections/, mockups/, collections.json. Same path format everywhere.
+const DATA_ROOT = process.env.COLORFLEX_DATA_PATH ? path.join(DATA_PATH, 'data') : DATA_PATH;
+const BASE_DATA_URL = process.env.COLORFLEX_DATA_BASE_URL || 'https://so-animation.com/colorflex';
+// Single path format: base URL + /data/collections/ (bucket has top-level data/ folder)
+const COLLECTIONS_URL_PATH = '/data/collections/';
+// Paths in collections.json: always ./data/collections/ and ./data/mockups/
+const JSON_PATH_PREFIX = './data/collections/';
+const JSON_MOCKUP_PREFIX = './data/mockups/';
+
+/** Convert path from collections.json (./data/collections/... or ./data/mockups/...) to filesystem path */
+function jsonPathToFsPath(jsonPath) {
+    if (!jsonPath || typeof jsonPath !== 'string') return jsonPath;
+    const p = jsonPath.replace(/^\.\//, '').replace(/^data\//, '');
+    return path.join(DATA_ROOT, p);
+}
 
 // Global file tracking
 const processedFiles = {
@@ -143,61 +176,132 @@ function loadShopifyCredentials() {
 }
 
 /**
- * Upload image to Shopify Files API
- * @param {string} imagePath - Local path to image file
- * @param {string} shopifyStore - Shopify store name (without .myshopify.com)
- * @param {string} shopifyToken - Shopify Admin API access token
- * @returns {Promise<string>} Shopify-hosted image URL
+ * Upload image to Shopify Files via GraphQL staged upload (REST files.json returns 406).
+ * Flow: stagedUploadsCreate → POST file to staged target → fileCreate with resourceUrl.
  */
 async function uploadImageToShopifyFiles(imagePath, shopifyStore, shopifyToken) {
     try {
         if (!fsSync.existsSync(imagePath)) {
             throw new Error(`Image file not found: ${imagePath}`);
         }
-        
-        // Read image file
         const imageBuffer = fsSync.readFileSync(imagePath);
-        const imageBase64 = imageBuffer.toString('base64');
-        
-        // Determine content type from file extension
+        const fileSize = imageBuffer.length;
+        const filename = path.basename(imagePath);
         const ext = path.extname(imagePath).toLowerCase();
-        const contentTypeMap = {
-            '.jpg': 'image/jpeg',
-            '.jpeg': 'image/jpeg',
-            '.png': 'image/png',
-            '.gif': 'image/gif',
-            '.webp': 'image/webp'
-        };
-        const contentType = contentTypeMap[ext] || 'image/jpeg';
-        
-        // Upload to Shopify Files API
-        const url = `https://${shopifyStore}.myshopify.com/admin/api/2025-01/files.json`;
-        const response = await fetch(url, {
+        const mimeMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp' };
+        const mimeType = mimeMap[ext] || 'image/jpeg';
+        const graphqlUrl = `https://${shopifyStore}.myshopify.com/admin/api/2025-01/graphql.json`;
+
+        // 1. Create staged upload target (resource FILE for Settings > Files)
+        const stagedMutation = `mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
+          stagedUploadsCreate(input: $input) {
+            stagedTargets { url resourceUrl parameters { name value } }
+            userErrors { field message }
+          }
+        }`;
+        const stagedRes = await fetch(graphqlUrl, {
             method: 'POST',
             headers: {
                 'X-Shopify-Access-Token': shopifyToken,
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-                file: {
-                    attachment: imageBase64,
-                    filename: path.basename(imagePath),
-                    content_type: contentType
+                query: stagedMutation,
+                variables: {
+                    input: [{ filename, mimeType, resource: 'FILE', httpMethod: 'POST' }]
                 }
             })
         });
-        
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(`Shopify API error ${response.status}: ${errorText}`);
+        const stagedJson = await stagedRes.json();
+        const createData = stagedJson.data?.stagedUploadsCreate;
+        const userErrors = createData?.userErrors || [];
+        if (userErrors.length) {
+            throw new Error(`Staged upload: ${userErrors.map(e => e.message).join('; ')}`);
         }
-        
-        const data = await response.json();
-        const shopifyUrl = data.file.url;
-        
-        console.log(`[SHOPIFY UPLOAD] ✅ Uploaded ${path.basename(imagePath)} to Shopify Files`);
+        const target = createData?.stagedTargets?.[0];
+        if (!target?.url || !target?.resourceUrl) {
+            throw new Error('Staged upload did not return url/resourceUrl');
+        }
+
+        // 2. POST file to staged target (multipart form with params + file)
+        const form = new FormData();
+        (target.parameters || []).forEach(p => form.append(p.name, p.value));
+        form.append('file', imageBuffer, filename);
+        const uploadHeaders = { ...form.getHeaders(), 'X-Shopify-Access-Token': shopifyToken };
+        if (target.url.includes('amazonaws.com')) {
+            uploadHeaders['Content-Length'] = fileSize + 5000;
+        }
+        const uploadRes = await fetch(target.url, {
+            method: 'POST',
+            headers: uploadHeaders,
+            body: form
+        });
+        if (!uploadRes.ok) {
+            const errText = await uploadRes.text();
+            throw new Error(`Staged target upload failed ${uploadRes.status}: ${errText}`);
+        }
+
+        // 3. Create file in Shopify with resourceUrl
+        const fileCreateMutation = `mutation fileCreate($files: [FileCreateInput!]!) {
+          fileCreate(files: $files) {
+            files { id ... on MediaImage { image { url } originalSource { url } status } ... on GenericFile { url fileStatus } }
+            userErrors { field message code }
+          }
+        }`;
+        const fileCreateRes = await fetch(graphqlUrl, {
+            method: 'POST',
+            headers: {
+                'X-Shopify-Access-Token': shopifyToken,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                query: fileCreateMutation,
+                variables: {
+                    files: [{
+                        contentType: 'IMAGE',
+                        originalSource: target.resourceUrl,
+                        filename: filename,
+                        duplicateResolutionMode: 'REPLACE'
+                    }]
+                }
+            })
+        });
+        const fileCreateJson = await fileCreateRes.json();
+        const fc = fileCreateJson.data?.fileCreate;
+        if (fc?.userErrors?.length) {
+            throw new Error(`fileCreate: ${fc.userErrors.map(e => e.message).join('; ')}`);
+        }
+        let fileObj = fc?.files?.[0];
+        let shopifyUrl = fileObj?.image?.url || fileObj?.originalSource?.url || fileObj?.url;
+        // File processing is async; image.url is null until status is READY. Poll once or twice.
+        const fileId = fileObj?.id;
+        if (!shopifyUrl && fileId) {
+            const pollQuery = `query getFile($id: ID!) {
+              node(id: $id) {
+                ... on MediaImage { image { url } originalSource { url } status }
+                ... on GenericFile { url fileStatus }
+              }
+            }`;
+            for (let attempt = 0; attempt < 3 && !shopifyUrl; attempt++) {
+                await new Promise(r => setTimeout(r, 1500 * (attempt + 1)));
+                const pollRes = await fetch(graphqlUrl, {
+                    method: 'POST',
+                    headers: { 'X-Shopify-Access-Token': shopifyToken, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: pollQuery, variables: { id: fileId } })
+                });
+                const pollJson = await pollRes.json();
+                const node = pollJson.data?.node;
+                if (node) {
+                    fileObj = node;
+                    shopifyUrl = node?.image?.url || node?.originalSource?.url || node?.url;
+                }
+            }
+        }
+        if (!shopifyUrl) {
+            throw new Error('fileCreate did not return file url (file may still be processing)');
+        }
+        console.log(`[SHOPIFY UPLOAD] ✅ Uploaded ${filename} to Shopify Files`);
         return shopifyUrl;
-        
     } catch (error) {
         console.error(`[SHOPIFY UPLOAD] ❌ Error uploading ${imagePath}:`, error.message);
         throw error;
@@ -299,9 +403,9 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
                 // Parse pattern number components with error handling
                 const numberData = parsePatternNumber(pattern.number);
                 
-                // Determine thumbnail path - check thumbnails-shopify first, then thumbnails
-                const thumbnailShopifyPath = path.join(projectRoot, 'data', 'collections', collection.name, 'thumbnails-shopify', `${patternFileName}.jpg`);
-                const thumbnailPath = path.join(projectRoot, 'data', 'collections', collection.name, 'thumbnails', `${patternFileName}.jpg`);
+                // Determine thumbnail path - check thumbnails-shopify first, then thumbnails (pattern.thumbnail is JSON path)
+                const thumbnailShopifyPath = path.join(DATA_ROOT, 'collections', collection.name, 'thumbnails-shopify', `${patternFileName}.jpg`);
+                const thumbnailPathFs = jsonPathToFsPath(pattern.thumbnail);
                 
                 let thumbnailUrl;
                 
@@ -312,8 +416,8 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
                         let localThumbnailPath = null;
                         if (fsSync.existsSync(thumbnailShopifyPath)) {
                             localThumbnailPath = thumbnailShopifyPath;
-                        } else if (fsSync.existsSync(thumbnailPath)) {
-                            localThumbnailPath = thumbnailPath;
+                        } else if (fsSync.existsSync(thumbnailPathFs)) {
+                            localThumbnailPath = thumbnailPathFs;
                         }
                         
                         if (localThumbnailPath) {
@@ -325,16 +429,16 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
                             await new Promise(resolve => setTimeout(resolve, 550));
                         } else {
                             console.warn(`[CSV] ⚠️  Thumbnail not found locally for ${pattern.name}, using external URL`);
-                            thumbnailUrl = `${baseServerUrl}/data/collections/${collection.name}/thumbnails/${patternFileName}.jpg`;
+                            thumbnailUrl = `${baseServerUrl}${COLLECTIONS_URL_PATH}${collection.name}/thumbnails/${patternFileName}.jpg`;
                         }
                     } catch (uploadError) {
                         console.error(`[CSV] ❌ Failed to upload thumbnail for ${pattern.name}:`, uploadError.message);
                         // Fallback to external URL
-                        thumbnailUrl = `${baseServerUrl}/data/collections/${collection.name}/thumbnails/${patternFileName}.jpg`;
+                        thumbnailUrl = `${baseServerUrl}${COLLECTIONS_URL_PATH}${collection.name}/thumbnails/${patternFileName}.jpg`;
                     }
                 } else {
                     // No credentials - use external URL
-                    thumbnailUrl = `${baseServerUrl}/data/collections/${collection.name}/thumbnails/${patternFileName}.jpg`;
+                    thumbnailUrl = `${baseServerUrl}${COLLECTIONS_URL_PATH}${collection.name}/thumbnails/${patternFileName}.jpg`;
                 }
             
             // Determine product type based on ColorFlex flag
@@ -344,10 +448,9 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
             const productType = pattern.category === 'Clothing' ? 'Clothing' : (isColorFlex ? 'ColorFlex Pattern' : 'Standard Pattern');
             const productCategory = 'Home & Garden > Decor';
             
-            // Different tags based on pattern type
-            // Include collection name as first tag for smart collection filtering
-            const baseTags = `${collection.name}, pattern, wallpaper, fabric`;
-            const tags = isColorFlex 
+            // Tags: first tag is collection name so Shopify Smart Collections can use "Product tag equals <collection.name>"
+            const baseTags = [collection.name, 'pattern', 'wallpaper', 'fabric'].join(', ');
+            const tags = isColorFlex
                 ? `${baseTags}, removable, custom-color, colorflex`
                 : `${baseTags}, standard`;
             
@@ -404,7 +507,7 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
                     variantIndex === 0 ? `${pattern.name} pattern thumbnail` : '', // Image Alt Text (only for first variant)
                     seoTitle, // SEO Title
                     seoDescription, // SEO Description
-                    baseServerUrl + '/data/collections/', // Metafield: color_flex.base_url [url]
+                    baseServerUrl + COLLECTIONS_URL_PATH.replace(/\/$/, ''), // Metafield: color_flex.base_url [url] (no trailing slash)
                     collection.name, // Metafield: color_flex.collection [single_line_text_field]
                     patternFileName, // Metafield: color_flex.pattern [single_line_text_field]
                     pattern.layers.length.toString(), // Metafield: color_flex.layer_count [number_integer]
@@ -907,8 +1010,8 @@ const collections = await getCollectionsFromAirtable();
     // Read existing collections.json
     let existingData = { collections: [] };
     try {
-        if (fsSync.existsSync('./data/collections.json')) {
-            const fileContent = fsSync.readFileSync('./data/collections.json', 'utf8');
+        if (fsSync.existsSync(path.join(DATA_ROOT, 'collections.json'))) {
+            const fileContent = fsSync.readFileSync(path.join(DATA_ROOT, 'collections.json'), 'utf8');
             existingData = JSON.parse(fileContent);
             console.log("Loaded existing collections.json:", existingData.collections.map(c => c.name));
         }
@@ -963,18 +1066,18 @@ const collections = await getCollectionsFromAirtable();
         const thumbnailUrl = record.get('THUMBNAIL')?.[0]?.url || '';
         const layerAttachments = record.get('LAYER SEPARATIONS') || [];
     
-        // Process all layers in LAYER SEPARATIONS
+        // Process all layers in LAYER SEPARATIONS (store JSON paths for collections.json)
         const layerPaths = layerAttachments.map((attachment, index) => {
             const layerFilename = cleanLayerFilename(attachment.filename || `${filename}_layer-${index + 1}.jpg`, filename, index);
-            return `./data/collections/coordinates/layers/${layerFilename}`;
+            return JSON_PATH_PREFIX + 'coordinates/layers/' + layerFilename;
         });
     
         console.log(`Coordinate record: rawName="${rawName}", cleaned="${filename}", layers=`, layerPaths);
     
         return {
             filename,
-            thumbnailPath: thumbnailUrl ? `./data/collections/coordinates/thumbnails/${filename}.jpg` : null,
-            layerPaths: layerPaths.length > 0 ? layerPaths : null // Array of layer paths
+            thumbnailPath: thumbnailUrl ? (JSON_PATH_PREFIX + 'coordinates/thumbnails/' + filename + '.jpg') : null,
+            layerPaths: layerPaths.length > 0 ? layerPaths : null
         };
     }).filter(coord => coord.thumbnailPath && coord.layerPaths && coord.layerPaths.length > 0);
     
@@ -993,30 +1096,102 @@ const collections = await getCollectionsFromAirtable();
             const allRecords = await base(tableName).select({}).all();
             console.log(`[FETCH] Found ${allRecords.length} total records in ${tableName}`);
             
-            // Find placeholder record
-            const placeholderRecord = allRecords.find(r => (r.get('NUMBER') || '').toLowerCase().endsWith('-000'));
-            
+            // Find placeholder record (master record with NUMBER ending in -000; holds collection metadata)
+            // When multiple -000 records exist (e.g. "22-000" and "01-22-000"), prefer the one that matches this collection (01-{num}-000)
+            const collectionNum = tableName.split(' - ')[0]?.trim(); // e.g. "22" from "22 - IKATS"
+            const placeholderCandidates = allRecords.filter(r => (r.get('NUMBER') || '').toLowerCase().endsWith('-000'));
+            const preferredNumber = collectionNum ? `01-${collectionNum}-000` : null; // e.g. "01-22-000"
+            const placeholderRecord = (preferredNumber && placeholderCandidates.length > 1)
+                ? placeholderCandidates.find(r => (r.get('NUMBER') || '').trim().toUpperCase().replace(/\s/g, '') === preferredNumber.replace(/\s/g, '').toUpperCase())
+                : placeholderCandidates[0];
+            if (placeholderCandidates.length > 1 && placeholderRecord) {
+                console.log(`[PLACEHOLDER] Preferring ${placeholderRecord.get('NUMBER')} (${placeholderCandidates.length} -000 records found, preferred: ${preferredNumber})`);
+            }
+
+            let collectionCuratedColors = [];
+            let collectionCoordinates = [];
+            let mockupName = JSON_MOCKUP_PREFIX + 'English-Countryside-Bedroom-1-W60H45.png';
+            let mockupShadowName = null;
+            let mockupDims = { widthInches: 60, heightInches: 45 };
+            let collectionThumbPath = JSON_PATH_PREFIX + baseName + '/' + baseName + '-thumb.jpg';
+            let records;
+
             if (!placeholderRecord) {
                 console.warn(`[SKIP] No placeholder record (-000) found for ${baseName}`);
-                continue;
+                console.warn(`[TIP] Add a record with NUMBER ending in -000 (e.g. 27-000) and ACTIVE=1 to enable this collection.`);
+                console.log(`[FALLBACK] Proceeding with ACTIVE pattern records only (no collection thumbnail/curated colors from master)...`);
+                records = await base(tableName).select({ filterByFormula: "{ACTIVE} = 1" }).all();
+                // Exclude any record that looks like a placeholder so we don't treat it as a pattern
+                records = records.filter(r => !(r.get('NUMBER') || '').toLowerCase().endsWith('-000'));
+                if (records.length === 0) {
+                    console.warn(`[SKIP] No ACTIVE pattern records (excluding -000) for ${baseName}`);
+                    continue;
+                }
+            } else {
+                console.log(`[PLACEHOLDER] Found placeholder record: ${placeholderRecord.get('NUMBER')}`);
+
+                // Check ACTIVE field on the master record (controls Shopify inclusion). If field is missing (undefined), treat as enabled.
+                const isActive = placeholderRecord.get('ACTIVE');
+                console.log(`[ACTIVE] Field value for ${baseName}: ${isActive} (type: ${typeof isActive})`);
+                if (isActive === false || isActive === 0) {
+                    console.log(`[SKIP] ACTIVE is explicitly disabled for ${baseName} - enable it on the master record (${placeholderRecord.get('NUMBER')}) to include this collection.`);
+                    continue;
+                }
+                if (isActive === undefined || isActive === null) {
+                    console.log(`[ACTIVE] No ACTIVE field on placeholder - treating as enabled. Add ACTIVE=1 to the 27-000 record to control inclusion.`);
+                }
+                console.log(`[PROCEED] ACTIVE is enabled for ${baseName}, proceeding...`);
+
+                const thumbAttachments = placeholderRecord.get('THUMBNAIL') || [];
+                collectionCuratedColors = (placeholderRecord.get('CURATED COLORS') || "")
+                    .split(/[,|.\n]+/)
+                    .map(c => c.trim())
+                    .filter(Boolean);
+                const coordField = placeholderRecord.get('COORDINATES') || [];
+                console.log(`[COORDINATES] Field for ${baseName}:`, coordField);
+                collectionCoordinates = coordField.map(coord => {
+                    const rawFilename = coord.filename || '';
+                    let cleanFilename = rawFilename
+                        .toLowerCase()
+                        .replace(/[^a-z0-9\s-.]/g, '')
+                        .replace(/\s+/g, '-')
+                        .replace(/-+/g, '-')
+                        .replace(/\.jpg$/i, '');
+                    const coordRecord = coordinateData.find(c => c.filename === cleanFilename);
+                    if (coordRecord) {
+                        return {
+                            collection: 'coordinates',
+                            filename: coordRecord.filename + '.jpg',
+                            path: coordRecord.thumbnailPath,
+                            layerPaths: coordRecord.layerPaths
+                        };
+                    }
+                    console.warn(`No matching coordinate record for ${rawFilename} (cleaned: ${cleanFilename})`);
+                    return null;
+                }).filter(Boolean);
+                const mockupField = placeholderRecord.get('MOCKUP');
+                if (mockupField) {
+                    let mockupValues;
+                    if (Array.isArray(mockupField)) {
+                        mockupValues = mockupField.map(item => {
+                            if (typeof item === 'string') return item;
+                            if (item && item.name) return item.name;
+                            return String(item);
+                        });
+                    } else if (typeof mockupField === 'string') {
+                        mockupValues = mockupField.split(',').map(v => v.trim());
+                    } else {
+                        mockupValues = [String(mockupField)];
+                    }
+                    mockupName = JSON_MOCKUP_PREFIX + mockupValues[0] + '.png';
+                    if (mockupValues.length > 1) mockupShadowName = JSON_MOCKUP_PREFIX + mockupValues[1] + '.jpg';
+                }
+                mockupDims = parseMockupDimensions(mockupName.split('/').pop());
+
+                records = await base(tableName).select({ filterByFormula: "{ACTIVE} = 1" }).all();
             }
 
-            console.log(`[PLACEHOLDER] Found placeholder record: ${placeholderRecord.get('NUMBER')}`);
-
-            // Check ACTIVE field on the master record (controls Shopify inclusion)
-            const isActive = placeholderRecord.get('ACTIVE');
-            console.log(`[ACTIVE] Field value for ${baseName}: ${isActive} (type: ${typeof isActive})`);
-            
-            if (!isActive) {
-                console.log(`[SKIP] ACTIVE is not enabled for ${baseName} - enable it on the master record (${placeholderRecord.get('NUMBER')})`);
-                continue;
-            }
-
-            console.log(`[PROCEED] ACTIVE is enabled for ${baseName}, proceeding...`);
-
-            // Now get ACTIVE records (Color-Flex field is now just metadata)
             console.log(`[FETCH] Getting ACTIVE records for ${tableName}...`);
-            const records = await base(tableName).select({ filterByFormula: "{ACTIVE} = 1" }).all();
             console.log(`[FETCH] Found ${records.length} ACTIVE records for ${tableName}`);
             
             // Debug: Show all records and their ACTIVE/Color-Flex status
@@ -1035,16 +1210,10 @@ const collections = await getCollectionsFromAirtable();
                 continue;
             }
 
-            const collectionThumbPath = `./data/collections/${baseName}/${baseName}-thumb.jpg`;
-            let collectionCuratedColors = [];
-            let collectionCoordinates = [];
-            let mockupName = "./data/mockups/English-Countryside-Bedroom-1-W60H45.png";
-            let mockupShadowName = null;
-            let mockupDims = { widthInches: 60, heightInches: 45 };
-
-            const thumbAttachments = placeholderRecord.get('THUMBNAIL') || [];
-            collectionCuratedColors = (placeholderRecord.get('CURATED COLORS') || "")
-                .split(/[,|.]/)
+            // When placeholder exists, metadata was set in the block above; when missing, defaults were set. Only re-read from placeholder here if present (avoid reference error).
+            if (placeholderRecord) {
+                collectionCuratedColors = (placeholderRecord.get('CURATED COLORS') || "")
+                .split(/[,|.\n]+/)
                 .map(c => c.trim())
                 .filter(Boolean);
 
@@ -1072,7 +1241,7 @@ const collections = await getCollectionsFromAirtable();
                 return null;
             }).filter(Boolean);
 
-            console.log(`[COLLECTION DATA] Curated colors for ${baseName}:`, collectionCuratedColors);
+            console.log(`[COLLECTION DATA] Placeholder: ${placeholderRecord.get('NUMBER')} | Curated colors for ${baseName}: ${collectionCuratedColors.length} colors`, collectionCuratedColors);
             console.log(`[COLLECTION DATA] Coordinates for ${baseName}:`, collectionCoordinates);
 
             const mockupField = placeholderRecord.get('MOCKUP');
@@ -1093,10 +1262,11 @@ const collections = await getCollectionsFromAirtable();
                     // Fallback: convert to string
                     mockupValues = [String(mockupField)];
                 }
-                mockupName = `./data/mockups/${mockupValues[0]}.png`;
-                if (mockupValues.length > 1) mockupShadowName = `./data/mockups/${mockupValues[1]}.jpg`;
+                mockupName = JSON_MOCKUP_PREFIX + mockupValues[0] + '.png';
+                if (mockupValues.length > 1) mockupShadowName = JSON_MOCKUP_PREFIX + mockupValues[1] + '.jpg';
             }
             mockupDims = parseMockupDimensions(mockupName.split('/').pop());
+            }
 
             const coordinateIds = new Set();
             for (const record of records) {
@@ -1126,11 +1296,14 @@ const collections = await getCollectionsFromAirtable();
 
                     const rawName = record.get('NAME') || `${baseName}-product`;
                     
-                    // Enhanced error handling for pattern name processing
+                    // Enhanced error handling for pattern name processing.
+                    // Only split on " - " when the part before it looks like a pattern number (e.g. "27-104 - DOO-SEE-DOO").
+                    // Otherwise use the full name so "DOO-SEE-DOO" is not parsed as "See".
                     let parsedPatternName;
                     try {
-                        const nameParts = rawName.split(/\s*-\s*/);
-                        parsedPatternName = nameParts.length > 1 ? cleanPatternName(nameParts[1]) : cleanPatternName(rawName);
+                        const numberNameMatch = rawName.match(/^\s*(\d+[-a-z\d]*)\s*-\s*(.+)$/i);
+                        const nameToClean = numberNameMatch ? numberNameMatch[2].trim() : rawName;
+                        parsedPatternName = cleanPatternName(nameToClean);
                         
                         // Validate that we got a reasonable pattern name
                         if (!parsedPatternName || parsedPatternName === 'Unnamed Pattern') {
@@ -1202,7 +1375,7 @@ const collections = await getCollectionsFromAirtable();
                 const recordId = record.id;
                 const number = record.get('NUMBER') || '';
                 const fileSafeName = parsedPatternName.toLowerCase().replace(/\s+/g, '-');
-                const thumbnailPath = `./data/collections/${baseName}/thumbnails/${fileSafeName}.jpg`;
+                const thumbnailPath = JSON_PATH_PREFIX + baseName + '/thumbnails/' + fileSafeName + '.jpg';
                 const tilingStyle = (record.get('THUMBNAIL') || [])[0]?.filename.toUpperCase().includes("HD") ? "half-drop" : "straight";
 
                 const tintWhite = record.get('tintWhite') === true;
@@ -1220,7 +1393,7 @@ const collections = await getCollectionsFromAirtable();
                 if (tintWhite && record.get('BASE COMPOSITE')?.[0]) {
                     const baseCompositeFilename = record.get('BASE COMPOSITE')[0].filename || `${fileSafeName}-base.jpg`;
                     const parsedBaseComposite = parseFileName(baseCompositeFilename, 0, parsedPatternName);
-                    baseCompositePath = `./data/collections/${baseName}/layers/${parsedBaseComposite.layerFileName}.jpg`;
+                    baseCompositePath = JSON_PATH_PREFIX + baseName + '/layers/' + parsedBaseComposite.layerFileName + '.jpg';
                 }
 
                 // For Galleria collection, ensure correct layer assignment:
@@ -1233,15 +1406,15 @@ const collections = await getCollectionsFromAirtable();
                 for (let i = 0; i < processedLayerAttachments.length; i++) {
                     const layerFilename = processedLayerAttachments[i].filename || `${fileSafeName}-layer-${i + 1}.jpg`;
                     const parsedLayer = parseFileName(layerFilename, i, parsedPatternName);
-                    const layerPath = `./data/collections/${baseName}/layers/${parsedLayer.layerFileName}.jpg`;
-                    const proofLayerPath = `./data/collections/${baseName}/proof-layers/${parsedLayer.layerFileName}.jpg`;
+                    const layerPath = JSON_PATH_PREFIX + baseName + '/layers/' + parsedLayer.layerFileName + '.jpg';
+                    const proofLayerPath = JSON_PATH_PREFIX + baseName + '/proof-layers/' + parsedLayer.layerFileName + '.jpg';
                     layerData.push({ path: layerPath, proofPath: proofLayerPath });
                     layerLabels.push(parsedLayer.layerLabel);
                 }
 
                 // Get designer colors, fallback to collection curated colors if empty
                 let designerColors = (record.get('DESIGNER COLORS') || "")
-                    .split(/[,|.]/)
+                    .split(/[,|.\n]+/)
                     .map(c => c.trim())
                     .filter(Boolean);
                 
@@ -1279,9 +1452,12 @@ const collections = await getCollectionsFromAirtable();
                 });
             }
 
+            // Collection number for designer sort order (e.g. "22 - IKATS" -> 22; used by theme to order collections)
+            const collectionNumber = parseInt(String(tableName).split(' - ')[0], 10) || 999;
             const newCollectionData = {
                 name: baseName,
                 tableName: tableName,
+                collectionNumber: Number.isNaN(collectionNumber) ? 999 : collectionNumber,
                 collection_thumbnail: collectionThumbPath,
                 curatedColors: collectionCuratedColors,
                 coordinates: collectionCoordinates.length > 0 ? collectionCoordinates : null,
@@ -1332,14 +1508,14 @@ async function downloadImagesForCollections(data, collectionName = null, forceDo
         const baseName = collection.name;
         console.log(`\n[DOWNLOAD COLLECTION] Starting ${baseName}`);
 
-        // Create directories
+        // Create directories (filesystem paths under DATA_ROOT: data/collections/...)
         const dirs = [
-            `./data/collections/${baseName}/thumbnails`,
-            `./data/collections/${baseName}/layers`,
-            `./data/collections/${baseName}/proof-layers`,
-            `./data/collections/${baseName}/coordinates`,
-            `./data/collections/coordinates/thumbnails`,
-            `./data/collections/coordinates/layers`
+            path.join(DATA_ROOT, 'collections', baseName, 'thumbnails'),
+            path.join(DATA_ROOT, 'collections', baseName, 'layers'),
+            path.join(DATA_ROOT, 'collections', baseName, 'proof-layers'),
+            path.join(DATA_ROOT, 'collections', baseName, 'coordinates'),
+            path.join(DATA_ROOT, 'collections', 'coordinates', 'thumbnails'),
+            path.join(DATA_ROOT, 'collections', 'coordinates', 'layers')
         ];
         
         for (const dir of dirs) {
@@ -1347,12 +1523,19 @@ async function downloadImagesForCollections(data, collectionName = null, forceDo
             console.log(`[MKDIR] Created directory: ${dir}`);
         }
 
-        // Download collection thumbnail
-        const placeholderRecord = (await base(collection.tableName).select({}).all()).find(r => (r.get('NUMBER') || '').toLowerCase().endsWith('-000'));
+        // Download collection thumbnail (collection_thumbnail is JSON path)
+        // Prefer 01-{num}-000 placeholder when multiple -000 records exist (same as fetchCollectionData)
+        const allRecs = await base(collection.tableName).select({}).all();
+        const thumbPlaceholderCandidates = allRecs.filter(r => (r.get('NUMBER') || '').toLowerCase().endsWith('-000'));
+        const tableNum = (collection.tableName || '').split(' - ')[0]?.trim();
+        const preferredNum = tableNum ? `01-${tableNum}-000` : null;
+        const placeholderRecord = (preferredNum && thumbPlaceholderCandidates.length > 1)
+            ? thumbPlaceholderCandidates.find(r => (r.get('NUMBER') || '').trim().toUpperCase().replace(/\s/g, '') === preferredNum.replace(/\s/g, '').toUpperCase())
+            : thumbPlaceholderCandidates[0];
         if (placeholderRecord && placeholderRecord.get('THUMBNAIL')?.[0]?.url) {
             console.log(`[DOWNLOAD COLLECTION THUMB] Downloading collection thumbnail for ${baseName}`);
             try {
-                await downloadImage(placeholderRecord.get('THUMBNAIL')[0].url, collection.collection_thumbnail, 2800, 3, forceDownload);
+                await downloadImage(placeholderRecord.get('THUMBNAIL')[0].url, jsonPathToFsPath(collection.collection_thumbnail), 2800, 3, forceDownload);
             } catch (error) {
                 console.error(`[DOWNLOAD ERROR] Failed to download collection thumbnail for ${baseName}:`, error);
             }
@@ -1371,7 +1554,7 @@ async function downloadImagesForCollections(data, collectionName = null, forceDo
                 
                 if (thumbnailUrl) {
                     console.log(`[DOWNLOAD THUMB] Downloading thumbnail for ${pattern.name}`);
-                    const metadata = await downloadImage(thumbnailUrl, pattern.thumbnail, 2800, 3, forceDownload);
+                    const metadata = await downloadImage(thumbnailUrl, jsonPathToFsPath(pattern.thumbnail), 2800, 3, forceDownload);
                     if (metadata) {
                         const pixelAspect = metadata.width / metadata.height;
                         pattern.size[1] = Math.round(pattern.size[0] / pixelAspect);
@@ -1384,7 +1567,7 @@ async function downloadImagesForCollections(data, collectionName = null, forceDo
                     const baseCompositeUrl = patternRecord.get('BASE COMPOSITE')?.[0]?.url;
                     if (baseCompositeUrl) {
                         console.log(`[DOWNLOAD BASE] Downloading base composite for ${pattern.name}`);
-                        await downloadImage(baseCompositeUrl, pattern.baseComposite, 2800, 3, forceDownload);
+                        await downloadImage(baseCompositeUrl, jsonPathToFsPath(pattern.baseComposite), 2800, 3, forceDownload);
                     }
                 }
 
@@ -1429,10 +1612,10 @@ async function downloadImagesForCollections(data, collectionName = null, forceDo
                         console.log(`[DOWNLOAD LAYER] Downloading layer ${pattern.layerLabels[i]} for ${pattern.name} (URL: ${layerUrl})`);
 
                         // Download proof layer normalized to maxProofDimension (ensures all layers same size)
-                        await downloadImage(layerUrl, pattern.layers[i].proofPath, maxProofDimension, 3, forceDownload);
+                        await downloadImage(layerUrl, jsonPathToFsPath(pattern.layers[i].proofPath), maxProofDimension, 3, forceDownload);
 
                         // Download optimized working layer (always 1400x1400)
-                        const metadata = await downloadImage(layerUrl, pattern.layers[i].path, 1400, 3, forceDownload);
+                        const metadata = await downloadImage(layerUrl, jsonPathToFsPath(pattern.layers[i].path), 1400, 3, forceDownload);
                         if (i === 0 && !pattern.tintWhite && !pattern.baseComposite && metadata) {
                             const pixelAspect = metadata.width / metadata.height;
                             pattern.size[1] = Math.round(pattern.size[0] / pixelAspect);
@@ -1473,7 +1656,7 @@ async function downloadImagesForCollections(data, collectionName = null, forceDo
                     if (thumbnailUrl) {
                         console.log(`[DOWNLOAD COORD THUMB] Downloading coordinate thumbnail ${coord.filename}`);
                         try {
-                            await downloadImage(thumbnailUrl, coord.path, 2800, 3, forceDownload);
+                            await downloadImage(thumbnailUrl, jsonPathToFsPath(coord.path), 2800, 3, forceDownload);
                         } catch (error) {
                             console.error(`[DOWNLOAD ERROR] Failed to download thumbnail for ${coord.filename}:`, error);
                         }
@@ -1483,7 +1666,7 @@ async function downloadImagesForCollections(data, collectionName = null, forceDo
                         const layerPath = coord.layerPaths[i];
                         console.log(`[DOWNLOAD COORD LAYER] Downloading coordinate layer ${i + 1} for ${coord.filename}`);
                         try {
-                            await downloadImage(layerUrls[i], layerPath, 2800, 3, forceDownload);
+                            await downloadImage(layerUrls[i], jsonPathToFsPath(layerPath), 2800, 3, forceDownload);
                         } catch (error) {
                             console.error(`[DOWNLOAD ERROR] Failed to download layer ${i + 1} for ${coord.filename}:`, error);
                         }
@@ -1567,7 +1750,7 @@ async function main(downloadImages = true, collectionName = null, generateShopif
 
     if (incrementalMode) {
         console.log(`[MAIN] 🔄 INCREMENTAL MODE: Using name comparison approach`);
-        const collectionsPath = path.resolve('./data/collections.json');
+        const collectionsPath = path.join(DATA_ROOT, 'collections.json');
 
         try {
             // Load existing collections.json
@@ -1648,17 +1831,34 @@ async function main(downloadImages = true, collectionName = null, generateShopif
         }
     }
 
-    // Write updated data to collections.json
+    // Write updated data to collections.json (try DATA_ROOT first, fallback to project data/ if permission denied)
+    const projectDataRoot = path.join(projectRoot, 'data');
+    let collectionsPath = path.join(DATA_ROOT, 'collections.json');
+    let writeRoot = DATA_ROOT;
     try {
-        const collectionsPath = path.resolve('./data/collections.json');
+        fsSync.mkdirSync(DATA_ROOT, { recursive: true });
         fsSync.writeFileSync(collectionsPath, JSON.stringify(finalData, null, 2));
-
+    } catch (error) {
+        if ((error.code === 'EACCES' || error.code === 'ENOENT') && DATA_ROOT !== projectDataRoot) {
+            console.warn(`[MAIN] Cannot write to ${DATA_ROOT}, falling back to project data/ (${projectDataRoot})`);
+            writeRoot = projectDataRoot;
+            collectionsPath = path.join(projectDataRoot, 'collections.json');
+            try {
+                fsSync.mkdirSync(projectDataRoot, { recursive: true });
+                fsSync.writeFileSync(collectionsPath, JSON.stringify(finalData, null, 2));
+            } catch (fallbackErr) {
+                console.error(`[MAIN ERROR] Error writing to collections.json:`, fallbackErr);
+            }
+        } else {
+            console.error(`[MAIN ERROR] Error writing to collections.json:`, error);
+        }
+    }
+    if (fsSync.existsSync(collectionsPath)) {
         if (incrementalMode) {
             console.log(`[MAIN] ✅ Successfully updated collections.json (${newPatternsAdded} new patterns added)`);
         } else {
             console.log(`[MAIN] ✅ Successfully wrote to collections.json (full overwrite)`);
         }
-
         processedFiles.dataFiles.push({
             type: incrementalMode ? 'Collections Data (Incremental)' : 'Collections Data',
             path: collectionsPath,
@@ -1666,14 +1866,12 @@ async function main(downloadImages = true, collectionName = null, generateShopif
             collections: finalData.collections.length,
             newPatterns: incrementalMode ? newPatternsAdded : undefined
         });
-    } catch (error) {
-        console.error(`[MAIN ERROR] Error writing to collections.json:`, error);
     }
 
     // Generate Shopify CSV if requested
     if (generateShopify) {
         try {
-            const baseServerUrl = 'https://so-animation.com/colorflex'; // Your actual server URL
+            const baseServerUrl = BASE_DATA_URL;
 
             // In incremental mode, only generate CSV for NEW patterns
             let csvData;

@@ -64,7 +64,8 @@
            })(event)"
            onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.5)'; this.querySelector('.chameleon-tooltip').style.opacity='1'; this.querySelector('.chameleon-tooltip').style.visibility='visible';"
            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)'; this.querySelector('.chameleon-tooltip').style.opacity='0'; this.querySelector('.chameleon-tooltip').style.visibility='hidden';">
-          <img src="https://so-animation.com/colorflex/img/camelion-sm-r.jpg"
+          {% if settings.colorflex_data_base_url == blank %}{% assign cf_data_base = 'https://s3.us-east-005.backblazeb2.com/cf-data' %}{% else %}{% assign cf_data_base = settings.colorflex_data_base_url %}{% endif %}
+          <img src="{{ cf_data_base }}/img/camelion-sm-r.jpg"
                alt="ColorFlex Customize"
                style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; pointer-events: none; ">
           <span class="chameleon-tooltip" style="position: absolute; bottom: -35px; right: 0; background: rgba(0,0,0,0.9); color: white; padding: 6px 10px; border-radius: 4px; font-size: 12px; white-space: nowrap; opacity: 0; visibility: hidden; transition: opacity 0.3s 0.5s, visibility 0.3s 0.5s; pointer-events: none; font-family: 'Special Elite', monospace; z-index: 1000;">

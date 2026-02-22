@@ -7,14 +7,28 @@
 
 set -e  # Exit on any error
 
-# Configuration (matches deploy.sh settings)
-SERVER_HOST="162.241.24.65"
-SERVER_USER="soanimat"
-SERVER_PORT="2222"
-SERVER_KEY="../code-build/deploy_key"
-SERVER_PATH="/home4/soanimat/public_html/colorflex"
-LOCAL_DATA_PATH="./data"
+# Load data path and overrides (data lives on Synology /Volumes/jobs/cf-data, syncs to Backblaze)
+if [ -f "config/local.env" ]; then
+    set -a
+    source config/local.env
+    set +a
+fi
+
+# Data folder: Synology/Backblaze. Top-level data/ holds collections/, mockups/, collections.json.
+LOCAL_DATA_PATH="${COLORFLEX_DATA_PATH:-/Volumes/jobs/cf-data}"
+if [ -f "$LOCAL_DATA_PATH/data/collections.json" ]; then
+    COLLECTIONS_JSON_PATH="$LOCAL_DATA_PATH/data/collections.json"
+else
+    COLLECTIONS_JSON_PATH="$LOCAL_DATA_PATH/collections.json"
+fi
 BACKUP_DIR="./backups"
+
+# Legacy server vars (kept for reference; deploy to server is disabled)
+SERVER_HOST="${COLORFLEX_SERVER_HOST:-}"
+SERVER_USER="${COLORFLEX_SERVER_USER:-}"
+SERVER_PORT="${COLORFLEX_SERVER_PORT:-}"
+SERVER_KEY="${COLORFLEX_SERVER_KEY:-}"
+SERVER_PATH="${COLORFLEX_SERVER_PATH:-}"
 
 # Colors for output
 RED='\033[0;31m'
@@ -70,12 +84,9 @@ Options:
   --skip-products             Skip Shopify product creation (manual CSV import instead)
   --update-products           Update existing Shopify products (instead of skipping them)
 
-Environment Variables:
-  COLORFLEX_SERVER_HOST        Server hostname (default: 162.241.24.65)
-  COLORFLEX_SERVER_USER        SSH username (default: soanimat)
-  COLORFLEX_SERVER_PORT        SSH port (default: 2222)
-  COLORFLEX_SERVER_KEY         SSH key path (default: ../code-build/deploy_key)
-  COLORFLEX_SERVER_PATH        Remote path (default: /home4/soanimat/public_html/colorflex)
+Environment Variables (can be set in config/local.env):
+  COLORFLEX_DATA_PATH          Data folder (default: /Volumes/jobs/cf-data). Synology Cloud Sync → Backblaze.
+  COLORFLEX_DATA_BASE_URL      Optional: Backblaze B2 public URL for data; set so CSV/theme use it for image URLs.
 
 EOF
 }
@@ -225,6 +236,8 @@ deploy_to_server() {
     
     # Build rsync options with SSH key
     local rsync_opts="-avz --delete"
+    # Exclude Bassett mockup data (main-branch collection updates only; Bassett is local/dev)
+    rsync_opts="$rsync_opts --exclude='mockups/bassett'"
     if [ -n "$server_port" ] && [ -n "$server_key" ] && [ -f "$server_key" ]; then
         rsync_opts="$rsync_opts -e 'ssh -p $server_port -i $server_key'"
     elif [ -n "$server_key" ] && [ -f "$server_key" ]; then
@@ -265,8 +278,8 @@ deploy_mockups_to_server() {
 
     print_status "Deploying mockups to: $server_user@$server_host:$server_path/data/mockups/"
 
-    # Use SSH key and port if specified
-    local rsync_opts="-avz --progress"
+    # Use SSH key and port if specified; exclude Bassett (main-branch deploy only)
+    local rsync_opts="-avz --progress --exclude='bassett/'"
     if [ -n "$SERVER_PORT" ] && [ -n "$SERVER_KEY" ] && [ -f "$SERVER_KEY" ]; then
         rsync_opts="$rsync_opts -e 'ssh -p $SERVER_PORT -i $SERVER_KEY'"
     fi
@@ -285,23 +298,23 @@ deploy_mockups_to_server() {
 deploy_collections_to_shopify() {
     print_header "Deploying collections.json to Shopify"
 
-    # Check if collections.json exists
-    if [ ! -f "data/collections.json" ]; then
-        print_error "data/collections.json not found"
+    # Check if collections.json exists (data path: Synology cf-data)
+    if [ ! -f "$COLLECTIONS_JSON_PATH" ]; then
+        print_error "collections.json not found at $COLLECTIONS_JSON_PATH"
         return 1
     fi
 
     # Check if deploy-shopify-cli.sh exists
     if [ ! -f "./deploy-shopify-cli.sh" ]; then
         print_error "deploy-shopify-cli.sh not found"
-        print_warning "You can manually upload data/collections.json to Shopify assets"
+        print_warning "You can manually upload $COLLECTIONS_JSON_PATH to Shopify assets"
         return 1
     fi
 
     print_status "Uploading collections.json to Shopify assets via CLI..."
 
-    # Copy collections.json to src/assets/ for Shopify upload
-    cp data/collections.json src/assets/collections.json
+    # Copy collections.json from data path to src/assets/ for Shopify upload
+    cp "$COLLECTIONS_JSON_PATH" src/assets/collections.json
 
     # Use Shopify CLI to upload (--yes flag for non-interactive mode)
     if ./deploy-shopify-cli.sh data --yes; then
@@ -309,7 +322,7 @@ deploy_collections_to_shopify() {
         return 0
     else
         print_error "Shopify upload failed"
-        print_warning "You can manually upload data/collections.json to Shopify > Online Store > Themes > Assets"
+        print_warning "You can manually upload $COLLECTIONS_JSON_PATH to Shopify > Online Store > Themes > Assets"
         return 1
     fi
 }
@@ -327,9 +340,9 @@ create_shopify_products() {
         return 1
     fi
 
-    # Check if .env file exists with Shopify credentials
-    if [ ! -f ".env" ]; then
-        print_error ".env file not found - Shopify credentials required"
+    # Check for Shopify API credentials in .env, config/local.env, or api/.env (same as other API scripts)
+    if [ ! -f ".env" ] && [ ! -f "config/local.env" ] && [ ! -f "api/.env" ]; then
+        print_error "No .env, config/local.env, or api/.env - Shopify credentials required (SHOPIFY_STORE, SHOPIFY_ACCESS_TOKEN)"
         print_warning "Skipping Shopify product creation - you can manually import the CSV"
         return 1
     fi
@@ -364,12 +377,17 @@ create_shopify_products() {
 validate_results() {
     print_header "Validating Results"
 
-    # Check if collections.json was created/updated
-    if [ -f "$LOCAL_DATA_PATH/collections.json" ]; then
-        local collection_count=$(node -e "const data = require('./data/collections.json'); console.log(data.collections.length);")
+    # Check if collections.json was created/updated (primary path or project data/ fallback)
+    local json_to_check="$COLLECTIONS_JSON_PATH"
+    if [ ! -f "$json_to_check" ] && [ -f "./data/collections.json" ]; then
+        json_to_check="./data/collections.json"
+        print_status "Using project data/collections.json (primary path not found)"
+    fi
+    if [ -f "$json_to_check" ]; then
+        local collection_count=$(node -e "const data = require(process.argv[1]); console.log(data.collections.length);" "$json_to_check")
         print_status "Collections.json contains $collection_count collections"
     else
-        print_error "collections.json not found!"
+        print_error "collections.json not found at $COLLECTIONS_JSON_PATH or ./data/collections.json"
         return 1
     fi
 
@@ -542,29 +560,10 @@ main() {
         exit 1
     fi
     
-    # Deploy to server if requested (note: cf-dl.js also auto-deploys when downloading images)
+    # Data lives in Synology cf-data (syncs to Backblaze). So-Animation server deploy is disabled.
     if [ "$DEPLOY" = true ]; then
-        # Check if SSH key exists before attempting deployment
-        local server_key="${COLORFLEX_SERVER_KEY:-$SERVER_KEY}"
-        if [ -n "$server_key" ] && [ -f "$server_key" ]; then
-            if [ "$INCREMENTAL_MODE" = true ]; then
-                # In incremental mode, cf-dl.js handles deployment automatically
-                print_status "Note: Server deployment was already handled by cf-dl.js during image download"
-            else
-                # For non-incremental modes, deploy manually
-                if ! deploy_to_server; then
-                    print_warning "Server deployment encountered errors - check output above"
-                fi
-            fi
-
-            # Deploy mockups directory (not handled by cf-dl.js)
-            if ! deploy_mockups_to_server; then
-                print_warning "Mockup deployment encountered errors - check output above"
-            fi
-        else
-            print_warning "SSH key not found - skipping server deployment"
-            print_status "Images downloaded locally only (not deployed to server)"
-        fi
+        print_status "Data path: $LOCAL_DATA_PATH (Synology → Backblaze)"
+        print_status "Server deploy is disabled; use COLORFLEX_DATA_BASE_URL in theme for Backblaze URL"
     fi
 
     # Deploy collections.json to Shopify assets (CRITICAL - needed for wallpaper page)
@@ -593,9 +592,8 @@ main() {
         echo "  ✅ Collection data updated: $COLLECTION_NAME"
     fi
     [ "$FORCE_DOWNLOAD" = true ] && echo "  ✅ Images downloaded"
-    [ "$GENERATE_CSV" = true ] && echo "  ✅ Shopify CSV generated: data/shopify-import.csv"
-    [ "$DEPLOY" = true ] && echo "  ✅ Deployed to server: $SERVER_HOST"
-    [ "$DEPLOY" = true ] && echo "  ✅ Mockups deployed to server"
+    [ "$GENERATE_CSV" = true ] && echo "  ✅ Shopify CSV generated: deployment/csv/"
+    [ "$DEPLOY" = true ] && echo "  ✅ Data path: $LOCAL_DATA_PATH (Synology → Backblaze)"
     echo "  ✅ collections.json uploaded to Shopify assets"
     [ "$CREATE_BACKUP" = true ] && echo "  ✅ Backup created in: $BACKUP_DIR"
     echo
@@ -614,13 +612,16 @@ main() {
                 fi
             else
                 if [ "$COLLECTION_NAME" != "all" ]; then
-                    echo "  1. Import ./deployment/csv/shopify-import-$COLLECTION_NAME-$(date +%Y%m%d).csv to Shopify"
-                    echo "  2. Use metafield mapping during import for custom fields"
+                    echo "  1. Import ./deployment/csv/shopify-import-$COLLECTION_NAME-$(date +%Y%m%d).csv to Shopify (Products > Import)"
+                    echo "  2. CSV includes Tags (e.g. $COLLECTION_NAME, pattern, wallpaper, fabric). Use them to organize:"
+                    echo "     In Shopify: Products > Collections > Create collection > Automated > Add condition: Product tag equals \"$COLLECTION_NAME\""
+                    echo "  3. Use metafield mapping during import for custom fields (color_flex.*)"
                 else
                     echo "  1. Check ./deployment/csv/ for generated CSV file"
-                    echo "  2. Import the CSV file to Shopify admin (Products > Import)"
+                    echo "  2. Import the CSV file to Shopify admin (Products > Import). Tags column organizes products by collection."
+                    echo "  3. Create Smart Collections: Product tag equals <collection-name> (e.g. hip-to-be-square)"
                 fi
-                echo "  3. Test pattern URLs on the website"
+                echo "  4. Test pattern URLs on the website"
                 if [ "$INCREMENTAL_MODE" = true ]; then
                     echo ""
                     print_status "Note: Only NEW patterns were added. Existing patterns in Shopify are unaffected."

@@ -9,6 +9,10 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const rateLimit = require('express-rate-limit');
+const path = require('path');
+const fs = require('fs');
+const os = require('os');
+const { spawn } = require('child_process');
 const { 
     savePatternToCustomer, 
     getCustomerSavedPatterns, 
@@ -425,14 +429,168 @@ app.post('/api/upload-thumbnail', async (req, res) => {
 });
 
 /**
+ * Generate Bassett room mockup image from current pattern (Python composite, no Photoshop).
+ * POST /api/bassett/render
+ * Body: { patternUrl?: string, patternDataUrl?: string, blanketColor?: string }
+ * Returns: PNG image (Content-Type: image/png) or { error }.
+ * Requires: BASSETT_REPO_ROOT, BASSETT_PSD_PATH on server; Python 3 + bassett_psd deps.
+ */
+app.post('/api/bassett/render', async (req, res) => {
+  const REPO_ROOT = process.env.BASSETT_REPO_ROOT;
+  const PSD_PATH = process.env.BASSETT_PSD_PATH;
+  if (!REPO_ROOT || !PSD_PATH) {
+    return res.status(503).json({
+      error: 'Bassett render not configured',
+      message: 'Set BASSETT_REPO_ROOT and BASSETT_PSD_PATH to enable instant room preview.'
+    });
+  }
+  const scriptPath = path.join(REPO_ROOT, 'scripts', 'bassett_psd_export.py');
+  const psdPath = path.resolve(PSD_PATH);
+  if (!fs.existsSync(scriptPath) || !fs.existsSync(psdPath)) {
+    return res.status(503).json({
+      error: 'Bassett paths missing',
+      message: 'Script or PSD not found. Check BASSETT_REPO_ROOT and BASSETT_PSD_PATH.'
+    });
+  }
+
+  try {
+    let { patternUrl, patternDataUrl, blanketColor = '#336699' } = req.body;
+    if (!patternUrl && !patternDataUrl) {
+      return res.status(400).json({ error: 'Provide patternUrl or patternDataUrl' });
+    }
+    if (typeof blanketColor !== 'string' || !/^#[0-9A-Fa-f]{6}$/.test(blanketColor.trim())) {
+      blanketColor = '#336699';
+    } else {
+      blanketColor = blanketColor.trim();
+    }
+
+    const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'bassett-'));
+    const patternPath = path.join(tmpDir, 'pattern.png');
+    const outDir = path.join(tmpDir, 'out');
+    fs.mkdirSync(outDir, { recursive: true });
+
+    try {
+      if (patternDataUrl) {
+        const base64 = patternDataUrl.replace(/^data:image\/\w+;base64,/, '').trim();
+        fs.writeFileSync(patternPath, Buffer.from(base64, 'base64'));
+      } else {
+        const resp = await fetch(patternUrl, { redirect: 'follow' });
+        if (!resp.ok) throw new Error(`Failed to fetch pattern: ${resp.status}`);
+        const buf = Buffer.from(await resp.arrayBuffer());
+        fs.writeFileSync(patternPath, buf);
+      }
+
+      await new Promise((resolve, reject) => {
+        const py = spawn('python3', [
+          scriptPath,
+          psdPath,
+          patternPath,
+          '--out-dir', outDir,
+          '--blanket', blanketColor
+        ], { cwd: REPO_ROOT, stdio: ['ignore', 'pipe', 'pipe'] });
+        let stderr = '';
+        py.stderr.on('data', (d) => { stderr += d.toString(); });
+        py.on('close', (code) => {
+          if (code === 0) resolve();
+          else reject(new Error(stderr || `Python exited ${code}`));
+        });
+      });
+
+      const compositePath = path.join(outDir, 'composite.png');
+      if (!fs.existsSync(compositePath)) {
+        throw new Error('Composite not produced');
+      }
+      const png = fs.readFileSync(compositePath);
+      res.set('Content-Type', 'image/png');
+      res.send(png);
+    } finally {
+      try {
+        fs.rmSync(tmpDir, { recursive: true, force: true });
+      } catch (_) {}
+    }
+  } catch (error) {
+    console.error('Bassett render error:', error);
+    res.status(500).json({
+      error: 'Bassett render failed',
+      message: error.message || String(error)
+    });
+  }
+});
+
+/**
+ * Upload Bassett room mockup result (sofa composite from run_bassett_photoshop.sh)
+ * POST /api/bassett/upload-result
+ * Body: { image: "data:image/png;base64,...", filename?: "bassett-sofa.png" }
+ * Returns: { success, url } for use as room mockup image.
+ */
+app.post('/api/bassett/upload-result', async (req, res) => {
+  try {
+    const { image, filename } = req.body;
+    if (!image) {
+      return res.status(400).json({ error: 'Missing image data' });
+    }
+    let base64Data = image.replace(/^data:image\/\w+;base64,/, '').trim();
+    const SHOPIFY_STORE = process.env.SHOPIFY_STORE || process.env.SHOPIFY_STORE_URL;
+    const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
+    const API_VERSION = '2025-01';
+    if (!SHOPIFY_STORE || !SHOPIFY_ACCESS_TOKEN) {
+      return res.status(500).json({ error: 'Shopify credentials not configured' });
+    }
+    const cleanStore = SHOPIFY_STORE.replace(/^https?:\/\//, '').replace(/\.myshopify\.com$/, '').trim();
+    const finalFilename = (filename || `bassett-room-${Date.now()}.png`).replace(/[^a-zA-Z0-9._-]/g, '-');
+    const graphqlUrl = `https://${cleanStore}.myshopify.com/admin/api/${API_VERSION}/graphql.json`;
+    const graphqlMutation = `
+      mutation fileCreate($files: [FileCreateInput!]!) {
+        fileCreate(files: $files) {
+          files {
+            id
+            ... on MediaImage { image { url } }
+            ... on GenericFile { url }
+          }
+          userErrors { field message }
+        }
+      }
+    `;
+    const response = await fetch(graphqlUrl, {
+      method: 'POST',
+      headers: {
+        'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN.trim(),
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      },
+      body: JSON.stringify({
+        query: graphqlMutation,
+        variables: {
+          files: [{ originalSource: `data:image/png;base64,${base64Data}`, alt: finalFilename }]
+        }
+      })
+    });
+    if (!response.ok) throw new Error(`Shopify API ${response.status}`);
+    const data = await response.json();
+    const userErrors = data.data?.fileCreate?.userErrors;
+    if (userErrors?.length) throw new Error(userErrors.map(e => e.message).join('; '));
+    const file = data.data?.fileCreate?.files?.[0];
+    const url = file?.image?.url || file?.url;
+    if (!url) throw new Error('No URL in response');
+    res.json({ success: true, url });
+  } catch (error) {
+    console.error('Bassett upload error:', error);
+    res.status(500).json({
+      error: 'Failed to upload Bassett result',
+      message: error.message
+    });
+  }
+});
+
+/**
  * Health check endpoint
  */
 app.get('/api/health', (req, res) => {
-    res.json({
-        status: 'healthy',
-        timestamp: new Date().toISOString(),
-        service: 'ColorFlex Shopify API'
-    });
+  res.json({
+    status: 'healthy',
+    timestamp: new Date().toISOString(),
+    service: 'ColorFlex Shopify API'
+  });
 });
 
 // Error handling middleware

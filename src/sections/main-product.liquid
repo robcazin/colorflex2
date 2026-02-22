@@ -349,18 +349,56 @@
           sample: 12.00
         },
         'WALLPAPER': {
-          pricePerRoll: 89.99,
-          coverage: '56 sq ft',
+          pricePerRoll: 249,
+          coverage: '~60 sq ft',
           minimumRolls: 1,
-          description: 'Professional-grade removable wallpaper',
+          description: 'Prepasted wallpaper 24" x 30\' per roll',
           material: 'wallpaper',
           variant: 'WALLPAPER',
+          sample: 12.00
+        },
+        'WALLPAPER-PREPASTED': {
+          pricePerRoll: 249,
+          coverage: '~60 sq ft',
+          minimumRolls: 1,
+          description: 'Prepasted wallpaper 24" x 30\' per roll',
+          material: 'wallpaper',
+          variant: 'Pre-pasted',
+          sample: 12.00
+        },
+        'WALLPAPER-PEEL-STICK': {
+          pricePerRoll: 319,
+          coverage: '~54 sq ft',
+          minimumRolls: 1,
+          description: 'Peel & stick wallpaper 24" x 27\' per roll',
+          material: 'wallpaper',
+          variant: 'Peel & Stick',
+          sample: 12.00
+        },
+        'WALLPAPER-UNPASTED': {
+          pricePerRoll: 180,
+          coverage: '~60 sq ft',
+          minimumRolls: 1,
+          description: 'Unpasted wallpaper 24" x 30\' per roll',
+          material: 'wallpaper',
+          variant: 'Unpasted',
           sample: 12.00
         }
       };
 
       // Convert material ID to fabric specification
       function getFabricSpec(materialId) {
+        const wallpaperMap = {
+          'wallpaper-prepasted': 'WALLPAPER-PREPASTED',
+          'wallpaper-peel-stick': 'WALLPAPER-PEEL-STICK',
+          'wallpaper-unpasted': 'WALLPAPER-UNPASTED',
+          'wallpaper-grasscloth': 'WALLPAPER'
+        };
+        const wallpaperKey = wallpaperMap[materialId];
+        if (wallpaperKey && FABRIC_SPECIFICATIONS[wallpaperKey]) {
+          return FABRIC_SPECIFICATIONS[wallpaperKey];
+        }
+
         const fabricMap = {
           'soft-velvet': 'SOFT VELVET',
           'decorator-linen': 'DECORATOR LINEN',
@@ -455,7 +493,7 @@
           priceField.name = 'properties[Price Per Unit]';
           priceField.value = isCustomFabric ?
             `$${specification.pricePerYard.toFixed(2)}/yard` :
-            `$${specification.pricePerRoll ? specification.pricePerRoll.toFixed(2) : '89.99'}/roll`;
+            `$${specification.pricePerRoll != null ? specification.pricePerRoll.toFixed(2) : '249.00'}/roll`;
           form.appendChild(priceField);
 
           // Add quantity with unit
@@ -656,18 +694,19 @@
       hoverPreview.appendChild(previewLabel);
       document.body.appendChild(hoverPreview);
 
-      // Define fabric image mappings (from So Animation server)
+      // Define fabric image mappings (use theme data base URL - Backblaze, not so-animation)
+      var cfBase = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '');
       const fabricImages = {
-        'drapery': 'https://so-animation.com/colorflex/img/fabric-drapery-blackout.jpg',
-        'blackout': 'https://so-animation.com/colorflex/img/fabric-drapery-blackout.jpg',
-        'sheer': 'https://so-animation.com/colorflex/img/fabric-drapery-sheer.jpg',
-        'suede': 'https://so-animation.com/colorflex/img/fabric-faux-suede.jpg',
-        'faux': 'https://so-animation.com/colorflex/img/fabric-faux-suede.jpg',
-        'lightweight': 'https://so-animation.com/colorflex/img/fabric-lightweight-linen.jpg',
-        'linen': 'https://so-animation.com/colorflex/img/fabric-decorator-linen.jpg',
-        'decorator': 'https://so-animation.com/colorflex/img/fabric-decorator-linen.jpg',
-        'velvet': 'https://so-animation.com/colorflex/img/fabric-soft-velvet.jpg',
-        'soft': 'https://so-animation.com/colorflex/img/fabric-soft-velvet.jpg'
+        'drapery': cfBase + '/img/fabric-drapery-blackout.jpg',
+        'blackout': cfBase + '/img/fabric-drapery-blackout.jpg',
+        'sheer': cfBase + '/img/fabric-drapery-sheer.jpg',
+        'suede': cfBase + '/img/fabric-faux-suede.jpg',
+        'faux': cfBase + '/img/fabric-faux-suede.jpg',
+        'lightweight': cfBase + '/img/fabric-lightweight-linen.jpg',
+        'linen': cfBase + '/img/fabric-decorator-linen.jpg',
+        'decorator': cfBase + '/img/fabric-decorator-linen.jpg',
+        'velvet': cfBase + '/img/fabric-soft-velvet.jpg',
+        'soft': cfBase + '/img/fabric-soft-velvet.jpg'
       };
 
       // Wait for page to fully load before setting up hovers
@@ -997,7 +1036,7 @@
             const materialInfo = {
               'wallpaper-prepasted': {
                 name: 'Prepasted Wallpaper',
-                price: '$180/roll',
+                price: '$249/roll',
                 specs: [
                   'Dimensions: 24" wide × 30\' long per roll',
                   'Coverage: ~60 square feet per roll',
@@ -1009,7 +1048,7 @@
               },
               'wallpaper-peel-stick': {
                 name: 'Peel & Stick Wallpaper',
-                price: '$320/roll',
+                price: '$319/roll',
                 specs: [
                   'Dimensions: 24" wide × 27\' long per roll',
                   'Coverage: ~54 square feet per roll',
@@ -1337,7 +1376,7 @@
                   const materialInfo = {
                     'wallpaper-prepasted': {
                       name: 'Prepasted Wallpaper',
-                      price: '$180/roll',
+                      price: '$249/roll',
                       specs: [
                         'Dimensions: 24" wide × 30\' long per roll',
                         'Coverage: ~60 square feet per roll',
@@ -1349,7 +1388,7 @@
                     },
                     'wallpaper-peel-stick': {
                       name: 'Peel & Stick Wallpaper',
-                      price: '$320/roll',
+                      price: '$319/roll',
                       specs: [
                         'Dimensions: 24" wide × 27\' long per roll',
                         'Coverage: ~54 square feet per roll',
@@ -4054,7 +4093,7 @@ function addCustomColorsDisplay(patternName, collection, material, customColors)
   
   let displayHTML = `
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-      <img src="https://so-animation.com/colorflex/img/camelion-sm-r.jpg" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(212, 175, 55, 0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.3);" alt="ColorFlex">
+      <img src="${(window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '')}/img/camelion-sm-r.jpg" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(212, 175, 55, 0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.3);" alt="ColorFlex">
       <div>
         <strong>${patternName}</strong> from ${collection} collection
         ${material ? ' • ' + material.charAt(0).toUpperCase() + material.slice(1) : ''}
@@ -4681,7 +4720,7 @@ async function processHighResLayer(ctx, imageUrl, targetColor, canvasWidth, canv
       // Check if this is a proof-layers path - these load from server, not Shopify CDN
       if (imageUrl.includes('proof-layers/')) {
         // Convert to server URL for proof layers
-        img.src = 'https://so-animation.com/colorflex/' + imageUrl.substring(2);
+        img.src = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '') + '/' + imageUrl.substring(2);
       } else {
         // Convert relative path to Shopify CDN path for other assets
         img.src = '/cdn/shop/files/' + imageUrl.substring(2);
@@ -4691,7 +4730,7 @@ async function processHighResLayer(ctx, imageUrl, targetColor, canvasWidth, canv
     } else {
       // Check if this is a proof-layers path
       if (imageUrl.includes('proof-layers/')) {
-        img.src = 'https://so-animation.com/colorflex/' + imageUrl;
+        img.src = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '') + '/' + imageUrl;
       } else {
         img.src = '/cdn/shop/files/' + imageUrl;
       }

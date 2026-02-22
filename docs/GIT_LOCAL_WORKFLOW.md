@@ -6,6 +6,78 @@ We use Git **locally** so you can restore any file or the whole project to a pre
 
 ---
 
+## Branches and themes
+
+| Branch   | Shopify theme to deploy to / preview on |
+|----------|----------------------------------------|
+| **bassett** | **CF Bassett** (duplicate theme for safe preview) |
+| main     | Live theme (script default)             |
+
+When you work on the **bassett** branch, deploy to the **CF Bassett** theme so you can preview without affecting the live theme. The deploy script auto-selects the theme by branch (bassett → CF Bassett, main → live).
+
+---
+
+## Two terminals: main + bassett (worktrees)
+
+You can keep **main** and **bassett** in separate folders and use two terminal windows—one for live wallpaper work, one for Bassett—so you can jump into either at any time.
+
+**One-time setup (from the main repo):**
+
+```bash
+cd /Volumes/K3/jobs/colorflex2
+./scripts/setup-worktrees.sh
+```
+
+That creates a **bassett worktree** at `colorflex2-bassett` (sibling folder). Same Git history, two working directories.
+
+**Daily use:**
+
+| Terminal | Folder | Branch | Deploys to |
+|----------|--------|--------|------------|
+| **1** | `colorflex2` | main | Live theme |
+| **2** | `colorflex2-bassett` | bassett | CF Bassett theme |
+
+In **Terminal 1** (main): `cd` to `colorflex2` (or use the **CF Main** profile in Cursor).  
+In **Terminal 2** (bassett): `cd` to `colorflex2-bassett` (or use the **CF Bassett** profile).  
+If you’ve run `./scripts/cf-source-setup.sh` once, aliases load automatically when the shell starts in either folder — no need to type `source scripts/cf-aliases.sh`. Then `cfd` / `cfo` / `cfs` in each terminal use that side’s branch.
+
+Each folder has its own branch checked out. Edits and deploys stay separate. When you want main to get bassett changes, in the **main** folder run: `git merge bassett`.
+
+**If you open the project in an editor:** Open the folder for the branch you’re working on (e.g. `colorflex2` for main, `colorflex2-bassett` for bassett). Or open both as separate workspace folders.
+
+**Cursor: left terminal = main, right = bassett**  
+The repo has two terminal profiles (see `.vscode/settings.json`): **CF Main** (starts in `colorflex2`) and **CF Bassett** (starts in `colorflex2-bassett`). Default is CF Main. To get main on the left and bassett on the right: (1) Open a terminal — it uses CF Main (left). (2) Split terminal (right side). (3) In the right panel, use the dropdown → **Terminal: Create New Terminal (With Profile)** → **CF Bassett**. If you’ve run `./scripts/cf-source-setup.sh` once, aliases load automatically in both panels; otherwise run `source scripts/cf-aliases.sh` in each.
+
+---
+
+## Safety: working on Bassett without changing main
+
+**Goal:** When you work on the local Bassett app or the `bassett` branch, avoid accidentally changing or deploying main-branch (live) code.
+
+**Separation checklist before Bassett work:**
+
+1. **Work in the Bassett worktree** — `cd` to `colorflex2-bassett` (sibling of `colorflex2`). Do not edit files in `colorflex2` when your intent is Bassett-only changes.
+2. **Open the correct folder in Cursor** — Open the workspace/folder `colorflex2-bassett` when doing Bassett work. That way edits, search, and terminal default to the bassett branch.
+3. **Confirm branch** — In the Bassett folder, run `git branch` and confirm it shows `* bassett`. Deploys from here go to **CF Bassett** theme only (script selects by branch).
+4. **Bassett-only edits** — Prefer editing only Bassett-specific files (e.g. `page.colorflex-bassett.liquid`, `color-flex-bassett.min.js` source, bassett-local). If you must change shared code (e.g. `CFM.js`), use `window.COLORFLEX_MODE === 'BASSETT'` guards so main behavior is unchanged. See `docs/COLORFLEX_BASSETT.md` for "Do not edit for Basset work".
+5. **Merge direction** — Changes flow **bassett → main** by merging in the **main** folder (`git merge bassett`). Never merge main into bassett if you've made Bassett-only experiments you don't want on live.
+
+**Quick check:** If you're about to edit `page.colorflex.liquid` or a main-only section, confirm you're in the main worktree and intend to change the live experience.
+
+---
+
+**ColorFlex chameleon icon (intended behavior):** On both main and Bassett, the icon should show **My Designs** (saved patterns). If the user has designs, using one takes them to the appropriate experience (wallpaper on main, furniture on Bassett; the Bassett furniture page is to be revised and may use the current ColorFlex furniture page as a starting point). The theme setting **"ColorFlex icon opens furniture page"** (Theme settings → ColorFlex) was only for testing direct launch; for normal behavior leave it **unchecked** on both themes so the icon opens My Designs.
+
+**If you get 401 "Service is not valid for authentication"** when running the deploy script, use a **Theme Access password** (CLI browser login alone is often not enough for theme push):
+
+1. In your store’s Shopify Admin, go to **Apps** and install **Theme Access** from the [Shopify App Store](https://apps.shopify.com/theme-access) (or open it if already installed).
+2. In Theme Access, create a new password and enter your developer email; the app will send you the password (link expires in 7 days).
+3. In your terminal, run:  
+   `export SHOPIFY_THEME_PASSWORD="the-password-you-received"`  
+   then run your deploy (e.g. `./deploy-shopify-cli.sh layout`). The script will pass this as `--password` to `shopify theme push`.
+
+---
+
 ## When to commit
 
 - **When you're pleased with the state of things** — e.g. after a fix is done and tested, or before a risky change. You don't have to commit after every single edit; batch your work and commit at natural break points (end of a fix, before deploy, end of day).

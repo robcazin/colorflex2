@@ -217,10 +217,10 @@
     const collectionsGrid = document.getElementById('collectionsGrid');
     collectionsGrid.innerHTML = '';
 
-    // Sort collections alphabetically by name
-    const sortedCollections = [...collections].sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
+    // Sort by collection number (designer order), then by name
+    const sortedCollections = window.ColorFlexSortCollectionsByNumber
+      ? window.ColorFlexSortCollectionsByNumber(collections)
+      : [...collections].sort((a, b) => a.name.localeCompare(b.name));
 
     // Populate collections grid
     sortedCollections.forEach(collection => {

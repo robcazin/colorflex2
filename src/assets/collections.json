@@ -6014,9 +6014,8 @@
           "repeat": "yes",
           "layers": [
             {
-              "path": "./data/collections/botanicals/layers/shadow-dance_isshadow_layer-1.jpg",
-              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_isshadow_layer-1.jpg",
-              "isShadow": true
+              "path": "./data/collections/botanicals/layers/shadow-dance_shadow_layer-1.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_shadow_layer-1.jpg"
             },
             {
               "path": "./data/collections/botanicals/layers/shadow-dance_flower_layer-2.jpg",
@@ -6954,9 +6953,8 @@
           ],
           "layers": [
             {
-              "path": "./data/collections/botanicals/layers/shadow-dance_isshadow_layer-1.jpg",
-              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_isshadow_layer-1.jpg",
-              "isShadow": true
+              "path": "./data/collections/botanicals/layers/shadow-dance_shadow_layer-1.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_shadow_layer-1.jpg"
             },
             {
               "path": "./data/collections/botanicals/layers/shadow-dance_flower_layer-2.jpg",
@@ -8551,8 +8549,7 @@
             },
             {
               "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_shadow_layer-2.jpg",
-              "proofPath": "./data/collections/coordinates/proof-layers/bamboo-latice-full-color_shadow_layer-2.jpg",
-              "isShadow": true
+              "proofPath": "./data/collections/coordinates/proof-layers/bamboo-latice-full-color_shadow_layer-2.jpg"
             },
             {
               "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_outline_layer-3.jpg",
@@ -10742,8 +10739,7 @@
             },
             {
               "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_shadow_layer-2.jpg",
-              "proofPath": "./data/collections/coordinates/proof-layers/bamboo-latice-full-color_shadow_layer-2.jpg",
-              "isShadow": true
+              "proofPath": "./data/collections/coordinates/proof-layers/bamboo-latice-full-color_shadow_layer-2.jpg"
             },
             {
               "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_outline_layer-3.jpg",
@@ -12708,7 +12704,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.433Z"
+          "updatedAt": "2026-02-14T16:21:01.298Z"
         },
         {
           "id": "recC6ZIeLw1gOINvN",
@@ -12769,7 +12765,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.438Z"
+          "updatedAt": "2026-02-14T16:21:01.304Z"
         },
         {
           "id": "recCNa1tDOQiOOE5N",
@@ -12830,7 +12826,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.438Z"
+          "updatedAt": "2026-02-14T16:21:01.304Z"
         },
         {
           "id": "recEbTfoTYuxvl3lc",
@@ -12885,7 +12881,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.438Z"
+          "updatedAt": "2026-02-14T16:21:01.304Z"
         },
         {
           "id": "recFTfxTNBMSac4C2",
@@ -12946,7 +12942,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.438Z"
+          "updatedAt": "2026-02-14T16:21:01.305Z"
         },
         {
           "id": "recFj0bhQxsj1wkzi",
@@ -13001,7 +12997,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.439Z"
+          "updatedAt": "2026-02-14T16:21:01.305Z"
         },
         {
           "id": "recH8qZYY0QnRu5YP",
@@ -13062,7 +13058,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.439Z"
+          "updatedAt": "2026-02-14T16:21:01.305Z"
         },
         {
           "id": "recNEFb9qUIXicKFU",
@@ -13129,7 +13125,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.439Z"
+          "updatedAt": "2026-02-14T16:21:01.306Z"
         },
         {
           "id": "recVT5iZdAj0yCwzU",
@@ -13190,7 +13186,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.439Z"
+          "updatedAt": "2026-02-14T16:21:01.306Z"
         },
         {
           "id": "recWZpvVDtOVYlZXU",
@@ -13245,7 +13241,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.440Z"
+          "updatedAt": "2026-02-14T16:21:01.306Z"
         },
         {
           "id": "recXCyxrtZNmkm3Ic",
@@ -13312,7 +13308,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.440Z"
+          "updatedAt": "2026-02-14T16:21:01.306Z"
         },
         {
           "id": "recXXFAOZrk79iRjE",
@@ -13367,7 +13363,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.440Z"
+          "updatedAt": "2026-02-14T16:21:01.307Z"
         },
         {
           "id": "recYnch7DZCLfa68s",
@@ -13422,7 +13418,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.440Z"
+          "updatedAt": "2026-02-14T16:21:01.307Z"
         },
         {
           "id": "recZOzsHAIGONOQi4",
@@ -13495,7 +13491,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.440Z"
+          "updatedAt": "2026-02-14T16:21:01.307Z"
         },
         {
           "id": "recboKzrFc9xDMPz5",
@@ -13574,7 +13570,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.441Z"
+          "updatedAt": "2026-02-14T16:21:01.307Z"
         },
         {
           "id": "recbymB9JZno6Knbw",
@@ -13635,7 +13631,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.441Z"
+          "updatedAt": "2026-02-14T16:21:01.307Z"
         },
         {
           "id": "recfafj590SCUFCLk",
@@ -13690,7 +13686,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.441Z"
+          "updatedAt": "2026-02-14T16:21:01.307Z"
         },
         {
           "id": "recg2zQWyDHhqMRT1",
@@ -13745,7 +13741,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.441Z"
+          "updatedAt": "2026-02-14T16:21:01.308Z"
         },
         {
           "id": "reclCDCowoQHNhTUj",
@@ -13806,7 +13802,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.441Z"
+          "updatedAt": "2026-02-14T16:21:01.308Z"
         },
         {
           "id": "recqoTluLJ3iLl8kj",
@@ -13867,7 +13863,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.441Z"
+          "updatedAt": "2026-02-14T16:21:01.308Z"
         },
         {
           "id": "recvRWXkpLczXEhlW",
@@ -13922,7 +13918,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.442Z"
+          "updatedAt": "2026-02-14T16:21:01.308Z"
         },
         {
           "id": "recvgWPhbStqghvy7",
@@ -13977,7 +13973,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.442Z"
+          "updatedAt": "2026-02-14T16:21:01.308Z"
         },
         {
           "id": "recxzNAjEXKDtkd99",
@@ -14039,7 +14035,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.442Z"
+          "updatedAt": "2026-02-14T16:21:01.308Z"
         },
         {
           "id": "recyJXPmIiYCPTHiS",
@@ -14112,7 +14108,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.442Z"
+          "updatedAt": "2026-02-14T16:21:01.309Z"
         },
         {
           "id": "recyvXphcTrmxO4eJ",
@@ -14173,7 +14169,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.443Z"
+          "updatedAt": "2026-02-14T16:21:01.309Z"
         },
         {
           "id": "reczodoii9qGvM3Sa",
@@ -14228,7 +14224,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-04T22:16:56.444Z"
+          "updatedAt": "2026-02-14T16:21:01.309Z"
         }
       ]
     },
@@ -18263,8 +18259,7 @@
             },
             {
               "path": "./data/collections/english-cottage/layers/staffordshire_dish-shadow_layer-2.jpg",
-              "proofPath": "./data/collections/english-cottage/proof-layers/staffordshire_dish-shadow_layer-2.jpg",
-              "isShadow": true
+              "proofPath": "./data/collections/english-cottage/proof-layers/staffordshire_dish-shadow_layer-2.jpg"
             },
             {
               "path": "./data/collections/english-cottage/layers/staffordshire_dish-background_layer-3.jpg",
@@ -21569,8 +21564,7 @@
             },
             {
               "path": "./data/collections/english-cottage/layers/staffordshire_dish-shadow_layer-2.jpg",
-              "proofPath": "./data/collections/english-cottage/proof-layers/staffordshire_dish-shadow_layer-2.jpg",
-              "isShadow": true
+              "proofPath": "./data/collections/english-cottage/proof-layers/staffordshire_dish-shadow_layer-2.jpg"
             },
             {
               "path": "./data/collections/english-cottage/layers/staffordshire_dish-background_layer-3.jpg",
@@ -22725,8 +22719,7 @@
           "layers": [
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg",
-              "isShadow": true
+              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg"
             },
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_scraps_layer-2.jpg",
@@ -22893,30 +22886,11 @@
             24
           ],
           "repeat": "yes",
-          "layers": [
-            {
-              "path": "./data/collections/farmhouse/layers/folkart-floral-on-black_unnamed-layer_layer-1.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/folkart-floral-on-black_unnamed-layer_layer-1.jpg"
-            }
-          ],
-          "layerLabels": [
-            "Unnamed Layer"
-          ],
+          "layers": [],
+          "layerLabels": [],
           "tilingType": "half-drop",
-          "designer_colors": [
-            "SC0001 COTTAGE LINEN",
-            "SW7069 Iron Ore",
-            "SW7067 Cityscape",
-            "SW3441 Foothills",
-            "SW6135 Ecru",
-            "SW7699 Rustic City",
-            "SW6206 Oyster Bay",
-            "SW6186 Dried Thyme",
-            "SW1472 Slate Tile",
-            "SW0006 Toile Red",
-            "SW6990 CAVIAR"
-          ],
-          "colorFlex": true,
+          "designer_colors": [],
+          "colorFlex": false,
           "coordinates": [
             {
               "collection": "coordinates",
@@ -22966,30 +22940,11 @@
             24
           ],
           "repeat": "yes",
-          "layers": [
-            {
-              "path": "./data/collections/farmhouse/layers/sewing-daze-version-2_advertising-cards-v2_layer-1.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/sewing-daze-version-2_advertising-cards-v2_layer-1.jpg"
-            }
-          ],
-          "layerLabels": [
-            "Advertising Cards V2"
-          ],
+          "layers": [],
+          "layerLabels": [],
           "tilingType": "half-drop",
-          "designer_colors": [
-            "SC0001 COTTAGE LINEN",
-            "SW7069 Iron Ore",
-            "SW7067 Cityscape",
-            "SW3441 Foothills",
-            "SW6135 Ecru",
-            "SW7699 Rustic City",
-            "SW6206 Oyster Bay",
-            "SW6186 Dried Thyme",
-            "SW1472 Slate Tile",
-            "SW0006 Toile Red",
-            "SW6990 CAVIAR"
-          ],
-          "colorFlex": true,
+          "designer_colors": [],
+          "colorFlex": false,
           "coordinates": [
             {
               "collection": "coordinates",
@@ -23039,30 +22994,11 @@
             24
           ],
           "repeat": "yes",
-          "layers": [
-            {
-              "path": "./data/collections/farmhouse/layers/sewing-daze-version-1_advertising-cards-v1_layer-1.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/sewing-daze-version-1_advertising-cards-v1_layer-1.jpg"
-            }
-          ],
-          "layerLabels": [
-            "Advertising Cards V1"
-          ],
+          "layers": [],
+          "layerLabels": [],
           "tilingType": "half-drop",
-          "designer_colors": [
-            "SC0001 COTTAGE LINEN",
-            "SW7069 Iron Ore",
-            "SW7067 Cityscape",
-            "SW3441 Foothills",
-            "SW6135 Ecru",
-            "SW7699 Rustic City",
-            "SW6206 Oyster Bay",
-            "SW6186 Dried Thyme",
-            "SW1472 Slate Tile",
-            "SW0006 Toile Red",
-            "SW6990 CAVIAR"
-          ],
-          "colorFlex": true,
+          "designer_colors": [],
+          "colorFlex": false,
           "coordinates": [
             {
               "collection": "coordinates",
@@ -23566,30 +23502,11 @@
             24
           ],
           "repeat": "yes",
-          "layers": [
-            {
-              "path": "./data/collections/farmhouse/layers/laundry-daze-original-colors_24x24_layer-1.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/laundry-daze-original-colors_24x24_layer-1.jpg"
-            }
-          ],
-          "layerLabels": [
-            "24x24"
-          ],
+          "layers": [],
+          "layerLabels": [],
           "tilingType": "half-drop",
-          "designer_colors": [
-            "SC0001 COTTAGE LINEN",
-            "SW7069 Iron Ore",
-            "SW7067 Cityscape",
-            "SW3441 Foothills",
-            "SW6135 Ecru",
-            "SW7699 Rustic City",
-            "SW6206 Oyster Bay",
-            "SW6186 Dried Thyme",
-            "SW1472 Slate Tile",
-            "SW0006 Toile Red",
-            "SW6990 CAVIAR"
-          ],
-          "colorFlex": true,
+          "designer_colors": [],
+          "colorFlex": false,
           "coordinates": [
             {
               "collection": "coordinates",
@@ -24190,8 +24107,7 @@
           "layers": [
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg",
-              "isShadow": true
+              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg"
             },
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_scraps_layer-2.jpg",
@@ -24410,7 +24326,7 @@
           "name": "Folkart Floral On Black",
           "slug": "folkart-floral-on-black",
           "displayName": "Folkart Floral On Black",
-          "colorFlex": false,
+          "colorFlex": true,
           "tilingType": "half-drop",
           "size": [
             24,
@@ -24480,7 +24396,7 @@
           "name": "Sewing Daze Version 2",
           "slug": "sewing-daze-version-2",
           "displayName": "Sewing Daze Version 2",
-          "colorFlex": false,
+          "colorFlex": true,
           "tilingType": "half-drop",
           "size": [
             24,
@@ -24550,7 +24466,7 @@
           "name": "Sewing Daze Version 1",
           "slug": "sewing-daze-version-1",
           "displayName": "Sewing Daze Version 1",
-          "colorFlex": false,
+          "colorFlex": true,
           "tilingType": "half-drop",
           "size": [
             24,
@@ -31102,11 +31018,19 @@
       "collection_thumbnail": "./data/collections/ikats/ikats-thumb.jpg",
       "curatedColors": [
         "SC0001 COTTAGE LINEN",
+        "SC0002 COTTAGE COAL",
         "SW7069 IRON ORE",
-        "SW6990 CAVIAR",
-        "SW0062 PEARL GRAY",
+        "SW0050 CLASSIC LIGHT BUFF",
+        "SW7740 MESSENGER BAG",
+        "SW0055 LIGHT FRENCH GRAY",
         "SW6214 UNDERSEAS",
-        "SW7006 EXTRA WHITE"
+        "SW0043 PERISTYLE BRASS",
+        "SW7622 HOMBURG GRAY",
+        "SW7726 LEMON VERBENA",
+        "SW6187 ROSEMARY",
+        "SW7698 STRAW HARVEST",
+        "SW6158 SAWDUST",
+        "SW0032 NEEDLEPOINT NAVY"
       ],
       "coordinates": null,
       "patterns": [
@@ -39571,6 +39495,34 @@
           "baseComposite": null,
           "tintWhite": false,
           "updatedAt": "2025-12-17T13:56:56.247Z"
+        },
+        {
+          "id": "rec1Nzx0D2qS0KHT2",
+          "number": "01-04-120",
+          "name": "Jacobean Tapestry",
+          "thumbnail": "./data/collections/traditions/thumbnails/jacobean-tapestry.jpg",
+          "size": [24, 24],
+          "repeat": "yes",
+          "layers": [
+            {"path": "./data/collections/traditions/layers/jacobean-tapestry_layer-1_layer-1.jpg", "proofPath": "./data/collections/traditions/proof-layers/jacobean-tapestry_layer-1_layer-1.jpg"},
+            {"path": "./data/collections/traditions/layers/jacobean-tapestry_layer-2_layer-2.jpg", "proofPath": "./data/collections/traditions/proof-layers/jacobean-tapestry_layer-2_layer-2.jpg"},
+            {"path": "./data/collections/traditions/layers/jacobean-tapestry_layer-3_layer-3.jpg", "proofPath": "./data/collections/traditions/proof-layers/jacobean-tapestry_layer-3_layer-3.jpg"},
+            {"path": "./data/collections/traditions/layers/jacobean-tapestry_layer-4_layer-4.jpg", "proofPath": "./data/collections/traditions/proof-layers/jacobean-tapestry_layer-4_layer-4.jpg"},
+            {"path": "./data/collections/traditions/layers/jacobean-tapestry_layer-5_layer-5.jpg", "proofPath": "./data/collections/traditions/proof-layers/jacobean-tapestry_layer-5_layer-5.jpg"},
+            {"path": "./data/collections/traditions/layers/jacobean-tapestry_layer-6_layer-6.jpg", "proofPath": "./data/collections/traditions/proof-layers/jacobean-tapestry_layer-6_layer-6.jpg"}
+          ],
+          "layerLabels": ["Layer 1", "Layer 2", "Layer 3", "Layer 4", "Layer 5", "Layer 6"],
+          "tilingType": "straight",
+          "designer_colors": ["SW2802 ROOKWOOD RED", "SW6425 RELENTLESS OLIVE", "SW6396 DIFFERENT GOLD", "SW0043 PERISTYLE BRASS", "SW6187 ROSEMARY", "SW6209 RIPE OLIVE"],
+          "colorFlex": true,
+          "coordinates": [
+            {"collection": "coordinates", "filename": "gingham-small.jpg", "path": "./data/collections/coordinates/thumbnails/gingham-small.jpg", "layerPaths": ["./data/collections/coordinates/layers/gingham-small_pattern_layer-1.jpg"]},
+            {"collection": "coordinates", "filename": "xena-tweed.jpg", "path": "./data/collections/coordinates/thumbnails/xena-tweed.jpg", "layerPaths": ["./data/collections/coordinates/layers/xena-tweed_xenatweed_layer-1.jpg"]},
+            {"collection": "coordinates", "filename": "trenton-ticking-small.jpg", "path": "./data/collections/coordinates/thumbnails/trenton-ticking-small.jpg", "layerPaths": ["./data/collections/coordinates/layers/trenton-ticking-small_pattern_layer-1.jpg"]}
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2025-12-17T13:56:56.248Z"
         }
       ]
     },
@@ -47022,9 +46974,8 @@
           ],
           "layers": [
             {
-              "path": "./data/collections/botanicals/layers/shadow-dance_isshadow_layer-1.jpg",
-              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_isshadow_layer-1.jpg",
-              "isShadow": true
+              "path": "./data/collections/botanicals/layers/shadow-dance_shadow_layer-1.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_shadow_layer-1.jpg"
             },
             {
               "path": "./data/collections/botanicals/layers/shadow-dance_flower_layer-2.jpg",
@@ -54186,8 +54137,7 @@
             },
             {
               "path": "./data/collections/english-cottage/layers/staffordshire_dish-shadow_layer-2.jpg",
-              "proofPath": "./data/collections/english-cottage/proof-layers/staffordshire_dish-shadow_layer-2.jpg",
-              "isShadow": true
+              "proofPath": "./data/collections/english-cottage/proof-layers/staffordshire_dish-shadow_layer-2.jpg"
             },
             {
               "path": "./data/collections/english-cottage/layers/staffordshire_dish-background_layer-3.jpg",
@@ -56933,8 +56883,7 @@
           "layers": [
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg",
-              "isShadow": true
+              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg"
             },
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_scraps_layer-2.jpg",
@@ -73979,6 +73928,460 @@
           ]
         }
       ]
+    },
+    {
+      "name": "hip-to-be-square",
+      "tableName": "27 - HIP TO BE SQUARE",
+      "collection_thumbnail": "./data/collections/hip-to-be-square/hip-to-be-square-thumb.jpg",
+      "curatedColors": [],
+      "coordinates": null,
+      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H45.png",
+      "mockupShadow": null,
+      "mockupWidthInches": 60,
+      "mockupHeightInches": 45,
+      "patterns": [
+        {
+          "id": "rec2AkbVqW0ZwIKeZ",
+          "number": "27-112",
+          "name": "Pantry Floor",
+          "thumbnail": "./data/collections/hip-to-be-square/thumbnails/pantry-floor.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/hip-to-be-square/layers/pantry-floor_star-flowers_layer-1.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/pantry-floor_star-flowers_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/pantry-floor_big-scroll_layer-2.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/pantry-floor_big-scroll_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/pantry-floor_small-scroll_layer-3.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/pantry-floor_small-scroll_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/pantry-floor_outline_layer-4.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/pantry-floor_outline_layer-4.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Star Flowers",
+            "Big Scroll",
+            "Small Scroll",
+            "Outline"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW0053 PORCELAIN",
+            "SW9009 SUBDUED SIENNA",
+            "SW6214 UNDERSEAS",
+            "SW7699 RUSTIC CITY",
+            "SW7740 MESSENGER BAG"
+          ],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-02-14T18:01:45.297Z"
+        },
+        {
+          "id": "rec3eVi8VGJn0xLnV",
+          "number": "27-104 ",
+          "name": "Doo See Doo",
+          "thumbnail": "./data/collections/hip-to-be-square/thumbnails/doo-see-doo.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_ruffle_layer-1.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_ruffle_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_outside-border_layer-2.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_outside-border_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_design-background_layer-3.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_design-background_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_leaves_layer-4.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_leaves_layer-4.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_inner-zone_layer-5.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_inner-zone_layer-5.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_inner-zone_layer-6.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_inner-zone_layer-6.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_flowers_layer-7.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_flowers_layer-7.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_inner-zone_layer-8.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_inner-zone_layer-8.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_centers_layer-9.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_centers_layer-9.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_tiny-flowers_layer-10.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_tiny-flowers_layer-10.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Ruffle",
+            "Outside Border",
+            "Design Background",
+            "Leaves",
+            "Inner Zone",
+            "Inner Zone",
+            "Flowers",
+            "Inner Zone",
+            "Centers",
+            "Tiny Flowers"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6159 HIGH TEA",
+            "SW6371 VANILLIN",
+            "SW6215 ROCKY RIVER",
+            "SW6394 SEQUIN",
+            "SW9133 JASPER STONE",
+            "SW0006 TOILE RED",
+            "SW6395 ALCHEMY",
+            "SW7069 IRON ORE"
+          ],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-02-14T18:01:45.305Z"
+        },
+        {
+          "id": "rec4uQdgEfyWZNeQ6",
+          "number": "27-208",
+          "name": "Daisey Chain",
+          "thumbnail": "./data/collections/hip-to-be-square/thumbnails/daisey-chain.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/hip-to-be-square/layers/daisey-chain_outter-edge_layer-1.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/daisey-chain_outter-edge_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/daisey-chain_daisey-background_layer-2.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/daisey-chain_daisey-background_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/daisey-chain_center-dot_layer-3.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/daisey-chain_center-dot_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/daisey-chain_design_layer-4.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/daisey-chain_design_layer-4.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Outter Edge",
+            "Daisey Background",
+            "Center Dot",
+            "Design"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW9009 SUBDUED SIENNA",
+            "SW0020 PEACOCK PLUME",
+            "SW9658 FRESH EUCALYPTUS",
+            "SW6395 ALCHEMY",
+            "SW7069 IRON ORE"
+          ],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-02-14T18:01:45.306Z"
+        },
+        {
+          "id": "rec9y0o32XosTUhT7",
+          "number": "27-106",
+          "name": "Four Diamonds Mono",
+          "thumbnail": "./data/collections/hip-to-be-square/thumbnails/four-diamonds-mono.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/hip-to-be-square/layers/four-diamonds-mono_pattern_layer-1.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/four-diamonds-mono_pattern_layer-1.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Pattern"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW0050 CLASSIC LIGHT BUFF",
+            "SW6159 HIGH TEA"
+          ],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-02-14T18:01:45.306Z"
+        },
+        {
+          "id": "recJ3HqUHaCM8GWzb",
+          "number": "27-103",
+          "name": "Sunflower Vine",
+          "thumbnail": "./data/collections/hip-to-be-square/thumbnails/sunflower-vine.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/hip-to-be-square/layers/sunflower-vine_leaves_layer-1.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/sunflower-vine_leaves_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/sunflower-vine_centers_layer-2.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/sunflower-vine_centers_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/sunflower-vine_flower_layer-3.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/sunflower-vine_flower_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/sunflower-vine_tulips_layer-4.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/sunflower-vine_tulips_layer-4.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/sunflower-vine_tulips-outline_layer-5.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/sunflower-vine_tulips-outline_layer-5.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Leaves",
+            "Centers",
+            "Flower",
+            "Tulips",
+            "Tulips Outline"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW0053 PORCELAIN",
+            "SW6214 UNDERSEAS",
+            "SW6394 SEQUIN",
+            "SW6395 ALCHEMY",
+            "SW0006 TOILE RED",
+            "SW7069 IRON ORE"
+          ],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-02-14T18:01:45.306Z"
+        },
+        {
+          "id": "recbixcgTV1vK1Ch2",
+          "number": "27 - 101",
+          "name": "Moral Copass",
+          "thumbnail": "./data/collections/hip-to-be-square/thumbnails/moral-copass.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/hip-to-be-square/layers/moral-copass_background_layer-1.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-copass_background_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/moral-copass_scallop_layer-2.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-copass_scallop_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/moral-copass_outter-flowers_layer-3.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-copass_outter-flowers_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/moral-copass_inner-flowers_layer-4.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-copass_inner-flowers_layer-4.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/moral-copass_outline_layer-5.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-copass_outline_layer-5.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Background",
+            "Scallop",
+            "Outter Flowers",
+            "Inner Flowers",
+            "Outline"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6394 SEQUIN",
+            "SW6425 RELENTLESS OLIVE",
+            "SW6424 TANSY GREEN",
+            "SW0039 MELLOW MAUVE",
+            "SW6356 COPPER MOUNTAIN",
+            "SW6990 CAVIAR"
+          ],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-02-14T18:01:45.307Z"
+        },
+        {
+          "id": "recfOnXrjaHLQGuEE",
+          "number": "27-107 ",
+          "name": "Versailles",
+          "thumbnail": "./data/collections/hip-to-be-square/thumbnails/versailles.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/hip-to-be-square/layers/versailles_center-_layer-1.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/versailles_center-_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/versailles_diamond-pattern_layer-2.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/versailles_diamond-pattern_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/versailles_design_layer-3.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/versailles_design_layer-3.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Center",
+            "Diamond Pattern",
+            "Design"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6244 NAVAL",
+            "SW6306 CORDIAL",
+            "SW7698 STRAW HARVEST",
+            "SW0043 PERISTYLE BRASS"
+          ],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-02-14T18:01:45.308Z"
+        },
+        {
+          "id": "recgoXhArUbZTBKnC",
+          "number": "27-209",
+          "name": "Hip To Be Square Product",
+          "thumbnail": "./data/collections/hip-to-be-square/thumbnails/hip-to-be-square-product.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/hip-to-be-square/layers/hip-to-be-square-product_design_layer-1.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/hip-to-be-square-product_design_layer-1.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Design"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SC0001 COTTAGE LINEN",
+            "SW6244 NAVAL"
+          ],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-02-14T18:01:45.308Z"
+        },
+        {
+          "id": "recrcOrW6kSuC150M",
+          "number": "27-105",
+          "name": "Four Diamonds",
+          "thumbnail": "./data/collections/hip-to-be-square/thumbnails/four-diamonds.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/hip-to-be-square/layers/four-diamonds_outter-edge_layer-1.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/four-diamonds_outter-edge_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/four-diamonds_scrolls_layer-2.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/four-diamonds_scrolls_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/four-diamonds_outter-scrolls_layer-3.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/four-diamonds_outter-scrolls_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/four-diamonds_inner-things_layer-4.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/four-diamonds_inner-things_layer-4.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/four-diamonds_pattern_layer-5.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/four-diamonds_pattern_layer-5.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Outter Edge",
+            "Scrolls",
+            "Outter Scrolls",
+            "Inner Things",
+            "Pattern"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6371 VANILLIN",
+            "SW6396 DIFFERENT GOLD",
+            "SW6394 SEQUIN",
+            "SW6424 TANSY GREEN",
+            "SW2802 ROOKWOOD RED"
+          ],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-02-14T18:01:45.309Z"
+        }
+      ],
+      "mockupId": "white-dresser"
     }
   ]
 }

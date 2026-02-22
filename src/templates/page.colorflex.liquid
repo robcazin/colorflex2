@@ -316,10 +316,10 @@
       c.name && !c.name.includes('.fur-') && !c.name.includes('-clo') && !c.name.includes('.clo-')
     );
 
-    // Sort collections alphabetically by name
-    const sortedCollections = [...wallpaperCollections].sort((a, b) =>
-      a.name.localeCompare(b.name)
-    );
+    // Sort by collection number (designer order), then by name
+    const sortedCollections = window.ColorFlexSortCollectionsByNumber
+      ? window.ColorFlexSortCollectionsByNumber(wallpaperCollections)
+      : [...wallpaperCollections].sort((a, b) => a.name.localeCompare(b.name));
 
     // Populate collections grid
     sortedCollections.forEach(collection => {

@@ -221,11 +221,12 @@
     const collectionsGrid = document.getElementById('collectionsGrid');
     collectionsGrid.innerHTML = '';
 
-    // Filter to clothing collections and sort alphabetically
+    // Filter to clothing collections; sort by collection number (designer order), then by name
     // Match: .clo-1, .clo-2, -clo, .clo-, etc.
-    const clothingCollections = collections
-      .filter(c => c.name && (c.name.includes('-clo') || c.name.includes('.clo')))
-      .sort((a, b) => a.name.localeCompare(b.name));
+    const filtered = collections.filter(c => c.name && (c.name.includes('-clo') || c.name.includes('.clo')));
+    const clothingCollections = window.ColorFlexSortCollectionsByNumber
+      ? window.ColorFlexSortCollectionsByNumber(filtered)
+      : filtered.sort((a, b) => a.name.localeCompare(b.name));
     
     console.log(`🔍 Found ${clothingCollections.length} clothing collections out of ${collections.length} total`);
 

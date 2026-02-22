@@ -1451,5 +1451,24 @@
         "default": "scheme-1"
       }
     ]
+  },
+  {
+    "name": "ColorFlex",
+    "settings": [
+      {
+        "type": "text",
+        "id": "colorflex_data_base_url",
+        "label": "ColorFlex data base URL",
+        "info": "Base URL for pattern images and data (e.g. Backblaze B2). Leave empty to use default. Main site must use your B2 bucket URL, not so-animation.",
+        "default": "https://s3.us-east-005.backblazeb2.com/cf-data"
+      },
+      {
+        "type": "checkbox",
+        "id": "colorflex_icon_launches_furniture",
+        "label": "ColorFlex icon opens furniture page",
+        "info": "When enabled, the chameleon icon goes directly to the ColorFlex Furniture page (test mode). For normal behavior leave disabled on both themes: icon shows My Designs; on Bassett, using a design then leads to the furniture experience.",
+        "default": false
+      }
+    ]
   }
 ]

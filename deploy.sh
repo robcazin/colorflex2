@@ -6,10 +6,17 @@
 # Deploys ColorFlex application and collection data to production server
 # Based on your original deploy script with collections support
 
-# SSH key path (override with COLORFLEX_DEPLOY_KEY)
-# Fallback: grab from colorFlex-shopify dev folder (saffron/code-build)
-SSH_KEY="${COLORFLEX_DEPLOY_KEY:-../code-build/deploy_key}"
-if [ ! -f "$SSH_KEY" ] && [ -z "${COLORFLEX_DEPLOY_KEY}" ]; then
+# Load key path from config so cf-dl.js → deploy.sh can find it when run from node
+if [ -f "config/local.env" ]; then
+    set -a
+    source config/local.env
+    set +a
+fi
+
+# SSH key path: COLORFLEX_SERVER_KEY or COLORFLEX_DEPLOY_KEY or default
+# (update-collection.sh and cf-dl.js use same key for so-animation deploy)
+SSH_KEY="${COLORFLEX_SERVER_KEY:-${COLORFLEX_DEPLOY_KEY:-../code-build/deploy_key}}"
+if [ ! -f "$SSH_KEY" ] && [ -z "${COLORFLEX_SERVER_KEY}" ] && [ -z "${COLORFLEX_DEPLOY_KEY}" ]; then
     DEV_KEY="/Volumes/K3/jobs/saffron/code-build/deploy_key"
     if [ -f "$DEV_KEY" ]; then
         SSH_KEY="$DEV_KEY"
@@ -20,7 +27,7 @@ fi
 if [ ! -f "$SSH_KEY" ]; then
     echo -e "${YELLOW}⚠️  SSH key not found at: $SSH_KEY${NC}"
     echo -e "${YELLOW}⚠️  Skipping server deployment (no password prompts)${NC}"
-    echo -e "${YELLOW}💡 Set COLORFLEX_DEPLOY_KEY=/path/to/key to use your key${NC}"
+    echo -e "${YELLOW}💡 Set COLORFLEX_SERVER_KEY=/path/to/key in config/local.env (or env) to deploy thumbnails to so-animation${NC}"
     echo -e "${YELLOW}   Or COLORFLEX_SKIP_DEPLOY=true to suppress this message${NC}"
     if [ "${COLORFLEX_SKIP_DEPLOY}" != "true" ]; then
         exit 0

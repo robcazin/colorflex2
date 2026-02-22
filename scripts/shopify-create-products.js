@@ -7,9 +7,16 @@
  * Example: node scripts/shopify-create-products.js english-cottage
  */
 
-require('dotenv').config();
+// Load Shopify credentials: .env (root) → config/local.env → api/.env (same as other API scripts)
 const fs = require('fs');
 const path = require('path');
+require('dotenv').config();
+if (!process.env.SHOPIFY_STORE || !process.env.SHOPIFY_ACCESS_TOKEN) {
+    if (fs.existsSync('config/local.env')) require('dotenv').config({ path: 'config/local.env' });
+    if ((!process.env.SHOPIFY_STORE || !process.env.SHOPIFY_ACCESS_TOKEN) && fs.existsSync('api/.env')) {
+        require('dotenv').config({ path: path.resolve('api/.env') });
+    }
+}
 
 const SHOPIFY_STORE = process.env.SHOPIFY_STORE;
 const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
@@ -87,6 +94,43 @@ async function shopifyRequest(endpoint, method = 'GET', body = null) {
     return text ? JSON.parse(text) : {};
 }
 
+// Product Images REST endpoint is deprecated in 2025-01; use 2024-01 for image upload
+const IMAGE_API_VERSION = '2024-01';
+
+/**
+ * Add a product image from a local file (base64). Use this so thumbnails always
+ * appear in Shopify even when CSV import or URL fetch fails.
+ */
+async function addProductImageFromFile(productId, localPath, alt = '') {
+    const absPath = path.resolve(process.cwd(), localPath.replace(/^\.\//, ''));
+    if (!fs.existsSync(absPath)) return false;
+    try {
+        const imageBuffer = fs.readFileSync(absPath);
+        const base64 = imageBuffer.toString('base64');
+        const body = { image: { attachment: base64 } };
+        if (alt) body.image.alt = alt;
+        const url = `https://${SHOPIFY_STORE}/admin/api/${IMAGE_API_VERSION}/products/${productId}/images.json`;
+        const res = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(body)
+        });
+        if (res.status === 429) {
+            await sleep(2000);
+            return addProductImageFromFile(productId, localPath, alt);
+        }
+        if (!res.ok) throw new Error(`${res.status} ${await res.text()}`);
+        await sleep(RATE_LIMIT_DELAY);
+        return true;
+    } catch (err) {
+        log(`  ⚠️ Image upload from file failed: ${err.message}`, 'yellow');
+        return false;
+    }
+}
+
 /**
  * Check if a product already exists by handle
  */
@@ -130,6 +174,8 @@ async function createProduct(pattern, collection, options = {}) {
     const patternFileName = pattern.name.toLowerCase().replace(/\s+/g, '-');
     const handle = `${collection.name}-${pattern.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`;
     const thumbnailUrl = `${BASE_SERVER_URL}/data/collections/${collection.name}/thumbnails/${patternFileName}.jpg`;
+    const localThumbPath = pattern.thumbnail ? path.resolve(process.cwd(), pattern.thumbnail.replace(/^\.\//, '')) : null;
+    const hasLocalThumb = localThumbPath && fs.existsSync(localThumbPath);
 
     const isColorFlex = pattern.colorFlex === true;
 
@@ -203,11 +249,9 @@ async function createProduct(pattern, collection, options = {}) {
             options: [
                 { name: 'Application' }
             ],
-            images: [
-                {
-                    src: thumbnailUrl,
-                    alt: `${pattern.name} pattern thumbnail`
-                }
+            // Use local file upload after create/update when available so thumbnails always appear (CSV/URL import often fails)
+            images: hasLocalThumb ? [] : [
+                { src: thumbnailUrl, alt: `${pattern.name} pattern thumbnail` }
             ]
         }
     };
@@ -280,6 +324,12 @@ async function createProduct(pattern, collection, options = {}) {
         }
 
         await sleep(RATE_LIMIT_DELAY);
+
+        // Add thumbnail from local file so it always appears (re-import/URL often doesn't bring images in)
+        if (product && product.id && hasLocalThumb && pattern.thumbnail) {
+            const added = await addProductImageFromFile(product.id, pattern.thumbnail, `${pattern.name} pattern thumbnail`);
+            if (added) log(`  🖼️ Image attached from file: ${pattern.name}`, 'green');
+        }
 
         // Set metafields only for ColorFlex patterns (those with layers)
         if (product && product.id) {
@@ -385,7 +435,7 @@ Examples:
 
     // Check credentials
     if (!SHOPIFY_STORE || !SHOPIFY_ACCESS_TOKEN) {
-        log('❌ Missing Shopify credentials. Create .env file with:', 'red');
+        log('❌ Missing Shopify credentials. Add to .env or config/local.env:', 'red');
         log('   SHOPIFY_STORE=your-store.myshopify.com', 'yellow');
         log('   SHOPIFY_ACCESS_TOKEN=SHOPIFY_TOKEN_...', 'yellow');
         process.exit(1);

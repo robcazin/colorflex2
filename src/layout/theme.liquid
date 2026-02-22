@@ -312,6 +312,10 @@
     <!-- ColorFlex Shopify Configuration -->
     <script>
       console.log('🔧🔧🔧 COLORFLEX CONFIG LOADED 🔧🔧🔧');
+      // Data base URL for pattern images/collections (Backblaze B2). Main site must not use so-animation.
+      {% assign colorflex_data_base = settings.colorflex_data_base_url %}
+      {% if colorflex_data_base == blank %}{% assign colorflex_data_base = 'https://s3.us-east-005.backblazeb2.com/cf-data' %}{% endif %}
+      window.COLORFLEX_DATA_BASE_URL = {{ colorflex_data_base | json }};
       // Set Shopify credentials for direct thumbnail uploads to Shopify Files
       // Get your Admin API access token from: Shopify Admin → Apps → Develop apps → Your app → API credentials
       window.SHOPIFY_STORE = 'f63bae-86'; // Your store name (without .myshopify.com)
@@ -656,93 +660,63 @@
     {%- endif -%}
     
 
-<!-- ColorFlex Modal System - now using unified-pattern-modal.js only -->
+<!-- ColorFlex: theme setting can override to direct-launch furniture (test mode). Default false = icon shows My Designs; on Bassett, designs lead to furniture. -->
 <script>
-// Simple replacement for theme.liquid script - only calls unified modal
 (function() {
     'use strict';
 
-    console.log('🎨 Theme.liquid using unified-pattern-modal.js only');
+    // Theme setting: if true, icon goes straight to furniture page (test). Default false = icon shows My Designs; using a design leads to wallpaper (main) or furniture (Bassett).
+    var colorFlexIconLaunchesFurniture = {{ settings.colorflex_icon_launches_furniture | default: false }};
 
     var isProductPage = {{ template.name | json }} === 'product';
 
     function updateMenuIcon() {
-        console.log('🔄 Updating menu icon...');
-
-        // Remove existing icon
-        const existing = document.getElementById('colorflexMenuIcon');
+        var existing = document.getElementById('colorflexMenuIcon');
         if (existing) existing.remove();
 
-        // Do not show floating chameleon on product pages (avoids clutter / layout issues)
         if (isProductPage) return;
 
-        // Check for patterns
-        const patterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+        var patterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+        var showIcon = colorFlexIconLaunchesFurniture || patterns.length > 0;
 
-        if (patterns.length > 0) {
-            const menuIcon = document.createElement('div');
+        if (showIcon) {
+            var menuIcon = document.createElement('div');
             menuIcon.id = 'colorflexMenuIcon';
-            menuIcon.innerHTML = `<img src="https://so-animation.com/colorflex/img/camelion-sm-black.jpg" style="width: 100%; height: 100%; border-radius: 50%;"><span style="background:#d4af37;color:#1a202c;font-size:10px;border-radius:10px;padding:2px 4px;position:absolute;top:-8px;right:-8px;min-width:16px;text-align:center;">${patterns.length}</span>`;
-            menuIcon.style.cssText = `
-                position: fixed;
-                top: 20px;
-                right: 20px;
-                width: 70px;
-                height: 70px;
-                cursor: pointer;
-                z-index: 9999;
-                background: rgba(26, 32, 44, 0.9);
-                padding: 4px;
-                border-radius: 50%;
-                border: 2px solid #d4af37;
-                transition: transform 0.3s ease;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                overflow: visible;
-            `;
+            var cfDataBase = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '');
+            menuIcon.innerHTML = patterns.length > 0
+                ? '<img src="' + cfDataBase + '/img/camelion-sm-black.jpg" style="width:100%;height:100%;border-radius:50%;"><span style="background:#d4af37;color:#1a202c;font-size:10px;border-radius:10px;padding:2px 4px;position:absolute;top:-8px;right:-8px;min-width:16px;text-align:center;">' + patterns.length + '</span>'
+                : '<img src="' + cfDataBase + '/img/camelion-sm-black.jpg" style="width:100%;height:100%;border-radius:50%;">';
+            menuIcon.style.cssText = 'position:fixed;top:20px;right:20px;width:70px;height:70px;cursor:pointer;z-index:9999;background:rgba(26,32,44,0.9);padding:4px;border-radius:50%;border:2px solid #d4af37;transition:transform 0.3s ease;display:flex;align-items:center;justify-content:center;overflow:visible;';
 
-            // Add hover effect - grow 75%
-            menuIcon.addEventListener('mouseenter', () => {
-                menuIcon.style.transform = 'scale(2.0)';
-            });
+            menuIcon.addEventListener('mouseenter', function() { menuIcon.style.transform = 'scale(2.0)'; });
+            menuIcon.addEventListener('mouseleave', function() { menuIcon.style.transform = 'scale(1)'; });
 
-            menuIcon.addEventListener('mouseleave', () => {
-                menuIcon.style.transform = 'scale(1)';
-            });
-
-            menuIcon.addEventListener('click', () => {
-                console.log('🎨 Calling unified modal system');
-
-                // Wait for unified modal to be available if not loaded yet
+            menuIcon.addEventListener('click', function() {
+                if (colorFlexIconLaunchesFurniture) {
+                    window.location.href = '/pages/colorflex-furniture';
+                    return;
+                }
                 function tryShowModal() {
                     if (window.UnifiedPatternModal && window.UnifiedPatternModal.showSavedPatternsModal) {
                         window.UnifiedPatternModal.showSavedPatternsModal();
                     } else {
-                        console.log('⏳ Waiting for unified modal to load...');
-                        setTimeout(tryShowModal, 100); // Retry after 100ms
+                        setTimeout(tryShowModal, 100);
                     }
                 }
-
                 tryShowModal();
             });
 
-            menuIcon.title = `My ColorFlex Patterns (${patterns.length})`;
+            menuIcon.title = colorFlexIconLaunchesFurniture ? 'Open ColorFlex Furniture' : ('My ColorFlex Patterns (' + patterns.length + ')');
             document.body.appendChild(menuIcon);
-            console.log(`🦎 Menu icon created with ${patterns.length} patterns`);
         }
     }
 
-    // Update icon when page loads
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', updateMenuIcon);
     } else {
         updateMenuIcon();
     }
-
-    // Make available globally
     window.updateColorFlexMenuIcon = updateMenuIcon;
-
 })();
 </script>
 </body>

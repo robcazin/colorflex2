@@ -1,6 +1,14 @@
 # Dependencies
 node_modules/
 
+# Python venv (Bassett PSD pipeline)
+.venv/
+# Bassett PSD pipeline output (scripts/bassett_psd_export.py)
+bassett_psd_output/
+# Bassett Photoshop JSX bridge (scripts/run_bassett_photoshop.sh)
+bassett_psd/bassett_psd_bridge.txt
+bassett_psd/bassett_psd_done.txt
+
 # Local backups (separate from Git history)
 backups/
 
@@ -13,6 +21,7 @@ theme-pull-*/
 *.env
 !*.env.example
 config/shopify.json
+config/local.env
 
 # OS and editors
 .DS_Store
