@@ -2975,7 +2975,7 @@ window.switchCollection = function(collectionName) {
         }
     }
 
-    // Clear curated colors if switching to standard collection (no ColorFlex patterns)
+    // Update curated colors for the new collection (clear if none, else populate)
     const hasColorFlexPatterns = targetCollection.patterns?.some(p => p.colorFlex === true);
     if (!hasColorFlexPatterns) {
         console.log('🧹 Clearing curated colors for standard collection');
@@ -2984,6 +2984,11 @@ window.switchCollection = function(collectionName) {
             curatedColorsContainer.innerHTML = '';
         }
         appState.curatedColors = [];
+    } else {
+        appState.curatedColors = targetCollection.curatedColors || [];
+        if (appState.curatedColors.length && dom.curatedColorsContainer && Array.isArray(appState.colorsData) && appState.colorsData.length) {
+            populateCuratedColors(appState.curatedColors);
+        }
     }
 
     // Populate thumbnails for new collection
@@ -3016,10 +3021,11 @@ window.switchCollection = function(collectionName) {
         }
     }
 
-    // Load the first pattern in the collection
+    // Load the first pattern in the collection (slug preferred for ColorFlex/Bassett)
     const firstPattern = targetCollection.patterns[0];
     if (firstPattern) {
-        loadPatternData(targetCollection, firstPattern.id || firstPattern.name);
+        const firstPatternId = firstPattern.slug || firstPattern.id || firstPattern.name;
+        loadPatternData(targetCollection, firstPatternId);
     }
 
     console.log(`✅ Switched to collection: ${collectionName}`);
@@ -5604,6 +5610,14 @@ function normalizePath(path) {
     if (path.includes('shadow-dance_shadow_layer-1')) {
         path = path.replace(/shadow-dance_shadow_layer-1/g, 'shadow-dance_isshadow_layer-1');
     }
+    // If path is an absolute filesystem path (e.g. /Volumes/jobs/cf-data/collections/...), convert to relative data/collections/... so base URL applies correctly
+    if (path.startsWith('/') && !path.startsWith('//') && (path.indexOf('/collections/') !== -1 || path.indexOf('/data/') !== -1)) {
+        if (path.indexOf('/data/collections/') !== -1) {
+            path = path.substring(path.indexOf('/data/collections/') + 1);
+        } else if (path.indexOf('/collections/') !== -1) {
+            path = 'data/' + path.substring(path.indexOf('/collections/') + 1);
+        }
+    }
     var resolved;
     // If it's already a full URL, rewrite so-animation to current data base (Backblaze)
     if (path.startsWith('http://') || path.startsWith('https://')) {
@@ -7543,6 +7557,9 @@ async function loadColors() {
             console.log("🎯 Using embedded Sherwin-Williams colors");
             appState.colorsData = window.ColorFlexData.colors;
             console.log("✅ Colors loaded:", appState.colorsData.length);
+            if (appState.curatedColors?.length && typeof populateCuratedColors === 'function') {
+                populateCuratedColors(appState.curatedColors);
+            }
             return;
         }
         
@@ -7570,6 +7587,9 @@ async function loadColors() {
 
         appState.colorsData = data;
         console.log("✅ Colors loaded:", appState.colorsData.length);
+        if (appState.curatedColors?.length && typeof populateCuratedColors === 'function') {
+            populateCuratedColors(appState.curatedColors);
+        }
     } catch (err) {
         console.error("âŒ Error loading colors:", err);
         alert("Failed to load Sherwin-Williams colors.");
@@ -9021,17 +9041,19 @@ const createColorInput = (label, id, initialColor, isBackground = false) => {
             updatePreview(); // Update pattern preview
             renderFabricMockup();
         } else {
-            // ✅ BASSETT: clear room cache so next updateRoomMockup re-requests render with new blanket (Layer 1) color
+            // ✅ BASSETT: clear room cache so next updateRoomMockup re-requests render with new colors
             if (window.COLORFLEX_MODE === 'BASSETT') {
                 appState.bassettResultUrl = null;
                 appState.bassettResultPatternId = null;
                 appState.bassettResultBlanketColor = null;
                 appState.bassettResultScale = null;
+                appState.bassettResultSofaColor = null;
+                appState.bassettResultLayerColorsSig = null;
             }
-            // ✅ WALLPAPER MODE: Use updateRoomMockup()
-            console.log("🖼️ Color changed in wallpaper mode - calling updateRoomMockup()");
+            // ✅ WALLPAPER / BASSETT: update preview; room mockup is triggered by updatePreview when it finishes (BASSETT)
+            console.log("🖼️ Color changed in wallpaper mode - calling updatePreview()");
             updatePreview();
-            updateRoomMockup();
+            if (window.COLORFLEX_MODE !== 'BASSETT') updateRoomMockup();
         }
         populateCoordinates();
     };
@@ -9209,19 +9231,23 @@ function populateCuratedColors(colors) {
     return;
   }
 
-  // ⚠️ Standard = not explicitly ColorFlex (colorFlex: true + layers)
-  const isStandardPattern = !(appState.currentPattern?.colorFlex === true && appState.currentPattern?.layers && appState.currentPattern.layers.length > 0);
+  // ⚠️ Standard = not explicitly ColorFlex (colorFlex: true + layers). BASSETT: always show collection curated colors on load.
+  const isStandardPattern = !(appState.currentPattern?.colorFlex === true && appState.currentPattern?.layers && (appState.currentPattern?.layers?.length || 0) > 0);
+  const isBassett = window.COLORFLEX_MODE === 'BASSETT';
   console.log("🔍 CURATED COLORS CHECK:");
   console.log("  Pattern:", appState.currentPattern?.name);
   console.log("  Has layers:", appState.currentPattern?.layers?.length || 0);
   console.log("  Is standard pattern:", isStandardPattern);
 
-  if (isStandardPattern) {
+  if (isStandardPattern && !isBassett) {
     console.log("⏭️ Standard pattern: leaving curated colors in place (not used for this pattern)");
     return;
   }
+  if (isStandardPattern && isBassett) {
+    console.log("🎨 BASSETT: showing collection curated colors even for standard pattern (so they're visible on initial load)");
+  }
 
-  console.log("✅ SHOWING CURATED COLORS: This is a ColorFlex pattern with", appState.currentPattern.layers.length, "layers");
+  console.log("✅ SHOWING CURATED COLORS: This is a ColorFlex pattern with", (appState.currentPattern?.layers?.length || 0), "layers");
 
   if (!colors || !colors.length) {
     console.warn("⚠️ No curated colors provided, colors array:", colors);
@@ -10238,10 +10264,10 @@ async function initializeApp() {
         
         appState.selectedCollection = finalCollection;
         appState.lockedCollection = true;
-        // ✅ Skip curated colors entirely in simple mode
+        // ✅ Skip curated colors entirely in simple mode. Use finalCollection so curated colors match the collection we just set.
         const isSimpleMode = window.COLORFLEX_SIMPLE_MODE === true;
         if (!isSimpleMode) {
-        appState.curatedColors = selectedCollection.curatedColors || [];
+        appState.curatedColors = finalCollection.curatedColors || [];
         console.log("@ Selected Collection:", selectedCollection.name);
         console.log("@ Curated colors:", appState.curatedColors.length);
         } else {
@@ -10981,16 +11007,17 @@ function populatePatternThumbnails(patterns) {
 
 // Populate coordinates thumbnails in #coordinatesContainer
 const populateCoordinates = () => {
-    // ✅ Skip coordinates for fabric, clothing, and furniture modes
+    // ✅ Skip coordinates for fabric, clothing, furniture, and Bassett modes
     if (appState.isInFabricMode) {
         return;
     }
-    // ✅ Skip for clothing mode (check window.COLORFLEX_MODE since standard clothing uses base collections)
     if (window.COLORFLEX_MODE === 'CLOTHING') {
         return;
     }
-    // ✅ Skip for furniture mode
     if (window.COLORFLEX_MODE === 'FURNITURE') {
+        return;
+    }
+    if (window.COLORFLEX_MODE === 'BASSETT') {
         return;
     }
 
@@ -11533,6 +11560,10 @@ if (USE_GUARD && DEBUG_TRACE) {
 // ============================================================================
 
 function handlePatternSelection(patternName, preserveColors = false, colorLockBuffer = null) {
+    if (!appState.selectedCollection || !appState.selectedCollection.patterns || !appState.selectedCollection.patterns.length) {
+        console.warn('handlePatternSelection: no collection or patterns');
+        return;
+    }
     // Check if colors are locked - if so, force preserveColors to true
     if (appState.colorsLocked) {
         preserveColors = true;
@@ -11887,11 +11918,23 @@ let processImage = (
 async function loadPatternData(collection, patternId) {
     console.log(`loadPatternData: patternId=${patternId}`);
 
+    // BASSETT: clear room mockup cache so we never show the previous pattern/collection; mockup will re-composite with current state.
+    if (window.COLORFLEX_MODE === 'BASSETT') {
+        appState.bassettResultUrl = null;
+        appState.bassettResultPatternId = null;
+        appState.bassettResultBlanketColor = null;
+        appState.bassettResultScale = null;
+        appState.bassettResultSofaColor = null;
+        appState.bassettResultLayerColorsSig = null;
+    }
+
     // Check slug, id, and name for backwards compatibility
     let pattern = collection.patterns.find(p => p.slug === patternId || p.id === patternId || p.name === patternId);
         
     if (pattern) {
         console.log(`✅ Found pattern "${pattern.name}" (ID: ${pattern.id}) in collection "${collection.name}"`);
+        // Build currentLayers with designer/curated colors so first thumbnail click applies preset colors (no need to click twice)
+        handlePatternSelection(pattern.name, appState.colorsLocked);
         
         // ✅ NEW ARCHITECTURE: Look up mockupLayers from variant collection if available
         // We're always using base collections now, but need mode-specific mockupLayers
@@ -12455,7 +12498,7 @@ async function loadPatternData(collection, patternId) {
                 await renderFabricMockup();
             } else {
                 console.log('🔒 Color lock restore: Calling updateRoomMockup() for wallpaper mode');
-                updateRoomMockup();
+                if (window.COLORFLEX_MODE !== 'BASSETT') updateRoomMockup();
             }
         }
 
@@ -12529,17 +12572,14 @@ async function loadPatternData(collection, patternId) {
         appState.curatedColors = appState.selectedCollection.curatedColors || [];
         console.log(">>> Updated appState.curatedColors:", appState.curatedColors);
         
-        if (!Array.isArray(appState.colorsData) || appState.colorsData.length === 0) {
-            console.warn("🛑 Sherwin-Williams colors not loaded yet. Delaying populateCuratedColors.");
-            return;
-        }
-
-        // ✅ Only call curated color population when everything is ready
-        if (appState.colorsData.length && collection.curatedColors?.length) {
+        // ✅ Populate curated colors when we have colors data; don't block preview/mockup on it
+        if (Array.isArray(appState.colorsData) && appState.colorsData.length && collection.curatedColors?.length) {
             appState.curatedColors = collection.curatedColors;
             populateCuratedColors(appState.curatedColors);
+        } else if (!Array.isArray(appState.colorsData) || appState.colorsData.length === 0) {
+            console.warn("🛑 Sherwin-Williams colors not loaded yet. Curated circles will appear when colors load.");
         } else {
-            console.warn("X Not populating curated colors - missing data");
+            console.warn("X Not populating curated colors - missing collection curatedColors");
         }
 
         const isFurniturePattern = appState.currentPattern?.isFurniture || false;
@@ -12591,7 +12631,7 @@ async function loadPatternData(collection, patternId) {
                 }
             } else {
                 console.log(`🔍 Scale persistence: Calling updateRoomMockup() with scale: ${appState.scaleMultiplier}`);
-                updateRoomMockup();
+                if (window.COLORFLEX_MODE !== 'BASSETT') updateRoomMockup();
             }
         }
         // ✅ Only populate coordinates for wallpaper mode (skip clothing/furniture)
@@ -12663,9 +12703,11 @@ async function loadPatternData(collection, patternId) {
                 appState.bassettResultPatternId = null;
                 appState.bassettResultBlanketColor = null;
                 appState.bassettResultScale = null;
+                appState.bassettResultSofaColor = null;
+                appState.bassettResultLayerColorsSig = null;
             }
             updatePreview();
-            updateRoomMockup();
+            if (window.COLORFLEX_MODE !== 'BASSETT') updateRoomMockup();
         }
 
         const isFurniturePattern = appState.currentPattern?.isFurniture || false;
@@ -13169,6 +13211,9 @@ let updatePreview = async () => {
                     patternRepeatsElement.textContent = 'Pattern Repeats 24x24';
                 }
 
+                if (window.COLORFLEX_MODE === 'BASSETT') {
+                    requestAnimationFrame(function() { requestAnimationFrame(updateRoomMockup); });
+                }
                 return;
             } else {
                 console.warn("⚠️ Standard pattern has no thumbnail:", appState.currentPattern.name);
@@ -13321,7 +13366,7 @@ let updatePreview = async () => {
                 const firstLayerPath = typeof firstLayer === 'string' ? firstLayer : (firstLayer.path || firstLayer);
                 tempImg.src = normalizePath(firstLayerPath);
                 
-                await new Promise((resolve) => {
+                await (new Promise((resolve) => {
                     tempImg.onload = () => {
                         // ✅ FIX: Use declared pattern size for aspect ratio, not image dimensions
                         const patternAspect = getCorrectAspectRatio(tempImg, patternToRender);
@@ -13449,7 +13494,7 @@ let updatePreview = async () => {
                             }, layerColor, 2.2, isShadow, false, false);
                         });
                     }
-                });
+                }));
             }
         }
 
@@ -13471,6 +13516,9 @@ let updatePreview = async () => {
 
         console.log("✅ Pattern preview rendered");
 
+        if (window.COLORFLEX_MODE === 'BASSETT') {
+            requestAnimationFrame(function() { requestAnimationFrame(updateRoomMockup); });
+        }
         // Loading indicator removed
 
     } catch (err) {
@@ -13647,8 +13695,23 @@ var BASSETT_LAYER_STACK = [
   { id: 'pillow1-displaced', displacementFile: 'PILLOW-1-DSPL.png', type: 'pattern-displaced' },
   { id: 'pillow1-shadows', file: 'PILLOW-1-SHADOWS.png', type: 'image' }
 ];
+// Test mockup: data/mockups/bassett — beauty.png (background) + sofa_disp.png + pillow1_disp.png, pillow2_disp.png, pillow3_disp.png
+var BASSETT_LAYER_STACK_TEST = [
+  { id: 'background', file: 'beauty.png', type: 'image', colorFlexIndex: null },
+  { id: 'sofa-displaced', displacementFile: 'sofa_disp.png', type: 'pattern-displaced' },
+  { id: 'pillow1-displaced', displacementFile: 'pillow1_disp.png', type: 'pattern-displaced' },
+  { id: 'pillow2-displaced', displacementFile: 'pillow2_disp.png', type: 'pattern-displaced' },
+  { id: 'pillow3-displaced', displacementFile: 'pillow3_disp.png', type: 'pattern-displaced' }
+];
 function getBassettLayersBaseUrl() {
-  return (typeof window !== 'undefined' && window.BASSETT_LAYERS_BASE_URL) || '/data/mockups/bassett/sofa-with-pillows-mockup-2';
+  if (typeof window !== 'undefined' && window.BASSETT_LAYERS_BASE_URL) return window.BASSETT_LAYERS_BASE_URL;
+  if (typeof window !== 'undefined' && window.BASSETT_USE_TEST_LAYERS) return '/data/mockups/bassett';
+  return '/data/mockups/bassett/sofa-with-pillows-mockup-2';
+}
+function getBassettLayerStack() {
+  if (typeof window !== 'undefined' && window.BASSETT_LAYER_STACK) return window.BASSETT_LAYER_STACK;
+  if (typeof window !== 'undefined' && window.BASSETT_USE_TEST_LAYERS) return BASSETT_LAYER_STACK_TEST;
+  return BASSETT_LAYER_STACK;
 }
 function bassettDisplaceInWorker(patternBitmap, displacementMapBitmap, strength) {
   strength = strength != null ? strength : 1;
@@ -13675,17 +13738,17 @@ function bassettDisplaceInWorker(patternBitmap, displacementMapBitmap, strength)
   });
 }
 
-// Bassett room mockup: generate from layers + displacement (no PSD), or show uploaded result / fallback UI.
+// Bassett room mockup: 800×800 display, 1600×1600 full-res; zoom on click; optional wall pattern + pillow solid colors.
 async function updateBassettRoomMockup() {
   if (!dom.roomMockup) return;
-  const cssW = 550, cssH = 400;
+  const displaySize = 800;
+  const internalSize = 1600;
   const dpr = window.devicePixelRatio || 1;
   const resultUrl = appState.bassettResultUrl;
   const resultPatternId = appState.bassettResultPatternId;
   const resultBlanketColor = appState.bassettResultBlanketColor;
   const resultScale = appState.bassettResultScale;
   const currentId = appState.currentPattern ? (appState.currentPattern.id || appState.currentPattern.name) : null;
-  // Second ColorFlex color (index 1) for blanket
   const blanketHex = (appState.currentLayers && appState.currentLayers[1] && appState.currentLayers[1].color) ? (lookupColor(appState.currentLayers[1].color) || "#336699") : "#336699";
   function hexFromRgb(rgb) {
     if (!rgb) return "#336699";
@@ -13701,34 +13764,53 @@ async function updateBassettRoomMockup() {
   }
   const currentBlanketColor = normalizeBlanketHex(blanketHex);
   const currentScaleMultiplier = appState.scaleMultiplier != null ? appState.scaleMultiplier : 1;
-  const stale = resultUrl && (resultPatternId !== currentId || resultBlanketColor !== currentBlanketColor || resultScale !== currentScaleMultiplier);
+  const sofaHex = (appState.currentLayers && appState.currentLayers[0] && appState.currentLayers[0].color) ? (lookupColor(appState.currentLayers[0].color) || "#ffffff") : "#ffffff";
+  const currentSofaColor = normalizeBlanketHex(sofaHex);
+  const resultSofaColor = appState.bassettResultSofaColor != null ? appState.bassettResultSofaColor : null;
+  const currentLayerColorsSig = (appState.currentLayers || []).map(function(l) { return (l && l.color) ? normalizeBlanketHex(lookupColor(l.color) || "#000") : ""; }).join("|");
+  const resultLayerColorsSig = appState.bassettResultLayerColorsSig != null ? appState.bassettResultLayerColorsSig : null;
+  const pillowWallSig = [
+    appState.bassettPillow1Style || "pattern",
+    appState.bassettPillow2Style || "pattern",
+    (appState.bassettPillow1ColorSource != null ? appState.bassettPillow1ColorSource : 0),
+    (appState.bassettPillow2ColorSource != null ? appState.bassettPillow2ColorSource : 1),
+    appState.bassettWallpaperOn ? "1" : "0"
+  ].join("|");
+  const resultPillowWallSig = appState.bassettResultPillowWallSig != null ? appState.bassettResultPillowWallSig : null;
+  const stale = resultUrl && (resultPatternId !== currentId || resultBlanketColor !== currentBlanketColor || resultScale !== currentScaleMultiplier || resultSofaColor !== currentSofaColor || resultLayerColorsSig !== currentLayerColorsSig || resultPillowWallSig !== pillowWallSig);
 
   const renderResult = (imageUrl) => {
-    const canvas = document.createElement("canvas");
-    canvas.width = Math.round(cssW * dpr);
-    canvas.height = Math.round(cssH * dpr);
-    canvas.style.width = cssW + "px";
-    canvas.style.height = cssH + "px";
-    const ctx = canvas.getContext("2d", { willReadFrequently: true });
-    ctx.imageSmoothingEnabled = true;
-    ctx.imageSmoothingQuality = "high";
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = "#1a1a1a";
-    ctx.fillRect(0, 0, cssW, cssH);
-
     const img = new Image();
     img.crossOrigin = "Anonymous";
     img.onload = () => {
-      const scale = Math.min(cssW / img.width, cssH / img.height);
-      const dw = img.width * scale, dh = img.height * scale;
-      const x = (cssW - dw) / 2, y = (cssH - dh) / 2;
-      ctx.drawImage(img, x, y, dw, dh);
+      const canvas = document.createElement("canvas");
+      canvas.width = internalSize;
+      canvas.height = internalSize;
+      canvas.dataset.bassettMockup = "true";
+      const ctx = canvas.getContext("2d", { willReadFrequently: true });
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      ctx.drawImage(img, 0, 0, internalSize, internalSize);
+      const zoomed = !!(appState.bassettMockupZoomed);
+      canvas.style.width = (zoomed ? internalSize : displaySize) + "px";
+      canvas.style.height = (zoomed ? internalSize : displaySize) + "px";
+      canvas.style.display = "block";
+      canvas.style.margin = "0 auto";
+      canvas.style.cursor = zoomed ? "zoom-out" : "zoom-in";
       dom.roomMockup.innerHTML = "";
       dom.roomMockup.appendChild(canvas);
+      dom.roomMockup.style.cursor = zoomed ? "zoom-out" : "zoom-in";
+      canvas._bassettZoomClick = function() {
+        appState.bassettMockupZoomed = !appState.bassettMockupZoomed;
+        canvas.style.width = (appState.bassettMockupZoomed ? internalSize : displaySize) + "px";
+        canvas.style.height = (appState.bassettMockupZoomed ? internalSize : displaySize) + "px";
+        canvas.style.cursor = appState.bassettMockupZoomed ? "zoom-out" : "zoom-in";
+        dom.roomMockup.style.cursor = canvas.style.cursor;
+      };
+      canvas.addEventListener("click", canvas._bassettZoomClick);
     };
     img.onerror = () => {
       dom.roomMockup.innerHTML = "";
-      dom.roomMockup.appendChild(canvas);
     };
     img.src = imageUrl;
   };
@@ -13743,6 +13825,9 @@ async function updateBassettRoomMockup() {
     appState.bassettResultPatternId = null;
     appState.bassettResultBlanketColor = null;
     appState.bassettResultScale = null;
+    appState.bassettResultSofaColor = null;
+    appState.bassettResultLayerColorsSig = null;
+    appState.bassettResultPillowWallSig = null;
   }
 
   const apiBase = (window.ColorFlexApiBaseUrl || "").replace(/\/$/, "");
@@ -13765,6 +13850,8 @@ async function updateBassettRoomMockup() {
 
     var layerCompositeOk = false;
     try {
+      // Wait for next paint so preview canvas (and any DOM updates from color change) are committed before we read it.
+      await new Promise(function(r) { requestAnimationFrame(function() { requestAnimationFrame(r); }); });
       var layerUrl = function(path) {
         var url = baseUrl + "/" + path;
         if (typeof window !== "undefined" && window.BASSETT_LAYER_CACHE_BUST) {
@@ -13781,72 +13868,154 @@ async function updateBassettRoomMockup() {
           img.src = src;
         });
       };
-      var patternImg = await loadImg(patternUrl);
-      var bgUrl = layerUrl("Background.png");
+      // Use pattern preview canvas (with current sofa/fabric color) when available so UI color changes update the mockup
+      var patternImg = null;
+      if (dom.preview) {
+        var previewCanvas = dom.preview.querySelector("canvas");
+        if (previewCanvas && previewCanvas.width > 0 && previewCanvas.height > 0) {
+          try {
+            var dataUrl = previewCanvas.toDataURL("image/png");
+            if (dataUrl && dataUrl.indexOf("data:") === 0) patternImg = await loadImg(dataUrl);
+          } catch (e) { /* tainted or unsupported */ }
+        }
+      }
+      if (!patternImg) patternImg = await loadImg(patternUrl);
+      var stack = getBassettLayerStack();
+      var firstImageLayer = null;
+      for (var si = 0; si < stack.length; si++) {
+        if (stack[si].type === 'image' && stack[si].file) {
+          firstImageLayer = stack[si];
+          break;
+        }
+      }
       var bgImg;
-      try {
-        bgImg = await loadImg(bgUrl);
-      } catch (e) {
-        console.error("Bassett: Background.png failed to load. URL:", bgUrl, e && e.message ? e.message : e);
-        throw e;
+      var cw = 1;
+      var ch = 1;
+      if (firstImageLayer) {
+        var bgUrl = layerUrl(firstImageLayer.file);
+        try {
+          bgImg = await loadImg(bgUrl);
+          cw = bgImg.naturalWidth || 1;
+          ch = bgImg.naturalHeight || 1;
+        } catch (e) {
+          console.error("Bassett: first image layer failed to load. URL:", bgUrl, e && e.message ? e.message : e);
+          throw e;
+        }
       }
-      if (!bgImg.naturalWidth || !bgImg.naturalHeight) {
-        console.warn("Bassett: Background.png loaded but has zero size:", bgImg.naturalWidth, "x", bgImg.naturalHeight);
-      }
-      var cw = bgImg.naturalWidth || 1;
-      var ch = bgImg.naturalHeight || 1;
+      var outW = internalSize;
+      var outH = internalSize;
+      var scaleToOut = outW / cw;
       var compCanvas = document.createElement("canvas");
-      compCanvas.width = cw;
-      compCanvas.height = ch;
+      compCanvas.width = outW;
+      compCanvas.height = outH;
       var ctx = compCanvas.getContext("2d");
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
 
-      for (var li = 0; li < BASSETT_LAYER_STACK.length; li++) {
-        var layer = BASSETT_LAYER_STACK[li];
+      function getPillowSolidColor(colorSourceIndex) {
+        var layers = appState.currentLayers || [];
+        var idx = Math.max(0, Math.min(colorSourceIndex, layers.length - 1));
+        var c = layers[idx] && layers[idx].color ? lookupColor(layers[idx].color) : "#888888";
+        return normalizeBlanketHex(c);
+      }
+
+      for (var li = 0; li < stack.length; li++) {
+        var layer = stack[li];
         ctx.globalAlpha = 1;
         ctx.globalCompositeOperation = "source-over";
         if (layer.type === 'image' && layer.file) {
-          var limg = (li === 0 && layer.file === 'Background.png') ? bgImg : await loadImg(layerUrl(layer.file));
-          ctx.drawImage(limg, 0, 0);
+          var limg = (firstImageLayer && li === 0 && layer.file === firstImageLayer.file) ? bgImg : await loadImg(layerUrl(layer.file));
+          var lw = limg.naturalWidth || limg.width;
+          var lh = limg.naturalHeight || limg.height;
+          ctx.drawImage(limg, 0, 0, lw, lh, 0, 0, outW, outH);
+        } else if (layer.type === 'wall-pattern' && layer.file && appState.bassettWallpaperOn) {
+          try {
+            var wallMaskImg = await loadImg(layerUrl(layer.file));
+            var ww = wallMaskImg.naturalWidth;
+            var wh = wallMaskImg.naturalHeight;
+            var wallTile = document.createElement("canvas");
+            wallTile.width = ww;
+            wallTile.height = wh;
+            var wctx = wallTile.getContext("2d");
+            wctx.imageSmoothingEnabled = true;
+            wctx.imageSmoothingQuality = "high";
+            var reps = Math.max(4, Math.ceil(outW / ww) + 2);
+            var tw = ww / 4;
+            var th = wh / 4;
+            for (var tx = -tw; tx < ww + tw * reps; tx += tw) {
+              for (var ty = -th; ty < wh + th * reps; ty += th) {
+                wctx.drawImage(patternImg, tx, ty, tw, th);
+              }
+            }
+            wctx.globalCompositeOperation = "destination-in";
+            wctx.drawImage(wallMaskImg, 0, 0);
+            ctx.drawImage(wallTile, 0, 0, outW, outH);
+          } catch (e) {
+            console.warn("Bassett: wall-pattern layer skipped (missing mask?)", e && e.message ? e.message : e);
+          }
         } else if (layer.type === 'pattern-displaced' && layer.displacementFile) {
-          var dispImg = await loadImg(layerUrl(layer.displacementFile));
-          var dw = dispImg.naturalWidth;
-          var dh = dispImg.naturalHeight;
-          var tileCanvas = document.createElement("canvas");
-          tileCanvas.width = dw;
-          tileCanvas.height = dh;
-          var tctx = tileCanvas.getContext("2d");
-          tctx.imageSmoothingEnabled = true;
-          tctx.imageSmoothingQuality = "high";
-          var reps = 4;
-          var tw = dw / reps;
-          var th = dh / reps;
-          for (var tx = -tw; tx < dw + tw; tx += tw) {
-            for (var ty = -th; ty < dh + th; ty += th) {
-              tctx.drawImage(patternImg, tx, ty, tw, th);
+          var isPillow1 = (layer.id === 'pillow1-displaced');
+          var isPillow2 = (layer.id === 'pillow2-displaced');
+          var useSolid = (isPillow1 && (appState.bassettPillow1Style === 'solid')) || (isPillow2 && (appState.bassettPillow2Style === 'solid'));
+          var pillowMaskFile = isPillow1 ? 'PILLOW-1.png' : (isPillow2 ? 'PILLOW-2.png' : null);
+          if (useSolid && pillowMaskFile) {
+            try {
+              var pimg = await loadImg(layerUrl(pillowMaskFile));
+              var pillHex = isPillow1 ? getPillowSolidColor(appState.bassettPillow1ColorSource != null ? appState.bassettPillow1ColorSource : 0) : getPillowSolidColor(appState.bassettPillow2ColorSource != null ? appState.bassettPillow2ColorSource : 1);
+              var pillCanvas = document.createElement("canvas");
+              pillCanvas.width = outW;
+              pillCanvas.height = outH;
+              var pctx = pillCanvas.getContext("2d");
+              var pw = pimg.naturalWidth || pimg.width, ph = pimg.naturalHeight || pimg.height;
+              pctx.drawImage(pimg, 0, 0, pw, ph, 0, 0, outW, outH);
+              pctx.globalCompositeOperation = "multiply";
+              pctx.fillStyle = "#" + pillHex.replace(/^#/, "");
+              pctx.fillRect(0, 0, outW, outH);
+              pctx.globalCompositeOperation = "destination-in";
+              pctx.drawImage(pillCanvas, 0, 0, outW, outH, 0, 0, outW, outH);
+              pctx.globalCompositeOperation = "source-over";
+              ctx.drawImage(pillCanvas, 0, 0);
+            } catch (e) {
+              useSolid = false;
             }
           }
-          var patternBmp = await createImageBitmap(tileCanvas);
-          var dispBmp = await createImageBitmap(dispImg);
-          var displaced = await bassettDisplaceInWorker(patternBmp, dispBmp, 0.5);
-          ctx.drawImage(displaced, 0, 0);
-          patternBmp.close();
-          dispBmp.close();
-          displaced.close();
+          if (!useSolid) {
+            var dispImg = await loadImg(layerUrl(layer.displacementFile));
+            var dw = dispImg.naturalWidth;
+            var dh = dispImg.naturalHeight;
+            var tileCanvas = document.createElement("canvas");
+            tileCanvas.width = dw;
+            tileCanvas.height = dh;
+            var tctx = tileCanvas.getContext("2d");
+            tctx.imageSmoothingEnabled = true;
+            tctx.imageSmoothingQuality = "high";
+            var reps = 4;
+            var tw = dw / reps;
+            var th = dh / reps;
+            for (var tx = -tw; tx < dw + tw; tx += tw) {
+              for (var ty = -th; ty < dh + th; ty += th) {
+                tctx.drawImage(patternImg, tx, ty, tw, th);
+              }
+            }
+            tctx.globalCompositeOperation = "destination-in";
+            tctx.drawImage(dispImg, 0, 0);
+            ctx.globalCompositeOperation = "multiply";
+            ctx.drawImage(tileCanvas, 0, 0, outW, outH);
+            ctx.globalCompositeOperation = "source-over";
+          }
         } else if (layer.type === 'solid-color' && layer.file) {
           var blimg = await loadImg(layerUrl(layer.file));
           var blanketCanvas = document.createElement("canvas");
-          blanketCanvas.width = cw;
-          blanketCanvas.height = ch;
+          blanketCanvas.width = outW;
+          blanketCanvas.height = outH;
           var bctx = blanketCanvas.getContext("2d");
-          bctx.drawImage(blimg, 0, 0);
+          bctx.drawImage(blimg, 0, 0, outW, outH);
           bctx.globalCompositeOperation = "multiply";
           var hex = blanketColor.replace(/^#/, "");
           bctx.fillStyle = "#" + hex;
-          bctx.fillRect(0, 0, cw, ch);
+          bctx.fillRect(0, 0, outW, outH);
           bctx.globalCompositeOperation = "destination-in";
-          bctx.drawImage(blimg, 0, 0);
+          bctx.drawImage(blimg, 0, 0, outW, outH);
           bctx.globalCompositeOperation = "source-over";
           ctx.drawImage(blanketCanvas, 0, 0);
         }
@@ -13857,6 +14026,9 @@ async function updateBassettRoomMockup() {
       appState.bassettResultPatternId = currentId;
       appState.bassettResultBlanketColor = currentBlanketColor;
       appState.bassettResultScale = currentScaleMultiplier;
+      appState.bassettResultSofaColor = currentSofaColor;
+      appState.bassettResultLayerColorsSig = currentLayerColorsSig;
+      appState.bassettResultPillowWallSig = pillowWallSig;
       layerCompositeOk = true;
     } catch (e) {
       console.warn("Bassett layer composite failed:", e);
@@ -16009,15 +16181,22 @@ async function updateDisplays() {
     try {
         console.log('updateDisplays called');
         
-        // ✅ Always update pattern preview
-        updatePreview();
-        
-        // ✅ Check mode and call appropriate render function
         const isFurnitureModeUpdate = window.COLORFLEX_MODE === 'FURNITURE' || appState.isInFurnitureMode;
         const isClothingModeUpdate = window.COLORFLEX_MODE === 'CLOTHING' || (window.COLORFLEX_SIMPLE_MODE === true && window.COLORFLEX_MODE !== 'FURNITURE');
-        
+        const isBassett = window.COLORFLEX_MODE === 'BASSETT';
+
+        if (isBassett) {
+            appState.bassettResultUrl = null;
+            appState.bassettResultPatternId = null;
+            appState.bassettResultBlanketColor = null;
+            appState.bassettResultScale = null;
+            appState.bassettResultSofaColor = null;
+            appState.bassettResultLayerColorsSig = null;
+        }
+
         if (isFurnitureModeUpdate) {
             console.log("🪑 updateDisplays in furniture mode - calling updateFurniturePreview()");
+            updatePreview();
             if (typeof updateFurniturePreview === 'function') {
                 await updateFurniturePreview();
             } else {
@@ -16025,9 +16204,15 @@ async function updateDisplays() {
             }
         } else if (appState.isInFabricMode || isClothingModeUpdate) {
             console.log("🧵 updateDisplays in fabric/clothing mode - calling renderFabricMockup()");
+            updatePreview();
             await renderFabricMockup();
         } else {
-            updateRoomMockup();
+            if (isBassett) {
+                await updatePreview();
+            } else {
+                updatePreview();
+                updateRoomMockup();
+            }
         }
         // ✅ Only populate coordinates for wallpaper mode (skip clothing/furniture)
         if (window.COLORFLEX_MODE !== 'CLOTHING' && window.COLORFLEX_MODE !== 'FURNITURE') {

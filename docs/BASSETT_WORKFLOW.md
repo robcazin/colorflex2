@@ -34,9 +34,12 @@ This builds the Bassett bundle, builds the local HTML, and starts the server. Op
 
 **Optional env (e.g. `config/local.env`):**
 
+- **`COLORFLEX_DATA_PATH`** — Path to the **canonical data folder** (the folder that contains `data/`). When set, both the Bassett server and `cf-dl.js` use it. Use the **SMB share** (see below) by mounting it and setting this to the mount path (e.g. `/Volumes/cf-data`).
 - `BASSETT_PSD_PATH` — PSD path for render API (optional).
-- `BASSETT_REPO_ROOT` / `BASSETT_CONTENT_ROOT` — override content root for data/assets.
+- `BASSETT_REPO_ROOT` / `BASSETT_CONTENT_ROOT` — override content root for repo assets (built JS, workers); data is still taken from `COLORFLEX_DATA_PATH/data` when set.
 - `BASSETT_LOCAL_PORT` — default 3333.
+
+**Data folder (SMB):** The canonical data folder is on the Synology share **`smb://soanimation._smb._tcp.local/jobs/cf-data`**. Mount that share on your Mac (Finder → Go → Connect to Server, or `mount_smbfs`); then set **`COLORFLEX_DATA_PATH`** in `config/local.env` to the **mount path** (the folder that contains the `data/` subfolder). Example: if the share mounts as `/Volumes/cf-data` and inside it you have `data/collections.json`, `data/collections/`, `data/mockups/`, then set `COLORFLEX_DATA_PATH=/Volumes/cf-data`. The Bassett server and the download script (`cf-dl.js`) both use this; no need to copy data into the repo.
 
 **If you see "No collections found":**
 
@@ -74,6 +77,16 @@ This builds the Bassett bundle, builds the local HTML, and starts the server. Op
 
 ---
 
+## Asset source and Blender (bpy) context
+
+**Where the assets come from:** The app doesn’t care how the layer PNGs or displacement (DSPL) maps are produced. For this project they are produced from **Blender** (the 3D software in use). Any other 3D or 2D tool that can output the same filenames and formats would work with the same pipeline.
+
+**Blender and bpy:** Blender’s Python API (**bpy**) is used to script exports, batch renders, and headless runs (`blender --background --python script.py`) so the 3D pipeline fits the layer stack and DSPL format the local server expects. The assistant is familiar with bpy; when we need to add or change a Blender script (e.g. render displacement passes, bake layers, export PNGs into the mockup folder with the expected names), we can write or modify the script in Blender Python.
+
+**DSPL format (for reference when authoring from Blender):** R/G = X/Y displacement; 128 = no shift. The displacement worker uses the map’s **alpha as a mask** (alpha &lt; 128 → output transparent). Export DSPL images with the expected filenames (`SOFA-DSPL.png`, `PILLOW-1-DSPL.png`, `PILLOW-2-DSPL.png`) into the layer base folder so the room preview finds them.
+
+---
+
 ## Key files (for recovery / reference)
 
 - **Layer stack + displace client:** `src/CFM.js` (BASSETT_LAYER_STACK, getBassettLayersBaseUrl, bassettDisplaceInWorker), `src/bassett-layer-stack.js`, `src/bassett-displace-client.js`
@@ -98,6 +111,9 @@ Bassett layer-based room preview is in place and the workflow is stable. One com
 - **2025-02-07:** Room preview scramble fix: displacement worker now uses the map's **alpha as a mask** — where alpha < 128 the output pixel is transparent, so we don't draw warped pattern in "empty" regions (which were using R/G and producing large offsets and scramble). File: `src/workers/pattern-displace.worker.js`.
 - **2026-02:** Launch default collection **hip-to-be-square** when no valid collection found (BASSETT mode). Server logs `collections.json` path at startup. "No collections found" troubleshooting and checklist added. **Milestone:** layer-stack composite, single-command workflow, and backup/checkpoint policy in place; commemorated in Milestones section above.
 - **2026-02-07:** Main-branch session: curated colors retained for standard patterns (no clear at top); layer inputs for standard patterns restored to blurb (clear layer UI, hide heading/lock, show "24x24 inches" copy). Collection number ordering (cf-dl, templates). **Safety:** Separation checklist added to `docs/GIT_LOCAL_WORKFLOW.md` (work in bassett worktree, open correct folder, confirm branch, Bassett-only edits, merge direction) so Bassett work doesn't change main.
+- **2026-02-07:** Added **Asset source and Blender (bpy) context** to this doc: app agnostic to asset source; project uses Blender; bpy for scripting exports/batch/headless; assistant familiar with bpy; DSPL format reminder (R/G, 128 neutral, alpha mask, filenames) for authoring from Blender.
+- **2026-02-07:** **Canonical data folder:** SMB share `smb://soanimation._smb._tcp.local/jobs/cf-data`. Mount it and set `COLORFLEX_DATA_PATH` in `config/local.env` to the mount path (folder containing `data/`). Bassett server and cf-dl both use it; server prefers DATA_ROOT when set.
+- **2026-02-23:** **Checkpoint before UI tweaks.** Local server running (SOLID). Backup for safety; user list of tweaks to apply next. See git commit same date.
 
 ---
 

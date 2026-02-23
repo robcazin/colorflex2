@@ -85,7 +85,7 @@ Options:
   --update-products           Update existing Shopify products (instead of skipping them)
 
 Environment Variables (can be set in config/local.env):
-  COLORFLEX_DATA_PATH          Data folder (default: /Volumes/jobs/cf-data). Synology Cloud Sync → Backblaze.
+  COLORFLEX_DATA_PATH          Data folder: mount smb://soanimation._smb._tcp.local/jobs/cf-data and set to mount path (folder containing data/).
   COLORFLEX_DATA_BASE_URL      Optional: Backblaze B2 public URL for data; set so CSV/theme use it for image URLs.
 
 EOF

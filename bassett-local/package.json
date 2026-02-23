@@ -1,0 +1,9 @@
+{
+  "name": "bassett-local",
+  "private": true,
+  "description": "Bassett ColorFlex local server — no Shopify",
+  "dependencies": {
+    "dotenv": "^17.2.3",
+    "express": "^4.22.1"
+  }
+}

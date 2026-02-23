@@ -20,7 +20,7 @@ module.exports = (env = {}) => {
   }
 
   if (buildMode === 'all' || buildMode === 'bassett') {
-    entries['color-flex-bassett'] = './src/index.core.js';
+    entries['color-flex-bassett'] = './src/index.bassett.js';
   }
 
   if (buildMode === 'all' || buildMode === 'furniture') {
