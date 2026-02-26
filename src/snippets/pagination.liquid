@@ -1,12 +1,16 @@
 {% comment %}
   Pagination - used on list collections and collection product grid.
   Usage: {% render 'pagination', paginate: paginate, anchor: '' %}
-  anchor: optional URL hash to append to pagination links
+  anchor: optional URL hash to append to pagination links (omit or pass '' for list collections)
 {% endcomment %}
 {% if paginate.pages > 1 %}
-  <nav class="pagination-wrapper" role="navigation" aria-label="{{ 'general.pagination.label' | t }}">
+  <nav id="pagination" class="pagination-wrapper" role="navigation" aria-label="{{ 'general.pagination.label' | t }}" style="margin-top: 2rem;">
     <div class="pagination">
-      {{ paginate | default_pagination: anchor: anchor }}
+      {% if anchor != blank %}
+        {{ paginate | default_pagination: anchor: anchor }}
+      {% else %}
+        {{ paginate | default_pagination }}
+      {% endif %}
     </div>
   </nav>
 {% endif %}

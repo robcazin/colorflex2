@@ -502,8 +502,8 @@ const FURNITURE_BASE_INDEX = 1;
 const PATTERN_BASE_INDEX = 2;
 let isAppReady = false; // Flag to track if the app is fully initialized
 
-// Fallback: collections always treated as standard when collection.colorFlex is missing (e.g. old JSON).
-// Primary source of truth is Airtable: master row (-000) ColorFlex checkbox → collection.colorFlex in data.
+// When collection.colorFlex is missing (old JSON), we fall back to STANDARD_COLLECTION_NAMES and pattern data.
+// Airtable: master row (-000) ColorFlex checkbox → collection.colorFlex in data when using fetch.
 const STANDARD_COLLECTION_NAMES = ['abundance', 'pages', 'galleria', 'oceana', 'ancient-tiles'];
 
 /** Returns true if pattern should be treated as standard (no layer UI, pass-through). */
@@ -512,8 +512,11 @@ function patternIsStandard(pattern, collection) {
     const byData = !(pattern.colorFlex === true && pattern.layers && pattern.layers.length > 0);
     if (byData) return true;
     const col = collection || appState.selectedCollection;
-    // Airtable master row: ColorFlex checked = ColorFlex collection; unchecked or no column = standard
-    if (col && col.colorFlex !== true) return true;
+    // Explicitly standard collection (Airtable master row ColorFlex unchecked)
+    if (col && col.colorFlex === false) return true;
+    // Explicitly ColorFlex collection → show layer UI when pattern has layers
+    if (col && col.colorFlex === true) return false;
+    // Missing collection.colorFlex (old JSON): only treat as standard if name is in known list
     const colName = col?.name?.toLowerCase?.();
     return !!colName && STANDARD_COLLECTION_NAMES.includes(colName);
 }

@@ -44,7 +44,7 @@
         </li>
       {%- endfor -%}
     </ul>
-    {% render 'pagination', paginate: paginate %}
+    {% render 'pagination', paginate: paginate, anchor: 'pagination' %}
   {%- endpaginate -%}
 </div>
 {% schema %}
