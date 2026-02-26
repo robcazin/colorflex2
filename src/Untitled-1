@@ -1,0 +1,28 @@
+python scripts/bassett_psd_export.py "/Volumes/K3/jobs/saffron/colorFlex-shopify/data/mockups/bassett/sofa-with-pillows-mockup-1.psd" /Users/robcazin/Downloads/pantry.jpg --layers
+
+# Pattern must be a file (e.g. export from the app or use any PNG).
+./scripts/run_bassett_photoshop.sh \
+  "/Volumes/K3/jobs/saffron/colorFlex-shopify/data/mockups/bassett/sofa-with-pillows-mockup-1.psd" \
+  /path/to/pattern.png
+
+  --blanket "#RRGGBB" (default #336699)
+
+Third positional arg or --output /path/to/out.png for the PNG path 
+(default: colorflex2-bassett/bassett_psd_output/composite_photoshop.png 
+or ./bassett_psd_output/composite_photoshop.png)
+
+
+./scripts/run_bassett_photoshop.sh  "/Volumes/K3/jobs/saffron/colorFlex-shopify/data/mockups/bassett/sofa-with-pillows-mockup-1.psd" /Users/robcazin/Downloads/pantry.jpg --blanket "#336699" --output /Users/robcazin/Downloads/pantry-bassett.png
+
+
+
+Typical Bassett deploy:
+npm run build then ./deploy-shopify-cli.sh bassett.
+docs/COLORFLEX_BASSETT.md is updated with this.
+
+
+
+python scripts/bassett_psd_export.py /Volumes/K3/jobs/saffron/colorFlex-shopify/data/mockups/bassett/sofa-with-pillows-mockup-1.psd /Users/robcazin/Downloads/pantry.jpg --out-dir ./my_layers --blanket "#336699" --layers-only
+
+
+python scripts/export_psd_layers_raw.py /Volumes/K3/jobs/saffron/colorFlex-shopify/data/mockups/bassett/sofa-with-pillows-mockup-1.psd --out-dir ./my_layers

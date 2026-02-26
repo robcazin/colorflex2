@@ -1,0 +1,7 @@
+# PSD pipeline for Bassett (Smart Object → PNG)
+# Install: pip install -r requirements-psd.txt
+psd-tools>=1.9.0
+Pillow>=9.0.0
+
+# Optional: better compositing (vector, gradients)
+# psd-tools[composite]

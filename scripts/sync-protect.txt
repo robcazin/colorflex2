@@ -1,0 +1,8 @@
+# Files under src/ that are NOT overwritten when syncing theme-pull → src.
+# One path per line, relative to src/. Add any file you edit locally.
+# Lines starting with # are ignored.
+
+config/colorFlex-modes.js
+sections/main-product.liquid
+sections/footer.liquid
+snippets/card-product.liquid

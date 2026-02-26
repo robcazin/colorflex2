@@ -1,0 +1,13 @@
+{
+  "terminal.integrated.profiles.osx": {
+    "CF Main": {
+      "path": "/bin/zsh",
+      "cwd": "/Volumes/K3/jobs/colorflex2"
+    },
+    "CF Bassett": {
+      "path": "/bin/zsh",
+      "cwd": "/Volumes/K3/jobs/colorflex2-bassett"
+    }
+  },
+  "terminal.integrated.defaultProfile.osx": "CF Main"
+}

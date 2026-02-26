@@ -290,26 +290,35 @@ case "$DEPLOY_MODE" in
         ;;
 
     sections)
-        echo "📑 Deploying SECTIONS only..."
+        echo "📑 Deploying SECTIONS (and pagination snippet)..."
         echo ""
         echo "Files to deploy:"
-        echo "  - src/sections/main-product.liquid"
-        echo "  - src/sections/rich-text.liquid"
-        echo "  - src/sections/header.liquid (calculator icon in menu)"
-        echo "  - src/sections/header-group.json"
-        echo "  - src/sections/footer.liquid"
-        echo "  - src/sections/footer-group.json"
+        echo "  - sections/main-product.liquid"
+        echo "  - sections/rich-text.liquid"
+        echo "  - sections/header.liquid, header-group.json"
+        echo "  - sections/footer.liquid, footer-group.json"
+        echo "  - sections/main-collection-product-grid.liquid (collection product grid + pagination)"
+        echo "  - sections/main-list-collections.liquid (list collections + pagination)"
+        echo "  - snippets/pagination.liquid (required for collection/list pagination)"
         echo ""
-        read -p "Continue? (y/n) " -n 1 -r
-        echo
-        if [[ $REPLY =~ ^[Yy]$ ]]; then
+        if [[ "$2" == "--yes" ]]; then
+            DO_PUSH=true
+        else
+            read -p "Continue? (y/n) " -n 1 -r
+            echo
+            [[ $REPLY =~ ^[Yy]$ ]] && DO_PUSH=true
+        fi
+        if [[ "$DO_PUSH" == true ]]; then
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only sections/main-product.liquid --nodelete
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only sections/rich-text.liquid --nodelete
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only sections/header.liquid --nodelete
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only sections/header-group.json --nodelete
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only sections/footer.liquid --nodelete
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only sections/footer-group.json --nodelete
-            echo -e "${GREEN}✅ Sections deployed successfully${NC}"
+            ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only sections/main-collection-product-grid.liquid --nodelete
+            ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only sections/main-list-collections.liquid --nodelete
+            ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only snippets/pagination.liquid --nodelete
+            echo -e "${GREEN}✅ Sections and pagination snippet deployed successfully${NC}"
         fi
         ;;
 
