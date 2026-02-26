@@ -4,7 +4,7 @@
   anchor: optional URL hash to append to pagination links (omit or pass '' for list collections)
 {% endcomment %}
 {% if paginate.pages > 1 %}
-  <nav id="pagination" class="pagination-wrapper" role="navigation" aria-label="{{ 'general.pagination.label' | t }}" style="margin-top: 2rem;">
+  <nav id="pagination" class="pagination-wrapper" role="navigation" aria-label="{{ 'general.pagination.label' | t }}">
     <div class="pagination">
       {% if anchor != blank %}
         {{ paginate | default_pagination: anchor: anchor }}

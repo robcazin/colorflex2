@@ -97,3 +97,89 @@
 .collection__view-all a:not(.link) {
   margin-top: 1rem;
 }
+
+/* Pagination on collection and list-collections (mirrors .customer .pagination) */
+.pagination-wrapper {
+  margin-top: 2rem;
+  margin-bottom: 2rem;
+  width: 100%;
+}
+
+@media screen and (min-width: 990px) {
+  .pagination-wrapper {
+    margin-top: 3rem;
+    margin-bottom: 4rem;
+  }
+}
+
+.pagination-wrapper .pagination ul {
+  display: flex;
+  justify-content: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.pagination-wrapper .pagination li {
+  flex: 1 1;
+  max-width: 4rem;
+}
+
+.pagination-wrapper .pagination li:not(:last-child) {
+  margin-right: 1rem;
+}
+
+.pagination-wrapper .pagination li :first-child {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  height: 4rem;
+  width: 100%;
+  padding: 0;
+  text-decoration: none;
+  color: rgb(var(--color-foreground));
+  font-size: 1.4rem;
+}
+
+.pagination-wrapper .pagination li :first-child:hover {
+  text-decoration: underline;
+}
+
+.pagination-wrapper .pagination li :first-child .svg-wrapper {
+  height: 0.6rem;
+}
+
+.pagination-wrapper .pagination li:first-of-type .svg-wrapper {
+  margin-left: -0.2rem;
+  transform: rotate(90deg);
+}
+
+.pagination-wrapper .pagination li:last-of-type .svg-wrapper {
+  margin-right: -0.2rem;
+  transform: rotate(-90deg);
+}
+
+.pagination-wrapper .pagination li [aria-current]::after {
+  content: '';
+  display: block;
+  width: 2rem;
+  height: 0.01rem;
+  position: absolute;
+  bottom: 0.08rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: currentColor;
+}
+
+/* Product count on collection (visible for all filter types) */
+.collection .product-count-collection {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.collection .product-count-collection .product-count__text {
+  margin: 0;
+  font-size: 1.4rem;
+  color: rgba(var(--color-foreground), 0.75);
+}
