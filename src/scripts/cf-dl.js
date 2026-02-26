@@ -37,6 +37,12 @@ const COLLECTIONS_URL_PATH = '/data/collections/';
 const JSON_PATH_PREFIX = './data/collections/';
 const JSON_MOCKUP_PREFIX = './data/mockups/';
 
+// Collections that use mockupId (reference src/assets/mockups.json). New collections should use this.
+const COLLECTION_MOCKUP_IDS = {
+    'cabin-fever': 'white-dresser',
+    'hip-to-be-square': 'white-dresser'
+};
+
 /** Convert path from collections.json (./data/collections/... or ./data/mockups/...) to filesystem path */
 function jsonPathToFsPath(jsonPath) {
     if (!jsonPath || typeof jsonPath !== 'string') return jsonPath;
@@ -114,6 +120,32 @@ function cleanPatternName(str) {
         console.error(`[CLEAN NAME ERROR] Using fallback name for problematic input`);
         return 'Unnamed Pattern';
     }
+}
+
+/**
+ * Get curated colors from a placeholder record. Tries multiple Airtable field name variants
+ * (API may return field names with different casing) and handles string or array (e.g. linked records).
+ */
+function getCuratedColorsFromRecord(record) {
+    const fieldNames = ['CURATED COLORS', 'Curated Colors', 'Curated colors', 'curated colors'];
+    let raw = null;
+    for (const name of fieldNames) {
+        raw = record.get(name);
+        if (raw !== undefined && raw !== null && raw !== '') break;
+    }
+    if (raw === undefined || raw === null) return [];
+    if (Array.isArray(raw)) {
+        return raw
+            .map(item => typeof item === 'string' ? item : (item && typeof item === 'object' && (item.name || item.fields?.Name)) ? String(item.name || item.fields.Name) : String(item))
+            .join(', ')
+            .split(/[,|.\n]+/)
+            .map(c => c.trim())
+            .filter(Boolean);
+    }
+    return String(raw)
+        .split(/[,|.\n]+/)
+        .map(c => c.trim())
+        .filter(Boolean);
 }
 
 // Parse pattern number components (e.g., "01-01-101A" -> {category: "01", collection: "01", pattern: "101", variant: "A"})
@@ -510,11 +542,11 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
                     baseServerUrl + COLLECTIONS_URL_PATH.replace(/\/$/, ''), // Metafield: color_flex.base_url [url] (no trailing slash)
                     collection.name, // Metafield: color_flex.collection [single_line_text_field]
                     patternFileName, // Metafield: color_flex.pattern [single_line_text_field]
-                    pattern.layers.length.toString(), // Metafield: color_flex.layer_count [number_integer]
-                    pattern.layerLabels.join(','), // Metafield: color_flex.layer_labels [single_line_text_field]
-                    `${pattern.size[0]}x${pattern.size[1]}`, // Metafield: color_flex.pattern_size [single_line_text_field]
+                    (pattern.layers && Array.isArray(pattern.layers) ? pattern.layers : []).length.toString(), // Metafield: color_flex.layer_count [number_integer]
+                    (pattern.layerLabels && Array.isArray(pattern.layerLabels) ? pattern.layerLabels : []).join(','), // Metafield: color_flex.layer_labels [single_line_text_field]
+                    (pattern.size && pattern.size[0] != null && pattern.size[1] != null) ? `${pattern.size[0]}x${pattern.size[1]}` : '24x24', // Metafield: color_flex.pattern_size [single_line_text_field]
                     pattern.tilingType || 'straight', // Metafield: color_flex.tiling_type [single_line_text_field]
-                    pattern.designer_colors.join(','), // Metafield: color_flex.designer_colors [single_line_text_field]
+                    (pattern.designer_colors && Array.isArray(pattern.designer_colors) ? pattern.designer_colors : []).join(','), // Metafield: color_flex.designer_colors [single_line_text_field]
                     numberData.full, // Metafield: color_flex.pattern_number [single_line_text_field]
                     numberData.collection, // Metafield: color_flex.collection_sequence [single_line_text_field]
                     numberData.pattern, // Metafield: color_flex.pattern_sequence [single_line_text_field]
@@ -787,7 +819,8 @@ async function fetchNewPatternsOnly(collectionName, existingPatterns) {
         'wall-panels': '16 - WALL PANELS',
         'new-orleans': '17 - NEW ORLEANS',
         'folksie': '18 - FOLKSIE',
-        'ikats': '22 - IKATS'
+        'ikats': '22 - IKATS',
+        'cabin-fever': '16 - CABIN FEVER'
     };
 
     const tableName = tableMapping[collectionName.toLowerCase()];
@@ -999,7 +1032,8 @@ function getFallbackCollections() {
         { name: '17 - NEW ORLEANS' },
         { name: '18 - FOLKSIE' },
         { name: '21 - COORDINATES' }, // Background data only - not displayed as products
-        { name: '22 - IKATS' }
+        { name: '22 - IKATS' },
+        { name: '16 - CABIN FEVER' }
     ];
 }
 
@@ -1110,9 +1144,11 @@ const collections = await getCollectionsFromAirtable();
 
             let collectionCuratedColors = [];
             let collectionCoordinates = [];
-            let mockupName = JSON_MOCKUP_PREFIX + 'English-Countryside-Bedroom-1-W60H45.png';
+            let collectionColorFlex = false; // from master row (-000): checked = ColorFlex collection, unchecked/missing = standard
+            let mockupName = JSON_MOCKUP_PREFIX + 'English-Countryside-Bedroom-1-W60H40.png';
             let mockupShadowName = null;
             let mockupDims = { widthInches: 60, heightInches: 45 };
+            let collectionMockupId = null; // when set, use mockupId (mockups.json) instead of old mockup/mockupShadow
             let collectionThumbPath = JSON_PATH_PREFIX + baseName + '/' + baseName + '-thumb.jpg';
             let records;
 
@@ -1143,10 +1179,7 @@ const collections = await getCollectionsFromAirtable();
                 console.log(`[PROCEED] ACTIVE is enabled for ${baseName}, proceeding...`);
 
                 const thumbAttachments = placeholderRecord.get('THUMBNAIL') || [];
-                collectionCuratedColors = (placeholderRecord.get('CURATED COLORS') || "")
-                    .split(/[,|.\n]+/)
-                    .map(c => c.trim())
-                    .filter(Boolean);
+                collectionCuratedColors = getCuratedColorsFromRecord(placeholderRecord);
                 const coordField = placeholderRecord.get('COORDINATES') || [];
                 console.log(`[COORDINATES] Field for ${baseName}:`, coordField);
                 collectionCoordinates = coordField.map(coord => {
@@ -1183,10 +1216,21 @@ const collections = await getCollectionsFromAirtable();
                     } else {
                         mockupValues = [String(mockupField)];
                     }
-                    mockupName = JSON_MOCKUP_PREFIX + mockupValues[0] + '.png';
-                    if (mockupValues.length > 1) mockupShadowName = JSON_MOCKUP_PREFIX + mockupValues[1] + '.jpg';
+                    const first = (mockupValues[0] || '').trim();
+                    // If value looks like a mockupId (no path, no extension), use mockupId style (mockups.json)
+                    if (first && !/[\\/]/.test(first) && !/\.(png|jpg|jpeg|gif|webp)$/i.test(first)) {
+                        collectionMockupId = first;
+                    } else {
+                        mockupName = JSON_MOCKUP_PREFIX + (first || 'English-Countryside-Bedroom-1-W60H40') + '.png';
+                        if (mockupValues.length > 1) mockupShadowName = JSON_MOCKUP_PREFIX + mockupValues[1] + '.jpg';
+                    }
                 }
                 mockupDims = parseMockupDimensions(mockupName.split('/').pop());
+
+                // Collection-level ColorFlex: master row (-000) checkbox. Checked = ColorFlex collection, unchecked or no column = standard.
+                const masterColorFlex = placeholderRecord.get('ColorFlex') ?? placeholderRecord.get('Color-Flex');
+                collectionColorFlex = masterColorFlex === true;
+                console.log(`[COLORFLEX] Master row ColorFlex for ${baseName}: ${collectionColorFlex} (raw: ${masterColorFlex})`);
 
                 records = await base(tableName).select({ filterByFormula: "{ACTIVE} = 1" }).all();
             }
@@ -1212,10 +1256,7 @@ const collections = await getCollectionsFromAirtable();
 
             // When placeholder exists, metadata was set in the block above; when missing, defaults were set. Only re-read from placeholder here if present (avoid reference error).
             if (placeholderRecord) {
-                collectionCuratedColors = (placeholderRecord.get('CURATED COLORS') || "")
-                .split(/[,|.\n]+/)
-                .map(c => c.trim())
-                .filter(Boolean);
+                collectionCuratedColors = getCuratedColorsFromRecord(placeholderRecord);
 
             // Map COORDINATES field to 21 - COORDINATES
             const coordField = placeholderRecord.get('COORDINATES') || [];
@@ -1249,21 +1290,23 @@ const collections = await getCollectionsFromAirtable();
                 // Handle both string and array types for MOCKUP field
                 let mockupValues;
                 if (Array.isArray(mockupField)) {
-                    // If it's an array (linked records), extract the first value
                     mockupValues = mockupField.map(item => {
                         if (typeof item === 'string') return item;
-                        if (item && item.name) return item.name; // Handle linked record objects
+                        if (item && item.name) return item.name;
                         return String(item);
                     });
                 } else if (typeof mockupField === 'string') {
-                    // If it's a string, split by comma
                     mockupValues = mockupField.split(',').map(v => v.trim());
                 } else {
-                    // Fallback: convert to string
                     mockupValues = [String(mockupField)];
                 }
-                mockupName = JSON_MOCKUP_PREFIX + mockupValues[0] + '.png';
-                if (mockupValues.length > 1) mockupShadowName = JSON_MOCKUP_PREFIX + mockupValues[1] + '.jpg';
+                const first = (mockupValues[0] || '').trim();
+                if (first && !/[\\/]/.test(first) && !/\.(png|jpg|jpeg|gif|webp)$/i.test(first)) {
+                    collectionMockupId = first;
+                } else {
+                    mockupName = JSON_MOCKUP_PREFIX + (first || 'English-Countryside-Bedroom-1-W60H40') + '.png';
+                    if (mockupValues.length > 1) mockupShadowName = JSON_MOCKUP_PREFIX + mockupValues[1] + '.jpg';
+                }
             }
             mockupDims = parseMockupDimensions(mockupName.split('/').pop());
             }
@@ -1452,6 +1495,11 @@ const collections = await getCollectionsFromAirtable();
                 });
             }
 
+            // Prefer mockupId (references src/assets/mockups.json) over legacy mockup/mockupShadow paths
+            const resolvedMockupId = COLLECTION_MOCKUP_IDS[baseName] || collectionMockupId;
+            if (resolvedMockupId) {
+                console.log(`[MOCKUP] Using mockupId "${resolvedMockupId}" for ${baseName} (mockups.json)`);
+            }
             // Collection number for designer sort order (e.g. "22 - IKATS" -> 22; used by theme to order collections)
             const collectionNumber = parseInt(String(tableName).split(' - ')[0], 10) || 999;
             const newCollectionData = {
@@ -1461,10 +1509,11 @@ const collections = await getCollectionsFromAirtable();
                 collection_thumbnail: collectionThumbPath,
                 curatedColors: collectionCuratedColors,
                 coordinates: collectionCoordinates.length > 0 ? collectionCoordinates : null,
-                mockup: mockupName,
-                mockupShadow: mockupShadowName,
-                mockupWidthInches: mockupDims.widthInches,
-                mockupHeightInches: mockupDims.heightInches,
+                colorFlex: collectionColorFlex, // from Airtable master row (-000): true = ColorFlex collection, false = standard
+                ...(resolvedMockupId
+                    ? { mockupId: resolvedMockupId }
+                    : { mockup: mockupName, mockupShadow: mockupShadowName, mockupWidthInches: mockupDims.widthInches, mockupHeightInches: mockupDims.heightInches }
+                ),
                 patterns: jsonRecords
             };
 

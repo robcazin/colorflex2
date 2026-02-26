@@ -502,6 +502,22 @@ const FURNITURE_BASE_INDEX = 1;
 const PATTERN_BASE_INDEX = 2;
 let isAppReady = false; // Flag to track if the app is fully initialized
 
+// Fallback: collections always treated as standard when collection.colorFlex is missing (e.g. old JSON).
+// Primary source of truth is Airtable: master row (-000) ColorFlex checkbox → collection.colorFlex in data.
+const STANDARD_COLLECTION_NAMES = ['abundance', 'pages', 'galleria', 'oceana', 'ancient-tiles'];
+
+/** Returns true if pattern should be treated as standard (no layer UI, pass-through). */
+function patternIsStandard(pattern, collection) {
+    if (!pattern) return false;
+    const byData = !(pattern.colorFlex === true && pattern.layers && pattern.layers.length > 0);
+    if (byData) return true;
+    const col = collection || appState.selectedCollection;
+    // Airtable master row: ColorFlex checked = ColorFlex collection; unchecked or no column = standard
+    if (col && col.colorFlex !== true) return true;
+    const colName = col?.name?.toLowerCase?.();
+    return !!colName && STANDARD_COLLECTION_NAMES.includes(colName);
+}
+
 // Designer-requested order: sort collections by collection number (from tableName e.g. "22 - IKATS" -> 22)
 function getCollectionOrderNumber(c) {
     if (c == null) return 999;
@@ -2977,7 +2993,9 @@ window.switchCollection = function(collectionName) {
 
     // Update curated colors for the new collection (clear if none, else populate)
     const hasColorFlexPatterns = targetCollection.patterns?.some(p => p.colorFlex === true);
-    if (!hasColorFlexPatterns) {
+    const hasCuratedColors = (targetCollection.curatedColors || []).length > 0;
+    const isBassett = window.COLORFLEX_MODE === 'BASSETT';
+    if (!hasColorFlexPatterns && !(isBassett && hasCuratedColors)) {
         console.log('🧹 Clearing curated colors for standard collection');
         const curatedColorsContainer = document.getElementById('curatedColorsContainer');
         if (curatedColorsContainer) {
@@ -5586,12 +5604,12 @@ function loadSavedPatternToUI(pattern) {
     }
 }
 
-// Base URL for data/images: from theme (Backblaze) so main site never uses so-animation
+// Base URL for data/images: from theme (Backblaze). Fallback is Backblaze so main site never hits so-animation (no CORS there).
 function getColorFlexDataBaseUrl() {
     if (typeof window !== 'undefined' && window.COLORFLEX_DATA_BASE_URL) {
         return String(window.COLORFLEX_DATA_BASE_URL).replace(/\/$/, '');
     }
-    return 'https://so-animation.com/colorflex';
+    return 'https://s3.us-east-005.backblazeb2.com/cf-data';
 }
 
 // Path normalization: use theme data base URL (Backblaze); no so-animation on main site
@@ -5599,6 +5617,12 @@ var _colorFlexBaseUrlLogged = false;
 var _colorFlexLayerUrlLogCount = 0;
 var _colorFlexThumbUrlLogCount = 0;
 var _COLORFLEX_MAX_RESOLVED_LOGS = 8; // log first N layer/thumb URLs so you can verify Backblaze
+/** Use when loading an image with crossOrigin for canvas: avoids reusing a cached response that lacked CORS headers. */
+function urlForCorsFetch(url) {
+    if (!url || typeof url !== 'string') return url;
+    var sep = url.indexOf('?') >= 0 ? '&' : '?';
+    return url + sep + '_cf=cors';
+}
 function normalizePath(path) {
     if (!path || typeof path !== 'string') return path;
     var base = getColorFlexDataBaseUrl();
@@ -5610,12 +5634,19 @@ function normalizePath(path) {
     if (path.includes('shadow-dance_shadow_layer-1')) {
         path = path.replace(/shadow-dance_shadow_layer-1/g, 'shadow-dance_isshadow_layer-1');
     }
-    // If path is an absolute filesystem path (e.g. /Volumes/jobs/cf-data/collections/...), convert to relative data/collections/... so base URL applies correctly
-    if (path.startsWith('/') && !path.startsWith('//') && (path.indexOf('/collections/') !== -1 || path.indexOf('/data/') !== -1)) {
+    if (path.includes('English-Countryside-Bedroom-1-W60H45')) {
+        path = path.replace(/English-Countryside-Bedroom-1-W60H45/g, 'English-Countryside-Bedroom-1-W60H40');
+    }
+    // If path is an absolute filesystem path (e.g. /Volumes/jobs/cf-data/collections/... or .../mockups/...), convert to relative data/... so base URL applies correctly
+    if (path.startsWith('/') && !path.startsWith('//')) {
         if (path.indexOf('/data/collections/') !== -1) {
             path = path.substring(path.indexOf('/data/collections/') + 1);
+        } else if (path.indexOf('/data/mockups/') !== -1) {
+            path = path.substring(path.indexOf('/data/mockups/') + 1);
         } else if (path.indexOf('/collections/') !== -1) {
             path = 'data/' + path.substring(path.indexOf('/collections/') + 1);
+        } else if (path.indexOf('/mockups/') !== -1) {
+            path = 'data/' + path.substring(path.indexOf('/mockups/') + 1);
         }
     }
     var resolved;
@@ -5623,7 +5654,8 @@ function normalizePath(path) {
     if (path.startsWith('http://') || path.startsWith('https://')) {
         if (path.startsWith('https://so-animation.com/colorflex/')) {
             var rest = path.slice(26);
-            resolved = base + '/' + rest;
+            var encodedRest = rest.split('/').map(function(seg) { return encodeURIComponent(seg); }).join('/');
+            resolved = base + '/' + encodedRest;
             if (window.COLORFLEX_DEBUG_URLS || (_colorFlexLayerUrlLogCount + _colorFlexThumbUrlLogCount < _COLORFLEX_MAX_RESOLVED_LOGS && (path.indexOf('layers/') !== -1 || path.indexOf('thumbnails/') !== -1))) {
                 console.log('[ColorFlex] resolved (rewritten):', path, '→', resolved);
                 if (path.indexOf('layers/') !== -1) _colorFlexLayerUrlLogCount++; else if (path.indexOf('thumbnails/') !== -1) _colorFlexThumbUrlLogCount++;
@@ -5634,8 +5666,10 @@ function normalizePath(path) {
     }
     // Strip leading ./
     if (path.startsWith('./')) path = path.substring(2);
+    // Encode path segments so filenames with &, #, ?, etc. (e.g. stag-&-white-moth.jpg) work in URLs
+    var encodedPath = path.split('/').map(function(seg) { return encodeURIComponent(seg); }).join('/');
     // Single format: base URL + path (bucket has top-level data/ so path is data/collections/... or img/...)
-    resolved = base + '/' + path;
+    resolved = base + '/' + encodedPath;
     var isLayer = path.indexOf('layers/') !== -1;
     var isThumb = path.indexOf('thumbnails/') !== -1;
     if (window.COLORFLEX_DEBUG_URLS || ((isLayer || isThumb) && _colorFlexLayerUrlLogCount + _colorFlexThumbUrlLogCount < _COLORFLEX_MAX_RESOLVED_LOGS)) {
@@ -6188,12 +6222,17 @@ const dom = {
 
 // Validate DOM elements and report missing ones
 function validateDOMElements() {
+    var isBassett = typeof window !== "undefined" && window.COLORFLEX_MODE === "BASSETT";
     console.log("🔍 DOM Validation:");
     Object.entries(dom).forEach(([key, element]) => {
         if (element) {
             console.log(`  ✅ ${key}: found`);
         } else {
-            console.error(`  ❌ ${key}: NOT FOUND - missing element with id "${key}"`);
+            if (key === "coordinatesContainer" && isBassett) {
+                console.log("  ℹ️ coordinatesContainer: not in DOM (optional for Bassett)");
+            } else {
+                console.error(`  ❌ ${key}: NOT FOUND - missing element with id "${key}"`);
+            }
         }
     });
 }
@@ -9217,9 +9256,11 @@ const createColorInput = (label, id, initialColor, isBackground = false) => {
 // Populate curated colors in header
 function populateCuratedColors(colors) {
   console.log("🎨 populateCuratedColors called with colors:", colors?.length);
-  console.log("🔍 curatedColorsContainer element:", dom.curatedColorsContainer);
+  // Use live lookup so we find container even when dom was initialized before DOM ready (e.g. first load Bassett)
+  var container = dom.curatedColorsContainer || document.getElementById("curatedColorsContainer");
+  console.log("🔍 curatedColorsContainer element:", container);
 
-  if (!dom.curatedColorsContainer) {
+  if (!container) {
     console.log("ℹ️ curatedColorsContainer not in DOM (expected for simple mode pages)");
     return;
   }
@@ -9231,8 +9272,8 @@ function populateCuratedColors(colors) {
     return;
   }
 
-  // ⚠️ Standard = not explicitly ColorFlex (colorFlex: true + layers). BASSETT: always show collection curated colors on load.
-  const isStandardPattern = !(appState.currentPattern?.colorFlex === true && appState.currentPattern?.layers && (appState.currentPattern?.layers?.length || 0) > 0);
+  // ⚠️ Standard = not ColorFlex by data, or in a standard-only collection. BASSETT: always show collection curated colors on load.
+  const isStandardPattern = patternIsStandard(appState.currentPattern, appState.selectedCollection);
   const isBassett = window.COLORFLEX_MODE === 'BASSETT';
   console.log("🔍 CURATED COLORS CHECK:");
   console.log("  Pattern:", appState.currentPattern?.name);
@@ -9256,7 +9297,7 @@ function populateCuratedColors(colors) {
 
   console.log("✅ About to populate", colors.length, "curated colors");
 
-  dom.curatedColorsContainer.innerHTML = "";
+  container.innerHTML = "";
 
   // 🎟️ Run The Ticket Button - Only show for ColorFlex patterns
   if (true) {
@@ -9276,7 +9317,7 @@ function populateCuratedColors(colors) {
       const ticketNumber = prompt("🎟️ Enter the Sherwin-Williams Ticket Number:");
       if (ticketNumber) runStaticTicket(ticketNumber.trim());
     });
-    dom.curatedColorsContainer.appendChild(ticketCircle);
+    container.appendChild(ticketCircle);
   }
 
   // 🎨 Add curated color swatches
@@ -9359,7 +9400,7 @@ function populateCuratedColors(colors) {
       updateDisplays();
     });
 
-    dom.curatedColorsContainer.appendChild(circle);
+    container.appendChild(circle);
   });
 
   console.log("✅ Curated colors populated:", colors.length);
@@ -9451,7 +9492,7 @@ function insertTicketIndicator(ticketNumber) {
     indicator.style.marginRight = "8px";
     indicator.innerHTML = `TICKET<br>${ticketNumber}`;
 
-    dom.curatedColorsContainer.prepend(indicator);
+    container.prepend(indicator);
 }
 
 function promptTicketNumber() {
@@ -9606,17 +9647,30 @@ async function initializeApp() {
             console.log("🎯 Using embedded ColorFlex data");
             data = { collections: window.ColorFlexData.collections };
         } else {
-            console.log("📁 Loading collections from Shopify assets");
-            const collectionsUrl = window.ColorFlexAssets?.collectionsUrl || "/assets/collections.json";
-            const response = await fetch(collectionsUrl, { 
-                method: 'GET',
-                cache: "no-store",
-                headers: {
-                    'Content-Type': 'application/json',
+            // BASSETT: prefer full data from data base URL so we get all standard collections + Farmhouse (theme asset may be minimal)
+            let collectionsUrl = window.ColorFlexAssets?.collectionsUrl || "/assets/collections.json";
+            if (window.COLORFLEX_MODE === 'BASSETT') {
+                const dataBase = getColorFlexDataBaseUrl();
+                if (dataBase) {
+                    const remoteUrl = dataBase.replace(/\/$/, '') + '/data/collections.json';
+                    const remoteRes = await fetch(remoteUrl, { method: 'GET', cache: 'no-store' }).catch(function() { return null; });
+                    if (remoteRes && remoteRes.ok) {
+                        console.log("📁 BASSETT: Loading full collections from data base:", remoteUrl);
+                        const raw = await remoteRes.json();
+                        data = Array.isArray(raw) ? { collections: raw } : (raw && raw.collections ? raw : { collections: [] });
+                    }
                 }
-            });
-            if (!response.ok) throw new Error(`Failed to fetch collections: ${response.status}`);
-            data = await response.json();
+            }
+            if (!data || !data.collections) {
+                console.log("📁 Loading collections from Shopify assets");
+                const response = await fetch(collectionsUrl, {
+                    method: 'GET',
+                    cache: "no-store",
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!response.ok) throw new Error(`Failed to fetch collections: ${response.status}`);
+                data = await response.json();
+            }
         }
 
         // ADD THIS DEBUG:
@@ -9653,9 +9707,17 @@ async function initializeApp() {
                 window.ColorFlexMockups = mockupsData.mockups;
 
                 // Merge mockup data into collections that reference mockupId
+                const mockupsMap = mockupsData.mockups || {};
+                const resolveMockupById = (mockupId) => {
+                    if (!mockupId) return null;
+                    if (mockupsMap[mockupId]) return mockupsMap[mockupId];
+                    const lower = String(mockupId).toLowerCase();
+                    if (mockupsMap[lower]) return mockupsMap[lower];
+                    return Object.values(mockupsMap).find(m => (m && (m.id === mockupId || (m.id && m.id.toLowerCase() === lower)))) || null;
+                };
                 data.collections.forEach(collection => {
-                    if (collection.mockupId && mockupsData.mockups[collection.mockupId]) {
-                        const mockup = mockupsData.mockups[collection.mockupId];
+                    const mockup = resolveMockupById(collection.mockupId);
+                    if (mockup) {
                         // ✅ CRITICAL: Ensure mockup.image is a string, not an object
                         const mockupImagePath = typeof mockup.image === 'string' ? mockup.image : 
                                               (mockup.image?.path || mockup.image?.url || mockup.path || '');
@@ -9664,8 +9726,8 @@ async function initializeApp() {
                         } else {
                             collection.mockup = mockupImagePath;
                             collection.mockupShadow = typeof mockup.shadow === 'string' ? mockup.shadow : (mockup.shadow?.path || mockup.shadow?.url || '');
-                        collection.mockupWidthInches = mockup.widthInches;
-                        collection.mockupHeightInches = mockup.heightInches;
+                            collection.mockupWidthInches = mockup.widthInches;
+                            collection.mockupHeightInches = mockup.heightInches;
                             console.log(`  🔗 Merged mockup "${mockup.name}" into collection "${collection.name}" (path: ${mockupImagePath})`);
                         }
                     }
@@ -9743,6 +9805,21 @@ async function initializeApp() {
             
             // ✅ DEBUG: Log before filtering to verify mode detection
             console.log(`🔍 PRE-FILTER: isClothingMode=${isClothingMode}, isFurnitureMode=${isFurnitureMode}, collections=${appState.collections.length}`);
+            
+            // BASSETT: Exclude standard patterns/collections to avoid CORS on B2 thumbnails; show only ColorFlex.
+            if (window.COLORFLEX_MODE === 'BASSETT') {
+                const beforeBassett = appState.collections.length;
+                appState.collections = appState.collections.filter(c => {
+                    const colorFlexPatterns = (c.patterns || []).filter(p => p.colorFlex === true && p.layers && p.layers.length > 0);
+                    if (colorFlexPatterns.length === 0) {
+                        console.log("🚫 BASSETT: Excluding collection (no ColorFlex patterns):", c.name);
+                        return false;
+                    }
+                    c.patterns = colorFlexPatterns;
+                    return true;
+                });
+                console.log("🎨 BASSETT: Only ColorFlex collections shown:", appState.collections.length, "(excluded", beforeBassett - appState.collections.length, "standard-only)");
+            }
             
             if (isClothingMode) {
                 // ✅ CRITICAL: Filter to ONLY ColorFlex collections (must have colorFlex: true)
@@ -10071,6 +10148,11 @@ async function initializeApp() {
                              autoLoadCollectionName ||
                              modeDefaultCollection;
         
+        // BASSETT: prefer hip-to-be-square so we never default to another collection
+        if (window.COLORFLEX_MODE === 'BASSETT' && (!collectionName || collectionName === modeDefaultCollection)) {
+            collectionName = window.BASSETT_DEFAULT_COLLECTION || 'hip-to-be-square';
+        }
+        
         console.log("🔍 COLLECTION MATCHING DEBUG:");
         console.log("  Requested collection name:", collectionName);
         console.log("  Available collection names:", appState.collections.map(c => c.name));
@@ -10079,6 +10161,16 @@ async function initializeApp() {
             c => c && typeof c.name === 'string' && collectionName && typeof collectionName === 'string' && 
             c.name.trim().toLowerCase() === collectionName.toLowerCase()
         );
+        // BASSETT: try normalized name (hyphen/space) so "hip to be square" or "hip-to-be-square" both match
+        if (!selectedCollection && window.COLORFLEX_MODE === 'BASSETT' && collectionName && collectionName.toLowerCase().replace(/\s+/g, '-').indexOf('hip') !== -1) {
+            var want = (window.BASSETT_DEFAULT_COLLECTION || 'hip-to-be-square').toLowerCase().replace(/\s+/g, '-');
+            selectedCollection = appState.collections.find(function(c) {
+                if (!c || !c.name) return false;
+                var n = c.name.trim().toLowerCase().replace(/\s+/g, '-');
+                return n === want || n.replace(/-/g, ' ') === want.replace(/-/g, ' ');
+            });
+            if (selectedCollection) console.log("  ✅ BASSETT: matched default collection by normalized name:", selectedCollection.name);
+        }
         
         // ✅ If not found and collectionName has furniture/clothing variant suffix, try matching base name
         if (!selectedCollection && collectionName) {
@@ -10127,6 +10219,15 @@ async function initializeApp() {
                         console.error(`  ❌ No ColorFlex collections found! Using first collection: ${appState.collections[0]?.name}`);
                         selectedCollection = appState.collections[0];
                     }
+                } else if (window.COLORFLEX_MODE === 'BASSETT') {
+                    // BASSETT: prefer hip-to-be-square when lookup failed
+                    var bassettDefault = (window.BASSETT_DEFAULT_COLLECTION || 'hip-to-be-square').toLowerCase().replace(/\s+/g, '-');
+                    selectedCollection = appState.collections.find(function(c) {
+                        if (!c || !c.name) return false;
+                        var n = c.name.trim().toLowerCase().replace(/\s+/g, '-');
+                        return n === bassettDefault || n.replace(/-/g, ' ') === bassettDefault.replace(/-/g, ' ');
+                    }) || appState.collections[0];
+                    console.log("  BASSETT fallback:", selectedCollection?.name || "none");
                 } else {
                 selectedCollection = appState.collections[0];
                 console.log("  Using first collection as fallback (no collection specified)");
@@ -10424,6 +10525,17 @@ async function initializeApp() {
                 console.log('🔒 Skipping initial pattern load - auto-load already completed for:', window.autoLoadedPatternName);
             } else {
                 loadPatternData(selectedCollection, initialPatternId);  // ✅ Fixed: pass collection
+
+                // BASSETT: retry populating curated colors so the bar appears when container is in DOM (first load often runs before container exists)
+                if (window.COLORFLEX_MODE === 'BASSETT' && (appState.curatedColors?.length || selectedCollection.curatedColors?.length)) {
+                    [400, 1000, 2000].forEach(function(delay) {
+                        setTimeout(function() {
+                            var col = appState.selectedCollection || selectedCollection;
+                            var c = (appState.curatedColors && appState.curatedColors.length) ? appState.curatedColors : (col && col.curatedColors) || [];
+                            if (c.length && typeof populateCuratedColors === 'function') populateCuratedColors(c);
+                        }, delay);
+                    });
+                }
 
                 // Apply URL parameters for colors and scale after pattern loading
                 setTimeout(() => {
@@ -11165,8 +11277,29 @@ function populateLayerInputs(pattern = appState.currentPattern) {
       return;
     }
 
-    // ⚡ Standard = not explicitly ColorFlex (colorFlex: true + layers)
-    const isStandardPattern = !(pattern.colorFlex === true && pattern.layers && pattern.layers.length > 0);
+    // ⚡ Standard = not ColorFlex by data, or in a standard-only collection (farmhouse, oceana, abundance). Pass through — no layer inputs.
+    const isStandard = patternIsStandard(pattern, appState.selectedCollection);
+    if (isStandard) {
+      appState.layerInputs = [];
+      appState.currentLayers = [];
+      if (dom.layerInputsContainer) {
+        dom.layerInputsContainer.innerHTML = "";
+        dom.layerInputsContainer.style.display = "block";
+      }
+      const colorLayersHeading = document.getElementById("colorLayersHeading");
+      if (colorLayersHeading) colorLayersHeading.style.display = "none";
+      const colorLockBtn = document.getElementById("colorLockBtn");
+      if (colorLockBtn) colorLockBtn.style.display = "none";
+      if (dom.layerInputsContainer) {
+        const collectionDescription = appState.selectedCollection?.description || "";
+        dom.layerInputsContainer.style.gridTemplateColumns = "repeat(1, 1fr)";
+        dom.layerInputsContainer.innerHTML = `<div style="text-align:center;padding:30px 20px;color:#d4af37;font-family:'IM Fell English',serif;font-size:1.1rem;line-height:1.8;max-width:800px;margin:0 auto;">${collectionDescription ? collectionDescription + "<br><br>" : ""}Each pattern repeat is 24x24 inches and can be scaled to suite your need.</div>`;
+      }
+      handlePatternSelection(pattern.name, appState.colorsLocked);
+      addSaveButton();
+      console.log("📋 Standard pattern: passed through (no color layer inputs):", pattern.name);
+      return;
+    }
 
     // 🎨 SIMPLE MODE: Render into layerThumbnailsContainer with thumbnail images
     const thumbnailContainer = document.getElementById('layerThumbnailsContainer');
@@ -11343,78 +11476,15 @@ function populateLayerInputs(pattern = appState.currentPattern) {
       return;
     }
 
-    if (isStandardPattern) {
-      // Clear and hide layer controls
-      if (dom.layerInputsContainer) {
-        dom.layerInputsContainer.innerHTML = "";
-        dom.layerInputsContainer.style.display = 'block';
-      }
-
-      // Hide the "Color Layers" heading
-      const colorLayersHeading = document.getElementById('colorLayersHeading');
-      if (colorLayersHeading) {
-        colorLayersHeading.style.display = 'none';
-      }
-
-      // Hide the color lock button for standard patterns
-      console.log("🔍 COLOR LOCK BUTTON CHECK (Standard Pattern):");
-      console.log("  Pattern:", pattern.name);
-      console.log("  Has layers:", pattern.layers?.length || 0);
-
-      const colorLockBtn = document.getElementById('colorLockBtn');
-      console.log("  Button found:", !!colorLockBtn);
-
-      if (colorLockBtn) {
-        colorLockBtn.style.display = 'none';
-        console.log('✅ HIDING COLOR LOCK BUTTON: Standard pattern has no layers to customize');
-        console.log('  Button display style:', colorLockBtn.style.display);
-      } else {
-        console.warn('⚠️ Color lock button not found in DOM');
-      }
-
-      // Show description for standard patterns
-      if (dom.layerInputsContainer) {
-        // Get collection description (first sentence)
-        const collectionDescription = appState.selectedCollection?.description || '';
-
-        // Change to single column for standard patterns
-        dom.layerInputsContainer.style.gridTemplateColumns = 'repeat(1, 1fr)';
-
-        dom.layerInputsContainer.innerHTML = `
-          <div style="
-            text-align: center;
-            padding: 30px 20px;
-            color: #d4af37;
-            font-family: 'IM Fell English', serif;
-            font-size: 1.1rem;
-            line-height: 1.8;
-            max-width: 800px;
-            margin: 0 auto;
-          ">
-            ${collectionDescription ? `${collectionDescription}<br><br>` : ''}
-            Each pattern repeat is 24x24 inches and can be scaled to suite your need.
-          </div>
-        `;
-        dom.layerInputsContainer.style.display = 'block';
-      }
-
-      // Set up minimal state (but DON'T render yet - let loadPatternData render after scale restoration)
-      handlePatternSelection(pattern.name, appState.colorsLocked);
-      // REMOVED: updatePreview() and updateRoomMockup() calls here
-      // These will be called by loadPatternData() after scale restoration
-      console.log('⏭️  Standard pattern: Skipping preview render (will render after scale restoration)');
-      return; // Skip complex UI creation for ColorFlex patterns
-    }
-    
-    // Show layer inputs container and heading for patterns with layers
+    // Show layer inputs container and heading for patterns with layers (ColorFlex only; standard patterns returned above)
     if (dom.layerInputsContainer) {
       dom.layerInputsContainer.style.display = '';
     }
 
     // Show "Color Layers" heading only for ColorFlex patterns (not standard patterns)
+    const isStandardPattern = patternIsStandard(pattern, appState.selectedCollection);
     const colorLayersHeading = document.getElementById('colorLayersHeading');
     if (colorLayersHeading) {
-      const isStandardPattern = !(pattern.colorFlex === true && pattern.layers && pattern.layers.length > 0);
       colorLayersHeading.style.display = isStandardPattern ? 'none' : '';
       console.log(`📋 Color Layers heading: ${isStandardPattern ? 'hidden' : 'shown'} for pattern type`);
     }
@@ -11583,9 +11653,9 @@ function handlePatternSelection(patternName, preserveColors = false, colorLockBu
     }
     appState.currentPattern = pattern;
 
-    // ⚡ Standard = not explicitly ColorFlex (colorFlex: true + layers). Avoids compositing standard thumbnails.
-    const isStandardPattern = !(pattern.colorFlex === true && pattern.layers && pattern.layers.length > 0);
-    if (isStandardPattern) {
+    // ⚡ Standard = not ColorFlex by data, or in a standard-only collection. Avoids compositing standard thumbnails.
+    const isStandard = patternIsStandard(pattern, appState.selectedCollection);
+    if (isStandard) {
         // Standard patterns don't need layer management, just set minimal state
         appState.currentLayers = [{
             imageUrl: null,
@@ -13064,9 +13134,9 @@ let updatePreview = async () => {
             console.log(`   Pattern has ${patternToRender.layers.length} layers for color customization`);
         }
 
-        // ✅ Standard = not explicitly ColorFlex (colorFlex: true + layers)
-        const isStandardPattern = !(patternToRender.colorFlex === true && patternToRender.layers && patternToRender.layers.length > 0);
-        if (isStandardPattern) {
+        // ✅ Standard = not ColorFlex by data, or in a standard-only collection
+        const isStandard = patternIsStandard(patternToRender, appState.selectedCollection);
+        if (isStandard) {
             console.log("📋 Rendering standard pattern with thumbnail:", appState.currentPattern.name);
             
             if (appState.currentPattern.thumbnail) {
@@ -13076,10 +13146,12 @@ let updatePreview = async () => {
                 previewCanvas.width = canvasSize;
                 previewCanvas.height = canvasSize;
                 
-                // Load thumbnail as pattern image
+                // Load thumbnail as pattern image (crossOrigin required for canvas draw)
+                const thumbUrl = urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));
                 const patternImg = new Image();
                 patternImg.crossOrigin = "Anonymous";
-                patternImg.src = normalizePath(appState.currentPattern.thumbnail);
+                patternImg.src = thumbUrl;
+                let usedFallback = false;
                 
                 await new Promise((resolve) => {
                     patternImg.onload = () => {
@@ -13189,17 +13261,34 @@ let updatePreview = async () => {
                         resolve();
                     };
                     patternImg.onerror = () => {
-                        console.error("❌ Failed to load standard pattern thumbnail");
+                        console.error("❌ Failed to load standard pattern thumbnail (CORS or 404); falling back to img display");
+                        usedFallback = true;
+                        // Fallback: show thumbnail in <img> without crossOrigin so it can display even when CORS blocks canvas
+                        const fallbackImg = document.createElement("img");
+                        fallbackImg.src = thumbUrl;
+                        fallbackImg.alt = appState.currentPattern.name || "Pattern";
+                        fallbackImg.style.cssText = "max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;margin:0 auto;background:#000;";
+                        dom.preview.innerHTML = "";
+                        dom.preview.style.width = canvasSize + "px";
+                        dom.preview.style.height = canvasSize + "px";
+                        dom.preview.style.backgroundColor = "#000";
+                        dom.preview.style.display = "flex";
+                        dom.preview.style.alignItems = "center";
+                        dom.preview.style.justifyContent = "center";
+                        dom.preview.appendChild(fallbackImg);
                         resolve();
+                        return;
                     };
                 });
                 
-                // Use same display setup as regular ColorFlex patterns
-                dom.preview.innerHTML = '';
-                dom.preview.appendChild(previewCanvas);
-                dom.preview.style.width = `${canvasSize}px`;
-                dom.preview.style.height = `${canvasSize}px`;
-                dom.preview.style.backgroundColor = "#000";
+                // Use same display setup as regular ColorFlex patterns (only if we didn't use CORS fallback)
+                if (!usedFallback) {
+                    dom.preview.innerHTML = '';
+                    dom.preview.appendChild(previewCanvas);
+                    dom.preview.style.width = `${canvasSize}px`;
+                    dom.preview.style.height = `${canvasSize}px`;
+                    dom.preview.style.backgroundColor = "#000";
+                }
 
                 if (appState.currentPattern.name && dom.patternName) {
                     dom.patternName.innerHTML = appState.currentPattern.name + formatPatternInfo(appState.currentPattern);
@@ -13276,8 +13365,8 @@ let updatePreview = async () => {
             const backgroundLayer = appState.currentLayers[backgroundLayerIndex];
 
             // Skip color lookup for standard patterns - use fixed dark background
-            const isStandardPattern = !(appState.currentPattern.colorFlex === true && appState.currentPattern.layers && appState.currentPattern.layers.length > 0);
-            if (isStandardPattern) {
+            const isStandardBg = patternIsStandard(appState.currentPattern, appState.selectedCollection);
+            if (isStandardBg) {
                 backgroundColor = "#000"; // Black background for standard patterns
                 console.log(`📋 Standard pattern using fixed dark background (no color lookup)`);
             } else {
@@ -13680,23 +13769,8 @@ function loadImage(src, highPriority = true) {
 }
 
 
-// Bassett: build a tiled pattern (like a mockup background), then composite with your
-// extracted PSD layers. Layers with DSPL get the pattern warped via displacement; others
-// are drawn as-is (image) or tinted (blanket = second ColorFlex color). Order = back to front.
+// Bassett: one folder (sofa-with-pillow-1). beauty.png, sofa_disp.png, pillow1–3_disp.png
 var BASSETT_LAYER_STACK = [
-  { id: 'background', file: 'Background.png', type: 'image', colorFlexIndex: null },
-  { id: 'sofa-displaced', displacementFile: 'SOFA-DSPL.png', type: 'pattern-displaced' },
-  { id: 'sofa-shadows', file: 'SOFA-SHADOWS.png', type: 'image' },
-  { id: 'blanket', file: 'BLANKET-BACKGROUND.png', type: 'solid-color', colorFlexIndex: 1 },
-  { id: 'pillow2', file: 'PILLOW-2.png', type: 'image' },
-  { id: 'pillow2-displaced', displacementFile: 'PILLOW-2-DSPL.png', type: 'pattern-displaced' },
-  { id: 'pillow2-shadows', file: 'PILLOW-2-SHADOWS.png', type: 'image' },
-  { id: 'pillow1', file: 'PILLOW-1.png', type: 'image' },
-  { id: 'pillow1-displaced', displacementFile: 'PILLOW-1-DSPL.png', type: 'pattern-displaced' },
-  { id: 'pillow1-shadows', file: 'PILLOW-1-SHADOWS.png', type: 'image' }
-];
-// Test mockup: data/mockups/bassett — beauty.png (background) + sofa_disp.png + pillow1_disp.png, pillow2_disp.png, pillow3_disp.png
-var BASSETT_LAYER_STACK_TEST = [
   { id: 'background', file: 'beauty.png', type: 'image', colorFlexIndex: null },
   { id: 'sofa-displaced', displacementFile: 'sofa_disp.png', type: 'pattern-displaced' },
   { id: 'pillow1-displaced', displacementFile: 'pillow1_disp.png', type: 'pattern-displaced' },
@@ -13704,19 +13778,20 @@ var BASSETT_LAYER_STACK_TEST = [
   { id: 'pillow3-displaced', displacementFile: 'pillow3_disp.png', type: 'pattern-displaced' }
 ];
 function getBassettLayersBaseUrl() {
-  if (typeof window !== 'undefined' && window.BASSETT_LAYERS_BASE_URL) return window.BASSETT_LAYERS_BASE_URL;
-  if (typeof window !== 'undefined' && window.BASSETT_USE_TEST_LAYERS) return '/data/mockups/bassett';
-  return '/data/mockups/bassett/sofa-with-pillows-mockup-2';
+  if (typeof window !== 'undefined' && window.BASSETT_LAYERS_BASE_URL) {
+    var u = (window.BASSETT_LAYERS_BASE_URL || '').toString().trim();
+    if (u && u.indexOf('http') === 0) return u;
+  }
+  return 'https://s3.us-east-005.backblazeb2.com/cf-data/data/mockups/bassett/sofa-with-pillow-1';
 }
 function getBassettLayerStack() {
   if (typeof window !== 'undefined' && window.BASSETT_LAYER_STACK) return window.BASSETT_LAYER_STACK;
-  if (typeof window !== 'undefined' && window.BASSETT_USE_TEST_LAYERS) return BASSETT_LAYER_STACK_TEST;
   return BASSETT_LAYER_STACK;
 }
 function bassettDisplaceInWorker(patternBitmap, displacementMapBitmap, strength) {
   strength = strength != null ? strength : 1;
   var origin = (typeof window !== 'undefined' && window.location && window.location.origin) ? window.location.origin.replace(/\/$/, '') : '';
-  var workerUrl = (typeof window !== 'undefined' && window.BASSETT_DISPLACE_WORKER_URL) || (origin + '/assets/workers/pattern-displace.worker.js');
+  var workerUrl = (typeof window !== 'undefined' && window.BASSETT_DISPLACE_WORKER_URL) || (origin + '/assets/pattern-displace.worker.js');
   return new Promise(function(resolve, reject) {
     var w = new Worker(workerUrl);
     var onMsg = function(e) {
@@ -13738,11 +13813,18 @@ function bassettDisplaceInWorker(patternBitmap, displacementMapBitmap, strength)
   });
 }
 
-// Bassett room mockup: 800×800 display, 1600×1600 full-res; zoom on click; optional wall pattern + pillow solid colors.
+// Bassett room mockup: square container (up to 800×800); image fits inside until click opens full-size overlay. Optional wall pattern + pillow solid colors.
 async function updateBassettRoomMockup() {
   if (!dom.roomMockup) return;
-  const displaySize = 800;
-  const internalSize = 1600;
+  dom.roomMockup.style.setProperty("width", "min(800px, 100%)", "important");
+  dom.roomMockup.style.setProperty("aspect-ratio", "1", "important");
+  dom.roomMockup.style.setProperty("height", "auto", "important");
+  dom.roomMockup.style.setProperty("max-height", "min(800px, 80vh)", "important");
+  dom.roomMockup.style.setProperty("overflow", "hidden", "important");
+  dom.roomMockup.style.setProperty("display", "flex", "important");
+  dom.roomMockup.style.setProperty("align-items", "center", "important");
+  dom.roomMockup.style.setProperty("justify-content", "center", "important");
+  const internalSize = 2000; // 2K; display scales down to fit container
   const dpr = window.devicePixelRatio || 1;
   const resultUrl = appState.bassettResultUrl;
   const resultPatternId = appState.bassettResultPatternId;
@@ -13791,21 +13873,70 @@ async function updateBassettRoomMockup() {
       ctx.imageSmoothingEnabled = true;
       ctx.imageSmoothingQuality = "high";
       ctx.drawImage(img, 0, 0, internalSize, internalSize);
-      const zoomed = !!(appState.bassettMockupZoomed);
-      canvas.style.width = (zoomed ? internalSize : displaySize) + "px";
-      canvas.style.height = (zoomed ? internalSize : displaySize) + "px";
-      canvas.style.display = "block";
-      canvas.style.margin = "0 auto";
-      canvas.style.cursor = zoomed ? "zoom-out" : "zoom-in";
+      // Bassett: fit image inside the square container (container may be <800px on narrow viewports)
       dom.roomMockup.innerHTML = "";
       dom.roomMockup.appendChild(canvas);
-      dom.roomMockup.style.cursor = zoomed ? "zoom-out" : "zoom-in";
+      canvas.style.display = "block";
+      canvas.style.flexShrink = "0";
+      canvas.style.cursor = "zoom-in";
+      dom.roomMockup.style.cursor = "zoom-in";
+      function sizeCanvasToContainer() {
+        var boxW = dom.roomMockup.clientWidth;
+        var boxH = dom.roomMockup.clientHeight;
+        var fitSize = Math.max(1, Math.min(boxW, boxH, 800));
+        canvas.style.width = fitSize + "px";
+        canvas.style.height = fitSize + "px";
+      }
+      sizeCanvasToContainer();
+      requestAnimationFrame(function() { requestAnimationFrame(sizeCanvasToContainer); });
       canvas._bassettZoomClick = function() {
-        appState.bassettMockupZoomed = !appState.bassettMockupZoomed;
-        canvas.style.width = (appState.bassettMockupZoomed ? internalSize : displaySize) + "px";
-        canvas.style.height = (appState.bassettMockupZoomed ? internalSize : displaySize) + "px";
-        canvas.style.cursor = appState.bassettMockupZoomed ? "zoom-out" : "zoom-in";
-        dom.roomMockup.style.cursor = canvas.style.cursor;
+        const overlay = document.createElement("div");
+        overlay.id = "bassettMockupOverlay";
+        overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;overflow:hidden;";
+        const scrollWrap = document.createElement("div");
+        scrollWrap.style.cssText = "display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;overflow:auto;max-width:100%;max-height:100%;";
+        const fullImg = new Image();
+        fullImg.src = imageUrl;
+        fullImg.style.maxWidth = "90vmin";
+        fullImg.style.maxHeight = "90vmin";
+        fullImg.style.width = "auto";
+        fullImg.style.height = "auto";
+        fullImg.style.cursor = "pointer";
+        fullImg.alt = "Room mockup (click for full resolution)";
+        scrollWrap.appendChild(fullImg);
+        overlay.appendChild(scrollWrap);
+        let isFullRes = false;
+        const close = function() {
+          overlay.remove();
+          document.body.style.overflow = "";
+        };
+        overlay.addEventListener("click", function(e) {
+          if (e.target === overlay) close();
+        });
+        fullImg.addEventListener("click", function(e) {
+          e.stopPropagation();
+          if (!isFullRes) {
+            const w = fullImg.naturalWidth || fullImg.width;
+            const h = fullImg.naturalHeight || fullImg.height;
+            if (w && h) {
+              isFullRes = true;
+              fullImg.style.maxWidth = "none";
+              fullImg.style.maxHeight = "none";
+              fullImg.style.width = w + "px";
+              fullImg.style.height = h + "px";
+              fullImg.alt = "Room mockup full resolution (click to close)";
+              scrollWrap.style.alignItems = "flex-start";
+              scrollWrap.style.justifyContent = "flex-start";
+            }
+          } else {
+            close();
+          }
+        });
+        fullImg.onload = function() {
+          fullImg.title = "Click for full resolution, click again to close";
+        };
+        document.body.style.overflow = "hidden";
+        document.body.appendChild(overlay);
       };
       canvas.addEventListener("click", canvas._bassettZoomClick);
     };
@@ -13837,16 +13968,30 @@ async function updateBassettRoomMockup() {
   // Try layer-stack composite first (no PSD): exported layers + displacement worker
   if (appState.currentPattern && !appState.bassettRenderPending) {
     const thumb = appState.currentPattern.thumbnail || "";
-    const patternUrl = thumb.startsWith("http") ? thumb : (window.location.origin + (thumb.startsWith("/") ? thumb : "/" + (thumb.replace(/^\.\//, ""))));
+    const patternUrl = thumb.startsWith("http") ? thumb : normalizePath(thumb);
     const blanketColor = currentBlanketColor;
-    const baseUrl = getBassettLayersBaseUrl();
+    var baseUrl = getBassettLayersBaseUrl();
+    if (!baseUrl || String(baseUrl).indexOf('http') !== 0) {
+      baseUrl = 'https://s3.us-east-005.backblazeb2.com/cf-data/data/mockups/bassett/sofa-with-pillow-1';
+    }
 
     appState.bassettRenderPending = true;
-    dom.roomMockup.innerHTML = "";
-    const loadingWrap = document.createElement("div");
-    loadingWrap.style.cssText = "width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#e2e8f0;padding:1rem;text-align:center;box-sizing:border-box;";
-    loadingWrap.innerHTML = "<p style='margin-bottom:0.5rem;'>Generating room preview…</p><p style='font-size:0.85rem;color:#94a3b8;'>Using layers + displacement</p>";
-    dom.roomMockup.appendChild(loadingWrap);
+    var hasExistingContent = dom.roomMockup.children.length > 0;
+    if (hasExistingContent) {
+      var overlay = document.createElement("div");
+      overlay.id = "bassett-mockup-updating-overlay";
+      overlay.setAttribute("aria-busy", "true");
+      overlay.style.cssText = "position:absolute;inset:0;background:rgba(0,0,0,0.35);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e2e8f0;font-size:0.9rem;pointer-events:none;transition:opacity 0.2s ease;";
+      overlay.innerHTML = "<span style='color:#d4af37;'>Updating…</span>";
+      dom.roomMockup.style.position = dom.roomMockup.style.position || "relative";
+      dom.roomMockup.appendChild(overlay);
+    } else {
+      dom.roomMockup.innerHTML = "";
+      var loadingWrap = document.createElement("div");
+      loadingWrap.style.cssText = "width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#e2e8f0;padding:1rem;text-align:center;box-sizing:border-box;";
+      loadingWrap.innerHTML = "<p style='margin-bottom:0.5rem;'>Generating room preview…</p><p style='font-size:0.85rem;color:#94a3b8;'>Using layers + displacement</p>";
+      dom.roomMockup.appendChild(loadingWrap);
+    }
 
     var layerCompositeOk = false;
     try {
@@ -13881,6 +14026,13 @@ async function updateBassettRoomMockup() {
       }
       if (!patternImg) patternImg = await loadImg(patternUrl);
       var stack = getBassettLayerStack();
+      var fromWindow = (typeof window !== 'undefined' && window.BASSETT_LAYER_STACK === stack);
+      console.log("[Bassett composite] stack source:", fromWindow ? "window.BASSETT_LAYER_STACK" : "CFM internal (rebuild + deploy Bassett bundle for transforms)", "layers:", stack.length);
+      if (!fromWindow && typeof window !== 'undefined') console.warn("[Bassett] Run: npm run build -- --env mode=bassett then deploy assets, or use ./deploy-shopify-cli.sh bassett");
+      for (var di = 0; di < stack.length; di++) {
+        var l = stack[di];
+        if (l && l.transform) console.log("  layer", l.id || di, "transform:", JSON.stringify(l.transform));
+      }
       var firstImageLayer = null;
       for (var si = 0; si < stack.length; si++) {
         if (stack[si].type === 'image' && stack[si].file) {
@@ -13919,6 +14071,24 @@ async function updateBassettRoomMockup() {
         return normalizeBlanketHex(c);
       }
 
+      function applyLayerTransform(ctx, transform, outW, outH) {
+        if (!transform || typeof transform !== 'object') return;
+        var cx = outW / 2;
+        var cy = outH / 2;
+        ctx.translate(cx, cy);
+        if (transform.rotation != null && transform.rotation !== 0) {
+          var rad = (transform.rotation * Math.PI) / 180;
+          ctx.rotate(rad);
+        }
+        var sx = transform.scaleX != null ? transform.scaleX : (transform.scale != null ? transform.scale : 1);
+        var sy = transform.scaleY != null ? transform.scaleY : (transform.scale != null ? transform.scale : 1);
+        if (sx !== 1 || sy !== 1) ctx.scale(sx, sy);
+        ctx.translate(-cx, -cy);
+        var tx = transform.translateX != null ? transform.translateX : 0;
+        var ty = transform.translateY != null ? transform.translateY : 0;
+        if (tx !== 0 || ty !== 0) ctx.translate(tx, ty);
+      }
+
       for (var li = 0; li < stack.length; li++) {
         var layer = stack[li];
         ctx.globalAlpha = 1;
@@ -13939,6 +14109,10 @@ async function updateBassettRoomMockup() {
             var wctx = wallTile.getContext("2d");
             wctx.imageSmoothingEnabled = true;
             wctx.imageSmoothingQuality = "high";
+            if (layer.transform && typeof layer.transform === 'object') {
+              wctx.save();
+              applyLayerTransform(wctx, layer.transform, ww, wh);
+            }
             var reps = Math.max(4, Math.ceil(outW / ww) + 2);
             var tw = ww / 4;
             var th = wh / 4;
@@ -13947,6 +14121,7 @@ async function updateBassettRoomMockup() {
                 wctx.drawImage(patternImg, tx, ty, tw, th);
               }
             }
+            if (layer.transform && typeof layer.transform === 'object') wctx.restore();
             wctx.globalCompositeOperation = "destination-in";
             wctx.drawImage(wallMaskImg, 0, 0);
             ctx.drawImage(wallTile, 0, 0, outW, outH);
@@ -13989,6 +14164,10 @@ async function updateBassettRoomMockup() {
             var tctx = tileCanvas.getContext("2d");
             tctx.imageSmoothingEnabled = true;
             tctx.imageSmoothingQuality = "high";
+            if (layer.transform && typeof layer.transform === 'object') {
+              tctx.save();
+              applyLayerTransform(tctx, layer.transform, dw, dh);
+            }
             var reps = 4;
             var tw = dw / reps;
             var th = dh / reps;
@@ -13997,6 +14176,7 @@ async function updateBassettRoomMockup() {
                 tctx.drawImage(patternImg, tx, ty, tw, th);
               }
             }
+            if (layer.transform && typeof layer.transform === 'object') tctx.restore();
             tctx.globalCompositeOperation = "destination-in";
             tctx.drawImage(dispImg, 0, 0);
             ctx.globalCompositeOperation = "multiply";
@@ -14044,7 +14224,7 @@ async function updateBassettRoomMockup() {
   // Fallback: try API (PSD pipeline) if layer composite didn't run or failed
   if (appState.currentPattern && !appState.bassettRenderPending) {
     const thumb = appState.currentPattern.thumbnail || "";
-    const patternUrl = thumb.startsWith("http") ? thumb : (window.location.origin + (thumb.startsWith("/") ? thumb : "/" + (thumb.replace(/^\.\//, ""))));
+    const patternUrl = thumb.startsWith("http") ? thumb : normalizePath(thumb);
     const blanketColor = currentBlanketColor;
 
     appState.bassettRenderPending = true;
@@ -14190,7 +14370,7 @@ let updateRoomMockup = async () => {
     ctx.imageSmoothingQuality = "high";
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // draw in CSS px
 
-    const isStandardPattern = !(appState.currentPattern.colorFlex === true && appState.currentPattern.layers && appState.currentPattern.layers.length > 0);
+    const isStandardPattern = patternIsStandard(appState.currentPattern, appState.selectedCollection);
 
     // ✅ CORE FUNCTION PROTECTION: updateRoomMockup() is WALLPAPER ONLY
     // If clothing or furniture mode detected, exit early - routing happens in callers
@@ -14236,7 +14416,32 @@ let updateRoomMockup = async () => {
 
         const patternImg = new Image();
         patternImg.crossOrigin = "Anonymous";
-        patternImg.src = normalizePath(appState.currentPattern.thumbnail);
+        patternImg.src = urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));
+
+        function drawStandardRoomWithOptionalShadow() {
+          const fit = scaleToFit(roomImg, cssW, cssH);
+          ctx.drawImage(roomImg, fit.x, fit.y, fit.width, fit.height);
+          if (appState.selectedCollection?.mockupShadow) {
+            const shadowOverlay = new Image();
+            shadowOverlay.crossOrigin = "Anonymous";
+            shadowOverlay.src = normalizePath(appState.selectedCollection.mockupShadow);
+            shadowOverlay.onload = () => {
+              ctx.globalCompositeOperation = "multiply";
+              const shadowFit = scaleToFit(shadowOverlay, cssW, cssH);
+              ctx.drawImage(shadowOverlay, shadowFit.x, shadowFit.y, shadowFit.width, shadowFit.height);
+              ctx.globalCompositeOperation = "source-over";
+              dom.roomMockup.innerHTML = "";
+              dom.roomMockup.appendChild(canvas);
+            };
+            shadowOverlay.onerror = () => {
+              dom.roomMockup.innerHTML = "";
+              dom.roomMockup.appendChild(canvas);
+            };
+          } else {
+            dom.roomMockup.innerHTML = "";
+            dom.roomMockup.appendChild(canvas);
+          }
+        }
 
         patternImg.onload = () => {
         // ✅ FIX: Use same default as ColorFlex patterns (1 = normal scale)
@@ -14298,6 +14503,10 @@ let updateRoomMockup = async () => {
             dom.roomMockup.innerHTML = "";
             dom.roomMockup.appendChild(canvas);
           }
+        };
+        patternImg.onerror = () => {
+          console.warn("❌ Room mockup: standard pattern thumbnail failed (CORS or 404). Showing room without pattern.");
+          drawStandardRoomWithOptionalShadow();
         };
       };
       return;

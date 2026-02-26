@@ -307,6 +307,13 @@
         media="print"
         onload="this.media='all'"
       >
+      {%- comment -%} Fallback: readable search results if component-predictive-search.css is missing (404 returns text/html) {%- endcomment -%}
+      <style>
+        .predictive-search__results-groups-wrapper,
+        #predictive-search-results,
+        .predictive-search__result-group { background: var(--color-background, #fff); color: var(--color-foreground, #1a1a1a); }
+        .predictive-search__item { color: inherit; }
+      </style>
     {%- endif -%}
 
     <!-- ColorFlex Shopify Configuration -->
@@ -321,12 +328,10 @@
       window.SHOPIFY_STORE = 'f63bae-86'; // Your store name (without .myshopify.com)
       
       // API server URL for thumbnail uploads (avoids CORS issues)
-      // Change colorflex_api_base in Liquid below for local vs production:
-      //   - Local (API on your machine): assign colorflex_api_base = 'http://localhost:3001'
-      //   - ngrok (tunnel to local): assign colorflex_api_base = 'https://YOUR-NGROK-URL.ngrok-free.dev'
-      //   - Production: assign colorflex_api_base = 'https://colorflex-api.railway.app' or your deployed URL
-      {% assign colorflex_api_base = 'http://localhost:3001' %}
-      window.COLORFLEX_API_URL = '{{ colorflex_api_base | strip }}/api/upload-thumbnail';
+      // Production: leave blank so live site doesn't point to localhost. For local dev, set in theme.liquid to 'http://localhost:3001'
+      // Or use a deployed API: 'https://colorflex-api.railway.app'
+      {% assign colorflex_api_base = '' %}
+      {% if colorflex_api_base != blank %}window.COLORFLEX_API_URL = '{{ colorflex_api_base | strip }}/api/upload-thumbnail';{% endif %}
       
       console.log('🔧 SHOPIFY_STORE set:', window.SHOPIFY_STORE);
       console.log('🔧 SHOPIFY_ADMIN_API_TOKEN set:', window.SHOPIFY_ADMIN_API_TOKEN ? 'YES (' + window.SHOPIFY_ADMIN_API_TOKEN.substring(0, 15) + '...)' : 'NO');

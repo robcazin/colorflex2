@@ -62,23 +62,26 @@ ColorFlex Collection Update Script
 Usage: $0 <command> <collection-name>
 
 Commands:
+  fetch       - Update collection state only: fetch from Airtable and write collections.json (colorFlex, mockupId, etc.). No CSV, no images, no Shopify.
   complete    - Full pipeline: fetch data + download images + deploy server + generate CSV + create Shopify products
   metadata    - Data-only update: fetch data + generate CSV (no images, no deploy, no product creation)
   images      - Images-only update: download images + deploy server (no CSV generation, no product creation)
   add-pattern - Incremental: check for NEW patterns only, append to collections.json, download + deploy new images, update CSV + create NEW Shopify products
 
 Collection Names:
-  abundance, english-cottage, ancient-tiles, botanicals, bombay, coordinates,
-  coverlets, dished-up, farmhouse, folksie, galleria, geometry, ikats,
-  new-orleans, pages, silk-road, traditions
+  abundance, cabin-fever, english-cottage, ancient-tiles, botanicals, bombay,
+  coordinates, coverlets, dished-up, farmhouse, folksie, galleria, geometry,
+  hip-to-be-square, ikats, new-orleans, pages, silk-road, traditions
   OR use 'all' to update all collections
 
 Examples:
+  $0 fetch all                # Refresh collection state from Airtable only (colorFlex, mockupId, etc.) - no CSV or uploads
   $0 complete abundance       # Complete abundance collection update + create Shopify products
   $0 metadata english-cottage # Generate CSV only for english-cottage (no images/deploy/products)
   $0 images botanicals         # Download and deploy images only for botanicals (no products)
   $0 add-pattern coordinates  # Check for new patterns in coordinates, append them + create NEW Shopify products
   $0 complete all             # Full update for all collections + create all Shopify products
+  $0 complete cabin-fever     # New or fixed collection: full fetch from Airtable (all patterns) + products
 
 Options:
   --skip-products             Skip Shopify product creation (manual CSV import instead)
@@ -298,31 +301,51 @@ deploy_mockups_to_server() {
 deploy_collections_to_shopify() {
     print_header "Deploying collections.json to Shopify"
 
-    # Check if collections.json exists (data path: Synology cf-data)
-    if [ ! -f "$COLLECTIONS_JSON_PATH" ]; then
-        print_error "collections.json not found at $COLLECTIONS_JSON_PATH"
+    # Use the most recently modified collections.json (fetch may have written to project data/ or DATA_PATH)
+    local source_file=""
+    if [ -f "$COLLECTIONS_JSON_PATH" ] && [ -f "./data/collections.json" ]; then
+        if [ "$COLLECTIONS_JSON_PATH" -nt "./data/collections.json" ]; then
+            source_file="$COLLECTIONS_JSON_PATH"
+        else
+            source_file="./data/collections.json"
+        fi
+        print_status "Using newer file: $source_file"
+    elif [ -f "$COLLECTIONS_JSON_PATH" ]; then
+        source_file="$COLLECTIONS_JSON_PATH"
+    elif [ -f "./data/collections.json" ]; then
+        source_file="./data/collections.json"
+        print_status "Using project data/collections.json (primary path not found)"
+    fi
+
+    if [ -z "$source_file" ] || [ ! -f "$source_file" ]; then
+        print_error "collections.json not found at $COLLECTIONS_JSON_PATH or ./data/collections.json"
         return 1
     fi
 
     # Check if deploy-shopify-cli.sh exists
     if [ ! -f "./deploy-shopify-cli.sh" ]; then
         print_error "deploy-shopify-cli.sh not found"
-        print_warning "You can manually upload $COLLECTIONS_JSON_PATH to Shopify assets"
+        print_warning "You can manually upload $source_file to Shopify assets"
         return 1
     fi
 
     print_status "Uploading collections.json to Shopify assets via CLI..."
 
-    # Copy collections.json from data path to src/assets/ for Shopify upload
-    cp "$COLLECTIONS_JSON_PATH" src/assets/collections.json
+    # Copy chosen source to both src/assets/ and project data/ so
+    # deploy-shopify-cli.sh data (which syncs data/ → src/assets/ before push) pushes the updated file
+    cp "$source_file" src/assets/collections.json
+    mkdir -p data
+    cp "$source_file" data/collections.json
+    print_status "Synced $(basename "$source_file") to src/assets/ and data/"
 
     # Use Shopify CLI to upload (--yes flag for non-interactive mode)
     if ./deploy-shopify-cli.sh data --yes; then
         print_status "Collections.json uploaded to Shopify successfully"
+        print_status "Verify in Shopify: Online Store → Themes → Current theme → Edit code → Assets → collections.json"
         return 0
     else
         print_error "Shopify upload failed"
-        print_warning "You can manually upload $COLLECTIONS_JSON_PATH to Shopify > Online Store > Themes > Assets"
+        print_warning "You can manually upload $source_file to Shopify > Online Store > Themes > Assets"
         return 1
     fi
 }
@@ -473,6 +496,13 @@ case $COMMAND in
         GENERATE_CSV=true
         INCREMENTAL_MODE=false
         CREATE_PRODUCTS=true
+        ;;
+    fetch)
+        FORCE_DOWNLOAD=false
+        DEPLOY=false
+        GENERATE_CSV=false
+        INCREMENTAL_MODE=false
+        CREATE_PRODUCTS=false
         ;;
     metadata)
         FORCE_DOWNLOAD=false

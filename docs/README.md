@@ -1,5 +1,11 @@
 # ColorFlex Documentation Index
 
+## Context recovery (AI / new session)
+
+**After a new chat, context loss, or crash:** read **`docs/AI_CONTEXT.md`** first. It restores correct understanding (e.g. Bassett Local has nothing to do with Shopify, workflows, safety rules).
+
+---
+
 ## How to Resume Projects
 
 **To resume the Style3D integration project, tell Claude:**

@@ -65,9 +65,13 @@
            onmouseover="this.style.transform='scale(1.1)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.5)'; this.querySelector('.chameleon-tooltip').style.opacity='1'; this.querySelector('.chameleon-tooltip').style.visibility='visible';"
            onmouseout="this.style.transform='scale(1)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)'; this.querySelector('.chameleon-tooltip').style.opacity='0'; this.querySelector('.chameleon-tooltip').style.visibility='hidden';">
           {% if settings.colorflex_data_base_url == blank %}{% assign cf_data_base = 'https://s3.us-east-005.backblazeb2.com/cf-data' %}{% else %}{% assign cf_data_base = settings.colorflex_data_base_url %}{% endif %}
-          <img src="{{ cf_data_base }}/img/camelion-sm-r.jpg"
+          {% assign cf_data_base = cf_data_base | strip %}
+          {% if cf_data_base != '' %}{% assign cf_data_base = cf_data_base | split: '?' | first %}{% endif %}
+          <img src="{{ cf_data_base | append: '/img/camelion-sm-r.jpg' | replace: '//', '/' }}"
                alt="ColorFlex Customize"
-               style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; pointer-events: none; ">
+               style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; pointer-events: none; "
+               onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+          <span class="chameleon-icon-fallback" style="display: none; width: 40px; height: 40px; border-radius: 50%; background: #d4af37; color: #1a202c; font-size: 18px; align-items: center; justify-content: center; font-weight: bold;">CF</span>
           <span class="chameleon-tooltip" style="position: absolute; bottom: -35px; right: 0; background: rgba(0,0,0,0.9); color: white; padding: 6px 10px; border-radius: 4px; font-size: 12px; white-space: nowrap; opacity: 0; visibility: hidden; transition: opacity 0.3s 0.5s, visibility 0.3s 0.5s; pointer-events: none; font-family: 'Special Elite', monospace; z-index: 1000;">
             Customize in ColorFlex
           </span>

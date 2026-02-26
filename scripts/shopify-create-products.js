@@ -359,10 +359,19 @@ async function processCollection(collectionName, options = {}) {
 
     log(`\n🎨 Processing collection: ${collectionName}`, 'blue');
 
-    // Load collections.json
-    const collectionsPath = path.join(process.cwd(), 'data', 'collections.json');
+    // Load collections.json (check data path, then src/assets, then project data/)
+    const dataPath = process.env.COLORFLEX_DATA_PATH
+        ? path.join(process.env.COLORFLEX_DATA_PATH, 'data', 'collections.json')
+        : null;
+    const assetsPath = path.join(process.cwd(), 'src', 'assets', 'collections.json');
+    const projectDataPath = path.join(process.cwd(), 'data', 'collections.json');
+    const collectionsPath = (dataPath && fs.existsSync(dataPath))
+        ? dataPath
+        : fs.existsSync(assetsPath)
+            ? assetsPath
+            : projectDataPath;
     if (!fs.existsSync(collectionsPath)) {
-        throw new Error(`collections.json not found at ${collectionsPath}`);
+        throw new Error(`collections.json not found (checked ${dataPath || 'N/A'}, ${assetsPath}, ${projectDataPath})`);
     }
 
     const collectionsData = JSON.parse(fs.readFileSync(collectionsPath, 'utf8'));

@@ -1,1 +1,12 @@
-{% comment %} Stub: replace with content from previous theme. {% endcomment %}
+{% comment %}
+  Pagination - used on list collections and collection product grid.
+  Usage: {% render 'pagination', paginate: paginate, anchor: '' %}
+  anchor: optional URL hash to append to pagination links
+{% endcomment %}
+{% if paginate.pages > 1 %}
+  <nav class="pagination-wrapper" role="navigation" aria-label="{{ 'general.pagination.label' | t }}">
+    <div class="pagination">
+      {{ paginate | default_pagination: anchor: anchor }}
+    </div>
+  </nav>
+{% endif %}

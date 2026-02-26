@@ -1468,6 +1468,13 @@
         "label": "ColorFlex icon opens furniture page",
         "info": "When enabled, the chameleon icon goes directly to the ColorFlex Furniture page (test mode). For normal behavior leave disabled on both themes: icon shows My Designs; on Bassett, using a design then leads to the furniture experience.",
         "default": false
+      },
+      {
+        "type": "text",
+        "id": "bassett_layers_base_url",
+        "label": "Bassett layers base URL (CF Bassett theme only)",
+        "info": "Full URL to the folder containing room mockup layer PNGs (e.g. Backblaze path ending in /sofa-with-pillow-1). Required for Bassett room preview on Shopify. Leave as default when only testing locally.",
+        "default": "https://s3.us-east-005.backblazeb2.com/cf-data/data/mockups/bassett/sofa-with-pillow-1"
       }
     ]
   }

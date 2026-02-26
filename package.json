@@ -28,6 +28,7 @@
     "migrate:scan": "node migration/upload-assets.js",
     "migrate:convert": "node migration/create-metafields.js",
     "test": "echo \"No tests specified\" && exit 0",
+    "benchmark": "node scripts/benchmark.js",
     "backup": "node scripts/backup.js create",
     "backup:list": "node scripts/backup.js list",
     "deploy:test": "node scripts/deploy-enhanced.js test",

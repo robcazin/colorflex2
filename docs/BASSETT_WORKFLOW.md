@@ -4,11 +4,20 @@
 
 ---
 
-## BASSETT is local only — no Shopify deploy
+**→ For context recovery / AI (new session or lost context): read `docs/AI_CONTEXT.md` first.**
 
-**Do not deploy BASSETT project files or code to Shopify.** Bassett runs locally only (`npm run bassett` → http://localhost:3333). Main-branch deploys (collections, theme, assets) must not include Bassett bundles, Bassett templates, or Bassett mockup data. Server rsync excludes `mockups/bassett`; the Shopify deploy script refuses to push Bassett assets.
+## One repo, one branch — both experiences online
 
-**Main site must never show “CF Bassett”.** The bar at the bottom of the storefront shows the **theme name** from Shopify. If your **published** theme on saffroncottage.shop is named “CF Bassett”, visitors will see that. Fix: In **Shopify Admin → Online Store → Themes**, rename the **current (published) theme** to e.g. “Saffron Cottage” or “Live theme”, or publish a different theme that is not named “CF Bassett”. Keep “CF Bassett” as an unpublished duplicate for Bassett dev only. The deploy script now excludes the Bassett bundle and Bassett template when pushing to the **live** theme (assets / changed); use separate deploy targets for live so the main site never loads Bassett.
+We use **one codebase on the main branch**. No separate Bassett git branch. Both the main ColorFlex experience and the Bassett (room mockup) experience live in the same repo and can be **safely changed in parallel**:
+
+- **Main site** (live theme): normal ColorFlex pages (wallpaper, furniture, clothing, etc.). Deploy with `assets`, `templates`, `sections`, etc. Bassett files are **not** pushed unless you use `bassett-live`.
+- **Bassett** is segregated **by page**: it only runs on pages that use the template **ColorFlex Bassett** (`page.colorflex-bassett.liquid`). The rest of the site is unchanged. You can deploy Bassett in two ways:
+  - **Preview only:** `./deploy-shopify-cli.sh bassett` → pushes to the **CF Bassett** (unpublished) theme. Test via **Online Store → Themes → CF Bassett → Preview**. No public URL.
+  - **Public URL:** `./deploy-shopify-cli.sh bassett-live` → pushes Bassett template + JS + worker to the **live** theme. Then in Shopify create a **Page** (e.g. title "Bassett"), set its template to **ColorFlex Bassett**, save. The page gets a stable public URL (e.g. `https://saffroncottage.shop/pages/bassett`). Only that page loads Bassett; the main site does not.
+
+**Safe to change both:** Edit main ColorFlex files (e.g. `page.colorflex.liquid`, core app) for the main site; edit Bassett-only files (e.g. `page.colorflex-bassett.liquid`, `bassett-flags.js`, Bassett bundle) for the room experience. For shared code (e.g. `CFM.js`), use `window.COLORFLEX_MODE === 'BASSETT'` when behavior must differ. Deploy only what you need (e.g. `assets` for main, `bassett` or `bassett-live` for Bassett).
+
+**Main site must not show "CF Bassett" as the theme name.** If your **published** theme is named "CF Bassett", rename it (e.g. "Saffron Cottage") in **Online Store → Themes**. Keep "CF Bassett" as an **unpublished** theme for preview-only testing.
 
 ---
 
@@ -40,6 +49,10 @@ This builds the Bassett bundle, builds the local HTML, and starts the server. Op
 - `BASSETT_LOCAL_PORT` — default 3333.
 
 **Data folder (SMB):** The canonical data folder is on the Synology share **`smb://soanimation._smb._tcp.local/jobs/cf-data`**. Mount that share on your Mac (Finder → Go → Connect to Server, or `mount_smbfs`); then set **`COLORFLEX_DATA_PATH`** in `config/local.env` to the **mount path** (the folder that contains the `data/` subfolder). Example: if the share mounts as `/Volumes/cf-data` and inside it you have `data/collections.json`, `data/collections/`, `data/mockups/`, then set `COLORFLEX_DATA_PATH=/Volumes/cf-data`. The Bassett server and the download script (`cf-dl.js`) both use this; no need to copy data into the repo.
+
+**Deploy Bassett (preview only):** `./deploy-shopify-cli.sh bassett` from repo root. Pushes only to the CF Bassett (unpublished) theme. After deploy: **Online Store → Themes → CF Bassett → Preview**. Create a page with template **ColorFlex Bassett** if needed. Theme setting **Bassett layers base URL** should point at your mockup folder (e.g. B2 URL ending in `/sofa-with-pillow-1`); the template and JS force a valid absolute URL if the setting is wrong.
+
+**Deploy Bassett (public URL):** `./deploy-shopify-cli.sh bassett-live`. Pushes Bassett template + JS + worker to the **live** theme. Then in Shopify: **Pages → Add page** (e.g. title "Bassett"), set template to **ColorFlex Bassett**, save. Public URL: `https://YOUR-STORE/pages/bassett` (or your page handle).
 
 **If you see "No collections found":**
 
@@ -114,6 +127,7 @@ Bassett layer-based room preview is in place and the workflow is stable. One com
 - **2026-02-07:** Added **Asset source and Blender (bpy) context** to this doc: app agnostic to asset source; project uses Blender; bpy for scripting exports/batch/headless; assistant familiar with bpy; DSPL format reminder (R/G, 128 neutral, alpha mask, filenames) for authoring from Blender.
 - **2026-02-07:** **Canonical data folder:** SMB share `smb://soanimation._smb._tcp.local/jobs/cf-data`. Mount it and set `COLORFLEX_DATA_PATH` in `config/local.env` to the mount path (folder containing `data/`). Bassett server and cf-dl both use it; server prefers DATA_ROOT when set.
 - **2026-02-23:** **Checkpoint before UI tweaks.** Local server running (SOLID). Backup for safety; user list of tweaks to apply next. See git commit same date.
+- **2026-02-23:** **One repo, both experiences online.** Doc updated: one codebase on main branch; safe to change both main ColorFlex and Bassett. Deploy: `bassett` = preview-only (CF Bassett theme); `bassett-live` = public URL (Bassett template + JS on live theme, then create a Page with template ColorFlex Bassett). See `docs/COLORFLEX_BASSETT.md` for edit/deploy summary.
 
 ---
 

@@ -1,9 +1,9 @@
-# Colorflex Basset branch
+# Colorflex Bassett (room mockup experience)
 
-**Page handle:** `colorflex-bassett` → URL: `/pages/colorflex-bassett`  
+**Page handle:** e.g. `bassett` → URL: `/pages/bassett`  
 **Template:** `page.colorflex-bassett` (file: `templates/page.colorflex-bassett.liquid`)
 
-This branch is a separate experience from the main ColorFlex page. To avoid affecting the main site:
+Bassett is a **separate experience** from the main ColorFlex page, in the **same repo on the main branch**. You can safely change both: main site (main ColorFlex pages) and Bassett (this template + Bassett bundle). Segregation is by **page**: only pages that use the template "ColorFlex Bassett" load the Bassett app. See **`docs/BASSETT_WORKFLOW.md`** for deploy commands (`bassett` = preview theme, `bassett-live` = public page on live store).
 
 ---
 
@@ -151,13 +151,7 @@ So the “hooks” are: **layer names** (into the PSD), **Smart Object replace +
 
 ## Git
 
-Work in a branch so main stays clean:
-
-```bash
-git checkout -b colorflex-bassett
-# do all Basset work in this branch
-# merge to main only when Basset is ready and reviewed
-```
+We use **one branch (main)**. Bassett and main ColorFlex coexist in the same codebase. Edit Bassett-only files for the room experience; edit shared files (e.g. `CFM.js`) with `window.COLORFLEX_MODE === 'BASSETT'` guards when behavior must differ. No separate Bassett branch required.
 
 ---
 
@@ -197,19 +191,13 @@ Example:
 
 ## Build and deploy
 
-**Typical Bassett deploy:** `npm run build` then `./deploy-shopify-cli.sh bassett`.
+**Build:** The Bassett page loads `color-flex-bassett.min.js`. Run `npm run build -- --env mode=bassett` (or `npm run build` for all bundles).
 
-- **Build:** The Bassett page loads `color-flex-bassett.min.js`. Build with:
-  - `npm run build` — builds all bundles (including Bassett).
-  - `npm run build -- --env mode=bassett` — builds only the Bassett bundle.
-- **Deploy (theme):** Use `deploy-shopify-cli.sh`. Theme is auto-selected by branch (branch `bassett` → CF Bassett preview theme; other branches → live theme).
-  - **Bassett only:** `./deploy-shopify-cli.sh bassett` — uploads:
-    - `src/assets/color-flex-bassett.min.js`
-    - `src/templates/page.colorflex-bassett.liquid`
-  - **All assets (includes Bassett):** `./deploy-shopify-cli.sh assets`
-  - **One file:** `./deploy-shopify-cli.sh only assets/color-flex-bassett.min.js` or `./deploy-shopify-cli.sh only templates/page.colorflex-bassett.liquid`
-  - **Changed files only:** `./deploy-shopify-cli.sh changed` (pushes modified/staged files under `src/`)
-- **API (instant room preview):** Deploy the `api/` server (e.g. Railway) separately if you use “Upload Bassett result” on the store. Set `ColorFlexApiBaseUrl` on the Bassett page Room mockup is generated from the selected pattern when the API has BASSETT_REPO_ROOT and BASSETT_PSD_PATH set (Python composite; no Photoshop). Fallback: Upload Bassett result.
+**Deploy (theme):** Use `deploy-shopify-cli.sh`. Default target is the **live** theme; only the `bassett` command targets the CF Bassett (unpublished) theme.
+  - **Bassett preview (no public URL):** `./deploy-shopify-cli.sh bassett` — pushes to CF Bassett theme. Test via **Online Store → Themes → CF Bassett → Preview**.
+  - **Bassett public URL:** `./deploy-shopify-cli.sh bassett-live` — pushes Bassett template + JS + worker to the **live** theme. Then in Shopify create a **Page** with template **ColorFlex Bassett**; that page gets a public URL (e.g. `https://YOUR-STORE/pages/bassett`).
+  - **One file (Bassett):** Use `bassett` or `bassett-live`; the script blocks pushing Bassett-only files to live when using `only` for other targets.
+- **API (optional):** Deploy the `api/` server if you use “Upload Bassett result” on the store. Room mockup is generated client-side from layers when the B2 base URL is set; API is a fallback.
 
 ## Shopify setup
 

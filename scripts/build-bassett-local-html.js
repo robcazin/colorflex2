@@ -73,7 +73,7 @@ html = html.replace(
 // Use test mockup layers (beauty.png, sofa_disp.png, pillow1/2/3_disp.png) when running locally; skip displacement worker for testing. Load collection images from this server.
 html = html.replace(
   /(window\.COLORFLEX_MODE\s*=\s*['"]BASSETT['"];)/,
-  "$1\n  window.BASSETT_USE_TEST_LAYERS = true;\n  window.BASSETT_LAYERS_BASE_URL = '/data/mockups/bassett';\n  window.BASSETT_SKIP_DISPLACEMENT = true;\n  window.COLORFLEX_DATA_BASE_URL = window.location.origin;"
+  "$1\n  window.BASSETT_LAYERS_BASE_URL = '/data/mockups/bassett/sofa-with-pillow-1';\n  window.BASSETT_SKIP_DISPLACEMENT = true;\n  window.COLORFLEX_DATA_BASE_URL = window.location.origin;"
 );
 
 // Any remaining {{ 'x' | asset_url }} (e.g. in JSON)
@@ -81,6 +81,8 @@ html = html.replace(/\{\{\s*'([^']+)'\s*\|\s*asset_url\s*\}\}/g, '/assets/$1');
 
 // Strip any remaining Liquid that might break (single-line)
 html = html.replace(/\{%[^%]*%}/g, '');
+// Remove Shopify-only line (contains unresolved {{ }} when built for local)
+html = html.replace(/^[^\n]*__BASSETT_LAYERS_BASE_URL_THEME[^\n]*\n?/gm, '');
 
 fs.mkdirSync(OUT_DIR, { recursive: true });
 fs.writeFileSync(OUT_HTML, html, 'utf8');

@@ -56,6 +56,12 @@ npm run build && cp dist/color-flex-core.min.js assets/color-flex-core.min.js &&
 ./smart-monitor-deployment.sh [collection] [pattern]
 ```
 
+## **Bassett (Bassett page / room preview)**
+- **Deploy to live** (so `/pages/bassett` is public): `./deploy-shopify-cli.sh bassett-live`  
+  Script builds the Bassett bundle from source then pushes `color-flex-bassett.min.js`, template, and worker to the live theme.
+- **Bassett shows only ColorFlex patterns** (standard patterns excluded) so thumbnail loads don’t depend on B2 CORS. When B2 CORS is fixed, this filter can be relaxed in `CFM.js` (BASSETT collection filter in `initializeApp`).
+- **Default collection** on first load: Hip to Be Square. Curated colors bar is refreshed after initial pattern load so it appears on first load.
+
 ## **Emergency Troubleshooting:**
 - **JavaScript not updating?** Check if you uploaded the `-bu.js` file to Shopify
 - **Images not loading?** Run `./update` to sync server files  

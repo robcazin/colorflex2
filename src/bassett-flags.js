@@ -1,12 +1,17 @@
 /**
- * Bassett-only flags: set before the main app (CFM.js) loads.
- * Used only by the Bassett bundle (index.bassett.js). Not imported by core/furniture/clothing.
- * This keeps Bassett behavior (test layers, no displacement worker) out of the Shopify bundles.
+ * Bassett: one folder (sofa-with-pillow-1). Only set base URL if theme didn't.
+ * Layer stack (with optional per-layer transforms) is loaded here so CFM uses it.
  */
+import { BASSETT_LAYER_STACK } from './bassett-layer-stack.js';
+
 if (typeof window !== 'undefined') {
   window.__BASSETT_BUNDLE_LOADED__ = true;
   window.COLORFLEX_MODE = 'BASSETT';
-  window.BASSETT_USE_TEST_LAYERS = true;
-  window.BASSETT_LAYERS_BASE_URL = '/data/mockups/bassett';
+  window.BASSETT_LAYER_STACK = BASSETT_LAYER_STACK;
+  console.log('[Bassett] layer stack set from bassett-layer-stack.js, layers:', BASSETT_LAYER_STACK.length, 'with transforms:', BASSETT_LAYER_STACK.filter(function(l) { return l && l.transform; }).length);
+  var base = (window.BASSETT_LAYERS_BASE_URL || '').toString().trim();
+  if (!base || base.indexOf('http') !== 0) {
+    window.BASSETT_LAYERS_BASE_URL = 'https://s3.us-east-005.backblazeb2.com/cf-data/data/mockups/bassett/sofa-with-pillow-1';
+  }
   window.BASSETT_SKIP_DISPLACEMENT = true;
 }

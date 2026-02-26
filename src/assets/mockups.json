@@ -3,8 +3,8 @@
     "english-countryside-bedroom": {
       "id": "english-countryside-bedroom",
       "name": "English Countryside Bedroom",
-      "image": "./data/mockups/English-Countryside-Bedroom-1-W90H60.png",
-      "shadow": "./data/mockups/English-Countryside-Bedroom-1-shadow-W90H60.jpg",
+      "image": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
+      "shadow": "./data/mockups/English-Countryside-Bedroom-1-shadow-W60H40.jpg",
       "widthInches": 96,
       "heightInches": 72,
       "description": "Elegant English countryside bedroom with window"
@@ -64,7 +64,7 @@
       "description": "Charming farmhouse bathroom"
     },
     "provenceBench": {
-      "id": "provenceBench",
+      "id": "provence-bench",
       "name": "Provence Bench",
       "image": "./data/mockups/provenceBench.png",
       "shadow": "./data/mockups/provenceBench-shadow.jpg",
@@ -197,6 +197,15 @@
       "widthInches": 48,
       "heightInches": 36,
       "description": "Shadow for still life arrangement with eucalyptus"
+    },
+    "modernHallLamp": {
+      "id": "modern-hall-lamp",
+      "name": "Modern Hall Lamp",
+      "image": "./data/mockups/hallway-table-with-with-white-lamp.png",
+      "shadow": "./data/mockups/mhallway-table-with-with-white-lamp-shadow.jpg ",
+      "widthInches": 72,
+      "heightInches": 60,
+      "description": "Hall with Modern Lamp"
     }
   }
 }

@@ -1,32 +1,38 @@
 /**
- * Bassett test composite: layer stack for sofa-with-pillows-mockup-2.
- * Order = draw order (first = back, last = front).
- * Source folder: /Volumes/K3/jobs/saffron/colorFlex-shopify/data/mockups/bassett/sofa-with-pillows-mockup-2/
+ * Bassett: one folder (sofa-with-pillow-1). Order = draw order (first = back, last = front).
+ * Files: beauty.png, sofa_disp.png, pillow1_disp.png, pillow2_disp.png, pillow3_disp.png
  *
- * Displacement files: PILLOW-1-DSPL.png, PILLOW-2-DSPL.png, SOFA-DSPL.png
+ * Per-layer transform (optional): add a "transform" object to pattern-displaced or wall-pattern
+ * layers. The pattern is transformed (scale/translate/rotate) *before* displacement/mask is
+ * applied, so the pattern is offset within the same confines (alpha/displacement shape).
+ * All values optional; omitted = no change.
+ *
+ *   transform: {
+ *     scale: 1.0,        // uniform scale (e.g. 1.1 = 10% larger pattern)
+ *     scaleX: 1.0,       // separate X/Y scale (overrides scale if set)
+ *     scaleY: 1.0,
+ *     translateX: 0,     // pixels to shift pattern (positive = right/down)
+ *     translateY: 0,
+ *     rotation: 0        // degrees clockwise (e.g. 2 = slight tilt)
+ *   }
+ *
+ * Transform is applied around the center of the layer's mask (displacement image size).
  */
 
 export const BASSETT_LAYER_STACK = [
-  // Back (drawn first)
-  { id: 'background', file: 'Background.png', type: 'image', colorFlexIndex: null },
-  // Optional: wall mask for wallpaper (tiled pattern, no deformation). Add WALL-MASK.png to use.
-  { id: 'wall-pattern', file: 'WALL-MASK.png', type: 'wall-pattern', colorFlexIndex: null },
-  { id: 'sofa-displaced', file: null, displacementFile: 'SOFA-DSPL.png', type: 'pattern-displaced', colorFlexIndex: null },
-  { id: 'sofa-shadows', file: 'SOFA-SHADOWS.png', type: 'image', colorFlexIndex: null },
-  { id: 'blanket', file: 'BLANKET-BACKGROUND.png', type: 'solid-color', colorFlexIndex: 1 }, // second ColorFlex color (index 1) — tint/fill this layer
-  { id: 'pillow2', file: 'PILLOW-2.png', type: 'image', colorFlexIndex: null },
-  { id: 'pillow2-displaced', file: null, displacementFile: 'PILLOW-2-DSPL.png', type: 'pattern-displaced', colorFlexIndex: null },
-  { id: 'pillow2-shadows', file: 'PILLOW-2-SHADOWS.png', type: 'image', colorFlexIndex: null },
-  { id: 'pillow1', file: 'PILLOW-1.png', type: 'image', colorFlexIndex: null },
-  { id: 'pillow1-displaced', file: null, displacementFile: 'PILLOW-1-DSPL.png', type: 'pattern-displaced', colorFlexIndex: null },
-  { id: 'pillow1-shadows', file: 'PILLOW-1-SHADOWS.png', type: 'image', colorFlexIndex: null },
-  // Front (drawn last)
+  { id: 'background', file: 'beauty.png', type: 'image', colorFlexIndex: null },
+  { id: 'sofa-displaced', displacementFile: 'sofa_disp.png', type: 'pattern-displaced', colorFlexIndex: null },
+  { id: 'pillow1-displaced', displacementFile: 'pillow1_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translateY: -4, rotation: 7.5 } },
+  { id: 'pillow2-displaced', displacementFile: 'pillow2_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translatex: 4, translateY: 4, rotation: -5 } },
+  { id: 'pillow3-displaced', displacementFile: 'pillow3_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translateY: 40, rotation: -7.5 } },
 ];
 
-/** Base URL for layer images (no trailing slash). Override with window.BASSETT_LAYERS_BASE_URL */
+var B2_BASSETT_LAYERS_BASE = 'https://s3.us-east-005.backblazeb2.com/cf-data/data/mockups/bassett/sofa-with-pillow-1';
+/** Base URL for layer images (no trailing slash). Override with window.BASSETT_LAYERS_BASE_URL (must be absolute). */
 export function getLayersBaseUrl() {
-  return (typeof window !== 'undefined' && window.BASSETT_LAYERS_BASE_URL) ||
-    '/data/mockups/bassett/sofa-with-pillows-mockup-2';
+  var u = typeof window !== 'undefined' && window.BASSETT_LAYERS_BASE_URL ? (window.BASSETT_LAYERS_BASE_URL || '').toString().trim() : '';
+  if (u && u.indexOf('http') === 0) return u;
+  return B2_BASSETT_LAYERS_BASE;
 }
 
 /** Resolve layer file or displacement file path */

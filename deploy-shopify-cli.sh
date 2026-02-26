@@ -49,22 +49,12 @@ else
     SHOPIFY_STORE="f63bae-86.myshopify.com"
 fi
 
-# Auto-select theme by branch: bassett → CF Bassett preview, main (or other) → live theme
-# IMPORTANT: Bassett must never contaminate the main site. When pushing to LIVE, we never push Bassett-only files.
+# Default target: live theme. Only the "bassett" command pushes to CF Bassett (unpublished preview).
+# You can work from main only; preview Bassett via Online Store → Themes → CF Bassett → Preview.
 LIVE_THEME_ID="150150381799"
 CF_BASSETT_THEME_ID="154901938407"
-if command -v git &> /dev/null; then
-    GIT_BRANCH=$(git branch --show-current 2>/dev/null || true)
-    if [ "$GIT_BRANCH" = "bassett" ]; then
-        THEME_ID="$CF_BASSETT_THEME_ID"
-    else
-        THEME_ID="$LIVE_THEME_ID"
-    fi
-else
-    THEME_ID="$LIVE_THEME_ID"
-fi
-IS_LIVE_THEME=false
-[ "$THEME_ID" = "$LIVE_THEME_ID" ] && IS_LIVE_THEME=true
+THEME_ID="$LIVE_THEME_ID"
+IS_LIVE_THEME=true
 THEME_FLAG="--theme=${THEME_ID} --store=${SHOPIFY_STORE}"
 # If you get 401 "Service is not valid for authentication", use a Theme Access password:
 # 1. In Shopify Admin: Online Store → Themes → Add theme → Connect from GitHub, or use the Theme Access app.
@@ -93,7 +83,8 @@ show_usage() {
     echo "  only <path>      - Push a single file (path relative to src/, e.g. templates/page.colorflex.liquid)"
     echo "  furniture       - Deploy furniture mode (assets + template + snippet)"
     echo "  clothing        - Deploy clothing mode (assets + template)"
-    echo "  bassett         - Deploy Bassett mode (Bassett JS + page template)"
+    echo "  bassett         - Deploy Bassett to CF Bassett theme (unpublished preview only)"
+    echo "  bassett-live    - Deploy Bassett to LIVE theme → use for pages/bassett on main store"
     echo "  all             - Push all local files, keep remote-only files (--nodelete)"
     echo "  pull            - Pull theme from Shopify into theme-pull/ (for sync/compare)"
     echo ""
@@ -108,8 +99,9 @@ show_usage() {
     echo "  ./deploy-shopify-cli.sh only templates/page.colorflex.liquid   # Upload one file only"
     echo "  ./deploy-shopify-cli.sh furniture   # Deploy furniture mode"
         echo "  ./deploy-shopify-cli.sh clothing    # Deploy clothing mode"
-        echo "  ./deploy-shopify-cli.sh bassett    # Deploy Bassett mode"
-        echo "  ./deploy-shopify-cli.sh all         # Push entire theme (safe: --nodelete)"
+    echo "  ./deploy-shopify-cli.sh bassett       # Deploy to CF Bassett theme (preview only)"
+    echo "  ./deploy-shopify-cli.sh bassett-live  # Deploy to live theme (for pages/bassett on main store)"
+    echo "  ./deploy-shopify-cli.sh all           # Push entire theme (safe: --nodelete)"
     echo "  ./deploy-shopify-cli.sh pull        # Pull theme from Shopify → theme-pull/"
     echo ""
 }
@@ -127,16 +119,19 @@ echo ""
 # Determine what to deploy
 DEPLOY_MODE="${1:-all}"
 
-# Show which theme and store we're pushing to (auto-selected by branch)
-if command -v git &> /dev/null; then
-    GIT_BRANCH=$(git branch --show-current 2>/dev/null || true)
-else
-    GIT_BRANCH=""
+# "bassett" command always targets CF Bassett (unpublished preview); everything else → live theme
+if [ "$DEPLOY_MODE" = "bassett" ]; then
+    THEME_ID="$CF_BASSETT_THEME_ID"
+    IS_LIVE_THEME=false
+    THEME_FLAG="--theme=${THEME_ID} --store=${SHOPIFY_STORE}"
+    [ -n "${SHOPIFY_THEME_PASSWORD:-}" ] && THEME_FLAG="${THEME_FLAG} --password=${SHOPIFY_THEME_PASSWORD}"
 fi
+
+# Show which theme and store we're pushing to
 if [ "$THEME_ID" = "$CF_BASSETT_THEME_ID" ]; then
-    echo -e "${BLUE}🎯 Deploy target: CF Bassett (theme ${THEME_ID}) — branch: ${GIT_BRANCH:-?}${NC}"
+    echo -e "${BLUE}🎯 Deploy target: CF Bassett / preview theme (${THEME_ID})${NC}"
 else
-    echo -e "${BLUE}🎯 Deploy target: Live theme (${THEME_ID}) — branch: ${GIT_BRANCH:-?}${NC}"
+    echo -e "${BLUE}🎯 Deploy target: Live theme (${THEME_ID})${NC}"
 fi
 echo -e "${BLUE}   Store: ${SHOPIFY_STORE}${NC}"
 echo ""
@@ -463,10 +458,62 @@ case "$DEPLOY_MODE" in
         ;;
 
     bassett)
-        echo "BASSETT is local only — do not deploy to Shopify."
-        echo "Run 'npm run bassett' for local preview at http://localhost:3333"
-        echo "Exiting without pushing any Bassett assets."
-        exit 1
+        echo "Deploying BASSETT to CF Bassett theme only (unpublished — for web testing)."
+        echo "Target: CF Bassett theme ${THEME_ID}. Live theme is not touched."
+        echo ""
+        echo -e "${YELLOW}Building Bassett bundle from source (CFM.js, etc.)...${NC}"
+        npm run build -- --env mode=bassett || { echo -e "${RED}Build failed. Fix errors and try again.${NC}"; exit 1; }
+        echo ""
+        echo "Files to deploy:"
+        echo "  - src/assets/color-flex-bassett.min.js"
+        echo "  - src/templates/page.colorflex-bassett.liquid"
+        echo "  - src/assets/pattern-displace.worker.js"
+        echo ""
+        if [ ! -f "src/assets/pattern-displace.worker.js" ] && [ -f "src/workers/pattern-displace.worker.js" ]; then
+            cp src/workers/pattern-displace.worker.js src/assets/pattern-displace.worker.js
+            echo -e "${GREEN}Copied worker to src/assets/ for theme deploy.${NC}"
+        fi
+        read -p "Continue? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/color-flex-bassett.min.js --nodelete
+            ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only templates/page.colorflex-bassett.liquid --nodelete
+            ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/pattern-displace.worker.js --nodelete
+            echo -e "${GREEN}Bassett deployed to CF Bassett theme. Preview at: Online Store → Themes → CF Bassett → Preview.${NC}"
+            echo "Preview at: Online Store → Themes → CF Bassett → Preview (not a public URL)."
+            echo "For a public URL, use: ./deploy-shopify-cli.sh bassett-live and create a Page (see help)."
+        fi
+        ;;
+
+    bassett-live)
+        echo "Deploying BASSETT to LIVE theme so the Bassett page is reachable from anywhere."
+        echo "Target: Live theme (${THEME_ID})."
+        echo ""
+        echo -e "${YELLOW}Building Bassett bundle from source (CFM.js, etc.)...${NC}"
+        npm run build -- --env mode=bassett || { echo -e "${RED}Build failed. Fix errors and try again.${NC}"; exit 1; }
+        echo ""
+        echo "Files to deploy:"
+        echo "  - src/assets/color-flex-bassett.min.js"
+        echo "  - src/templates/page.colorflex-bassett.liquid"
+        echo "  - src/assets/pattern-displace.worker.js"
+        echo ""
+        echo -e "${BLUE}After deploy: In Shopify Admin → Online Store → Pages → Add page (e.g. title 'Bassett').${NC}"
+        echo -e "${BLUE}Set template to 'ColorFlex Bassett' (or 'page.colorflex-bassett'). Save.${NC}"
+        echo -e "${BLUE}Public URL will be: https://YOUR-STORE/pages/bassett (use your store domain and page handle)${NC}"
+        echo ""
+        if [ ! -f "src/assets/pattern-displace.worker.js" ] && [ -f "src/workers/pattern-displace.worker.js" ]; then
+            cp src/workers/pattern-displace.worker.js src/assets/pattern-displace.worker.js
+            echo -e "${GREEN}Copied worker to src/assets/ for theme deploy.${NC}"
+        fi
+        read -p "Continue? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/color-flex-bassett.min.js --nodelete
+            ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only templates/page.colorflex-bassett.liquid --nodelete
+            ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/pattern-displace.worker.js --nodelete
+            echo -e "${GREEN}Bassett deployed to live theme.${NC}"
+            echo "Create a Page in Shopify with template 'ColorFlex Bassett' to get a public URL."
+        fi
         ;;
 
     layout)
@@ -546,7 +593,7 @@ case "$DEPLOY_MODE" in
             case "$ONEPATH" in
                 templates/page.colorflex-bassett.liquid|assets/color-flex-bassett.min.js)
                     echo -e "${RED}❌ Cannot push Bassett-only file to the live theme. Main site must not load Bassett.${NC}"
-                    echo "Use the Bassett theme (branch: bassett) or run Bassett locally: npm run bassett"
+                    echo "Use: ./deploy-shopify-cli.sh bassett  (or run Bassett locally: npm run bassett)"
                     exit 1
                     ;;
             esac

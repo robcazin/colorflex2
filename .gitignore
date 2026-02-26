@@ -3,6 +3,7 @@ node_modules/
 
 # Python venv (Bassett PSD pipeline)
 .venv/
+.venv-b2/
 # Bassett PSD pipeline output (scripts/bassett_psd_export.py)
 bassett_psd_output/
 # Bassett Photoshop JSX bridge (scripts/run_bassett_photoshop.sh)
