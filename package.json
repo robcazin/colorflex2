@@ -11,6 +11,7 @@
     "inventory:full": "cd manual-deploy/assets && node cf-dl.js true null shopify",
     "dev": "webpack --mode=development --watch",
     "build": "NODE_ENV=production webpack --mode=production",
+    "build:deploy": "npm run build && ./deploy-shopify-cli.sh assets",
     "build:dev": "webpack --mode=development",
     "build:wallpaper": "NODE_ENV=production webpack --mode=production --env mode=wallpaper",
     "build:furniture": "NODE_ENV=production webpack --mode=production --env mode=furniture",

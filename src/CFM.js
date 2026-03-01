@@ -504,7 +504,7 @@ let isAppReady = false; // Flag to track if the app is fully initialized
 
 // When collection.colorFlex is missing (old JSON), we fall back to STANDARD_COLLECTION_NAMES and pattern data.
 // Airtable: master row (-000) ColorFlex checkbox → collection.colorFlex in data when using fetch.
-const STANDARD_COLLECTION_NAMES = ['abundance', 'pages', 'galleria', 'oceana', 'ancient-tiles'];
+const STANDARD_COLLECTION_NAMES = ['abundance', 'pages', 'galleria', 'oceana', 'ancient-tiles', 'farmhouse'];
 
 /** Returns true if pattern should be treated as standard (no layer UI, pass-through). */
 function patternIsStandard(pattern, collection) {
@@ -9729,6 +9729,7 @@ async function initializeApp() {
                         } else {
                             collection.mockup = mockupImagePath;
                             collection.mockupShadow = typeof mockup.shadow === 'string' ? mockup.shadow : (mockup.shadow?.path || mockup.shadow?.url || '');
+                            collection.tintMask = typeof mockup.tintMask === 'string' ? mockup.tintMask : (mockup.tintMask?.path || mockup.tintMask?.url || '');
                             collection.mockupWidthInches = mockup.widthInches;
                             collection.mockupHeightInches = mockup.heightInches;
                             console.log(`  🔗 Merged mockup "${mockup.name}" into collection "${collection.name}" (path: ${mockupImagePath})`);
@@ -10922,6 +10923,8 @@ function populatePatternThumbnails(patterns) {
         dom.collectionThumbnails.innerHTML = "<p>No patterns available.</p>";
         return;
     }
+
+    // Use data order (Airtable row order after sync) — no client-side re-sort
 
     function cleanPatternName(str) {
         if (!str || typeof str !== 'string') {
@@ -14312,6 +14315,112 @@ async function updateBassettRoomMockup() {
   }
 }
 
+// Open room mockup in fullscreen overlay (Bassett-style: click to expand, click again for full res, click to close)
+function openRoomMockupFullscreen(source) {
+  const overlay = document.createElement("div");
+  overlay.id = "roomMockupFullscreenOverlay";
+  overlay.style.cssText = "position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;overflow:hidden;";
+  const scrollWrap = document.createElement("div");
+  scrollWrap.style.cssText = "display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;overflow:auto;max-width:100%;max-height:100%;";
+  const close = function () {
+    overlay.remove();
+    document.body.style.overflow = "";
+  };
+  overlay.addEventListener("click", function (e) {
+    if (e.target === overlay) close();
+  });
+
+  if (typeof source === "string") {
+    const fullImg = new Image();
+    fullImg.src = source;
+    fullImg.style.maxWidth = "90vmin";
+    fullImg.style.maxHeight = "90vmin";
+    fullImg.style.width = "auto";
+    fullImg.style.height = "auto";
+    fullImg.style.cursor = "pointer";
+    fullImg.alt = "Room mockup (click for full resolution)";
+    scrollWrap.appendChild(fullImg);
+    let isFullRes = false;
+    fullImg.addEventListener("click", function (e) {
+      e.stopPropagation();
+      if (!isFullRes) {
+        const w = fullImg.naturalWidth || fullImg.width;
+        const h = fullImg.naturalHeight || fullImg.height;
+        if (w && h) {
+          isFullRes = true;
+          fullImg.style.maxWidth = "none";
+          fullImg.style.maxHeight = "none";
+          fullImg.style.width = w + "px";
+          fullImg.style.height = h + "px";
+          fullImg.alt = "Room mockup full resolution (click to close)";
+          scrollWrap.style.alignItems = "flex-start";
+          scrollWrap.style.justifyContent = "flex-start";
+        }
+      } else {
+        close();
+      }
+    });
+    fullImg.onload = function () {
+      fullImg.title = "Click for full resolution, click again to close";
+    };
+  } else if (source && source.tagName === "CANVAS") {
+    let dataUrl;
+    try {
+      dataUrl = source.toDataURL("image/png");
+    } catch (err) {
+      dataUrl = null;
+    }
+    if (dataUrl) {
+      const fullImg = new Image();
+      fullImg.src = dataUrl;
+      fullImg.style.maxWidth = "90vmin";
+      fullImg.style.maxHeight = "90vmin";
+      fullImg.style.width = "auto";
+      fullImg.style.height = "auto";
+      fullImg.style.cursor = "pointer";
+      fullImg.alt = "Room mockup (click for full resolution)";
+      scrollWrap.appendChild(fullImg);
+      let isFullRes = false;
+      fullImg.addEventListener("click", function (e) {
+        e.stopPropagation();
+        if (!isFullRes) {
+          const w = fullImg.naturalWidth || fullImg.width;
+          const h = fullImg.naturalHeight || fullImg.height;
+          if (w && h) {
+            isFullRes = true;
+            fullImg.style.maxWidth = "none";
+            fullImg.style.maxHeight = "none";
+            fullImg.style.width = w + "px";
+            fullImg.style.height = h + "px";
+            fullImg.alt = "Room mockup full resolution (click to close)";
+            scrollWrap.style.alignItems = "flex-start";
+            scrollWrap.style.justifyContent = "flex-start";
+          }
+        } else {
+          close();
+        }
+      });
+      fullImg.onload = function () {
+        fullImg.title = "Click for full resolution, click again to close";
+      };
+    } else {
+      const clone = source.cloneNode(true);
+      clone.style.width = source.width + "px";
+      clone.style.height = source.height + "px";
+      clone.style.cursor = "pointer";
+      clone.title = "Click to close";
+      scrollWrap.appendChild(clone);
+      clone.addEventListener("click", function (e) {
+        e.stopPropagation();
+        close();
+      });
+    }
+  }
+  overlay.appendChild(scrollWrap);
+  document.body.style.overflow = "hidden";
+  document.body.appendChild(overlay);
+}
+
 //  room mockup
 let updateRoomMockup = async () => {
   try {
@@ -14748,6 +14857,62 @@ let updateRoomMockup = async () => {
         }
       }
 
+      // ----- Mockup tint mask (any mockup can define tintMask: path; tints that area with BG color) -----
+      if (appState.selectedCollection?.tintMask) {
+        const tintMaskPath = normalizePath(appState.selectedCollection.tintMask);
+        const tintMaskImg = new Image();
+        tintMaskImg.crossOrigin = "Anonymous";
+        tintMaskImg.src = tintMaskPath;
+        await new Promise((resolve) => {
+          tintMaskImg.onload = () => {
+            const fit = scaleToFit(tintMaskImg, cssW, cssH);
+            const tw = Math.ceil(fit.width);
+            const th = Math.ceil(fit.height);
+            const maskCanvas = document.createElement("canvas");
+            maskCanvas.width = tw;
+            maskCanvas.height = th;
+            const maskCtx = maskCanvas.getContext("2d");
+            maskCtx.drawImage(tintMaskImg, 0, 0, tw, th);
+            let maskData;
+            try {
+              maskData = maskCtx.getImageData(0, 0, tw, th);
+            } catch (e) {
+              console.warn("⚠️ Tint mask canvas tainted, skipping:", e.message);
+              resolve();
+              return;
+            }
+            const data = maskData.data;
+            const hex = (backgroundColor || "#ffffff").replace("#", "");
+            const r = parseInt(hex.substring(0, 2), 16);
+            const g = parseInt(hex.substring(2, 4), 16);
+            const b = parseInt(hex.substring(4, 6), 16);
+            for (let i = 0; i < data.length; i += 4) {
+              const maskR = data[i];
+              const maskG = data[i + 1];
+              const maskB = data[i + 2];
+              const maskA = data[i + 3];
+              const intensity = (maskR * 0.299 + maskG * 0.587 + maskB * 0.114);
+              const alpha = Math.round((intensity / 255) * (maskA / 255) * 255);
+              data[i] = r;
+              data[i + 1] = g;
+              data[i + 2] = b;
+              data[i + 3] = alpha;
+            }
+            maskCtx.putImageData(maskData, 0, 0);
+            ctx.save();
+            ctx.globalCompositeOperation = "multiply";
+            ctx.drawImage(maskCanvas, fit.x, fit.y, fit.width, fit.height);
+            ctx.restore();
+            console.log("✅ Mockup tint mask applied (BG color)");
+            resolve();
+          };
+          tintMaskImg.onerror = () => {
+            console.warn("⚠️ Failed to load tint mask:", tintMaskPath);
+            resolve();
+          };
+        });
+      }
+
       // ----- Shadow overlay -----
       if (appState.selectedCollection?.mockupShadow) {
         const shadowOverlay = new Image();
@@ -14772,8 +14937,12 @@ let updateRoomMockup = async () => {
       } catch (e) {
         if (e.name === "SecurityError") {
           dom.roomMockup.innerHTML = "";
-          canvas.style.cssText = "width: 100%; height: 100%; object-fit: contain; border: 1px solid #333;";
+          canvas.style.cssText = "width: 100%; height: 100%; object-fit: contain; border: 1px solid #333; cursor: pointer;";
+          canvas.title = "Click for full size";
           dom.roomMockup.appendChild(canvas);
+          canvas.addEventListener("click", function () {
+            openRoomMockupFullscreen(canvas);
+          });
           const isSimpleMode = window.COLORFLEX_SIMPLE_MODE === true;
       // Simple mode: let template CSS handle sizing, but ensure it stays 800x600
       if (isSimpleMode) {
@@ -14798,9 +14967,14 @@ let updateRoomMockup = async () => {
 
       const img = document.createElement("img");
       img.src = dataUrl;
-      img.style.cssText = "width: 100%; height: 100%; object-fit: contain; border: 1px solid #333;";
+      img.style.cssText = "width: 100%; height: 100%; object-fit: contain; border: 1px solid #333; cursor: pointer;";
+      img.title = "Click for full size";
+      img.alt = "Room mockup (click for full size)";
       dom.roomMockup.innerHTML = "";
       dom.roomMockup.appendChild(img);
+      img.addEventListener("click", function () {
+        openRoomMockupFullscreen(dataUrl);
+      });
       // ✅ CORE WALLPAPER FUNCTION: Only set wallpaper-specific styling
       // Clothing and furniture modes should never reach this code (exited early above)
       // Simple mode is handled by template CSS, standard wallpaper uses default sizing

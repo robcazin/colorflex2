@@ -152,6 +152,8 @@ case "$DEPLOY_MODE" in
         echo "  - src/assets/unified-pattern-modal.js"
         echo "  - src/assets/ProductConfigurationFlow.js"
         echo "  - src/assets/colorflex-simple-mode.css"
+        echo "  - src/assets/mockups.json"
+        echo "  - src/assets/*mask*.png (if any)"
         echo "  - src/assets/furniture-config.json (if exists)"
         echo ""
         if [ "$IS_LIVE_THEME" = true ]; then
@@ -184,6 +186,16 @@ case "$DEPLOY_MODE" in
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/unified-pattern-modal.js
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/ProductConfigurationFlow.js
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/colorflex-simple-mode.css
+            # Deploy mockups.json and any tint mask assets (used for mockup tinting)
+            if [ -f "src/assets/mockups.json" ]; then
+                ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/mockups.json
+            fi
+            for f in src/assets/*mask*.png; do
+                [ -f "$f" ] || continue
+                name=$(basename "$f")
+                ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only "assets/$name"
+                echo "  ✓ $name"
+            done
             # Deploy furniture-config.json if it exists
             if [ -f "src/assets/furniture-config.json" ]; then
                 ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/furniture-config.json

@@ -50,6 +50,7 @@
       "name": "Cottage Door",
       "image": "./data/mockups/Cottage-Door-W120H90.png",
       "shadow": "./data/mockups/Cottage-Door-shadow-W120H90.jpg",
+      "tintMask": "./data/mockups/Cottage-Door-W120H90-door-mask.png",
       "widthInches": 72,
       "heightInches": 54,
       "description": "Rustic cottage interior with door"

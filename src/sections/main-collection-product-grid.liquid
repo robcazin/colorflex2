@@ -163,33 +163,50 @@
                 {% if section.settings.quick_add == 'bulk' %} collection-quick-add-bulk{% endif %}
               "
             >
-              {% assign skip_card_product_styles = false %}
+              {% comment %} Sort by ColorFlex pattern number (designer order) when products have the metafield {% endcomment %}
+              {% assign sort_pairs_str = "" %}
               {%- for product in collection.products -%}
-                {% assign lazy_load = false %}
-                {%- if forloop.index > 2 -%}
-                  {%- assign lazy_load = true -%}
-                {%- endif -%}
-                <li
-                  class="grid__item{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}"
-                  {% if settings.animations_reveal_on_scroll %}
-                    data-cascade
-                    style="--animation-order: {{ forloop.index }};"
-                  {% endif %}
-                >
-                  {% render 'card-product',
-                    card_product: product,
-                    media_aspect_ratio: section.settings.image_ratio,
-                    image_shape: section.settings.image_shape,
-                    show_secondary_image: section.settings.show_secondary_image,
-                    show_vendor: section.settings.show_vendor,
-                    show_rating: section.settings.show_rating,
-                    lazy_load: lazy_load,
-                    skip_styles: skip_card_product_styles,
-                    quick_add: section.settings.quick_add,
-                    section_id: section.id
-                  %}
-                </li>
-                {%- assign skip_card_product_styles = true -%}
+                {% assign pn = product.metafields.color_flex.pattern_number.value | default: "999-999-999" %}
+                {% if sort_pairs_str != "" %}{% assign sort_pairs_str = sort_pairs_str | append: "," %}{% endif %}
+                {% assign sort_pairs_str = sort_pairs_str | append: pn | append: "|" | append: forloop.index0 %}
+              {%- endfor -%}
+              {% assign sort_pairs = sort_pairs_str | split: "," %}
+              {% assign sorted_pairs = sort_pairs | sort %}
+              {% assign skip_card_product_styles = false %}
+              {%- for pair in sorted_pairs -%}
+                {% assign pair_parts = pair | split: "|" %}
+                {% assign idx = pair_parts[1] | plus: 0 %}
+                {% assign animation_order = forloop.index %}
+                {%- for product in collection.products -%}
+                  {%- if forloop.index0 == idx -%}
+                    {% assign lazy_load = false %}
+                    {%- if animation_order > 2 -%}
+                      {%- assign lazy_load = true -%}
+                    {%- endif -%}
+                    <li
+                      class="grid__item{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}"
+                      {% if settings.animations_reveal_on_scroll %}
+                        data-cascade
+                        style="--animation-order: {{ animation_order }};"
+                      {% endif %}
+                    >
+                      {% render 'card-product',
+                        card_product: product,
+                        media_aspect_ratio: section.settings.image_ratio,
+                        image_shape: section.settings.image_shape,
+                        show_secondary_image: section.settings.show_secondary_image,
+                        show_vendor: section.settings.show_vendor,
+                        show_rating: section.settings.show_rating,
+                        lazy_load: lazy_load,
+                        skip_styles: skip_card_product_styles,
+                        quick_add: section.settings.quick_add,
+                        section_id: section.id
+                      %}
+                    </li>
+                    {%- assign skip_card_product_styles = true -%}
+                    {%- break -%}
+                  {%- endif -%}
+                {%- endfor -%}
               {%- endfor -%}
             </ul>
 

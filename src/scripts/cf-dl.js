@@ -169,6 +169,16 @@ function parsePatternNumber(numberString) {
     return { category: '', collection: '', pattern: '', variant: '', full: numberString };
 }
 
+/** Sort patterns by pattern number (01-02-101, 01-02-102, …). Mutates the array in place. */
+function sortCollectionPatternsByNumber(patterns) {
+    if (!Array.isArray(patterns) || patterns.length === 0) return;
+    patterns.sort((a, b) => {
+        const na = (a.number != null && a.number !== '') ? String(a.number).trim() : '\uFFFF';
+        const nb = (b.number != null && b.number !== '') ? String(b.number).trim() : '\uFFFF';
+        return na.localeCompare(nb, undefined, { numeric: true });
+    });
+}
+
 /**
  * Load Shopify credentials from config file or environment variables
  */
@@ -1495,6 +1505,13 @@ const collections = await getCollectionsFromAirtable();
                 });
             }
 
+            // Designer order: sort patterns by pattern number (01-02-101, 01-02-102, …) so collection page matches Airtable order
+            jsonRecords.sort((a, b) => {
+                const na = (a.number != null && a.number !== '') ? String(a.number).trim() : '\uFFFF';
+                const nb = (b.number != null && b.number !== '') ? String(b.number).trim() : '\uFFFF';
+                return na.localeCompare(nb, undefined, { numeric: true });
+            });
+
             // Prefer mockupId (references src/assets/mockups.json) over legacy mockup/mockupShadow paths
             const resolvedMockupId = COLLECTION_MOCKUP_IDS[baseName] || collectionMockupId;
             if (resolvedMockupId) {
@@ -1879,6 +1896,11 @@ async function main(downloadImages = true, collectionName = null, generateShopif
             console.log(`[MAIN] Falling back to full overwrite`);
         }
     }
+
+    // Ensure every collection's patterns are in designer order (by pattern number) before writing
+    finalData.collections.forEach(col => {
+        if (col.patterns && col.patterns.length) sortCollectionPatternsByNumber(col.patterns);
+    });
 
     // Write updated data to collections.json (try DATA_ROOT first, fallback to project data/ if permission denied)
     const projectDataRoot = path.join(projectRoot, 'data');

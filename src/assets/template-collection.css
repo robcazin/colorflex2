@@ -98,8 +98,10 @@
   margin-top: 1rem;
 }
 
-/* Pagination on collection and list-collections (mirrors .customer .pagination) */
+/* Pagination on collection and list-collections (default_pagination outputs spans: .page, .next, .prev) */
 .pagination-wrapper {
+  display: flex;
+  justify-content: center;
   margin-top: 2rem;
   margin-bottom: 2rem;
   width: 100%;
@@ -112,24 +114,79 @@
   }
 }
 
+.pagination-wrapper .pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+  width: fit-content;
+}
+
+/* Spans output by default_pagination: .page (current + links), .next, .prev */
+.pagination-wrapper .pagination .page,
+.pagination-wrapper .pagination .next,
+.pagination-wrapper .pagination .prev {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 4rem;
+  min-width: 4rem;
+  font-size: 1.4rem;
+}
+
+.pagination-wrapper .pagination .page.current {
+  position: relative;
+  color: rgb(var(--color-foreground));
+}
+
+.pagination-wrapper .pagination .page.current::after {
+  content: '';
+  display: block;
+  width: 2rem;
+  height: 0.1rem;
+  position: absolute;
+  bottom: 0.08rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: currentColor;
+}
+
+.pagination-wrapper .pagination a {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 4rem;
+  min-width: 4rem;
+  padding: 0;
+  text-decoration: none;
+  color: rgb(var(--color-foreground));
+  font-size: 1.4rem;
+}
+
+.pagination-wrapper .pagination a:hover {
+  text-decoration: underline;
+}
+
+/* Legacy ul/li selectors (Dawn/custom snippets may use list markup) */
 .pagination-wrapper .pagination ul {
   display: flex;
   justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
   list-style: none;
   padding: 0;
   margin: 0;
 }
 
 .pagination-wrapper .pagination li {
-  flex: 1 1;
+  flex: 0 0 auto;
   max-width: 4rem;
 }
 
-.pagination-wrapper .pagination li:not(:last-child) {
-  margin-right: 1rem;
-}
-
-.pagination-wrapper .pagination li :first-child {
+.pagination-wrapper .pagination li :first-child,
+.pagination-wrapper .pagination li a {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -142,22 +199,8 @@
   font-size: 1.4rem;
 }
 
-.pagination-wrapper .pagination li :first-child:hover {
+.pagination-wrapper .pagination li a:hover {
   text-decoration: underline;
-}
-
-.pagination-wrapper .pagination li :first-child .svg-wrapper {
-  height: 0.6rem;
-}
-
-.pagination-wrapper .pagination li:first-of-type .svg-wrapper {
-  margin-left: -0.2rem;
-  transform: rotate(90deg);
-}
-
-.pagination-wrapper .pagination li:last-of-type .svg-wrapper {
-  margin-right: -0.2rem;
-  transform: rotate(-90deg);
 }
 
 .pagination-wrapper .pagination li [aria-current]::after {

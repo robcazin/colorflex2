@@ -736,6 +736,62 @@ export async function updateRoomMockup(dependencies) {
                 });
             }
 
+            // Apply mockup tint mask if present (any mockup can define tintMask; tints that area with BG color)
+            if (appState.selectedCollection?.tintMask) {
+                const tintMaskPath = normalizePath(appState.selectedCollection.tintMask);
+                const tintMaskImg = new Image();
+                tintMaskImg.crossOrigin = "Anonymous";
+                tintMaskImg.src = tintMaskPath;
+                await new Promise((resolve) => {
+                    tintMaskImg.onload = () => {
+                        const fit = scaleToFit(tintMaskImg, canvas.width, canvas.height);
+                        const tw = Math.ceil(fit.width);
+                        const th = Math.ceil(fit.height);
+                        const maskCanvas = document.createElement("canvas");
+                        maskCanvas.width = tw;
+                        maskCanvas.height = th;
+                        const maskCtx = maskCanvas.getContext("2d");
+                        maskCtx.drawImage(tintMaskImg, 0, 0, tw, th);
+                        let maskData;
+                        try {
+                            maskData = maskCtx.getImageData(0, 0, tw, th);
+                        } catch (e) {
+                            console.warn("⚠️ Tint mask canvas tainted, skipping:", e.message);
+                            resolve();
+                            return;
+                        }
+                        const data = maskData.data;
+                        const hex = (backgroundColor || "#ffffff").replace("#", "");
+                        const r = parseInt(hex.substring(0, 2), 16);
+                        const g = parseInt(hex.substring(2, 4), 16);
+                        const b = parseInt(hex.substring(4, 6), 16);
+                        for (let i = 0; i < data.length; i += 4) {
+                            const maskR = data[i];
+                            const maskG = data[i + 1];
+                            const maskB = data[i + 2];
+                            const maskA = data[i + 3];
+                            const intensity = (maskR * 0.299 + maskG * 0.587 + maskB * 0.114);
+                            const alpha = Math.round((intensity / 255) * (maskA / 255) * 255);
+                            data[i] = r;
+                            data[i + 1] = g;
+                            data[i + 2] = b;
+                            data[i + 3] = alpha;
+                        }
+                        maskCtx.putImageData(maskData, 0, 0);
+                        ctx.save();
+                        ctx.globalCompositeOperation = "multiply";
+                        ctx.drawImage(maskCanvas, fit.x, fit.y, fit.width, fit.height);
+                        ctx.restore();
+                        console.log("✅ Mockup tint mask applied (BG color)");
+                        resolve();
+                    };
+                    tintMaskImg.onerror = () => {
+                        console.warn("⚠️ Failed to load tint mask:", tintMaskPath);
+                        resolve();
+                    };
+                });
+            }
+
             // Apply shadow overlay if exists
             if (appState.selectedCollection?.mockupShadow) {
                 const shadowOriginalPath = appState.selectedCollection.mockupShadow;
