@@ -90,6 +90,7 @@ Options:
 Environment Variables (can be set in config/local.env):
   COLORFLEX_DATA_PATH          Data folder: mount smb://soanimation._smb._tcp.local/jobs/cf-data and set to mount path (folder containing data/).
   COLORFLEX_DATA_BASE_URL      Optional: Backblaze B2 public URL for data; set so CSV/theme use it for image URLs.
+  B2_KEY_ID, B2_APPLICATION_KEY  When set, update-collection.sh applies S3 CORS to the cf-data bucket at the end of each run (see docs/BACKBLAZE_CORS_FIX.md).
 
 EOF
 }
@@ -396,6 +397,28 @@ create_shopify_products() {
     fi
 }
 
+# Ensure B2 bucket has S3 CORS so the store can load images (s3.us-east-005.backblazeb2.com).
+# Non-fatal: if script/venv/creds missing, warn and continue.
+ensure_b2_cors() {
+    if [ -z "${B2_KEY_ID:-}" ] && [ -z "${B2_APPLICATION_KEY:-}" ]; then
+        return 0
+    fi
+    if [ ! -f "scripts/set-b2-s3-cors.py" ]; then
+        print_warning "scripts/set-b2-s3-cors.py not found - skip B2 CORS"
+        return 0
+    fi
+    if [ ! -x ".venv-b2/bin/python" ]; then
+        print_warning "B2 CORS: .venv-b2 not found. Run: python3 -m venv .venv-b2 && .venv-b2/bin/pip install boto3"
+        return 0
+    fi
+    print_status "Ensuring B2 bucket (cf-data) has S3 CORS for store image loads..."
+    if .venv-b2/bin/python scripts/set-b2-s3-cors.py 2>/dev/null; then
+        print_status "B2 S3 CORS applied."
+    else
+        print_warning "B2 CORS script failed (check B2_KEY_ID/B2_APPLICATION_KEY). See docs/BACKBLAZE_CORS_FIX.md"
+    fi
+}
+
 # Function to validate results
 validate_results() {
     print_header "Validating Results"
@@ -609,6 +632,9 @@ main() {
             print_warning "You can manually import the CSV file from ./deployment/csv/"
         fi
     fi
+
+    # Ensure B2 bucket has S3 CORS (so store can load images). Idempotent; skip if no B2 creds/venv.
+    ensure_b2_cors
 
     print_header "Update Process Completed Successfully!"
     

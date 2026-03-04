@@ -70,7 +70,7 @@ html = html.replace(
   "window.ColorFlexApiBaseUrl = ''; // same origin for local server"
 );
 
-// Use test mockup layers (beauty.png, sofa_disp.png, pillow1/2/3_disp.png) when running locally; skip displacement worker for testing. Load collection images from this server.
+// Use test mockup layers (beauty.png, sofa_disp1.png, sofa_disp2.png, pillow1/2/3_disp.png) when running locally; skip displacement worker for testing. Load collection images from this server.
 html = html.replace(
   /(window\.COLORFLEX_MODE\s*=\s*['"]BASSETT['"];)/,
   "$1\n  window.BASSETT_LAYERS_BASE_URL = '/data/mockups/bassett/sofa-with-pillow-1';\n  window.BASSETT_SKIP_DISPLACEMENT = true;\n  window.COLORFLEX_DATA_BASE_URL = window.location.origin;"

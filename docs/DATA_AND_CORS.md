@@ -85,11 +85,14 @@ So “we set CORS but it still failed” usually means: CORS was set for the **N
 
 We don’t use the AWS CLI. We use:
 
-1. **Python script**  
+1. **Automatic in update process**  
+   **`update-collection.sh`** applies S3 CORS at the end of every run when `B2_KEY_ID` and `B2_APPLICATION_KEY` are set (e.g. in `config/local.env`). So you usually don’t need to run the script by hand. See **`docs/BACKBLAZE_CORS_FIX.md`** → “Automatic CORS in the update process”.
+
+2. **Python script (manual)**  
    `scripts/set-b2-s3-cors.py`  
    It uses **boto3** and your B2 credentials (e.g. from `config/local.env`) to call the S3-compatible API and set CORS on the `cf-data` bucket.
 
-2. **If the script errors** with something like “bucket contains B2 Native CORS rules”:  
+3. **If the script errors** with something like “bucket contains B2 Native CORS rules”:  
    First **remove** B2 Native CORS, then run the script again:
    ```bash
    env -u B2_APPLICATION_KEY -u B2_KEY_ID .venv-b2/bin/b2 bucket update --cors-rules '[]' cf-data allPublic

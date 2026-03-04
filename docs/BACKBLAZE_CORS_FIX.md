@@ -8,7 +8,35 @@ The main site and **Bassett** (e.g. `/pages/bassett`) load ColorFlex images and 
 
 ---
 
-## Fix: Add CORS rules to the `cf-data` bucket
+## Why does CORS keep breaking?
+
+1. **Two CORS configs, one URL**  
+   Backblaze has **B2 Native CORS** (console / `b2 bucket update --cors-rules`) and **S3 CORS** (S3 API only). Your app uses the **S3** URL (`s3.us-east-005.backblazeb2.com`). Only **S3 CORS** applies to that. If CORS was set in the B2 console or with the B2 CLI, it doesn’t affect the S3 endpoint, so the browser still blocks. Fix: always use the **S3** method (Python script or AWS CLI).
+
+2. **CORS lives on the bucket, not in the repo**  
+   CORS is bucket configuration in the cloud. It isn’t stored in this repo. So a new bucket, a restored bucket, or a bucket that was recreated won’t have CORS until you run the script again.
+
+3. **B2 Native CORS can block S3 CORS**  
+   If the bucket already has B2 Native CORS rules, Backblaze can reject setting S3 CORS until Native CORS is cleared. So after any “reset” or console change that re-adds Native CORS, you may need to clear it and re-run the S3 CORS script.
+
+4. **One-time checklist after any bucket change**  
+   After creating or reconfiguring the `cf-data` bucket: (1) Clear B2 Native CORS if present: `b2 bucket update --cors-rules '[]' cf-data allPublic`. (2) Run `scripts/set-b2-s3-cors.py` with credentials in env. (3) Verify with the `curl` command in “Verify” below.
+
+---
+
+## Automatic CORS in the update process
+
+**`update-collection.sh`** runs the S3 CORS script automatically at the end of every run when B2 credentials are in the environment.
+
+- **When:** After collection update, Shopify deploy, and product creation (if any). CORS is applied once per run; the call is idempotent.
+- **Requirements:** `B2_KEY_ID` and `B2_APPLICATION_KEY` set (e.g. in `config/local.env`), and `.venv-b2` with boto3 (`python3 -m venv .venv-b2 && .venv-b2/bin/pip install boto3`). The script loads `config/local.env` at startup.
+- **If CORS is skipped:** Missing credentials, missing `scripts/set-b2-s3-cors.py`, or missing `.venv-b2` causes a warning and the update continues. You can then run the manual fix below.
+
+So you don’t need to remember to run the CORS script separately when using the normal update flow.
+
+---
+
+## Fix: Add CORS rules to the `cf-data` bucket (manual)
 
 ### Recommended: Python script (no AWS CLI)
 

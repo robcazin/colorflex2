@@ -8,7 +8,8 @@ if (typeof window !== 'undefined') {
   window.__BASSETT_BUNDLE_LOADED__ = true;
   window.COLORFLEX_MODE = 'BASSETT';
   window.BASSETT_LAYER_STACK = BASSETT_LAYER_STACK;
-  console.log('[Bassett] layer stack set from bassett-layer-stack.js, layers:', BASSETT_LAYER_STACK.length, 'with transforms:', BASSETT_LAYER_STACK.filter(function(l) { return l && l.transform; }).length);
+  var dispFiles = BASSETT_LAYER_STACK.map(function(l) { return l && (l.displacementFile || l.file); }).filter(Boolean);
+  console.log('[Bassett] layer stack set from bassett-layer-stack.js, layers:', BASSETT_LAYER_STACK.length, 'files:', dispFiles.join(', '));
   var base = (window.BASSETT_LAYERS_BASE_URL || '').toString().trim();
   if (!base || base.indexOf('http') !== 0) {
     window.BASSETT_LAYERS_BASE_URL = 'https://s3.us-east-005.backblazeb2.com/cf-data/data/mockups/bassett/sofa-with-pillow-1';

@@ -593,6 +593,9 @@ case "$DEPLOY_MODE" in
         if [[ $REPLY =~ ^[Yy]$ ]]; then
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --nodelete
             echo -e "${GREEN}✅ Theme deployed successfully${NC}"
+        else
+            echo "Deployment cancelled."
+            exit 0
         fi
         ;;
 

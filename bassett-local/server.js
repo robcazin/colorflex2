@@ -61,7 +61,7 @@ function resolvePsdPath() {
   return null;
 }
 
-// Layer stack for room preview: folder containing beauty.png, sofa_disp.png, pillow1/2/3_disp.png
+// Layer stack for room preview: folder containing beauty.png, sofa_disp1.png, sofa_disp2.png, pillow1/2/3_disp.png
 function resolveMockupsPath() {
   const env = process.env.BASSETT_MOCKUPS_PATH;
   if (!env) return null;
@@ -136,7 +136,7 @@ const dataDirResolved = (DATA_ROOT && fs.existsSync(DATA_ROOT))
   ? DATA_ROOT
   : (collectionsPath ? path.dirname(collectionsPath) : path.join(REPO, 'data'));
 
-// Bassett layer stack PNGs (beauty.png, sofa_disp.png, etc.). Must run before app.use('/data').
+// Bassett layer stack PNGs (beauty.png, sofa_disp1.png, sofa_disp2.png, etc.). Must run before app.use('/data').
 app.get('/data/mockups/bassett/:file', (req, res, next) => {
   const name = req.params.file.replace(/[^a-zA-Z0-9._-]/g, '');
   if (!name) return next();

@@ -494,7 +494,8 @@ window.appState = {
     isInFurnitureMode: false,  // Furniture upholstery mode
     furnitureConfig: null,      // Loaded from furniture-config.json
     selectedFurnitureType: null, // e.g., 'sofa-capitol', 'sofa-kite'
-    colorsLocked: false  // When true, preserves colors when switching patterns
+    colorsLocked: false,  // When true, preserves colors when switching patterns
+    colorLockFullBuffer: null  // When lock is on: full palette (max colorable layers seen), so switching to fewer then back to more layers restores all
 };
 
 const BACKGROUND_INDEX = 0;
@@ -504,20 +505,31 @@ let isAppReady = false; // Flag to track if the app is fully initialized
 
 // When collection.colorFlex is missing (old JSON), we fall back to STANDARD_COLLECTION_NAMES and pattern data.
 // Airtable: master row (-000) ColorFlex checkbox → collection.colorFlex in data when using fetch.
-const STANDARD_COLLECTION_NAMES = ['abundance', 'pages', 'galleria', 'oceana', 'ancient-tiles', 'farmhouse'];
+// Collections that are entirely standard (no ColorFlex patterns). Do NOT include mixed collections (e.g. farmhouse has both ColorFlex and standard patterns).
+const STANDARD_COLLECTION_NAMES = ['abundance', 'pages', 'galleria', 'oceana', 'ancient-tiles'];
+
+// Farmhouse patterns that must always be treated as standard (thumbnail-only, no layer loads) even if JSON has colorFlex/layers.
+// Avoids loading layer images from B2 and CORS issues when those assets are missing or not CORS-enabled.
+const FARMHOUSE_STANDARD_PATTERN_NAMES = new Set([
+    'Laundry Daze Original Colors', 'On Antique Letters', 'Folkart Floral On Black',
+    'Sewing Daze Version 2', 'Sewing Daze Version 1'
+]);
 
 /** Returns true if pattern should be treated as standard (no layer UI, pass-through). */
 function patternIsStandard(pattern, collection) {
     if (!pattern) return false;
+    const col = collection || appState.selectedCollection;
+    const colName = col?.name?.toLowerCase?.();
+    if (colName === 'farmhouse' && pattern.name && FARMHOUSE_STANDARD_PATTERN_NAMES.has(pattern.name)) {
+        return true;
+    }
     const byData = !(pattern.colorFlex === true && pattern.layers && pattern.layers.length > 0);
     if (byData) return true;
-    const col = collection || appState.selectedCollection;
     // Explicitly standard collection (Airtable master row ColorFlex unchecked)
     if (col && col.colorFlex === false) return true;
     // Explicitly ColorFlex collection → show layer UI when pattern has layers
     if (col && col.colorFlex === true) return false;
     // Missing collection.colorFlex (old JSON): only treat as standard if name is in known list
-    const colName = col?.name?.toLowerCase?.();
     return !!colName && STANDARD_COLLECTION_NAMES.includes(colName);
 }
 
@@ -9719,7 +9731,15 @@ async function initializeApp() {
                     return Object.values(mockupsMap).find(m => (m && (m.id === mockupId || (m.id && m.id.toLowerCase() === lower)))) || null;
                 };
                 data.collections.forEach(collection => {
-                    const mockup = resolveMockupById(collection.mockupId);
+                    // Some legacy/mixed collections may be missing mockupId in collections.json.
+                    // Provide stable fallbacks so standard patterns can still render a room mockup.
+                    const fallbackMockupId =
+                        (collection && typeof collection.name === 'string' && collection.name.toLowerCase() === 'farmhouse')
+                            ? 'farmhouse-bathroom'
+                            : null;
+
+                    const effectiveMockupId = collection.mockupId || fallbackMockupId;
+                    const mockup = resolveMockupById(effectiveMockupId);
                     if (mockup) {
                         // ✅ CRITICAL: Ensure mockup.image is a string, not an object
                         const mockupImagePath = typeof mockup.image === 'string' ? mockup.image : 
@@ -11511,19 +11531,27 @@ function populateLayerInputs(pattern = appState.currentPattern) {
       console.warn('⚠️ Color lock button not found in DOM');
     }
 
-    // ✅ Save color lock buffer BEFORE handlePatternSelection (if colors are locked)
+    // ✅ Save color lock buffer BEFORE handlePatternSelection (if colors are locked).
+    // Retain full palette: merge current layer values with existing full buffer so switching to
+    // a pattern with fewer layers keeps the extra colors for when user switches back.
     let colorLockBuffer = null;
     if (appState.colorsLocked && appState.layerInputs && appState.layerInputs.length > 0) {
-        colorLockBuffer = appState.layerInputs.map(layer => layer.input.value);
-        console.log('🔒 Pre-selection: Saved color lock buffer:', colorLockBuffer);
+        const currentValues = appState.layerInputs.map(layer => layer.input.value);
+        const prev = appState.colorLockFullBuffer;
+        const maxLen = Math.max(currentValues.length, (prev && prev.length) || 0);
+        colorLockBuffer = [];
+        for (let i = 0; i < maxLen; i++) {
+            colorLockBuffer[i] = i < currentValues.length ? currentValues[i] : (prev && prev[i]) || "";
+        }
+        appState.colorLockFullBuffer = colorLockBuffer;
+        console.log('🔒 Pre-selection: Full color lock buffer (length ' + colorLockBuffer.length + '):', colorLockBuffer);
     }
 
     // Call handlePatternSelection with color lock buffer
-    // This sets up appState.currentPattern and appState.currentLayers correctly
+    // This sets up appState.currentPattern and appState.currentLayers correctly (with restored colors when lock is on)
     handlePatternSelection(pattern.name, appState.colorsLocked, colorLockBuffer);
 
     appState.layerInputs = [];
-    appState.currentLayers = [];
 
     if (!dom.layerInputsContainer) {
       console.error("❌ layerInputsContainer not found in DOM");
@@ -11543,18 +11571,23 @@ function populateLayerInputs(pattern = appState.currentPattern) {
     console.log("  - curatedColors:", curatedColors.length, curatedColors);
     console.log("  - effectiveColors:", effectiveColors.length, effectiveColors);
 
-    // Get all layers (including shadows)
-    const allLayers = buildLayerModel(
-      pattern,
-      effectiveColors,
-      {
-        isWallPanel: appState.selectedCollection?.name === "wall-panels",
-        tintWhite: appState.tintWhite || false
-      }
-    );
-
-    // Store all layers in currentLayers
-    appState.currentLayers = allLayers;
+    // When color lock had a buffer, keep currentLayers as set by handlePatternSelection (restored colors).
+    // Otherwise build from scratch so we don't overwrite restored colors and corrupt the full buffer on next click.
+    let allLayers;
+    if (appState.colorsLocked && colorLockBuffer && colorLockBuffer.length > 0) {
+      allLayers = appState.currentLayers;
+    } else {
+      appState.currentLayers = [];
+      allLayers = buildLayerModel(
+        pattern,
+        effectiveColors,
+        {
+          isWallPanel: appState.selectedCollection?.name === "wall-panels",
+          tintWhite: appState.tintWhite || false
+        }
+      );
+      appState.currentLayers = allLayers;
+    }
     dom.layerInputsContainer.innerHTML = "";
 
     if (isStandardPattern) {
@@ -11748,13 +11781,23 @@ function handlePatternSelection(patternName, preserveColors = false, colorLockBu
         console.log("Final appState.currentLayers:", JSON.stringify(appState.currentLayers, null, 2));
     }
 
-    // Restore saved colors if preserving
+    // Restore saved colors if preserving (apply buffer in colorable order so structure can differ)
     if (preserveColors && savedColors.length > 0) {
-        appState.currentLayers.forEach((layer, index) => {
-            if (savedColors[index] && layer.color) {
-                layer.color = savedColors[index];
+        let colorableIndex = 0;
+        appState.currentLayers.forEach((layer) => {
+            if (layer.color != null && savedColors[colorableIndex]) {
+                layer.color = savedColors[colorableIndex];
+                colorableIndex++;
             }
         });
+        // Keep full palette buffer: current colorable colors + tail from incoming buffer (for when user switches back to more layers)
+        if (colorLockBuffer && colorLockBuffer.length > 0) {
+            const colorableColors = appState.currentLayers.filter(l => l.color != null).map(l => l.color);
+            const newFull = [];
+            for (let i = 0; i < colorableColors.length; i++) newFull[i] = colorableColors[i];
+            for (let i = colorableColors.length; i < colorLockBuffer.length; i++) newFull[i] = colorLockBuffer[i];
+            appState.colorLockFullBuffer = newFull;
+        }
         console.log("🔄 Colors preserved from previous selection");
     }
 
@@ -12539,21 +12582,28 @@ async function loadPatternData(collection, patternId) {
         populateLayerInputs(pattern);
 
         // ✅ Restore saved colors if lock is enabled (AFTER populateLayerInputs builds new UI)
-        if (appState.colorsLocked && savedColorBuffer && savedColorBuffer.length > 0) {
-            console.log('🔒 Color lock: Restoring colors from buffer to', appState.layerInputs.length, 'layers');
-            appState.layerInputs.forEach((layer, index) => {
-                const colorIndex = index % savedColorBuffer.length;
-                const savedColor = savedColorBuffer[colorIndex];
+        // Use full palette buffer when available so we don't overwrite with a short cycled buffer (which would clamp to min layer count)
+        if (appState.colorsLocked && (savedColorBuffer?.length > 0 || (appState.colorLockFullBuffer && appState.colorLockFullBuffer.length > 0))) {
+            const bufferToRestore = (appState.colorLockFullBuffer && appState.colorLockFullBuffer.length >= appState.layerInputs.length)
+                ? appState.colorLockFullBuffer
+                : savedColorBuffer;
+            if (bufferToRestore && bufferToRestore.length > 0) {
+                console.log('🔒 Color lock: Restoring colors from', bufferToRestore === appState.colorLockFullBuffer ? 'full buffer' : 'saved buffer', 'to', appState.layerInputs.length, 'layers');
+                appState.layerInputs.forEach((layer, index) => {
+                    const savedColor = index < bufferToRestore.length
+                        ? bufferToRestore[index]
+                        : bufferToRestore[index % bufferToRestore.length];
 
-                layer.input.value = savedColor;
-                const hex = lookupColor(savedColor) || "#FFFFFF";
-                layer.circle.style.backgroundColor = hex;
+                    layer.input.value = savedColor;
+                    const hex = lookupColor(savedColor) || "#FFFFFF";
+                    layer.circle.style.backgroundColor = hex;
 
-                const clIdx = appState.currentLayers.findIndex(l => l.label === layer.label);
-                if (clIdx !== -1) appState.currentLayers[clIdx].color = savedColor;
+                    const clIdx = appState.currentLayers.findIndex(l => l.label === layer.label);
+                    if (clIdx !== -1) appState.currentLayers[clIdx].color = savedColor;
 
-                console.log(`  Restored layer ${index} (${layer.label}): ${savedColor} (cycling from buffer[${colorIndex}])`);
-            });
+                    console.log(`  Restored layer ${index} (${layer.label}): ${savedColor}`);
+                });
+            }
 
             // Trigger preview update with new colors (check mode first)
             updatePreview();
@@ -13775,10 +13825,11 @@ function loadImage(src, highPriority = true) {
 }
 
 
-// Bassett: one folder (sofa-with-pillow-1). beauty.png, sofa_disp.png, pillow1–3_disp.png
+// Bassett: one folder (sofa-with-pillow-1). beauty.png, sofa_disp1/2.png, pillow1–3_disp.png
 var BASSETT_LAYER_STACK = [
   { id: 'background', file: 'beauty.png', type: 'image', colorFlexIndex: null },
-  { id: 'sofa-displaced', displacementFile: 'sofa_disp.png', type: 'pattern-displaced' },
+  { id: 'sofa-displaced-1', displacementFile: 'sofa_disp1.png', type: 'pattern-displaced' },
+  { id: 'sofa-displaced-2', displacementFile: 'sofa_disp2.png', type: 'pattern-displaced' },
   { id: 'pillow1-displaced', displacementFile: 'pillow1_disp.png', type: 'pattern-displaced' },
   { id: 'pillow2-displaced', displacementFile: 'pillow2_disp.png', type: 'pattern-displaced' },
   { id: 'pillow3-displaced', displacementFile: 'pillow3_disp.png', type: 'pattern-displaced' }
@@ -14033,7 +14084,8 @@ async function updateBassettRoomMockup() {
       if (!patternImg) patternImg = await loadImg(patternUrl);
       var stack = getBassettLayerStack();
       var fromWindow = (typeof window !== 'undefined' && window.BASSETT_LAYER_STACK === stack);
-      console.log("[Bassett composite] stack source:", fromWindow ? "window.BASSETT_LAYER_STACK" : "CFM internal (rebuild + deploy Bassett bundle for transforms)", "layers:", stack.length);
+      var stackFiles = stack.map(function(l) { return l && (l.displacementFile || l.file); }).filter(Boolean);
+      console.log("[Bassett composite] stack source:", fromWindow ? "window.BASSETT_LAYER_STACK" : "CFM internal (rebuild + deploy Bassett bundle for transforms)", "layers:", stack.length, "files:", stackFiles.join(", "));
       if (!fromWindow && typeof window !== 'undefined') console.warn("[Bassett] Run: npm run build -- --env mode=bassett then deploy assets, or use ./deploy-shopify-cli.sh bassett");
       for (var di = 0; di < stack.length; di++) {
         var l = stack[di];
@@ -14161,7 +14213,14 @@ async function updateBassettRoomMockup() {
             }
           }
           if (!useSolid) {
-            var dispImg = await loadImg(layerUrl(layer.displacementFile));
+            var dispUrl = layerUrl(layer.displacementFile);
+            var dispImg;
+            try {
+              dispImg = await loadImg(dispUrl);
+            } catch (e) {
+              console.error("Bassett: failed to load displacement map:", layer.displacementFile, "URL:", dispUrl, e && e.message ? e.message : e);
+              continue;
+            }
             var dw = dispImg.naturalWidth;
             var dh = dispImg.naturalHeight;
             var tileCanvas = document.createElement("canvas");
@@ -14517,6 +14576,14 @@ let updateRoomMockup = async () => {
         return;
       }
 
+      function attachStandardRoomZoom(c) {
+        c.style.cursor = "pointer";
+        c.title = "Click for full size";
+        c.addEventListener("click", function () {
+          openRoomMockupFullscreen(c);
+        });
+      }
+
       const roomImg = new Image();
       roomImg.crossOrigin = "Anonymous";
       roomImg.src = normalizePath(appState.selectedCollection.mockup);
@@ -14543,14 +14610,17 @@ let updateRoomMockup = async () => {
               ctx.drawImage(shadowOverlay, shadowFit.x, shadowFit.y, shadowFit.width, shadowFit.height);
               ctx.globalCompositeOperation = "source-over";
               dom.roomMockup.innerHTML = "";
+              attachStandardRoomZoom(canvas);
               dom.roomMockup.appendChild(canvas);
             };
             shadowOverlay.onerror = () => {
               dom.roomMockup.innerHTML = "";
+              attachStandardRoomZoom(canvas);
               dom.roomMockup.appendChild(canvas);
             };
           } else {
             dom.roomMockup.innerHTML = "";
+            attachStandardRoomZoom(canvas);
             dom.roomMockup.appendChild(canvas);
           }
         }
@@ -14603,16 +14673,19 @@ let updateRoomMockup = async () => {
               console.log("✅ STANDARD PATTERN: Shadow overlay drawn with multiply blend mode");
 
               dom.roomMockup.innerHTML = "";
+              attachStandardRoomZoom(canvas);
               dom.roomMockup.appendChild(canvas);
             };
             shadowOverlay.onerror = () => {
               console.error("❌ STANDARD PATTERN: Shadow overlay failed to load:", shadowOverlay.src);
               dom.roomMockup.innerHTML = "";
+              attachStandardRoomZoom(canvas);
               dom.roomMockup.appendChild(canvas);
             };
           } else {
             console.log("⏭️ STANDARD PATTERN: No mockupShadow defined, skipping shadow overlay");
             dom.roomMockup.innerHTML = "";
+            attachStandardRoomZoom(canvas);
             dom.roomMockup.appendChild(canvas);
           }
         };
@@ -16644,6 +16717,7 @@ function toggleColorLock() {
         text.textContent = 'Unlocked';
         btn.style.background = 'rgba(110, 110, 110, 0.2)';
         btn.style.borderColor = '#d4af37';
+        appState.colorLockFullBuffer = null;  // Clear full palette buffer when lock is off
         console.log('🔓 Color lock disabled - patterns will load with default colors');
     }
 }
@@ -16952,17 +17026,18 @@ const generatePrintPreview = () => {
         });
         textContent += "</ul>";
 
-        // Open preview window
-        const previewWindow = window.open('', '_blank', 'width=800,height=1200');
+        // Open as popup (named window + features so it reuses same window and opens as popup when possible)
+        const popupFeatures = 'width=800,height=900,scrollbars=yes,resizable=yes,location=no,toolbar=no,menubar=no';
+        const previewWindow = window.open('about:blank', 'ColorFlexPrintPreview', popupFeatures);
         if (!previewWindow) {
-            console.error("Print preview - Failed to open preview window");
+            console.error("Print preview - Failed to open preview window (popup may be blocked)");
             return { canvas: printCanvas, dataUrl };
         }
 
         previewWindow.document.write(`
             <html>
                 <head>
-                    <title>Print Preview</title>
+                    <title>Print Preview - ${patternName}</title>
                     <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
                     <style>
                         body {
@@ -17013,6 +17088,31 @@ const generatePrintPreview = () => {
                         }
                         button:hover {
                             background-color: #e0d6c2;
+                        }
+                        @media print {
+                            body { margin: 0; padding: 0; background: #fff; color: #000; overflow: hidden; }
+                            .print-container {
+                                max-height: 100vh;
+                                height: 100vh;
+                                overflow: hidden;
+                                page-break-inside: avoid;
+                                padding: 12px;
+                                border-radius: 0;
+                                background: #fff;
+                            }
+                            .sc-logo { max-height: 12vh; width: auto !important; margin: 0 auto 8px; }
+                            h2 { font-size: 18px; margin: 4px 0; }
+                            h3 { font-size: 16px; margin: 2px 0; }
+                            .print-container ul {
+                                max-height: 22vh;
+                                overflow: hidden;
+                                margin: 4px 0;
+                                padding: 0;
+                                font-size: 11px;
+                            }
+                            .print-container li { margin: 2px 0; font-size: 11px; }
+                            .print-container img { max-height: 50vh; width: auto; margin: 8px auto; }
+                            .button-container { display: none !important; }
                         }
                     </style>
                 </head>

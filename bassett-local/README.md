@@ -48,7 +48,7 @@ Then open **http://localhost:3333**.
 In the repo you run the server from, set in `config/local.env`:
 
 - **COLORFLEX_DATA_PATH** — folder that contains `data/` (e.g. `data/collections.json`).
-- **BASSETT_MOCKUPS_PATH** — folder with layer PNGs: `beauty.png`, `sofa_disp.png`, `pillow1_disp.png`, etc.
+- **BASSETT_MOCKUPS_PATH** — folder with layer PNGs: `beauty.png`, `sofa_disp1.png`, `sofa_disp2.png`, `pillow1_disp.png`, etc.
 
 Optional: **BASSETT_REPO_ROOT** — if set, the server loads that repo’s config and serves assets from there (override; not needed for the one-way workflow above).
 

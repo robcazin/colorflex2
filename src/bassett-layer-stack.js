@@ -1,6 +1,6 @@
 /**
  * Bassett: one folder (sofa-with-pillow-1). Order = draw order (first = back, last = front).
- * Files: beauty.png, sofa_disp.png, pillow1_disp.png, pillow2_disp.png, pillow3_disp.png
+ * Files: beauty.png, sofa_disp1.png, sofa_disp2.png, pillow1_disp.png, pillow2_disp.png, pillow3_disp.png
  *
  * Per-layer transform (optional): add a "transform" object to pattern-displaced or wall-pattern
  * layers. The pattern is transformed (scale/translate/rotate) *before* displacement/mask is
@@ -21,10 +21,11 @@
 
 export const BASSETT_LAYER_STACK = [
   { id: 'background', file: 'beauty.png', type: 'image', colorFlexIndex: null },
-  { id: 'sofa-displaced', displacementFile: 'sofa_disp.png', type: 'pattern-displaced', colorFlexIndex: null },
-  { id: 'pillow1-displaced', displacementFile: 'pillow1_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translateY: -4, rotation: 7.5 } },
-  { id: 'pillow2-displaced', displacementFile: 'pillow2_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translatex: 4, translateY: 4, rotation: -5 } },
-  { id: 'pillow3-displaced', displacementFile: 'pillow3_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translateY: 40, rotation: -7.5 } },
+  { id: 'sofa-displaced-1', displacementFile: 'sofa_disp1.png', type: 'pattern-displaced', colorFlexIndex: null },
+  { id: 'sofa-displaced-2', displacementFile: 'sofa_disp2.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .92, translatex: -10, translateY: 3 } },
+  { id: 'pillow1-displaced', displacementFile: 'pillow1_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translateY: 65, rotation: 7.5 } },
+  { id: 'pillow2-displaced', displacementFile: 'pillow2_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translatex: 4, translateY: 4, rotation: -95 } },
+  { id: 'pillow3-displaced', displacementFile: 'pillow3_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translateY: 40, rotation: 80 } },
 ];
 
 var B2_BASSETT_LAYERS_BASE = 'https://s3.us-east-005.backblazeb2.com/cf-data/data/mockups/bassett/sofa-with-pillow-1';
