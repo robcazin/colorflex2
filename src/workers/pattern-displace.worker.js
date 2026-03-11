@@ -45,7 +45,7 @@ self.onmessage = function (e) {
       for (let x = 0; x < w; x++) {
         const i = (y * w + x) << 2;
         const a = disp[i + 3];
-        if (a < 128) {
+        if (a < 96) {
           out[i] = 0;
           out[i + 1] = 0;
           out[i + 2] = 0;

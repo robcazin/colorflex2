@@ -322,6 +322,7 @@
       // Data base URL for pattern images/collections (Backblaze B2). Main site must not use so-animation.
       {% assign colorflex_data_base = settings.colorflex_data_base_url %}
       {% if colorflex_data_base == blank %}{% assign colorflex_data_base = 'https://s3.us-east-005.backblazeb2.com/cf-data' %}{% endif %}
+      {% unless colorflex_data_base contains 'https://' or colorflex_data_base contains 'http://' %}{% assign colorflex_data_base = 'https://' | append: colorflex_data_base %}{% endunless %}
       window.COLORFLEX_DATA_BASE_URL = {{ colorflex_data_base | json }};
       // Set Shopify credentials for direct thumbnail uploads to Shopify Files
       // Get your Admin API access token from: Shopify Admin → Apps → Develop apps → Your app → API credentials
@@ -688,6 +689,7 @@
             var menuIcon = document.createElement('div');
             menuIcon.id = 'colorflexMenuIcon';
             var cfDataBase = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '');
+            if (cfDataBase && !/^https?:\/\//i.test(cfDataBase)) { cfDataBase = 'https://' + cfDataBase; }
             menuIcon.innerHTML = patterns.length > 0
                 ? '<img src="' + cfDataBase + '/img/camelion-sm-black.jpg" style="width:100%;height:100%;border-radius:50%;"><span style="background:#d4af37;color:#1a202c;font-size:10px;border-radius:10px;padding:2px 4px;position:absolute;top:-8px;right:-8px;min-width:16px;text-align:center;">' + patterns.length + '</span>'
                 : '<img src="' + cfDataBase + '/img/camelion-sm-black.jpg" style="width:100%;height:100%;border-radius:50%;">';
@@ -722,6 +724,27 @@
         updateMenuIcon();
     }
     window.updateColorFlexMenuIcon = updateMenuIcon;
+})();
+
+// ColorFlex launch: open any link to /pages/colorflex* in a 1920x1080 window (unless already on a ColorFlex page)
+(function() {
+    var colorFlexLaunchFeatures = 'width=1920,height=1080,scrollbars=yes,resizable=yes,menubar=no,toolbar=no,location=no';
+    document.addEventListener('click', function(e) {
+        var a = e.target && e.target.closest ? e.target.closest('a[href*="/pages/colorflex"]') : null;
+        if (!a || a.target === '_blank') return;
+        var href = (a.getAttribute('href') || '').trim();
+        if (href.indexOf('/pages/colorflex') === -1) return;
+        var path = window.location.pathname || '';
+        if (path.indexOf('/pages/colorflex') !== -1) return;
+        var url = href.indexOf('http') === 0 ? href : (window.location.origin + (href.indexOf('/') === 0 ? '' : '/') + href);
+        e.preventDefault();
+        if (window.innerWidth === 1920 && window.innerHeight === 1080) {
+            window.location.href = url;
+        } else {
+            var w = window.open(url, 'ColorFlexApp', colorFlexLaunchFeatures);
+            if (w) w.focus();
+        }
+    }, true);
 })();
 </script>
 </body>

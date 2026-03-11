@@ -513,40 +513,85 @@ def setup_view_layer(scene, uv_mat):
 
 def ensure_compositor_tree(scene):
     """
-    Robustly initialise scene.node_tree for Blender 4.x.
-    In 4.3 the compositor tree is no longer auto-created by setting
-    use_nodes = True alone.
+    Robustly initialise scene.node_tree for Blender 4.3+.
+
+    In 4.3 the attribute does not exist at all until the compositor is
+    initialised — reading it directly raises AttributeError.  Use getattr
+    with a None default throughout so we never touch the attribute until
+    we know it exists.
     """
     scene.use_nodes = True
     scene.render.use_compositing = True
 
-    # Try a depsgraph nudge first
+    # Helper that never raises AttributeError
+    def get_nt():
+        return getattr(scene, 'node_tree', None)
+
+    if get_nt() is not None:
+        return get_nt()
+
+    # Nudge the depsgraph — sometimes enough to trigger tree creation
     try:
         bpy.context.evaluated_depsgraph_get()
     except Exception:
         pass
 
-    if scene.node_tree is not None:
-        return scene.node_tree
+    if get_nt() is not None:
+        return get_nt()
 
-    # Try flipping a SpaceNodeEditor to compositor context
+    # Flip a SpaceNodeEditor to CompositorNodeTree context.
+    # This is the most reliable trigger in 4.3.
     for window in bpy.context.window_manager.windows:
         for area in window.screen.areas:
             if area.type == 'NODE_EDITOR':
                 for space in area.spaces:
                     if space.type == 'NODE_EDITOR':
-                        old = space.tree_type
+                        prev = space.tree_type
                         space.tree_type = 'CompositorNodeTree'
-                        space.tree_type = old
+                        space.tree_type = prev
                         break
 
-    if scene.node_tree is not None:
-        return scene.node_tree
+    if get_nt() is not None:
+        return get_nt()
 
-    # Direct creation — works in Blender 4.x as a last resort
-    ng = bpy.data.node_groups.new("Compositor", 'CompositorNodeTree')
-    scene.node_tree = ng
-    return scene.node_tree
+    # Last resort: open a temporary compositor area via screen override
+    try:
+        for window in bpy.context.window_manager.windows:
+            for area in window.screen.areas:
+                with bpy.context.temp_override(window=window, area=area):
+                    area.type = 'NODE_EDITOR'
+                    for space in area.spaces:
+                        if space.type == 'NODE_EDITOR':
+                            space.tree_type = 'CompositorNodeTree'
+                    break
+    except Exception:
+        pass
+
+    if get_nt() is not None:
+        return get_nt()
+
+    # Absolute last resort: use bpy.ops with a compositor context override
+    try:
+        for window in bpy.context.window_manager.windows:
+            for area in window.screen.areas:
+                if area.type == 'NODE_EDITOR':
+                    with bpy.context.temp_override(
+                            window=window, area=area, scene=scene):
+                        bpy.ops.node.new_node_tree(
+                            type='CompositorNodeTree', name="Compositor")
+    except Exception:
+        pass
+
+    nt = get_nt()
+    if nt is not None:
+        return nt
+
+    raise RuntimeError(
+        "Could not initialise scene.node_tree.\n"
+        "Workaround: in the Scripting workspace, split off a panel, "
+        "change it to Node Editor, click the dropdown and select "
+        "'Compositor' once, then re-run the script."
+    )
 
 
 def setup_compositor(scene, tmp_dir):

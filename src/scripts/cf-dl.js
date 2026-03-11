@@ -1043,7 +1043,8 @@ function getFallbackCollections() {
         { name: '18 - FOLKSIE' },
         { name: '21 - COORDINATES' }, // Background data only - not displayed as products
         { name: '22 - IKATS' },
-        { name: '16 - CABIN FEVER' }
+        { name: '16 - CABIN FEVER' },
+        { name: '30 - STRIPES' }
     ];
 }
 
@@ -1051,13 +1052,20 @@ async function fetchCollectionData(collectionName = null) {
 
 // Dynamically discover collections from Airtable (with fallback to hardcoded list)
 const collections = await getCollectionsFromAirtable();
-    // Read existing collections.json
+    // Read existing collections.json (DATA_ROOT first; fallback to project data/ so we never merge into empty when full file lives in repo)
+    const projectDataRoot = path.join(projectRoot, 'data');
+    const dataRootPath = path.join(DATA_ROOT, 'collections.json');
+    const projectDataPath = path.join(projectDataRoot, 'collections.json');
     let existingData = { collections: [] };
     try {
-        if (fsSync.existsSync(path.join(DATA_ROOT, 'collections.json'))) {
-            const fileContent = fsSync.readFileSync(path.join(DATA_ROOT, 'collections.json'), 'utf8');
+        if (fsSync.existsSync(dataRootPath)) {
+            const fileContent = fsSync.readFileSync(dataRootPath, 'utf8');
             existingData = JSON.parse(fileContent);
             console.log("Loaded existing collections.json:", existingData.collections.map(c => c.name));
+        } else if (DATA_ROOT !== projectDataRoot && fsSync.existsSync(projectDataPath)) {
+            const fileContent = fsSync.readFileSync(projectDataPath, 'utf8');
+            existingData = JSON.parse(fileContent);
+            console.log("Loaded existing collections.json from project data/ (DATA_ROOT path not found):", existingData.collections.map(c => c.name));
         }
     } catch (error) {
         console.error("Error reading collections.json, starting with empty data:", error);
@@ -1484,7 +1492,8 @@ const collections = await getCollectionsFromAirtable();
                 const size = extractDimensions(thumbnailFilename);
                 console.log(`[PATTERN] ${parsedPatternName}: size=${size}, layers=${layerData.length}`);
 
-                const isColorFlex = record.get('Color-Flex') === true;
+                // ColorFlex: explicit Airtable checkbox, or infer from layers (so misnamed/missing "Color-Flex" field still yields ColorFlex when LAYER SEPARATIONS is filled)
+                const isColorFlex = record.get('Color-Flex') === true || record.get('ColorFlex') === true || layerData.length > 0;
                 
                 jsonRecords.push({
                     id: recordId,
@@ -1519,6 +1528,8 @@ const collections = await getCollectionsFromAirtable();
             }
             // Collection number for designer sort order (e.g. "22 - IKATS" -> 22; used by theme to order collections)
             const collectionNumber = parseInt(String(tableName).split(' - ')[0], 10) || 999;
+            // If master row didn't set ColorFlex (no -000 or field unchecked/misnamed), infer from patterns so STRIPES etc. are ColorFlex when they have layers
+            const effectiveCollectionColorFlex = collectionColorFlex || jsonRecords.some(p => p.colorFlex === true);
             const newCollectionData = {
                 name: baseName,
                 tableName: tableName,
@@ -1526,7 +1537,7 @@ const collections = await getCollectionsFromAirtable();
                 collection_thumbnail: collectionThumbPath,
                 curatedColors: collectionCuratedColors,
                 coordinates: collectionCoordinates.length > 0 ? collectionCoordinates : null,
-                colorFlex: collectionColorFlex, // from Airtable master row (-000): true = ColorFlex collection, false = standard
+                colorFlex: effectiveCollectionColorFlex, // from master row (-000) or inferred from patterns with layers
                 ...(resolvedMockupId
                     ? { mockupId: resolvedMockupId }
                     : { mockup: mockupName, mockupShadow: mockupShadowName, mockupWidthInches: mockupDims.widthInches, mockupHeightInches: mockupDims.heightInches }
@@ -1902,9 +1913,37 @@ async function main(downloadImages = true, collectionName = null, generateShopif
         if (col.patterns && col.patterns.length) sortCollectionPatternsByNumber(col.patterns);
     });
 
-    // Write updated data to collections.json (try DATA_ROOT first, fallback to project data/ if permission denied)
+    // Safety: single-collection update must not overwrite a full file (e.g. DATA_ROOT missing → we had merged into empty → would write only 1 collection to project fallback)
     const projectDataRoot = path.join(projectRoot, 'data');
-    let collectionsPath = path.join(DATA_ROOT, 'collections.json');
+    const dataRootJsonPath = path.join(DATA_ROOT, 'collections.json');
+    if (collectionName && finalData.collections.length === 1) {
+        const singleName = (finalData.collections[0].name || '').toLowerCase().replace(/[\s-]/g, '');
+        for (const candidatePath of [dataRootJsonPath, path.join(projectDataRoot, 'collections.json')]) {
+            if (fsSync.existsSync(candidatePath)) {
+                try {
+                    const existing = JSON.parse(fsSync.readFileSync(candidatePath, 'utf8'));
+                    if (existing.collections && existing.collections.length > 1) {
+                        const idx = existing.collections.findIndex(c =>
+                            (c.name || '').toLowerCase().replace(/[\s-]/g, '') === singleName
+                        );
+                        if (idx >= 0) {
+                            existing.collections[idx] = finalData.collections[0];
+                        } else {
+                            existing.collections.push(finalData.collections[0]);
+                        }
+                        finalData = existing;
+                        console.log(`[MAIN] Merged single collection into existing file (${existing.collections.length} collections) to avoid overwriting`);
+                        break;
+                    }
+                } catch (e) {
+                    // ignore parse/read errors, proceed with current finalData
+                }
+            }
+        }
+    }
+
+    // Write updated data to collections.json (try DATA_ROOT first, fallback to project data/ if permission denied)
+    let collectionsPath = dataRootJsonPath;
     let writeRoot = DATA_ROOT;
     try {
         fsSync.mkdirSync(DATA_ROOT, { recursive: true });

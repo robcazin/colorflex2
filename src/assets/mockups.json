@@ -1,5 +1,51 @@
 {
   "mockups": {
+    "modernHallLamp": {
+      "id": "modern-hall-lamp",
+      "name": "Modern Hall Lamp",
+      "image": "./data/mockups/hallway-table-with-with-white-lamp.png",
+      "shadow": "./data/mockups/mhallway-table-with-with-white-lamp-shadow.jpg ",
+      "widthInches": 72,
+      "heightInches": 60,
+      "description": "Hall with Modern Lamp"
+    },
+    "rustic-desk": {
+      "id": "rustic-desk",
+      "name": "Rustic Desk",
+      "image": "./data/mockups/rusticDesk.png",
+      "shadow": "./data/mockups/rusticDesk-shadow.jpg",
+      "widthInches": 60,
+      "heightInches": 45,
+      "description": "Rustic wooden desk"
+    },
+    "tableBisqueLamp": {
+      "id": "table-bisque-lamp",
+      "name": "Table Bisque Lamp",
+      "image": "./data/mockups/table-bisque-lamp.png",
+      "shadow": "./data/mockups/table-bisque-lamp-shadow.jpg ",
+      "widthInches": 72,
+      "heightInches": 60,
+      "description": "fire"
+    },    
+    "farmhouse-bathroom": {
+      "id": "farmhouse-bathroom",
+      "name": "Farmhouse Bathroom",
+      "image": "./data/mockups/FarmhouseBathroom.png",
+      "shadow": "./data/mockups/FarmhouseBathroom-shadow.jpg",
+      "widthInches": 72,
+      "heightInches": 54,
+      "description": "Charming farmhouse bathroom"
+    },
+    "provenceBench": {
+      "id": "provence-bench",
+      "name": "Provence Bench",
+      "image": "./data/mockups/provenceBench.png",
+      "shadow": "./data/mockups/provenceBench-shadow.jpg",
+      "widthInches": 96,
+      "heightInches": 72,
+      "description": "Rustic Provence-style bench"
+    },
+
     "english-countryside-bedroom": {
       "id": "english-countryside-bedroom",
       "name": "English Countryside Bedroom",
@@ -55,24 +101,6 @@
       "heightInches": 54,
       "description": "Rustic cottage interior with door"
     },
-    "farmhouse-bathroom": {
-      "id": "farmhouse-bathroom",
-      "name": "Farmhouse Bathroom",
-      "image": "./data/mockups/FarmhouseBathroom.png",
-      "shadow": "./data/mockups/FarmhouseBathroom-shadow.jpg",
-      "widthInches": 72,
-      "heightInches": 54,
-      "description": "Charming farmhouse bathroom"
-    },
-    "provenceBench": {
-      "id": "provence-bench",
-      "name": "Provence Bench",
-      "image": "./data/mockups/provenceBench.png",
-      "shadow": "./data/mockups/provenceBench-shadow.jpg",
-      "widthInches": 96,
-      "heightInches": 72,
-      "description": "Rustic Provence-style bench"
-    },
     "longHallway": {
       "id": "longHallway",
       "name": "Long Hallway with Shadow",
@@ -100,17 +128,8 @@
       "heightInches": 60,
       "description": "Modern white dresser"
     },
-    "rustic-desk": {
-      "id": "rustic-desk",
-      "name": "Rustic Desk",
-      "image": "./data/mockups/rusticDesk.png",
-      "shadow": "./data/mockups/rusticDesk-shadow.jpg",
-      "widthInches": 60,
-      "heightInches": 45,
-      "description": "Rustic wooden desk"
-    },
     "wallpaper-mockup-39": {
-      "id": "wallpaper-mockup-39",
+      "id": "blue-desk",
       "name": "Wallpaper Room 39",
       "image": "./data/mockups/wallpaper-mockup-39-W60H45.png",
       "shadow": "./data/mockups/wallpaper-mockup-39-shadow-W60H45.jpg",
@@ -136,33 +155,6 @@
       "heightInches": 60,
       "description": "T-shirt clothing mockup"
     },
-    "dress-mannequin": {
-      "id": "dress-mannequin",
-      "name": "Dress Mannequin",
-      "image": "./data/mockups/clothing/dress-mannequin.png",
-      "shadow": null,
-      "widthInches": 60,
-      "heightInches": 90,
-      "description": "Dress on mannequin"
-    },
-    "armchair": {
-      "id": "armchair",
-      "name": "Armchair",
-      "image": "./data/mockups/armchair-W120H90.png",
-      "shadow": null,
-      "widthInches": 36,
-      "heightInches": 40,
-      "description": "Upholstered armchair for furniture mode"
-    },
-    "white-dresser-large": {
-      "id": "white-dresser-large",
-      "name": "White Dresser (Large)",
-      "image": "./data/mockups/white-dresser-W72H72.png",
-      "shadow": null,
-      "widthInches": 72,
-      "heightInches": 72,
-      "description": "Modern white dresser - larger version"
-    },
     "mudroom": {
       "id": "mudroom",
       "name": "Mudroom",
@@ -182,7 +174,7 @@
       "description": "Still life arrangement with pine bough"
     },
     "stillLife_eucalyptus": {
-      "id": "stillLife_eucalyptus",
+      "id": "still-life-eucalyptus",
       "name": "Still Life - Eucalyptus",
       "image": "./data/mockups/stillLife_eucalyptus.png",
       "shadow": "stillLife_eucalyptus",
@@ -199,14 +191,61 @@
       "heightInches": 36,
       "description": "Shadow for still life arrangement with eucalyptus"
     },
-    "modernHallLamp": {
-      "id": "modern-hall-lamp",
-      "name": "Modern Hall Lamp",
-      "image": "./data/mockups/hallway-table-with-with-white-lamp.png",
-      "shadow": "./data/mockups/mhallway-table-with-with-white-lamp-shadow.jpg ",
+      "rusticConsole": {
+      "id": "rustic-console",
+      "name": "Rustic Console",
+      "image": "./data/mockups/rustic-console.png",
+      "shadow": "./data/mockups/rustic-console-shadow.jpg ",
       "widthInches": 72,
       "heightInches": 60,
-      "description": "Hall with Modern Lamp"
+      "description": "Console"
+    },
+      "slApples": {
+      "id": "slapples",
+      "name": "Still Life - Apples",
+      "image": "./data/mockups/slapples.png",
+      "shadow": "./data/mockups/slapples-shadow.jpg ",
+      "widthInches": 72,
+      "heightInches": 60,
+      "description": "Console"
+    },
+      "scallopConsole": {
+      "id": "scallop-console",
+      "name": "Scallop Console",
+      "image": "./data/mockups/scallop-console.png",
+      "shadow": "./data/mockups/scallop-console-shadow.jpg",
+      "tintMask": "./data/mockups/scallop-console-mask.png",
+      "widthInches": 72,
+      "heightInches": 60,
+      "description": "Console"
+    },
+      "cozyChair": {
+      "id": "cozy-chair",
+      "name": "Cozy Chair",
+      "image": "./data/mockups/cozy-chair.png",
+      "shadow": "./data/mockups/cozy-chair-shadow.jpg ",
+      "widthInches": 72,
+      "heightInches": 60,
+      "description": "Console"
+    },
+      "fireplaceMantle": {
+      "id": "fireplace-mantle",
+      "name": "Fireplace Mantle",
+      "image": "./data/mockups/fireplace-mantle.png",
+      "shadow": "./data/mockups/fireplace-mantle-shadow.jpg ",
+      "widthInches": 72,
+      "heightInches": 60,
+      "description": "fire"
+    }, 
+    "greenDresser": {
+      "id": "green-dresser",
+      "name": "Green Dresser",
+      "image": "./data/mockups/dresser-green.png",
+      "shadow": "./data/mockups/dresser-green-shadow.jpg ",
+      "widthInches": 84,
+      "heightInches": 60,
+      "description": "Wide Vintage dresser with Basket"
     }
+
   }
 }

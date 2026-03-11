@@ -15,7 +15,7 @@
       <div style="display: grid; grid-template-columns: 1fr 280px 1fr; gap: 2rem; max-width: 1500px; margin: 0 auto; margin-left: 160px; padding: 0 1rem; position: relative; z-index: 1;">
         
         <!-- MOVED: Curated Colors Section - Compact Version -->
-        <div style="grid-column: 1 / -1; margin-bottom: 0;">
+        <div style="grid-column: 1 / -1; margin-bottom: 0;" data-tooltip="Click a color to apply it to the selected layer">
           <section id="curatedColorsSection" style="width: 100%; padding: 0.125rem 0 0 0; text-align: center;">
             <div id="curatedColorsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 1300px; margin: 0 auto; min-height: 30px;"></div>
           </section>
@@ -23,7 +23,7 @@
         
         <!-- Pattern Preview -->
         <div style="text-align: center; margin-top: -22px;">
-          <h3 style="margin-bottom: 0.5rem; font-size: 2.4rem; font-family: 'Island Moments', cursive !important;">Pattern Preview</h3>
+          <h3 style="margin-bottom: 0.5rem; font-size: 2.4rem; font-family: 'Island Moments', cursive !important;" data-tooltip="Your pattern with current colors and scale">Pattern Preview</h3>
           <div id="preview" style="max-width: 700px; min-height: 200px; background: #434341; margin: 0 auto; display: flex; justify-content: center; align-items: center;"></div>
           <h3 id="patternName" style="margin: 0.5rem .5rem; font-size: 1.4rem; font-family: 'Special Elite', monospace !important;">Pattern Name</h3>
           <div style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.5rem; margin-bottom: 3rem; padding-bottom: 2rem; position: relative; z-index: 150;">
@@ -53,24 +53,24 @@
         
         <!-- Color Controls -->
         <div id="colorControls" style="display: flex; flex-direction: column; width: 100%; margin-left: -1rem;">
-          <h3 style="text-align: center; color: #d4af37; font-size: 1.5rem; font-family: 'Special Elite', monospace !important;">Color Layers</h3>
+          <h3 style="text-align: center; color: #d4af37; font-size: 1.5rem; font-family: 'Special Elite', monospace !important;" data-tooltip="Choose a color for each layer; type a name or SW number">Color Layers</h3>
 
           <div id="layerInputsContainer" style="width: 100%; min-width: 280px;"></div>
         </div>
         
         <!-- Room Mockup -->
         <div style="text-align: center; margin-top: -15px;">
-          <h3 style="margin-bottom: 0.5rem; font-size: 2.4rem; font-family: 'Island Moments', cursive !important;">Room Mockup Preview</h3>
-          <div id="roomMockup" style="width: 550px; height: 400px; background: #434341; margin: 0 auto;"></div>
+          <h3 style="margin-bottom: 0.5rem; font-size: 2.4rem; font-family: 'Island Moments', cursive !important;" data-tooltip="Pattern shown in a room scene">Room Mockup Preview</h3>
+          <div id="roomMockup" style="width: 550px; height: 400px; background: #434341; margin: 0 auto;" data-tooltip="Click for full size, click again to close"></div>
           
           <div id="scaleControls" style="margin-top: 0.75rem;">
-            <button data-multiplier="1" onclick="setPatternScale(1)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">Normal</button>
-            <button data-multiplier="0.5" onclick="setPatternScale(0.5)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">2X</button>
-            <button data-multiplier="0.25" onclick="setPatternScale(0.25)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">3X</button>
-            <button data-multiplier="0.125" onclick="setPatternScale(0.125)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">4X</button>
+            <button data-multiplier="1" data-tooltip="One repeat (baseline size)" onclick="setPatternScale(1)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">Normal</button>
+            <button data-multiplier="0.5" data-tooltip="More repeats, smaller on wall" onclick="setPatternScale(0.5)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">2X</button>
+            <button data-multiplier="0.25" data-tooltip="Even more repeats" onclick="setPatternScale(0.25)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">3X</button>
+            <button data-multiplier="0.125" data-tooltip="Maximum density" onclick="setPatternScale(0.125)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0; border: none; border-radius: 4px; font-size: 0.85rem;">4X</button>
           </div>
           <div style="text-align: center;">
-            <h3 style="margin-top: 1.9rem; font-size: 2rem; font-family: 'Island Moments', cursive !important;">Matching Coordinates</h3>
+            <h3 style="margin-top: 1.9rem; font-size: 2rem; font-family: 'Island Moments', cursive !important;" data-tooltip="Coordinating paint colors for this pattern">Matching Coordinates</h3>
             <div id="coordinatesContainer" style="margin-top: 3rem; min-height: 100px; max-width: 550px; margin-left: auto; margin-right: auto;"></div>
           </div>
           
@@ -79,13 +79,13 @@
       </div>
       
       <!-- Collection Header - Fixed Position -->
-      <div id="collectionHeaderContainer" style="position: fixed; left: 0; top: 180px; width: 140px; background: #2d3748; padding: 0.75rem 0.75rem 0.5rem 0.75rem; z-index: 26; border-radius: 8px 8px 0 0; text-align: center; margin-left: 5px;">
+      <div id="collectionHeaderContainer" style="position: fixed; left: 0; top: 180px; width: 140px; background: #2d3748; padding: 0.75rem 0.75rem 0.5rem 0.75rem; z-index: 26; border-radius: 8px 8px 0 0; text-align: center; margin-left: 5px;" data-tooltip="Current collection">
         <h6 id="collectionHeader" style="background: #2d3748; margin: 0 0 0.25rem 0; font-family: 'IM Fell English', serif !important; font-size: 1.1rem !important; color: white !important; font-weight: normal !important; text-transform: uppercase !important;">BOMBAY</h6>
         <div style="font-family: 'Special Elite', monospace !important; font-size: 0.8rem; color: #d4af37 !important; text-transform: uppercase; letter-spacing: 0.5px;">Collection</div>
       </div>
       
       <!-- Left Sidebar - Scrollable Thumbnails Only -->
-      <div id="leftSidebar" style="position: fixed; left: 0; top: 160px; width: 140px; background: #2d3748; padding: 0.75rem; z-index: 25; border-radius: 0 0 8px 8px; overflow-y: auto; height: 760px; scrollbar-width: none; -ms-overflow-style: none;">
+      <div id="leftSidebar" style="position: fixed; left: 0; top: 160px; width: 140px; background: #2d3748; padding: 0.75rem; z-index: 25; border-radius: 0 0 8px 8px; overflow-y: auto; height: 760px; scrollbar-width: none; -ms-overflow-style: none;" data-tooltip="Click a pattern to customize colors">
         <div id="collectionThumbnails"></div>
       </div>
 

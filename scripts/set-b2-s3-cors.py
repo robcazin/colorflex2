@@ -36,6 +36,10 @@ CORS = {
 
 
 def main():
+    # Avoid proxy for B2 (Backblaze); proxy often blocks or mis-handles S3 API.
+    for var in ("HTTP_PROXY", "HTTPS_PROXY", "http_proxy", "https_proxy", "ALL_PROXY", "all_proxy"):
+        os.environ.pop(var, None)
+
     key_id = os.environ.get("B2_KEY_ID") or os.environ.get("B2_APPLICATION_KEY_ID")
     secret = os.environ.get("B2_APPLICATION_KEY")
     if not key_id or not secret:
@@ -52,9 +56,19 @@ def main():
     )
     client.put_bucket_cors(Bucket=BUCKET, CORSConfiguration=CORS)
     print("S3 CORS applied to bucket cf-data.")
-    print("Verify with:")
-    print('  curl -sI -H "Origin: https://saffroncottage.shop" "https://s3.us-east-005.backblazeb2.com/cf-data/data/collections/coverlets/thumbnails/zane-tweed.jpg" | grep -i access-control')
-    print("You should see Access-Control-Allow-Origin. Then reload the main site.")
+
+    # Verify the bucket actually has the rules (confirms put succeeded)
+    try:
+        out = client.get_bucket_cors(Bucket=BUCKET)
+        rules = out.get("CORSRules", [])
+        print(f"Verified: bucket has {len(rules)} CORS rule(s).")
+        if not rules:
+            print("WARNING: No CORS rules on bucket. Check Backblaze console; B2 Native CORS may need to be cleared first.", file=sys.stderr)
+    except Exception as e:
+        print(f"Could not verify CORS (get_bucket_cors): {e}", file=sys.stderr)
+
+    print("Verify in browser: curl -sI -H \"Origin: https://saffroncottage.shop\" \"https://s3.us-east-005.backblazeb2.com/cf-data/data/collections/geometry/thumbnails/oxbow.jpg\" | grep -i access-control")
+    print("You should see Access-Control-Allow-Origin. Then hard-refresh the site (Cmd+Shift+R).")
 
 
 if __name__ == "__main__":

@@ -2,6 +2,10 @@
  * Bassett: one folder (sofa-with-pillow-1). Order = draw order (first = back, last = front).
  * Files: beauty.png, sofa_disp1.png, sofa_disp2.png, pillow1_disp.png, pillow2_disp.png, pillow3_disp.png
  *
+ * Sofa gap fix: sofa_disp1 and sofa_disp2 must overlap in alpha where they meet, or a visible
+ * seam (grey strip) appears. Transform on sofa-displaced-2 (scale/translateX/translateY) helps alignment;
+ * re-export DSPL maps with overlapping alpha at the seam if gaps remain.
+ *
  * Per-layer transform (optional): add a "transform" object to pattern-displaced or wall-pattern
  * layers. The pattern is transformed (scale/translate/rotate) *before* displacement/mask is
  * applied, so the pattern is offset within the same confines (alpha/displacement shape).
@@ -22,9 +26,9 @@
 export const BASSETT_LAYER_STACK = [
   { id: 'background', file: 'beauty.png', type: 'image', colorFlexIndex: null },
   { id: 'sofa-displaced-1', displacementFile: 'sofa_disp1.png', type: 'pattern-displaced', colorFlexIndex: null },
-  { id: 'sofa-displaced-2', displacementFile: 'sofa_disp2.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .92, translatex: -10, translateY: 3 } },
+  { id: 'sofa-displaced-2', displacementFile: 'sofa_disp2.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .94, translateX: -8, translateY: 2 } },
   { id: 'pillow1-displaced', displacementFile: 'pillow1_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translateY: 65, rotation: 7.5 } },
-  { id: 'pillow2-displaced', displacementFile: 'pillow2_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translatex: 4, translateY: 4, rotation: -95 } },
+  { id: 'pillow2-displaced', displacementFile: 'pillow2_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translateX: 4, translateY: 4, rotation: -95 } },
   { id: 'pillow3-displaced', displacementFile: 'pillow3_disp.png', type: 'pattern-displaced', colorFlexIndex: null, transform: { scale: .95, translateY: 40, rotation: 80 } },
 ];
 

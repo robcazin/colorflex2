@@ -696,6 +696,7 @@
 
       // Define fabric image mappings (use theme data base URL - Backblaze, not so-animation)
       var cfBase = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '');
+      if (cfBase && !/^https?:\/\//i.test(cfBase)) { cfBase = 'https://' + cfBase; }
       const fabricImages = {
         'drapery': cfBase + '/img/fabric-drapery-blackout.jpg',
         'blackout': cfBase + '/img/fabric-drapery-blackout.jpg',
@@ -4093,7 +4094,7 @@ function addCustomColorsDisplay(patternName, collection, material, customColors)
   
   let displayHTML = `
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-      <img src="${(window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '')}/img/camelion-sm-r.jpg" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(212, 175, 55, 0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.3);" alt="ColorFlex">
+      <img src="${(function(){ var b = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, ''); return (b && !/^https?:\/\//i.test(b)) ? 'https://' + b : b; })()}/img/camelion-sm-r.jpg" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(212, 175, 55, 0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.3);" alt="ColorFlex">
       <div>
         <strong>${patternName}</strong> from ${collection} collection
         ${material ? ' • ' + material.charAt(0).toUpperCase() + material.slice(1) : ''}

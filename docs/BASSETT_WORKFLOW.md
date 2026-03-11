@@ -69,22 +69,22 @@ This builds the Bassett bundle, builds the local HTML, and starts the server. Op
 - **Composite** it with the **extracted PSD layers** (exported PNGs).
 - **Warp** only the layers that have a **DSPL** (displacement) file; the rest are drawn as images or tinted (blanket).
 
-**Layer stack (draw order: back → front)** — in code: `BASSETT_LAYER_STACK` in `src/CFM.js`:
+**Sofa seam / tiling:** The app uses a **single shared tiled canvas** (one global pattern phase) so the pattern aligns across all displacement layers (sofa parts, pillows). Tiling uses **integer indices** (i×twB, j×thB) so non-square patterns (e.g. 24×36) don’t get an offset from float accumulation or half-drop column detection. The displacement layers (“sprites”) are cut and reflected per object; any offset was from tiling math, not from the DSPL maps.
+
+**Layer stack (draw order: back → front)** — in code: `BASSETT_LAYER_STACK` in `src/bassett-layer-stack.js` / `src/CFM.js`:
 
 | # | Layer              | File                     | Type               | Notes                          |
 |---|--------------------|--------------------------|--------------------|--------------------------------|
-| 1 | background         | Background.png           | image              |                                |
-| 2 | sofa-displaced     | SOFA-DSPL.png            | pattern-displaced  | pattern warped by displacement |
-| 3 | sofa-shadows       | SOFA-SHADOWS.png         | image              |                                |
-| 4 | blanket            | BLANKET-BACKGROUND.png   | solid-color        | ColorFlex color index 1        |
-| 5 | pillow2            | PILLOW-2.png             | image              |                                |
-| 6 | pillow2-displaced  | PILLOW-2-DSPL.png        | pattern-displaced  |                                |
-| 7 | pillow2-shadows    | PILLOW-2-SHADOWS.png     | image              |                                |
-| 8 | pillow1            | PILLOW-1.png             | image              |                                |
-| 9 | pillow1-displaced  | PILLOW-1-DSPL.png        | pattern-displaced  |                                |
-|10 | pillow1-shadows    | PILLOW-1-SHADOWS.png     | image              |                                |
+| 1 | background         | beauty.png               | image              |                                |
+| 2 | sofa-displaced-1   | sofa_disp1.png           | pattern-displaced  | left + overlap into center     |
+| 3 | sofa-displaced-2   | sofa_disp2.png           | pattern-displaced  | right + overlap into center    |
+| 4 | pillow1-displaced  | pillow1_disp.png        | pattern-displaced  |                                |
+| 5 | pillow2-displaced  | pillow2_disp.png        | pattern-displaced  |                                |
+| 6 | pillow3-displaced  | pillow3_disp.png        | pattern-displaced  |                                |
 
-**Displacement (DSPL) files:** `PILLOW-1-DSPL.png`, `PILLOW-2-DSPL.png`, `SOFA-DSPL.png`.
+(Current stack in use: `sofa-with-pillow-1` — beauty.png, sofa_disp1/2, pillow1–3_disp. No separate shadow/blanket layers in this stack.)
+
+**Displacement (DSPL) files:** `sofa_disp1.png`, `sofa_disp2.png`, `pillow1_disp.png`, `pillow2_disp.png`, `pillow3_disp.png`.
 
 **Layer base URL:** `window.BASSETT_LAYERS_BASE_URL` or `/data/mockups/bassett/sofa-with-pillows-mockup-2`. Point `/data` or this URL at the folder that contains the exported layer images.
 
@@ -128,6 +128,7 @@ Bassett layer-based room preview is in place and the workflow is stable. One com
 - **2026-02-07:** **Canonical data folder:** SMB share `smb://soanimation._smb._tcp.local/jobs/cf-data`. Mount it and set `COLORFLEX_DATA_PATH` in `config/local.env` to the mount path (folder containing `data/`). Bassett server and cf-dl both use it; server prefers DATA_ROOT when set.
 - **2026-02-23:** **Checkpoint before UI tweaks.** Local server running (SOLID). Backup for safety; user list of tweaks to apply next. See git commit same date.
 - **2026-02-23:** **One repo, both experiences online.** Doc updated: one codebase on main branch; safe to change both main ColorFlex and Bassett. Deploy: `bassett` = preview-only (CF Bassett theme); `bassett-live` = public URL (Bassett template + JS on live theme, then create a Page with template ColorFlex Bassett). See `docs/COLORFLEX_BASSETT.md` for edit/deploy summary.
+- **2026-03:** **Non-square patterns on sofa: known limitation.** Patterns with non-square repeat (e.g. 24×36) produce visible gaps on the Bassett sofa. Tried in code: (1) tile size from pattern aspect (tw/th), (2) aspect-corrected tiling source from square preview, (3) aspect-corrected source from thumbnail. None removed the gaps. Cause: pattern source used for tiling is the square preview (or square thumbnail); tiling that into non-square cells leaves large empty areas. Fix likely needs to be asset-side (e.g. how pattern is exported or how DSPL/UV covers the sofa) or a different tiling/mask approach. No further code toggles for this until a clear direction is chosen.
 
 ---
 

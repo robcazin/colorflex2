@@ -495,7 +495,8 @@ window.appState = {
     furnitureConfig: null,      // Loaded from furniture-config.json
     selectedFurnitureType: null, // e.g., 'sofa-capitol', 'sofa-kite'
     colorsLocked: false,  // When true, preserves colors when switching patterns
-    colorLockFullBuffer: null  // When lock is on: full palette (max colorable layers seen), so switching to fewer then back to more layers restores all
+    colorLockFullBuffer: null,  // When lock is on: full palette (max colorable layers seen), so switching to fewer then back to more layers restores all
+    selectedMockupId: null  // User override for room mockup (id from mockups.json); null = use collection default
 };
 
 const BACKGROUND_INDEX = 0;
@@ -508,29 +509,57 @@ let isAppReady = false; // Flag to track if the app is fully initialized
 // Collections that are entirely standard (no ColorFlex patterns). Do NOT include mixed collections (e.g. farmhouse has both ColorFlex and standard patterns).
 const STANDARD_COLLECTION_NAMES = ['abundance', 'pages', 'galleria', 'oceana', 'ancient-tiles'];
 
-// Farmhouse patterns that must always be treated as standard (thumbnail-only, no layer loads) even if JSON has colorFlex/layers.
-// Avoids loading layer images from B2 and CORS issues when those assets are missing or not CORS-enabled.
-const FARMHOUSE_STANDARD_PATTERN_NAMES = new Set([
-    'Laundry Daze Original Colors', 'On Antique Letters', 'Folkart Floral On Black',
-    'Sewing Daze Version 2', 'Sewing Daze Version 1'
-]);
+// Legacy fallback: patterns that are standard but may still have colorFlex: true in JSON (until data pipeline sets colorFlex: false).
+// Key = normalized collection name (lowercase, spaces → hyphens). Add new collections here only if JSON hasn't been re-exported yet.
+// Prefer setting pattern.colorFlex = false in collections.json for "Standard Pattern" so no code change is needed.
+const LEGACY_STANDARD_PATTERNS_BY_COLLECTION = {
+    'farmhouse': new Set([
+        'Laundry Daze Original Colors', 'On Antique Letters', 'Folkart Floral On Black',
+        'Sewing Daze Version 2', 'Sewing Daze Version 1'
+    ]),
+    'english-cottage': new Set(['Greenwich Time'])
+};
 
-/** Returns true if pattern should be treated as standard (no layer UI, pass-through). */
+function normalizedCollectionName(col) {
+    const name = col?.name?.toLowerCase?.();
+    return name ? name.replace(/\s+/g, '-') : '';
+}
+
+function patternNameMatches(pattern, standardName) {
+    if (!pattern?.name) return false;
+    if (pattern.name === standardName) return true;
+    const norm = pattern.name.toLowerCase().replace(/[\s-]+/g, '-');
+    const standardNorm = standardName.toLowerCase().replace(/[\s-]+/g, '-');
+    return norm === standardNorm;
+}
+
+/** Returns true if pattern should be treated as standard (no layer UI, thumbnail-only). */
 function patternIsStandard(pattern, collection) {
     if (!pattern) return false;
+
+    // 1. Universal: explicit pattern flag (source of truth). Set colorFlex: false in JSON for any "Standard Pattern" so new collections need no code change.
+    if (pattern.colorFlex === false || pattern.standard === true) return true;
+
     const col = collection || appState.selectedCollection;
-    const colName = col?.name?.toLowerCase?.();
-    if (colName === 'farmhouse' && pattern.name && FARMHOUSE_STANDARD_PATTERN_NAMES.has(pattern.name)) {
-        return true;
+    const colNameNorm = normalizedCollectionName(col);
+
+    // 2. Legacy fallback: known standard patterns per collection (for JSON that still has colorFlex: true on standard patterns).
+    const legacySet = LEGACY_STANDARD_PATTERNS_BY_COLLECTION[colNameNorm];
+    if (legacySet) {
+        for (const name of legacySet) {
+            if (patternNameMatches(pattern, name)) return true;
+        }
     }
+
+    // 3. By structure: not explicitly ColorFlex with layers
     const byData = !(pattern.colorFlex === true && pattern.layers && pattern.layers.length > 0);
     if (byData) return true;
-    // Explicitly standard collection (Airtable master row ColorFlex unchecked)
+
+    // 4. Collection-level: entirely standard collection
     if (col && col.colorFlex === false) return true;
-    // Explicitly ColorFlex collection → show layer UI when pattern has layers
     if (col && col.colorFlex === true) return false;
-    // Missing collection.colorFlex (old JSON): only treat as standard if name is in known list
-    return !!colName && STANDARD_COLLECTION_NAMES.includes(colName);
+    const colName = col?.name?.toLowerCase?.();
+    return !!colName && STANDARD_COLLECTION_NAMES.includes(colNameNorm || colName);
 }
 
 // Designer-requested order: sort collections by collection number (from tableName e.g. "22 - IKATS" -> 22)
@@ -1579,6 +1608,7 @@ function addSaveButton() {
     viewSavedButton.id = 'viewSavedBtn';
     viewSavedButton.setAttribute('aria-label', 'My Designs');
     viewSavedButton.setAttribute('title', 'Browse your saved ColorFlex Designs');
+    viewSavedButton.setAttribute('data-tooltip', 'My Designs — view, edit, and reopen your saved patterns');
 
     // Get pattern count for badge
     const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
@@ -5621,10 +5651,13 @@ function loadSavedPatternToUI(pattern) {
 
 // Base URL for data/images: from theme (Backblaze). Fallback is Backblaze so main site never hits so-animation (no CORS there).
 function getColorFlexDataBaseUrl() {
-    if (typeof window !== 'undefined' && window.COLORFLEX_DATA_BASE_URL) {
-        return String(window.COLORFLEX_DATA_BASE_URL).replace(/\/$/, '');
+    var base = (typeof window !== 'undefined' && window.COLORFLEX_DATA_BASE_URL)
+        ? String(window.COLORFLEX_DATA_BASE_URL).trim().replace(/\/$/, '')
+        : 'https://s3.us-east-005.backblazeb2.com/cf-data';
+    if (base && !/^https?:\/\//i.test(base)) {
+        base = 'https://' + base;
     }
-    return 'https://s3.us-east-005.backblazeb2.com/cf-data';
+    return base;
 }
 
 // Path normalization: use theme data base URL (Backblaze); no so-animation on main site
@@ -5638,6 +5671,71 @@ function urlForCorsFetch(url) {
     var sep = url.indexOf('?') >= 0 ? '&' : '?';
     return url + sep + '_cf=cors';
 }
+/**
+ * Returns the effective room mockup (image, shadow, dimensions) for the given collection.
+ * If appState.selectedMockupId is set and exists in ColorFlexMockups, uses that; otherwise collection default.
+ */
+function getEffectiveRoomMockup(collection) {
+    if (!collection) return { mockup: '', mockupShadow: '', mockupWidthInches: 90, mockupHeightInches: 60, tintMask: '' };
+    const id = appState.selectedMockupId;
+    const mockups = window.ColorFlexMockups || {};
+    const m = id && mockups[id] ? mockups[id] : null;
+    if (m) {
+        const image = typeof m.image === 'string' ? m.image : (m.image?.path || m.image?.url || m.path || '');
+        const shadow = typeof m.shadow === 'string' ? m.shadow : (m.shadow?.path || m.shadow?.url || '');
+        const tintMask = typeof m.tintMask === 'string' ? m.tintMask : (m.tintMask?.path || m.tintMask?.url || '');
+        return {
+            mockup: image,
+            mockupShadow: shadow,
+            mockupWidthInches: m.widthInches ?? 90,
+            mockupHeightInches: m.heightInches ?? 60,
+            tintMask: tintMask || ''
+        };
+    }
+    return {
+        mockup: collection.mockup || '',
+        mockupShadow: collection.mockupShadow || '',
+        mockupWidthInches: collection.mockupWidthInches ?? 90,
+        mockupHeightInches: collection.mockupHeightInches ?? 60,
+        tintMask: collection.tintMask || ''
+    };
+}
+
+/**
+ * Ensures the room mockup dropdown exists inside #roomMockup and re-appends it (e.g. after canvas is drawn).
+ * Only for wallpaper mode; call after appending the room canvas so the dropdown floats over it.
+ */
+function ensureRoomMockupDropdown() {
+    if (!dom.roomMockup || !window.ColorFlexMockups) return;
+    const existing = document.getElementById('roomMockupDropdown');
+    if (existing) existing.remove();
+    const mockups = window.ColorFlexMockups;
+    const select = document.createElement('select');
+    select.id = 'roomMockupDropdown';
+    select.title = 'Change room preview';
+    select.style.cssText = 'position:absolute;top:8px;right:8px;z-index:20;font-size:11px;padding:4px 6px;background:rgba(0,0,0,0.75);color:#eee;border:1px solid #666;border-radius:4px;cursor:pointer;max-width:160px;';
+    const optDefault = document.createElement('option');
+    optDefault.value = '';
+    optDefault.textContent = 'Collection default';
+    select.appendChild(optDefault);
+    const ids = Object.keys(mockups); // preserve order from mockups.json
+    ids.forEach(id => {
+        const m = mockups[id];
+        const name = (m && m.name) || id;
+        const opt = document.createElement('option');
+        opt.value = id;
+        opt.textContent = name;
+        select.appendChild(opt);
+    });
+    select.value = appState.selectedMockupId || '';
+    select.addEventListener('change', function() {
+        appState.selectedMockupId = this.value || null;
+        if (typeof updateRoomMockup === 'function') updateRoomMockup();
+    });
+    if (getComputedStyle(dom.roomMockup).position === 'static') dom.roomMockup.style.position = 'relative';
+    dom.roomMockup.appendChild(select);
+}
+
 function normalizePath(path) {
     if (!path || typeof path !== 'string') return path;
     var base = getColorFlexDataBaseUrl();
@@ -5681,6 +5779,10 @@ function normalizePath(path) {
     }
     // Strip leading ./
     if (path.startsWith('./')) path = path.substring(2);
+    // Chameleon: B2 has camelion-sm-r.jpg; app also references camelion-sm-black.jpg — use -r when base is B2 so one file works
+    if (path.startsWith('img/') && base.indexOf('backblazeb2.com') !== -1 && path === 'img/camelion-sm-black.jpg') {
+        path = 'img/camelion-sm-r.jpg';
+    }
     // Encode path segments so filenames with &, #, ?, etc. (e.g. stag-&-white-moth.jpg) work in URLs
     var encodedPath = path.split('/').map(function(seg) { return encodeURIComponent(seg); }).join('/');
     // Single format: base URL + path (bucket has top-level data/ so path is data/collections/... or img/...)
@@ -9320,6 +9422,7 @@ function populateCuratedColors(colors) {
     ticketCircle.id = "runTheTicketCircle";
     ticketCircle.className = "curated-color-circle cursor-pointer border-2";
     ticketCircle.style.backgroundColor = "black";
+    ticketCircle.setAttribute("data-tooltip", "Load a Sherwin-Williams ticket number to apply its colors to this pattern");
 
     const ticketLabel = document.createElement("span");
     ticketLabel.className = "text-xs font-bold text-white text-center whitespace-pre-line font-special-elite";
@@ -9723,6 +9826,7 @@ async function initializeApp() {
 
                 // Merge mockup data into collections that reference mockupId
                 const mockupsMap = mockupsData.mockups || {};
+                const FALLBACK_MOCKUP_ID = 'white-dresser'; // Used when Airtable mockupId is wrong/missing or mockup has no image
                 const resolveMockupById = (mockupId) => {
                     if (!mockupId) return null;
                     if (mockupsMap[mockupId]) return mockupsMap[mockupId];
@@ -9739,21 +9843,22 @@ async function initializeApp() {
                             : null;
 
                     const effectiveMockupId = collection.mockupId || fallbackMockupId;
-                    const mockup = resolveMockupById(effectiveMockupId);
-                    if (mockup) {
-                        // ✅ CRITICAL: Ensure mockup.image is a string, not an object
-                        const mockupImagePath = typeof mockup.image === 'string' ? mockup.image : 
-                                              (mockup.image?.path || mockup.image?.url || mockup.path || '');
-                        if (!mockupImagePath) {
-                            console.warn(`⚠️ Mockup "${mockup.name}" has no valid image path (image: ${typeof mockup.image})`);
-                        } else {
-                            collection.mockup = mockupImagePath;
-                            collection.mockupShadow = typeof mockup.shadow === 'string' ? mockup.shadow : (mockup.shadow?.path || mockup.shadow?.url || '');
-                            collection.tintMask = typeof mockup.tintMask === 'string' ? mockup.tintMask : (mockup.tintMask?.path || mockup.tintMask?.url || '');
-                            collection.mockupWidthInches = mockup.widthInches;
-                            collection.mockupHeightInches = mockup.heightInches;
-                            console.log(`  🔗 Merged mockup "${mockup.name}" into collection "${collection.name}" (path: ${mockupImagePath})`);
+                    let mockup = resolveMockupById(effectiveMockupId);
+                    let mockupImagePath = mockup ? (typeof mockup.image === 'string' ? mockup.image : (mockup.image?.path || mockup.image?.url || mockup.path || '')) : '';
+                    if (!mockup || !mockupImagePath) {
+                        mockup = resolveMockupById(FALLBACK_MOCKUP_ID);
+                        mockupImagePath = mockup ? (typeof mockup.image === 'string' ? mockup.image : (mockup.image?.path || mockup.image?.url || mockup.path || '')) : '';
+                        if (mockup && mockupImagePath) {
+                            console.warn(`⚠️ Collection "${collection.name}" using fallback mockup "${FALLBACK_MOCKUP_ID}" (invalid/missing mockupId from Airtable)`);
                         }
+                    }
+                    if (mockup && mockupImagePath) {
+                        collection.mockup = mockupImagePath;
+                        collection.mockupShadow = typeof mockup.shadow === 'string' ? mockup.shadow : (mockup.shadow?.path || mockup.shadow?.url || '');
+                        collection.tintMask = typeof mockup.tintMask === 'string' ? mockup.tintMask : (mockup.tintMask?.path || mockup.tintMask?.url || '');
+                        collection.mockupWidthInches = mockup.widthInches;
+                        collection.mockupHeightInches = mockup.heightInches;
+                        console.log(`  🔗 Merged mockup "${mockup.name}" into collection "${collection.name}" (path: ${mockupImagePath})`);
                     }
                 });
             } else {
@@ -11643,6 +11748,11 @@ function populateLayerInputs(pattern = appState.currentPattern) {
 
     // Add save button after pattern layers are populated
     addSaveButton();
+
+    // First-time onboarding: arrow + tooltip to layer, then to curated colors (once per session)
+    if (appState.layerInputs && appState.layerInputs.length > 0) {
+        setTimeout(function() { runOnboardingSequence(); }, 600);
+    }
 
     } catch (e) {
         console.error("❌ Error in populateLayerInputs:", e);
@@ -13829,7 +13939,7 @@ function loadImage(src, highPriority = true) {
 var BASSETT_LAYER_STACK = [
   { id: 'background', file: 'beauty.png', type: 'image', colorFlexIndex: null },
   { id: 'sofa-displaced-1', displacementFile: 'sofa_disp1.png', type: 'pattern-displaced' },
-  { id: 'sofa-displaced-2', displacementFile: 'sofa_disp2.png', type: 'pattern-displaced' },
+  { id: 'sofa-displaced-2', displacementFile: 'sofa_disp2.png', type: 'pattern-displaced', transform: { scale: 0.94, translateX: -8, translateY: 2 } },
   { id: 'pillow1-displaced', displacementFile: 'pillow1_disp.png', type: 'pattern-displaced' },
   { id: 'pillow2-displaced', displacementFile: 'pillow2_disp.png', type: 'pattern-displaced' },
   { id: 'pillow3-displaced', displacementFile: 'pillow3_disp.png', type: 'pattern-displaced' }
@@ -14147,6 +14257,74 @@ async function updateBassettRoomMockup() {
         if (tx !== 0 || ty !== 0) ctx.translate(tx, ty);
       }
 
+      // Single shared tiled canvas (outW x outH) so all pattern-displaced layers use the same
+      // pattern phase — fixes seam/gap when sofa (or other mesh) is split into multiple DSPL parts.
+      var masterTiledCanvas = null;
+      var hasPatternDisplaced = stack.some(function(l) { return l && l.type === 'pattern-displaced' && l.displacementFile; });
+      if (hasPatternDisplaced && patternImg) {
+        var patternForTiling = appState.currentPattern;
+        var layersForTiling = patternForTiling && patternForTiling.layers && patternForTiling.layers.length > 0 ? patternForTiling.layers : null;
+        var layerMappingB = getLayerMappingForPreview(false);
+        var patternStartIdx = layerMappingB.patternStartIndex;
+        var tilingTypeB = (patternForTiling && patternForTiling.tilingType) || "";
+        var isHalfDropB = tilingTypeB === "half-drop";
+        masterTiledCanvas = document.createElement("canvas");
+        masterTiledCanvas.width = outW;
+        masterTiledCanvas.height = outH;
+        var mctx = masterTiledCanvas.getContext("2d");
+        mctx.imageSmoothingEnabled = true;
+        mctx.imageSmoothingQuality = "high";
+        if (layersForTiling) {
+          for (var lIdx = 0; lIdx < layersForTiling.length; lIdx++) {
+            var ly = layersForTiling[lIdx];
+            var layerPathB = typeof ly === "string" ? ly : (ly && (ly.path || ly.proofPath));
+            var isShadowB = (ly && typeof ly === "object" && ly.isShadow === true) ||
+              (layerPathB && (String(layerPathB).toUpperCase().includes("_SHADOW_") || String(layerPathB).toUpperCase().includes("SHADOW_LAYER")));
+            var inputIdx = patternStartIdx + lIdx;
+            var layerColorB = isShadowB ? null : (appState.currentLayers && appState.currentLayers[inputIdx] ? lookupColor(appState.currentLayers[inputIdx].color || "Snowbound") : "#7f817e");
+            await new Promise(function(resolve) {
+              processImage(layerPathB, function(processedCanvas) {
+                if (!processedCanvas || !(processedCanvas instanceof HTMLCanvasElement)) { resolve(); return; }
+                var pcw = processedCanvas.width;
+                var pch = processedCanvas.height;
+                var repsB = 3.85;
+                var scaleB = Math.min(outW / (pcw * repsB), outH / (pch * repsB));
+                var twB = pcw * scaleB;
+                var thB = pch * scaleB;
+                mctx.globalCompositeOperation = isShadowB ? "multiply" : "source-over";
+                mctx.globalAlpha = isShadowB ? 0.3 : 1.0;
+                var numCols = Math.ceil((outW + 2 * twB) / twB) + 1;
+                var numRows = Math.ceil((outH + 2 * thB) / thB) + 1;
+                for (var i = -numCols; i <= numCols; i++) {
+                  var txB = i * twB;
+                  var yOff = isHalfDropB && (i & 1) !== 0 ? thB / 2 : 0;
+                  for (var j = -numRows; j <= numRows; j++) {
+                    var tyB = j * thB + yOff;
+                    mctx.drawImage(processedCanvas, txB, tyB, twB, thB);
+                  }
+                }
+                mctx.globalAlpha = 1.0;
+                resolve();
+              }, layerColorB, 2.2, isShadowB, false, false);
+            });
+          }
+        } else {
+          var sizeIn = patternForTiling && patternForTiling.size && patternForTiling.size.length >= 2 ? patternForTiling.size : [24, 24];
+          var aspect = sizeIn[0] / sizeIn[1];
+          var reps = 3.85;
+          var tw = outW >= outH ? (outH / reps) * aspect : outW / reps;
+          var th = outW >= outH ? outH / reps : (outW / reps) / aspect;
+          var numColsT = Math.ceil((outW + 2 * tw) / tw) + 1;
+          var numRowsT = Math.ceil((outH + 2 * th) / th) + 1;
+          for (var i = -numColsT; i <= numColsT; i++) {
+            var tx = i * tw;
+            for (var j = -numRowsT; j <= numRowsT; j++) {
+              mctx.drawImage(patternImg, tx, j * th, tw, th);
+            }
+          }
+        }
+      }
+
       for (var li = 0; li < stack.length; li++) {
         var layer = stack[li];
         ctx.globalAlpha = 1;
@@ -14171,12 +14349,21 @@ async function updateBassettRoomMockup() {
               wctx.save();
               applyLayerTransform(wctx, layer.transform, ww, wh);
             }
-            var reps = Math.max(4, Math.ceil(outW / ww) + 2);
-            var tw = ww / 4;
-            var th = wh / 4;
-            for (var tx = -tw; tx < ww + tw * reps; tx += tw) {
-              for (var ty = -th; ty < wh + th * reps; ty += th) {
-                wctx.drawImage(patternImg, tx, ty, tw, th);
+            var patternForWall = appState.currentPattern;
+            var sizeWall = patternForWall && patternForWall.size && patternForWall.size.length >= 2 ? patternForWall.size : [24, 24];
+            var aspectWall = sizeWall[0] / sizeWall[1];
+            var repsWall = Math.max(4, Math.ceil(outW / ww) + 2);
+            var twWall, thWall;
+            if (ww >= wh) {
+              thWall = wh / 4;
+              twWall = thWall * aspectWall;
+            } else {
+              twWall = ww / 4;
+              thWall = twWall / aspectWall;
+            }
+            for (var tx = -twWall; tx < ww + twWall * repsWall; tx += twWall) {
+              for (var ty = -thWall; ty < wh + thWall * repsWall; ty += thWall) {
+                wctx.drawImage(patternImg, tx, ty, twWall, thWall);
               }
             }
             if (layer.transform && typeof layer.transform === 'object') wctx.restore();
@@ -14229,19 +14416,73 @@ async function updateBassettRoomMockup() {
             var tctx = tileCanvas.getContext("2d");
             tctx.imageSmoothingEnabled = true;
             tctx.imageSmoothingQuality = "high";
-            if (layer.transform && typeof layer.transform === 'object') {
-              tctx.save();
-              applyLayerTransform(tctx, layer.transform, dw, dh);
-            }
-            var reps = 4;
-            var tw = dw / reps;
-            var th = dh / reps;
-            for (var tx = -tw; tx < dw + tw; tx += tw) {
-              for (var ty = -th; ty < dh + th; ty += th) {
-                tctx.drawImage(patternImg, tx, ty, tw, th);
+            if (masterTiledCanvas) {
+              // Do not apply layer transform when using shared master — transform shifts this layer's
+              // sampling and breaks the seam (offset at part boundaries for non-square patterns).
+              tctx.drawImage(masterTiledCanvas, 0, 0, outW, outH, 0, 0, dw, dh);
+            } else {
+              if (layer.transform && typeof layer.transform === 'object') {
+                tctx.save();
+                applyLayerTransform(tctx, layer.transform, dw, dh);
               }
+              var patternForTiling = appState.currentPattern;
+              var layersForTiling = patternForTiling && patternForTiling.layers && patternForTiling.layers.length > 0 ? patternForTiling.layers : null;
+              var layerMappingB = getLayerMappingForPreview(false);
+              var patternStartIdx = layerMappingB.patternStartIndex;
+              var tilingTypeB = (patternForTiling && patternForTiling.tilingType) || "";
+              var isHalfDropB = tilingTypeB === "half-drop";
+              if (layersForTiling) {
+                for (var lIdx = 0; lIdx < layersForTiling.length; lIdx++) {
+                  var ly = layersForTiling[lIdx];
+                  var layerPathB = typeof ly === "string" ? ly : (ly && (ly.path || ly.proofPath));
+                  var isShadowB = (ly && typeof ly === "object" && ly.isShadow === true) ||
+                    (layerPathB && (String(layerPathB).toUpperCase().includes("_SHADOW_") || String(layerPathB).toUpperCase().includes("SHADOW_LAYER")));
+                  var inputIdx = patternStartIdx + lIdx;
+                  var layerColorB = isShadowB ? null : (appState.currentLayers && appState.currentLayers[inputIdx] ? lookupColor(appState.currentLayers[inputIdx].color || "Snowbound") : "#7f817e");
+                  await new Promise(function(resolve) {
+                    processImage(layerPathB, function(processedCanvas) {
+                      if (!processedCanvas || !(processedCanvas instanceof HTMLCanvasElement)) {
+                        resolve();
+                        return;
+                      }
+                      var pcw = processedCanvas.width;
+                      var pch = processedCanvas.height;
+                      var repsB = 3.85;
+                      var scaleB = Math.min(dw / (pcw * repsB), dh / (pch * repsB));
+                      var twB = pcw * scaleB;
+                      var thB = pch * scaleB;
+                      tctx.globalCompositeOperation = isShadowB ? "multiply" : "source-over";
+                      tctx.globalAlpha = isShadowB ? 0.3 : 1.0;
+                      var numColsL = Math.ceil((dw + 2 * twB) / twB) + 1;
+                      var numRowsL = Math.ceil((dh + 2 * thB) / thB) + 1;
+                      for (var i = -numColsL; i <= numColsL; i++) {
+                        var txB = i * twB;
+                        var yOff = isHalfDropB && (i & 1) !== 0 ? thB / 2 : 0;
+                        for (var j = -numRowsL; j <= numRowsL; j++) {
+                          tctx.drawImage(processedCanvas, txB, j * thB + yOff, twB, thB);
+                        }
+                      }
+                      tctx.globalAlpha = 1.0;
+                      resolve();
+                    }, layerColorB, 2.2, isShadowB, false, false);
+                  });
+                }
+              } else {
+                var sizeIn = patternForTiling && patternForTiling.size && patternForTiling.size.length >= 2 ? patternForTiling.size : [24, 24];
+                var aspect = sizeIn[0] / sizeIn[1];
+                var reps = 3.85;
+                var tw = dw >= dh ? (dh / reps) * aspect : dw / reps;
+                var th = dw >= dh ? dh / reps : (dw / reps) / aspect;
+                var numColsF = Math.ceil((dw + 2 * tw) / tw) + 1;
+                var numRowsF = Math.ceil((dh + 2 * th) / th) + 1;
+                for (var i = -numColsF; i <= numColsF; i++) {
+                  for (var j = -numRowsF; j <= numRowsF; j++) {
+                    tctx.drawImage(patternImg, i * tw, j * th, tw, th);
+                  }
+                }
+              }
+              if (layer.transform && typeof layer.transform === 'object') tctx.restore();
             }
-            if (layer.transform && typeof layer.transform === 'object') tctx.restore();
             tctx.globalCompositeOperation = "destination-in";
             tctx.drawImage(dispImg, 0, 0);
             ctx.globalCompositeOperation = "multiply";
@@ -14509,11 +14750,10 @@ let updateRoomMockup = async () => {
     const snap = v => Math.round(v * dpr) / dpr;           // align to device grid
     const mod  = (a,b)=>((a%b)+b)%b;
 
-    // Calculate px per inch based on actual mockup dimensions from collection
-    // If mockup is 90 inches wide and canvas is 600px → 600/90 = 6.67 px/inch
-    // If mockup is 60 inches wide and canvas is 600px → 600/60 = 10 px/inch
-    const mockupWidthInches = appState.selectedCollection.mockupWidthInches || 90;  // fallback to 90
-    const mockupHeightInches = appState.selectedCollection.mockupHeightInches || 60; // fallback to 60
+    // Calculate px per inch based on actual mockup dimensions (collection or user override)
+    const effectiveMockup = getEffectiveRoomMockup(appState.selectedCollection);
+    const mockupWidthInches = effectiveMockup.mockupWidthInches || 90;
+    const mockupHeightInches = effectiveMockup.mockupHeightInches || 60;
     const pxPerInRoom = cssW / mockupWidthInches;
 
     console.log(`📐 Room mockup dimensions: ${mockupWidthInches}x${mockupHeightInches} inches`);
@@ -14570,8 +14810,8 @@ let updateRoomMockup = async () => {
 
     // ---------- STANDARD (thumbnail-only) ----------
     if (isStandardPattern) {
-      // Check if collection has a mockup - if not, skip standard rendering
-      if (!appState.selectedCollection?.mockup) {
+      // Check if we have a mockup (collection default or user override)
+      if (!effectiveMockup.mockup) {
         console.log("⏭️  Skipping standard pattern rendering (no mockup defined for collection)");
         return;
       }
@@ -14586,7 +14826,23 @@ let updateRoomMockup = async () => {
 
       const roomImg = new Image();
       roomImg.crossOrigin = "Anonymous";
-      roomImg.src = normalizePath(appState.selectedCollection.mockup);
+      roomImg.src = normalizePath(effectiveMockup.mockup);
+
+      roomImg.onerror = () => {
+        if (!roomImg.dataset.fallbackUsed) {
+          roomImg.dataset.fallbackUsed = '1';
+          const fallbackMockup = window.ColorFlexMockups?.['white-dresser'];
+          const fallbackPath = (fallbackMockup && (typeof fallbackMockup.image === 'string' ? fallbackMockup.image : (fallbackMockup.image?.path || fallbackMockup.image?.url))) || './data/mockups/white-dresser-W72H72.png';
+          console.warn(`⚠️ Mockup image failed to load, using fallback (white dresser): ${fallbackPath}`);
+          roomImg.src = normalizePath(fallbackPath);
+        } else {
+          console.error('❌ Mockup and fallback mockup failed to load');
+          dom.roomMockup.innerHTML = '';
+          attachStandardRoomZoom(canvas);
+          dom.roomMockup.appendChild(canvas);
+          ensureRoomMockupDropdown();
+        }
+      };
 
       roomImg.onload = () => {
         // bg
@@ -14600,10 +14856,10 @@ let updateRoomMockup = async () => {
         function drawStandardRoomWithOptionalShadow() {
           const fit = scaleToFit(roomImg, cssW, cssH);
           ctx.drawImage(roomImg, fit.x, fit.y, fit.width, fit.height);
-          if (appState.selectedCollection?.mockupShadow) {
+          if (effectiveMockup.mockupShadow) {
             const shadowOverlay = new Image();
             shadowOverlay.crossOrigin = "Anonymous";
-            shadowOverlay.src = normalizePath(appState.selectedCollection.mockupShadow);
+            shadowOverlay.src = normalizePath(effectiveMockup.mockupShadow);
             shadowOverlay.onload = () => {
               ctx.globalCompositeOperation = "multiply";
               const shadowFit = scaleToFit(shadowOverlay, cssW, cssH);
@@ -14612,16 +14868,19 @@ let updateRoomMockup = async () => {
               dom.roomMockup.innerHTML = "";
               attachStandardRoomZoom(canvas);
               dom.roomMockup.appendChild(canvas);
+              ensureRoomMockupDropdown();
             };
             shadowOverlay.onerror = () => {
               dom.roomMockup.innerHTML = "";
               attachStandardRoomZoom(canvas);
               dom.roomMockup.appendChild(canvas);
+              ensureRoomMockupDropdown();
             };
           } else {
             dom.roomMockup.innerHTML = "";
             attachStandardRoomZoom(canvas);
             dom.roomMockup.appendChild(canvas);
+            ensureRoomMockupDropdown();
           }
         }
 
@@ -14656,13 +14915,13 @@ let updateRoomMockup = async () => {
           // ----- Shadow overlay for standard patterns -----
           console.log("🎨 STANDARD PATTERN: Checking for shadow overlay...");
           console.log("  Collection:", appState.selectedCollection?.name);
-          console.log("  mockupShadow:", appState.selectedCollection?.mockupShadow);
+          console.log("  mockupShadow:", effectiveMockup.mockupShadow);
 
-          if (appState.selectedCollection?.mockupShadow) {
+          if (effectiveMockup.mockupShadow) {
             console.log("✅ STANDARD PATTERN: Found mockupShadow, loading shadow overlay...");
             const shadowOverlay = new Image();
             shadowOverlay.crossOrigin = "Anonymous";
-            shadowOverlay.src = normalizePath(appState.selectedCollection.mockupShadow);
+            shadowOverlay.src = normalizePath(effectiveMockup.mockupShadow);
             shadowOverlay.onload = () => {
               console.log("✅ STANDARD PATTERN: Shadow overlay loaded successfully!");
               console.log("  Shadow image size:", shadowOverlay.width, "x", shadowOverlay.height);
@@ -14675,18 +14934,21 @@ let updateRoomMockup = async () => {
               dom.roomMockup.innerHTML = "";
               attachStandardRoomZoom(canvas);
               dom.roomMockup.appendChild(canvas);
+              ensureRoomMockupDropdown();
             };
             shadowOverlay.onerror = () => {
               console.error("❌ STANDARD PATTERN: Shadow overlay failed to load:", shadowOverlay.src);
               dom.roomMockup.innerHTML = "";
               attachStandardRoomZoom(canvas);
               dom.roomMockup.appendChild(canvas);
+              ensureRoomMockupDropdown();
             };
           } else {
             console.log("⏭️ STANDARD PATTERN: No mockupShadow defined, skipping shadow overlay");
             dom.roomMockup.innerHTML = "";
             attachStandardRoomZoom(canvas);
             dom.roomMockup.appendChild(canvas);
+            ensureRoomMockupDropdown();
           }
         };
         patternImg.onerror = () => {
@@ -14903,36 +15165,41 @@ let updateRoomMockup = async () => {
         ctx.drawImage(patternCanvas, 0, 0, cssW, cssH);
       }
 
-      // ----- Collection mockup overlay -----
-      if (appState.selectedCollection?.mockup) {
-        // ✅ CRITICAL: Ensure mockup is a string path, not an object
-        const mockupPath = typeof appState.selectedCollection.mockup === 'string' 
-          ? appState.selectedCollection.mockup 
-          : (appState.selectedCollection.mockup?.path || appState.selectedCollection.mockup?.url || appState.selectedCollection.mockup?.image || '');
-        
-        if (!mockupPath) {
-          console.warn(`⚠️ Collection "${appState.selectedCollection.name}" has invalid mockup (type: ${typeof appState.selectedCollection.mockup})`);
-        } else {
+      // ----- Collection mockup overlay (uses effective mockup: user override or collection default) -----
+      if (effectiveMockup.mockup) {
+        const mockupPath = effectiveMockup.mockup;
         const mockupImage = new Image();
         mockupImage.crossOrigin = "Anonymous";
-          mockupImage.src = normalizePath(mockupPath);
+        mockupImage.src = normalizePath(mockupPath);
         await new Promise((resolve) => {
           mockupImage.onload = () => {
             const fit = scaleToFit(mockupImage, cssW, cssH);
             ctx.drawImage(mockupImage, fit.x, fit.y, fit.width, fit.height);
             resolve();
           };
-            mockupImage.onerror = (err) => {
-              console.error(`❌ Failed to load mockup image: ${mockupPath}`, err);
-              resolve();
-            };
+          mockupImage.onerror = async (err) => {
+            console.warn(`⚠️ Failed to load mockup image: ${mockupPath}, trying fallback (white dresser)`, err);
+            const fallbackMockup = window.ColorFlexMockups?.['white-dresser'];
+            const fallbackPath = (fallbackMockup && (typeof fallbackMockup.image === 'string' ? fallbackMockup.image : (fallbackMockup.image?.path || fallbackMockup.image?.url))) || './data/mockups/white-dresser-W72H72.png';
+            const fallbackImg = new Image();
+            fallbackImg.crossOrigin = "Anonymous";
+            fallbackImg.src = normalizePath(fallbackPath);
+            await new Promise((res) => {
+              fallbackImg.onload = () => {
+                const fit = scaleToFit(fallbackImg, cssW, cssH);
+                ctx.drawImage(fallbackImg, fit.x, fit.y, fit.width, fit.height);
+                res();
+              };
+              fallbackImg.onerror = () => res();
+            });
+            resolve();
+          };
         });
-        }
       }
 
       // ----- Mockup tint mask (any mockup can define tintMask: path; tints that area with BG color) -----
-      if (appState.selectedCollection?.tintMask) {
-        const tintMaskPath = normalizePath(appState.selectedCollection.tintMask);
+      if (effectiveMockup.tintMask) {
+        const tintMaskPath = normalizePath(effectiveMockup.tintMask);
         const tintMaskImg = new Image();
         tintMaskImg.crossOrigin = "Anonymous";
         tintMaskImg.src = tintMaskPath;
@@ -14987,10 +15254,10 @@ let updateRoomMockup = async () => {
       }
 
       // ----- Shadow overlay -----
-      if (appState.selectedCollection?.mockupShadow) {
+      if (effectiveMockup.mockupShadow) {
         const shadowOverlay = new Image();
         shadowOverlay.crossOrigin = "Anonymous";
-        shadowOverlay.src = normalizePath(appState.selectedCollection.mockupShadow);
+        shadowOverlay.src = normalizePath(effectiveMockup.mockupShadow);
         await new Promise((resolve) => {
           shadowOverlay.onload = () => {
             ctx.globalCompositeOperation = "multiply";
@@ -15011,8 +15278,8 @@ let updateRoomMockup = async () => {
         if (e.name === "SecurityError") {
           dom.roomMockup.innerHTML = "";
           canvas.style.cssText = "width: 100%; height: 100%; object-fit: contain; border: 1px solid #333; cursor: pointer;";
-          canvas.title = "Click for full size";
           dom.roomMockup.appendChild(canvas);
+          ensureRoomMockupDropdown();
           canvas.addEventListener("click", function () {
             openRoomMockupFullscreen(canvas);
           });
@@ -15045,6 +15312,7 @@ let updateRoomMockup = async () => {
       img.alt = "Room mockup (click for full size)";
       dom.roomMockup.innerHTML = "";
       dom.roomMockup.appendChild(img);
+      ensureRoomMockupDropdown();
       img.addEventListener("click", function () {
         openRoomMockupFullscreen(dataUrl);
       });
@@ -17011,134 +17279,112 @@ const generatePrintPreview = () => {
                            appState.currentScale === 400 ? '4X' :
                            '1X';
 
-        let textContent = `
-            <img src="${normalizePath('img/SC-header-mage.jpg')}" alt="SC Logo" class="sc-logo">
-            <h2>${collectionName}</h2>
-            <h3>${patternName}</h3>
-            <p style="margin: 5px 0; font-size: 14px;"><strong>Tiling: ${tilingMethod} | Repeat: ${scaleDisplay}</strong></p>
-            <ul style="list-style: none; padding: 0;">
-        `;
-        layerLabels.forEach(({ label, color }, index) => {
-            // Use the actual user-selected color, not curated colors
-            textContent += `
-                <li>${toInitialCaps(label)} | ${color}</li>
-            `;
-        });
-        textContent += "</ul>";
+        const escapeHtml = (s) => {
+            if (s == null || s === '') return '';
+            const div = document.createElement('div');
+            div.textContent = s;
+            return div.innerHTML;
+        };
 
-        // Open as popup (named window + features so it reuses same window and opens as popup when possible)
-        const popupFeatures = 'width=800,height=900,scrollbars=yes,resizable=yes,location=no,toolbar=no,menubar=no';
-        const previewWindow = window.open('about:blank', 'ColorFlexPrintPreview', popupFeatures);
-        if (!previewWindow) {
-            console.error("Print preview - Failed to open preview window (popup may be blocked)");
-            return { canvas: printCanvas, dataUrl };
+        // In-page modal (no new window/tab); print shows only modal content, one page, no browser chrome
+        const modalId = 'print-preview-modal';
+        const existingModal = document.getElementById(modalId);
+        if (existingModal) existingModal.remove();
+
+        const modal = document.createElement('div');
+        modal.id = modalId;
+        modal.className = 'print-preview-modal';
+
+        const backdrop = document.createElement('div');
+        backdrop.className = 'print-preview-backdrop';
+
+        const content = document.createElement('div');
+        content.className = 'print-preview-content';
+        content.innerHTML = `
+            <div class="print-preview-inner">
+                <img src="${normalizePath('img/SC-header-mage.jpg')}" alt="SC Logo" class="sc-logo">
+                <h2>${escapeHtml(collectionName)}</h2>
+                <h3>${escapeHtml(patternName)}</h3>
+                <p class="print-tiling"><strong>Tiling: ${escapeHtml(tilingMethod)} | Repeat: ${escapeHtml(scaleDisplay)}</strong></p>
+                <ul class="print-colors"></ul>
+                <img class="print-pattern-img" src="" alt="Pattern Preview">
+                <p class="print-tip no-print">In the print dialog, turn off <strong>Headers and footers</strong> for a clean print (no URL, date, or page number).</p>
+                <div class="print-actions no-print">
+                    <button type="button" class="print-btn-print">Print</button>
+                    <button type="button" class="print-btn-download">Download</button>
+                    <button type="button" class="print-btn-close">Close</button>
+                </div>
+            </div>
+        `;
+
+        const ul = content.querySelector('.print-colors');
+        layerLabels.forEach(({ label, color }) => {
+            const li = document.createElement('li');
+            li.textContent = `${toInitialCaps(label)} | ${color}`;
+            ul.appendChild(li);
+        });
+        content.querySelector('.print-pattern-img').src = dataUrl;
+
+        modal.appendChild(backdrop);
+        modal.appendChild(content);
+
+        const styleId = 'print-preview-modal-styles';
+        let styleEl = document.getElementById(styleId);
+        if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = styleId;
+            styleEl.textContent = `
+                .print-preview-modal { position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: 'Special Elite', 'Times New Roman', serif; }
+                .print-preview-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); }
+                .print-preview-content { position: relative; max-width: 600px; max-height: 90vh; overflow: auto; background: #434341; color: #f0e6d2; padding: 20px; border-radius: 8px; text-align: center; }
+                .print-preview-inner { display: flex; flex-direction: column; align-items: center; }
+                .print-preview-modal .sc-logo { width: 280px; height: auto; margin: 0 auto 12px; display: block; }
+                .print-preview-modal h2 { font-size: 20px; margin: 6px 0; }
+                .print-preview-modal h3 { font-size: 18px; margin: 4px 0; }
+                .print-preview-modal .print-tiling { margin: 4px 0; font-size: 14px; }
+                .print-preview-modal ul.print-colors { list-style: none; padding: 0; margin: 8px 0; font-size: 14px; text-align: left; max-height: 120px; overflow-y: auto; }
+                .print-preview-modal ul.print-colors li { margin: 2px 0; }
+                .print-preview-modal .print-pattern-img { max-width: 100%; height: auto; margin: 12px auto; display: block; }
+                .print-preview-modal .print-tip { font-size: 12px; color: #b0a090; margin: 12px 0 8px; }
+                .print-preview-modal .print-actions { margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+                .print-preview-modal button { font-family: inherit; padding: 10px 20px; font-size: 14px; cursor: pointer; background: #f0e6d2; color: #111827; border: none; border-radius: 4px; }
+                .print-preview-modal button:hover { background: #e0d6c2; }
+                @media print {
+                    body * { visibility: hidden; }
+                    .print-preview-modal, .print-preview-modal * { visibility: visible; }
+                    .print-preview-modal { position: fixed !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; margin: 0 !important; padding: 0 !important; background: #fff !important; z-index: 99999 !important; overflow: hidden !important; }
+                    .print-preview-backdrop { display: none !important; }
+                    .print-preview-content { max-height: none !important; overflow: hidden !important; background: #fff !important; color: #000 !important; padding: 0 !important; box-shadow: none !important; }
+                    .print-preview-inner { max-height: 100vh !important; height: 100vh !important; overflow: hidden !important; padding: 12px; box-sizing: border-box; }
+                    .print-preview-modal .sc-logo { max-height: 10vh !important; width: auto !important; margin: 0 auto 6px !important; }
+                    .print-preview-modal h2 { font-size: 14px !important; margin: 2px 0 !important; }
+                    .print-preview-modal h3 { font-size: 13px !important; margin: 2px 0 !important; }
+                    .print-preview-modal .print-tiling { font-size: 11px !important; margin: 2px 0 !important; }
+                    .print-preview-modal ul.print-colors { max-height: 18vh !important; overflow: hidden !important; margin: 4px 0 !important; font-size: 10px !important; }
+                    .print-preview-modal .print-pattern-img { max-height: 58vh !important; width: auto !important; margin: 6px auto !important; }
+                    .print-preview-modal .no-print { display: none !important; }
+                }
+            `;
+            (document.head || document.documentElement).appendChild(styleEl);
         }
 
-        previewWindow.document.write(`
-            <html>
-                <head>
-                    <title>Print Preview - ${patternName}</title>
-                    <link href="https://fonts.googleapis.com/css2?family=Special+Elite&display=swap" rel="stylesheet">
-                    <style>
-                        body {
-                            font-family: 'Special Elite', 'Times New Roman', serif !important;
-                            padding: 20px;
-                            margin: 0;
-                            display: flex;
-                            justify-content: center;
-                            align-items: flex-start;
-                            min-height: 100vh;
-                            background-color: #111827;
-                            color: #f0e6d2;
-                            overflow: auto;
-                        }
-                        .print-container {
-                            text-align: center;
-                            max-width: 600px;
-                            width: 100%;
-                            display: flex;
-                            flex-direction: column;
-                            align-items: center;
-                            background-color: #434341;
-                            padding: 20px;
-                            border-radius: 8px;
-                        }
-                        .sc-logo {
-                            width: 400px !important;
-                            height: auto;
-                            margin: 0 auto 20px;
-                            display: block;
-                        }
-                        h2 { font-size: 24px; margin: 10px 0; }
-                        h3 { font-size: 20px; margin: 5px 0; }
-                        ul { margin: 10px 0; }
-                        li { margin: 5px 0; font-size: 16px; }
-                        img { max-width: 100%; height: auto; margin: 20px auto; display: block; }
-                        .button-container { margin-top: 20px; }
-                        button {
-                            font-family: 'Special Elite', serif;
-                            padding: 10px 20px;
-                            margin: 0 10px;
-                            font-size: 16px;
-                            cursor: pointer;
-                            background-color: #f0e6d2;
-                            color: #111827;
-                            border: none;
-                            border-radius: 4px;
-                        }
-                        button:hover {
-                            background-color: #e0d6c2;
-                        }
-                        @media print {
-                            body { margin: 0; padding: 0; background: #fff; color: #000; overflow: hidden; }
-                            .print-container {
-                                max-height: 100vh;
-                                height: 100vh;
-                                overflow: hidden;
-                                page-break-inside: avoid;
-                                padding: 12px;
-                                border-radius: 0;
-                                background: #fff;
-                            }
-                            .sc-logo { max-height: 12vh; width: auto !important; margin: 0 auto 8px; }
-                            h2 { font-size: 18px; margin: 4px 0; }
-                            h3 { font-size: 16px; margin: 2px 0; }
-                            .print-container ul {
-                                max-height: 22vh;
-                                overflow: hidden;
-                                margin: 4px 0;
-                                padding: 0;
-                                font-size: 11px;
-                            }
-                            .print-container li { margin: 2px 0; font-size: 11px; }
-                            .print-container img { max-height: 50vh; width: auto; margin: 8px auto; }
-                            .button-container { display: none !important; }
-                        }
-                    </style>
-                </head>
-                <body>
-                    <div class="print-container">
-                        ${textContent}
-                        <img src="${dataUrl}" alt="Pattern Preview">
-                        <div class="button-container">
-                            <button onclick="window.print();">Print</button>
-                            <button onclick="download()">Download</button>
-                            <button onclick="window.close();">Close</button>
-                        </div>
-                    </div>
-                    <script>
-                        function download() {
-                            const link = document.createElement("a");
-                            link.href = "${dataUrl}";
-                            link.download = "${patternName}-print.png";
-                            link.click();
-                        }
-                    </script>
-                </body>
-            </html>
-        `);
-        previewWindow.document.close();
-        console.log("Print preview - Preview window opened");
+        function closeModal() {
+            modal.remove();
+        }
+        backdrop.addEventListener('click', closeModal);
+        content.querySelector('.print-btn-close').addEventListener('click', closeModal);
+        content.querySelector('.print-btn-download').addEventListener('click', () => {
+            const link = document.createElement('a');
+            link.href = dataUrl;
+            link.download = `${patternName.replace(/[^\w\s-]/g, '')}-print.png`;
+            link.click();
+        });
+        content.querySelector('.print-btn-print').addEventListener('click', () => {
+            window.print();
+        });
+
+        document.body.appendChild(modal);
+        console.log("Print preview - Modal opened");
 
         return { canvas: printCanvas, dataUrl, layerLabels, collectionName, patternName };
     };
@@ -17178,6 +17424,7 @@ async function startApp() {
     setTimeout(() => {
         addSaveButton(); // This function adds the chameleon icon
     }, 1000); // Wait for DOM to be ready
+    setTimeout(setupIdleUsagePopup, 1500); // Idle "quick tips" popup after 15s of no interaction
     } finally {
         appInitializing = false;
     }
@@ -19795,6 +20042,205 @@ function showNotification(message, type = 'info') {
             }
         }, 5000);
     }
+}
+
+const IDLE_POPUP_KEY = 'colorflex_idle_popup_dismissed';
+const IDLE_DELAY_MS = 15000;
+const IDLE_AUTO_DISMISS_MS = 8000;
+
+function setupIdleUsagePopup() {
+    if (typeof sessionStorage === 'undefined') return;
+    if (sessionStorage.getItem(IDLE_POPUP_KEY) === 'true') return;
+
+    let idleTimer = null;
+    let popupEl = null;
+
+    function showIdlePopup() {
+        if (popupEl && popupEl.parentNode) return;
+        if (sessionStorage.getItem(IDLE_POPUP_KEY) === 'true') return;
+
+        popupEl = document.createElement('div');
+        popupEl.id = 'colorflexIdleUsagePopup';
+        popupEl.setAttribute('role', 'dialog');
+        popupEl.setAttribute('aria-label', 'ColorFlex quick tips');
+        popupEl.style.cssText = `
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%) translateY(20px);
+            width: min(360px, calc(100vw - 32px));
+            background: rgba(0,0,0,0.92);
+            color: #e2e8f0;
+            font-family: 'Special Elite', monospace;
+            font-size: 13px;
+            line-height: 1.45;
+            padding: 16px 20px;
+            border-radius: 8px;
+            border: 1px solid #d4af37;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            z-index: 10003;
+            opacity: 0;
+            transition: opacity 0.35s ease, transform 0.35s ease;
+            pointer-events: auto;
+        `;
+        popupEl.innerHTML = `
+            <div style="margin-bottom: 10px; color: #d4af37; font-weight: bold;">Quick tips</div>
+            <ul style="margin: 0; padding-left: 18px;">
+                <li>Pick a pattern from the collection</li>
+                <li>Choose colors from the Color Layers type a color name</li>
+                <li>Use scale (Normal, 2X, …) to adjust size</li>
+                <li>Lock colors to keep them when switching patterns</li>
+                <li>Save to My Designs to revisit later</li>
+            </ul>
+            <label style="display: flex; align-items: center; gap: 8px; margin-top: 12px; cursor: pointer;">
+                <input type="checkbox" id="colorflexIdleDontShowAgain">
+                <span>Don't show again this session</span>
+            </label>
+        `;
+        document.body.appendChild(popupEl);
+        requestAnimationFrame(() => {
+            popupEl.style.opacity = '1';
+            popupEl.style.transform = 'translateX(-50%) translateY(0)';
+        });
+
+        const dismiss = () => {
+            if (!popupEl || !popupEl.parentNode) return;
+            const dontShow = document.getElementById('colorflexIdleDontShowAgain');
+            if (dontShow && dontShow.checked && typeof sessionStorage !== 'undefined') {
+                sessionStorage.setItem(IDLE_POPUP_KEY, 'true');
+            }
+            popupEl.style.opacity = '0';
+            popupEl.style.transform = 'translateX(-50%) translateY(10px)';
+            setTimeout(() => { if (popupEl && popupEl.parentNode) popupEl.remove(); popupEl = null; }, 350);
+        };
+
+        popupEl.addEventListener('click', (e) => { e.stopPropagation(); });
+        document.addEventListener('click', dismiss, { once: true });
+        document.addEventListener('keydown', dismiss, { once: true });
+        setTimeout(dismiss, IDLE_AUTO_DISMISS_MS);
+    }
+
+    function resetIdleTimer() {
+        if (idleTimer) clearTimeout(idleTimer);
+        if (popupEl && popupEl.parentNode) return;
+        idleTimer = setTimeout(showIdlePopup, IDLE_DELAY_MS);
+    }
+
+    ['click', 'keydown', 'touchstart'].forEach(ev => {
+        document.addEventListener(ev, resetIdleTimer, { passive: true });
+    });
+    resetIdleTimer();
+}
+
+const ONBOARDING_KEY = 'colorflex_onboarding_done';
+
+function runOnboardingSequence() {
+    if (typeof sessionStorage !== 'undefined' && sessionStorage.getItem(ONBOARDING_KEY) === 'true') return;
+    if (window.COLORFLEX_SIMPLE_MODE === true) return;
+    const layerInputsContainer = document.getElementById('layerInputsContainer');
+    const curatedColorsContainer = document.getElementById('curatedColorsContainer');
+    const firstLayerCircle = layerInputsContainer && layerInputsContainer.querySelector('.circle-input');
+    if (!firstLayerCircle || !curatedColorsContainer) return;
+
+    let overlay = document.getElementById('colorflexOnboardingOverlay');
+    if (overlay && overlay.parentNode) return;
+
+    overlay = document.createElement('div');
+    overlay.id = 'colorflexOnboardingOverlay';
+    overlay.setAttribute('role', 'dialog');
+    overlay.setAttribute('aria-live', 'polite');
+    overlay.style.cssText = 'position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:10004;';
+    const card = document.createElement('div');
+    card.style.cssText = `
+        position: fixed;
+        min-width: 200px;
+        max-width: 280px;
+        padding: 12px 16px;
+        background: rgba(26, 32, 44, 0.96);
+        color: #e2e8f0;
+        font-family: 'Special Elite', monospace;
+        font-size: 0.85rem;
+        line-height: 1.4;
+        border-radius: 8px;
+        border: 1px solid #d4af37;
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+        pointer-events: auto;
+        transition: opacity 0.25s ease;
+    `;
+    const arrow = document.createElement('div');
+    arrow.style.cssText = `
+        position: fixed;
+        width: 0;
+        height: 0;
+        border-left: 10px solid transparent;
+        border-right: 10px solid transparent;
+        border-top: 12px solid #d4af37;
+        pointer-events: none;
+    `;
+    const skipBtn = document.createElement('button');
+    skipBtn.textContent = 'Skip';
+    skipBtn.style.cssText = 'margin-top:8px;background:transparent;border:1px solid #718096;color:#a0aec0;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.75rem;font-family:inherit;';
+    skipBtn.addEventListener('click', finishOnboarding);
+
+    function positionTooltip(targetEl, text) {
+        const rect = targetEl.getBoundingClientRect();
+        const cardWidth = 260;
+        const cardHeight = 80;
+        const gap = 12;
+        let left = rect.left + (rect.width / 2) - (cardWidth / 2);
+        left = Math.max(12, Math.min(left, window.innerWidth - cardWidth - 12));
+        const top = rect.top - cardHeight - gap - 14;
+        card.style.left = left + 'px';
+        card.style.top = Math.max(12, top) + 'px';
+        card.innerHTML = '';
+        card.appendChild(document.createTextNode(text));
+        card.appendChild(skipBtn);
+        arrow.style.left = (rect.left + rect.width / 2 - 10) + 'px';
+        arrow.style.top = (rect.top - gap - 14) + 'px';
+    }
+
+    function finishOnboarding() {
+        if (typeof sessionStorage !== 'undefined') sessionStorage.setItem(ONBOARDING_KEY, 'true');
+        if (overlay && overlay.parentNode) overlay.remove();
+    }
+
+    function goToStep2() {
+        card.textContent = '';
+        card.appendChild(document.createTextNode('Now select a color from the curated collection.'));
+        card.appendChild(skipBtn);
+        const rect = curatedColorsContainer.getBoundingClientRect();
+        const cardWidth = 260;
+        const gap = 12;
+        let left = rect.left + (rect.width / 2) - (cardWidth / 2);
+        left = Math.max(12, Math.min(left, window.innerWidth - cardWidth - 12));
+        const top = rect.top - 70;
+        card.style.left = left + 'px';
+        card.style.top = Math.max(12, top) + 'px';
+        arrow.style.left = (rect.left + rect.width / 2 - 10) + 'px';
+        arrow.style.top = (rect.top - gap - 14) + 'px';
+
+        const onCuratedClick = function(e) {
+            if (!curatedColorsContainer.contains(e.target)) return;
+            document.removeEventListener('click', onCuratedClick);
+            finishOnboarding();
+        };
+        document.addEventListener('click', onCuratedClick);
+        setTimeout(function() { document.removeEventListener('click', onCuratedClick); finishOnboarding(); }, 30000);
+    }
+
+    positionTooltip(firstLayerCircle, 'Click on a layer to change its color.');
+    overlay.appendChild(card);
+    overlay.appendChild(arrow);
+    document.body.appendChild(overlay);
+
+    const onLayerClick = function(e) {
+        const el = e.target;
+        if (!layerInputsContainer.contains(el)) return;
+        if (!el.classList.contains('circle-input') && !el.closest('.layer-input-container')) return;
+        document.removeEventListener('click', onLayerClick);
+        goToStep2();
+    };
+    document.addEventListener('click', onLayerClick);
 }
 
 // Generate shareable URL from pattern data

@@ -7,10 +7,8 @@
       "collection_thumbnail": "./data/collections/abundance/abundance-thumb.jpg",
       "curatedColors": [],
       "coordinates": null,
-      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H45.png",
-      "mockupShadow": null,
-      "mockupWidthInches": 60,
-      "mockupHeightInches": 45,
+      "colorFlex": false,
+      "mockupId": "dresser-green",
       "patterns": [
         {
           "id": "recFNURnfuHN3vdR8",
@@ -30,7 +28,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "recNlN29BZsJ8pXUx",
@@ -50,7 +48,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "receKwq2FvlsQ9lPd",
@@ -70,7 +68,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.035Z"
+          "updatedAt": "2026-03-07T18:34:34.327Z"
         },
         {
           "id": "recIBIHwEJzLPOZXH",
@@ -90,7 +88,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "recnGoiBlXwNYQIgO",
@@ -110,7 +108,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.035Z"
+          "updatedAt": "2026-03-07T18:34:34.327Z"
         },
         {
           "id": "rec1qsJ4Y7zA8dDPw",
@@ -126,11 +124,11 @@
           "layerLabels": [],
           "tilingType": "half-drop",
           "designer_colors": [],
-          "colorFlex": false,
+          "colorFlex": true,
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.031Z"
+          "updatedAt": "2026-03-07T18:34:34.317Z"
         },
         {
           "id": "recCrskJNmzCkCfOB",
@@ -150,7 +148,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.033Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "recAln3HFRJX37JUY",
@@ -170,7 +168,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.033Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "rec38WvKxb322fm3x",
@@ -190,7 +188,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.033Z"
+          "updatedAt": "2026-03-07T18:34:34.325Z"
         },
         {
           "id": "recp7u0RVQGm62UJM",
@@ -210,7 +208,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.035Z"
+          "updatedAt": "2026-03-07T18:34:34.328Z"
         },
         {
           "id": "recgmPUHoNTbAgcpB",
@@ -230,7 +228,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.035Z"
+          "updatedAt": "2026-03-07T18:34:34.327Z"
         },
         {
           "id": "recF4X7gBcFMcgZsr",
@@ -250,7 +248,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.033Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "recNzq2SulnylZUfH",
@@ -270,7 +268,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "recYz0OhFgMSb5Lhx",
@@ -290,7 +288,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.327Z"
         },
         {
           "id": "rec8cifyIYsG8lZDP",
@@ -310,7 +308,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.033Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "recpFI89X29gfKaBe",
@@ -330,7 +328,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.035Z"
+          "updatedAt": "2026-03-07T18:34:34.328Z"
         },
         {
           "id": "recHUjzvqnHSsid2g",
@@ -350,7 +348,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "recQGg0YgweOdgExz",
@@ -370,7 +368,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.327Z"
         },
         {
           "id": "reclpb961ry8Bb3Vd",
@@ -390,7 +388,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.035Z"
+          "updatedAt": "2026-03-07T18:34:34.327Z"
         },
         {
           "id": "recZt2jBe98yaxxfi",
@@ -410,7 +408,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.327Z"
         },
         {
           "id": "recE0hyHfHFSCUxU9",
@@ -430,7 +428,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.033Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "recU1iETN3dF7yDZM",
@@ -450,7 +448,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.327Z"
         },
         {
           "id": "recIxuyhh0Cp6tcRN",
@@ -470,7 +468,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "recFr2Qxt1zTxId33",
@@ -490,7 +488,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "recXgoKLZIIINsy6c",
@@ -510,7 +508,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.327Z"
         },
         {
           "id": "recUZj5SRCXvOH8Q0",
@@ -530,7 +528,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.327Z"
         },
         {
           "id": "recFBeYiwVzO60dkU",
@@ -550,7 +548,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.326Z"
         },
         {
           "id": "recSMzyh8fL6XWoRa",
@@ -570,7 +568,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.034Z"
+          "updatedAt": "2026-03-07T18:34:34.327Z"
         },
         {
           "id": "recaAWsr8KnMjplPu",
@@ -579,26 +577,26 @@
           "thumbnail": "./data/collections/abundance/thumbnails/stag-&-crow.jpg",
           "size": [
             24,
-            24
+            36
           ],
           "repeat": "yes",
           "layers": [],
           "layerLabels": [],
-          "tilingType": "straight",
+          "tilingType": "half-drop",
           "designer_colors": [],
           "colorFlex": false,
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-24T04:15:23.035Z"
+          "updatedAt": "2026-03-07T18:34:34.327Z"
         }
       ]
     },
     {
       "name": "ancient-tiles",
       "tableName": "13 - ANCIENT TILES",
+      "collectionNumber": 13,
       "collection_thumbnail": "./data/collections/ancient-tiles/ancient-tiles-thumb.jpg",
-      "mockupId": "cupboard",
       "curatedColors": [
         "SW7069 Iron Ore",
         "SW7067 Cityscape",
@@ -611,6 +609,8 @@
         "SW0006 Toile Red"
       ],
       "coordinates": null,
+      "colorFlex": false,
+      "mockupId": "still-life-eucalyptus",
       "patterns": [
         {
           "id": "recRXgiCLqosWaT7f",
@@ -640,7 +640,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.895Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "recC9FwKrf1jk4KcS",
@@ -670,7 +670,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.894Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "recPxNpeASTBKXG6X",
@@ -700,7 +700,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.894Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "recF1rMnuYoFHbsJ1",
@@ -730,7 +730,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.894Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "recTW8vIdiNJJah77",
@@ -760,7 +760,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.895Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "recCT1vXFkoOOUB43",
@@ -790,7 +790,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.894Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "recqjfFBlAJlpLIZj",
@@ -820,7 +820,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.895Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "recv3zkj3CJuhz70q",
@@ -850,7 +850,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.896Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "recxS1b5H50dykYJn",
@@ -880,7 +880,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.896Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "rechqW7f0RCyKvrPR",
@@ -910,7 +910,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.895Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "reczZad9Vg48LDJ2b",
@@ -940,7 +940,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.896Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "rec92OINQssVxeR2g",
@@ -970,7 +970,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.894Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "rect6N1AwVv4wvciC",
@@ -1000,7 +1000,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.896Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "rec6jJ691oyaozZW9",
@@ -1030,7 +1030,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.892Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         },
         {
           "id": "reckWW5PhpB04V08f",
@@ -1060,13 +1060,14 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:02.895Z"
+          "updatedAt": "2026-03-07T18:34:38.515Z"
         }
       ]
     },
     {
       "name": "bombay",
       "tableName": "8 - BOMBAY",
+      "collectionNumber": 8,
       "collection_thumbnail": "./data/collections/bombay/bombay-thumb.jpg",
       "curatedColors": [
         "SC0001 COTTAGE LINEN",
@@ -1108,6 +1109,8 @@
           ]
         }
       ],
+      "colorFlex": true,
+      "mockupId": "[object Object]",
       "patterns": [
         {
           "id": "recNMLJww2XtYk5Nv",
@@ -1146,10 +1149,10 @@
           "tilingType": "straight",
           "designer_colors": [
             "SC0001 COTTAGE LINEN",
-            "SW7729 EDAMAME",
-            "SW0043 PERISTYLE BRASS",
-            "SW7726 LEMON VERBENA",
-            "SW6415 HEARTS OF PALM"
+            "SW6425 RELENTLESS OLIVE",
+            "SW6558 PLUMMY",
+            "SW6395 ALCHEMY",
+            "SW6395 ALCHEMY"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -1182,7 +1185,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.961Z"
+          "updatedAt": "2026-03-07T18:34:37.177Z"
         },
         {
           "id": "rec0YgzbbxikypVMj",
@@ -1239,7 +1242,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.956Z"
+          "updatedAt": "2026-03-07T18:34:37.175Z"
         },
         {
           "id": "recepcpv8bkCoNrML",
@@ -1288,12 +1291,13 @@
           "tilingType": "straight",
           "designer_colors": [
             "SC0001 COTTAGE LINEN",
-            "SW6488 GRAND CANAL",
-            "SW6487 CLOUDBURST",
-            "SW6486 REFLECTING POOL",
-            "SW9052 BLITHE BLUE",
-            "SW6485 RAINDROP",
-            "SW6488 GRAND CANAL"
+            "SW",
+            "6811 HONORABLE BLUE",
+            "SW6810 LUPINE",
+            "SW6810 LUPINE",
+            "SW6810 LUPINE",
+            "SW6395 ALCHEMY",
+            "SW6395 ALCHEMY"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -1326,7 +1330,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.962Z"
+          "updatedAt": "2026-03-07T18:34:37.178Z"
         },
         {
           "id": "rectlBxCvxvMFVazh",
@@ -1383,7 +1387,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.964Z"
+          "updatedAt": "2026-03-07T18:34:37.182Z"
         },
         {
           "id": "rec2tEHnoLYiL9EtN",
@@ -1446,7 +1450,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.959Z"
+          "updatedAt": "2026-03-07T18:34:37.175Z"
         },
         {
           "id": "rec3kKu0gymKtgUQc",
@@ -1503,7 +1507,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.959Z"
+          "updatedAt": "2026-03-07T18:34:37.176Z"
         },
         {
           "id": "recPlE8c9XvSs0wIJ",
@@ -1560,7 +1564,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.961Z"
+          "updatedAt": "2026-03-07T18:34:37.177Z"
         },
         {
           "id": "recpY4vY9CoJ5UE12",
@@ -1617,7 +1621,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.962Z"
+          "updatedAt": "2026-03-07T18:34:37.182Z"
         },
         {
           "id": "recGZg3JFBpwUOJAq",
@@ -1674,7 +1678,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.960Z"
+          "updatedAt": "2026-03-07T18:34:37.176Z"
         },
         {
           "id": "recrXjjnthuLDkHWf",
@@ -1737,7 +1741,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.963Z"
+          "updatedAt": "2026-03-07T18:34:37.182Z"
         },
         {
           "id": "recFq72D26IObtAvy",
@@ -1794,7 +1798,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.960Z"
+          "updatedAt": "2026-03-07T18:34:37.176Z"
         },
         {
           "id": "recUsgvZJNjAmIb09",
@@ -1851,7 +1855,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.961Z"
+          "updatedAt": "2026-03-07T18:34:37.178Z"
         },
         {
           "id": "recZrIQnNd9aSt7IE",
@@ -1914,7 +1918,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.961Z"
+          "updatedAt": "2026-03-07T18:34:37.178Z"
         },
         {
           "id": "recieFYEmarxrRhPg",
@@ -1971,7 +1975,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.962Z"
+          "updatedAt": "2026-03-07T18:34:37.179Z"
         },
         {
           "id": "recmkr3Rv5NdR5RSl",
@@ -2028,7 +2032,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.962Z"
+          "updatedAt": "2026-03-07T18:34:37.182Z"
         },
         {
           "id": "recLBCj6Ohzrd9cNV",
@@ -2091,7 +2095,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.960Z"
+          "updatedAt": "2026-03-07T18:34:37.177Z"
         },
         {
           "id": "recpAx9VPhqxnQzxE",
@@ -2154,7 +2158,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.962Z"
+          "updatedAt": "2026-03-07T18:34:37.182Z"
         },
         {
           "id": "rec8dB9EXmURmAr48",
@@ -2211,7 +2215,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.959Z"
+          "updatedAt": "2026-03-07T18:34:37.176Z"
         },
         {
           "id": "recfnzISFU32JqEVv",
@@ -2274,7 +2278,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.962Z"
+          "updatedAt": "2026-03-07T18:34:37.178Z"
         },
         {
           "id": "recu3BiG4MCL8UQlP",
@@ -2331,7 +2335,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.964Z"
+          "updatedAt": "2026-03-07T18:34:37.189Z"
         },
         {
           "id": "recH6789vfsgDWPxz",
@@ -2388,7 +2392,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.960Z"
+          "updatedAt": "2026-03-07T18:34:37.176Z"
         },
         {
           "id": "rec5QB3YqzHT1ixw4",
@@ -2445,7 +2449,64 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.959Z"
+          "updatedAt": "2026-03-07T18:34:37.176Z"
+        },
+        {
+          "id": "recsGjmH0GtA7ITlB",
+          "number": "01-08-122",
+          "name": "Indian Peacock",
+          "thumbnail": "./data/collections/bombay/thumbnails/indian-peacock.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/bombay/layers/indian-peacock_design_layer-1.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/indian-peacock_design_layer-1.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Design"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6395 ALCHEMY",
+            "SW6371 VANILLIN"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "tresselwood.jpg",
+              "path": "./data/collections/coordinates/thumbnails/tresselwood.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/tresselwood_back_layer-1.jpg",
+                "./data/collections/coordinates/layers/tresselwood_front_layer-2.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "dakota-plaid.jpg",
+              "path": "./data/collections/coordinates/thumbnails/dakota-plaid.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/dakota-plaid_thick_layer-1.jpg",
+                "./data/collections/coordinates/layers/dakota-plaid_thin_layer-2.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-07T18:34:37.182Z"
         },
         {
           "id": "recVwrw9QY2TOCF2s",
@@ -2502,7 +2563,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.961Z"
+          "updatedAt": "2026-03-07T18:34:37.178Z"
         },
         {
           "id": "recWTtmpuM29ijFun",
@@ -2559,7 +2620,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.961Z"
+          "updatedAt": "2026-03-07T18:34:37.178Z"
         },
         {
           "id": "reciT6BiyBOyhHdMI",
@@ -2622,7 +2683,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.962Z"
+          "updatedAt": "2026-03-07T18:34:37.179Z"
         },
         {
           "id": "rectW3O1DJaS1cLQ9",
@@ -2679,7 +2740,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.963Z"
+          "updatedAt": "2026-03-07T18:34:37.182Z"
         },
         {
           "id": "rec1CWyg0tKEMe19I",
@@ -2736,7 +2797,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.958Z"
+          "updatedAt": "2026-03-07T18:34:37.175Z"
         },
         {
           "id": "recDE5IAltG8jVJtP",
@@ -2799,7 +2860,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.960Z"
+          "updatedAt": "2026-03-07T18:34:37.176Z"
         },
         {
           "id": "recMT2q5PlqcL4tsl",
@@ -2862,7 +2923,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.960Z"
+          "updatedAt": "2026-03-07T18:34:37.177Z"
         },
         {
           "id": "rec6FuvXjb9PHv0OU",
@@ -2931,7 +2992,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.959Z"
+          "updatedAt": "2026-03-07T18:34:37.176Z"
         },
         {
           "id": "recSWkr2w6QQ8t5N9",
@@ -2994,7 +3055,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.961Z"
+          "updatedAt": "2026-03-07T18:34:37.177Z"
         },
         {
           "id": "recTuYp9CdX0yuOCE",
@@ -3057,7 +3118,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.961Z"
+          "updatedAt": "2026-03-07T18:34:37.177Z"
         },
         {
           "id": "recmj4L93grqoI3xl",
@@ -3120,7 +3181,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.962Z"
+          "updatedAt": "2026-03-07T18:34:37.180Z"
         },
         {
           "id": "recql93mLpgwhX9DZ",
@@ -3177,10 +3238,273 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:24:23.962Z"
+          "updatedAt": "2026-03-07T18:34:37.182Z"
+        },
+        {
+          "id": "recnxNmWbUA7IE2MG",
+          "number": "01-08-138",
+          "name": "Mandi Vine",
+          "thumbnail": "./data/collections/bombay/thumbnails/mandi-vine.jpg",
+          "size": [
+            24,
+            18
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/bombay/layers/mandi-vine_pattern_layer-1.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/mandi-vine_pattern_layer-1.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Pattern"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW7588 SHOW STOPPER",
+            "SW6371 VANILLIN"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "tresselwood.jpg",
+              "path": "./data/collections/coordinates/thumbnails/tresselwood.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/tresselwood_back_layer-1.jpg",
+                "./data/collections/coordinates/layers/tresselwood_front_layer-2.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "dakota-plaid.jpg",
+              "path": "./data/collections/coordinates/thumbnails/dakota-plaid.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/dakota-plaid_thick_layer-1.jpg",
+                "./data/collections/coordinates/layers/dakota-plaid_thin_layer-2.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-07T18:34:37.182Z"
+        },
+        {
+          "id": "rec1ltrsYJpCtk7v7",
+          "number": "01-08-139",
+          "name": "Rewa Flower",
+          "thumbnail": "./data/collections/bombay/thumbnails/rewa-flower.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/bombay/layers/rewa-flower_texture_layer-1.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/rewa-flower_texture_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/bombay/layers/rewa-flower_flowers_layer-2.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/rewa-flower_flowers_layer-2.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Texture",
+            "Flowers"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SC0001 COTTAGE LINEN",
+            "SW6395 ALCHEMY",
+            "SW6810 LUPINE"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "tresselwood.jpg",
+              "path": "./data/collections/coordinates/thumbnails/tresselwood.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/tresselwood_back_layer-1.jpg",
+                "./data/collections/coordinates/layers/tresselwood_front_layer-2.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "dakota-plaid.jpg",
+              "path": "./data/collections/coordinates/thumbnails/dakota-plaid.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/dakota-plaid_thick_layer-1.jpg",
+                "./data/collections/coordinates/layers/dakota-plaid_thin_layer-2.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-07T18:34:37.175Z"
+        },
+        {
+          "id": "recQI6wqKHgPNobWe",
+          "number": "01-08-140",
+          "name": "Rampur",
+          "thumbnail": "./data/collections/bombay/thumbnails/rampur.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/bombay/layers/rampur_feathery-edge_layer-1.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/rampur_feathery-edge_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/bombay/layers/rampur_sm-center_layer-2.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/rampur_sm-center_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/bombay/layers/rampur_large-center_layer-3.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/rampur_large-center_layer-3.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Feathery Edge",
+            "Sm Center",
+            "Large Center"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SC0001 COTTAGE LINEN",
+            "SW6395 ALCHEMY",
+            "SW6425 RELENTLESS OLIVE",
+            "SW6558 PLUMMY"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "tresselwood.jpg",
+              "path": "./data/collections/coordinates/thumbnails/tresselwood.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/tresselwood_back_layer-1.jpg",
+                "./data/collections/coordinates/layers/tresselwood_front_layer-2.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "dakota-plaid.jpg",
+              "path": "./data/collections/coordinates/thumbnails/dakota-plaid.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/dakota-plaid_thick_layer-1.jpg",
+                "./data/collections/coordinates/layers/dakota-plaid_thin_layer-2.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-07T18:34:37.177Z"
+        },
+        {
+          "id": "recaOcdQBv6kjJ7HI",
+          "number": "01-08-141",
+          "name": "Curry",
+          "thumbnail": "./data/collections/bombay/thumbnails/curry.jpg",
+          "size": [
+            24,
+            18
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/bombay/layers/curry_centers_layer-1.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/curry_centers_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/bombay/layers/curry_leaves_layer-2.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/curry_leaves_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/bombay/layers/curry_lg-flowers_layer-3.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/curry_lg-flowers_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/bombay/layers/curry_sm-flowers_layer-4.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/curry_sm-flowers_layer-4.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Centers",
+            "Leaves",
+            "Lg Flowers",
+            "Sm Flowers"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SC0001 COTTAGE LINEN",
+            "SW6558 PLUMMY",
+            "SW6425 RELENTLESS OLIVE",
+            "SW0080 PINK FLAMINGO",
+            "SW6395 ALCHEMY"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "tresselwood.jpg",
+              "path": "./data/collections/coordinates/thumbnails/tresselwood.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/tresselwood_back_layer-1.jpg",
+                "./data/collections/coordinates/layers/tresselwood_front_layer-2.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "dakota-plaid.jpg",
+              "path": "./data/collections/coordinates/thumbnails/dakota-plaid.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/dakota-plaid_thick_layer-1.jpg",
+                "./data/collections/coordinates/layers/dakota-plaid_thin_layer-2.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-07T18:34:37.178Z"
         }
-      ],
-      "mockupId": "cupboard"
+      ]
     },
     {
       "name": "bombay-clo",
@@ -5630,6 +5954,7 @@
     {
       "name": "botanicals",
       "tableName": "6 - BOTANICALS",
+      "collectionNumber": 6,
       "collection_thumbnail": "./data/collections/botanicals/botanicals-thumb.jpg",
       "curatedColors": [
         "SC0001 COTTAGE LINEN",
@@ -5680,6 +6005,11 @@
           ]
         }
       ],
+      "colorFlex": true,
+      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
+      "mockupShadow": null,
+      "mockupWidthInches": 60,
+      "mockupHeightInches": 40,
       "patterns": [
         {
           "id": "rec750VTgOjWq8NEF",
@@ -5754,7 +6084,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:55:04.218Z"
+          "updatedAt": "2026-03-11T16:54:01.686Z"
         },
         {
           "id": "recRGK7SUhPF0ZBqg",
@@ -5768,21 +6098,27 @@
           "repeat": "yes",
           "layers": [
             {
-              "path": "./data/collections/botanicals/layers/shadow-dance_shadow_layer-1.jpg",
-              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_shadow_layer-1.jpg"
+              "path": "./data/collections/botanicals/layers/shadow-dance_texture_layer-1.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_texture_layer-1.jpg"
             },
             {
-              "path": "./data/collections/botanicals/layers/shadow-dance_flower_layer-2.jpg",
-              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_flower_layer-2.jpg"
+              "path": "./data/collections/botanicals/layers/shadow-dance_shadow_layer-2.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_shadow_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/botanicals/layers/shadow-dance_flower_layer-3.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/shadow-dance_flower_layer-3.jpg"
             }
           ],
           "layerLabels": [
+            "Texture",
             "Shadows",
             "Flower"
           ],
           "tilingType": "straight",
           "designer_colors": [
             "SC0001 COTTAGE LINEN",
+            "SW6135 ECRU",
             "SW7069 IRON ORE",
             "SW0043 PERISTYLE BRASS"
           ],
@@ -5823,7 +6159,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:55:04.219Z"
+          "updatedAt": "2026-03-11T16:54:01.688Z"
         },
         {
           "id": "recMVyHLV5mHRdBbC",
@@ -5904,7 +6240,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:55:04.219Z"
+          "updatedAt": "2026-03-11T16:54:01.687Z"
         },
         {
           "id": "recYei4sRdf0KDsng",
@@ -5997,7 +6333,82 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:55:04.219Z"
+          "updatedAt": "2026-03-11T16:54:01.688Z"
+        },
+        {
+          "id": "recxF8MU3bOLHMajd",
+          "number": "01-06-106",
+          "name": "Dutch Stripe",
+          "thumbnail": "./data/collections/botanicals/thumbnails/dutch-stripe.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/botanicals/layers/dutch-stripe_stripe-bg_layer-1.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/dutch-stripe_stripe-bg_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/botanicals/layers/dutch-stripe_leaf-stripe_layer-2.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/dutch-stripe_leaf-stripe_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/botanicals/layers/dutch-stripe_tulips_layer-3.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/dutch-stripe_tulips_layer-3.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Stripe Bg",
+            "Leaf Stripe",
+            "Tulips"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW0053 PORCELAIN",
+            "SW0036 BUCKRAM BINDING",
+            "SW6159 HIGH TEA",
+            "SW6159 HIGH TEA"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "gingham-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/gingham-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/gingham-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "garden-path.jpg",
+              "path": "./data/collections/coordinates/thumbnails/garden-path.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/garden-path_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "xena-tweed.jpg",
+              "path": "./data/collections/coordinates/thumbnails/xena-tweed.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/xena-tweed_xenatweed_layer-1.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-11T16:54:01.690Z"
         },
         {
           "id": "recs3yUdz15AaFGTP",
@@ -6060,7 +6471,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:55:04.221Z"
+          "updatedAt": "2026-03-11T16:54:01.690Z"
         },
         {
           "id": "recD8V5tnkDE3y8r3",
@@ -6123,7 +6534,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:55:04.218Z"
+          "updatedAt": "2026-03-11T16:54:01.687Z"
         },
         {
           "id": "rec4ddVXYhRbGOEtn",
@@ -6186,7 +6597,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:55:04.217Z"
+          "updatedAt": "2026-03-11T16:54:01.683Z"
         },
         {
           "id": "recZvocapOmMJNdpl",
@@ -6249,7 +6660,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:55:04.219Z"
+          "updatedAt": "2026-03-11T16:54:01.688Z"
         },
         {
           "id": "rec77e5r66j8KyvUz",
@@ -6312,7 +6723,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:55:04.218Z"
+          "updatedAt": "2026-03-11T16:54:01.686Z"
         },
         {
           "id": "recoBtv4Zug2qFe3D",
@@ -6393,7 +6804,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:55:04.220Z"
+          "updatedAt": "2026-03-11T16:54:01.690Z"
         },
         {
           "id": "receuL4maZxTcRAXf",
@@ -6456,7 +6867,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:55:04.220Z"
+          "updatedAt": "2026-03-11T16:54:01.688Z"
         },
         {
           "id": "rec93z0Ica9yKOdr0",
@@ -6531,7 +6942,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-24T22:55:02.968Z"
+          "updatedAt": "2026-03-11T16:54:01.687Z"
         },
         {
           "id": "recmwtfUroOTMNkNK",
@@ -6612,10 +7023,84 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-01T21:37:14.108Z"
+          "updatedAt": "2026-03-11T16:54:01.689Z"
+        },
+        {
+          "id": "recl9ql54T6gqpNqJ",
+          "number": "01-06-117",
+          "name": "Love Spat",
+          "thumbnail": "./data/collections/botanicals/thumbnails/love-spat.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/botanicals/layers/love-spat_trees_layer-1.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/love-spat_trees_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/botanicals/layers/love-spat_flowers_layer-2.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/love-spat_flowers_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/botanicals/layers/love-spat_birds_layer-3.jpg",
+              "proofPath": "./data/collections/botanicals/proof-layers/love-spat_birds_layer-3.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Trees",
+            "Flowers",
+            "Birds"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6209 RIPE OLIVE",
+            "SW7734 OLIVE GROVE",
+            "SW6394 SEQUIN",
+            "SW6395 ALCHEMY"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "gingham-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/gingham-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/gingham-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "garden-path.jpg",
+              "path": "./data/collections/coordinates/thumbnails/garden-path.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/garden-path_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "xena-tweed.jpg",
+              "path": "./data/collections/coordinates/thumbnails/xena-tweed.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/xena-tweed_xenatweed_layer-1.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-11T16:54:01.689Z"
         }
-      ],
-      "mockupId": "cottage-door"
+      ]
     },
     {
       "name": "botanicals-clo",
@@ -7585,6 +8070,7 @@
     {
       "name": "coordinates",
       "tableName": "21 - COORDINATES",
+      "collectionNumber": 21,
       "collection_thumbnail": "./data/collections/coordinates/coordinates-thumb.jpg",
       "curatedColors": [
         "SC001 COTTAGE COAL",
@@ -7607,6 +8093,11 @@
         "SW0034 ROYCROFT ROSE"
       ],
       "coordinates": null,
+      "colorFlex": true,
+      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
+      "mockupShadow": null,
+      "mockupWidthInches": 60,
+      "mockupHeightInches": 40,
       "patterns": [
         {
           "id": "recQ4Ts6YwFb1bu74",
@@ -7636,7 +8127,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.354Z"
+          "updatedAt": "2026-03-07T18:34:40.460Z"
         },
         {
           "id": "rec5ai87MMEfSpztu",
@@ -7666,7 +8157,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.352Z"
+          "updatedAt": "2026-03-07T18:34:40.459Z"
         },
         {
           "id": "rectAlAn5KvibSFEA",
@@ -7696,7 +8187,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.356Z"
+          "updatedAt": "2026-03-07T18:34:40.463Z"
         },
         {
           "id": "recFnHcwyUaVzcDoF",
@@ -7726,7 +8217,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.353Z"
+          "updatedAt": "2026-03-07T18:34:40.459Z"
         },
         {
           "id": "recbgFHMgqtzcrQ2K",
@@ -7756,7 +8247,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.354Z"
+          "updatedAt": "2026-03-07T18:34:40.460Z"
         },
         {
           "id": "recqliYNR4TBJielv",
@@ -7786,7 +8277,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.356Z"
+          "updatedAt": "2026-03-07T18:34:40.461Z"
         },
         {
           "id": "recrfGxRzfTJKNUFm",
@@ -7816,7 +8307,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.356Z"
+          "updatedAt": "2026-03-07T18:34:40.462Z"
         },
         {
           "id": "rec8Re25iINiJhoqQ",
@@ -7852,7 +8343,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.353Z"
+          "updatedAt": "2026-03-07T18:34:40.459Z"
         },
         {
           "id": "recpcZNJ8KPBAdW0O",
@@ -7882,7 +8373,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.356Z"
+          "updatedAt": "2026-03-07T18:34:40.461Z"
         },
         {
           "id": "rec5u4BaSkBIisSbk",
@@ -7912,7 +8403,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.352Z"
+          "updatedAt": "2026-03-07T18:34:40.459Z"
         },
         {
           "id": "recjvdRoIZz5N0knm",
@@ -7942,7 +8433,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.355Z"
+          "updatedAt": "2026-03-07T18:34:40.460Z"
         },
         {
           "id": "recpCj7kfdPtPYv9I",
@@ -7972,7 +8463,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.356Z"
+          "updatedAt": "2026-03-07T18:34:40.461Z"
         },
         {
           "id": "recq31BCJ0gpH5tLZ",
@@ -8002,7 +8493,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.356Z"
+          "updatedAt": "2026-03-07T18:34:40.461Z"
         },
         {
           "id": "recPaypNnoZ1JBFy6",
@@ -8032,7 +8523,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.353Z"
+          "updatedAt": "2026-03-07T18:34:40.459Z"
         },
         {
           "id": "reczkPngeoNcBDTmH",
@@ -8068,7 +8559,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.357Z"
+          "updatedAt": "2026-03-07T18:34:40.465Z"
         },
         {
           "id": "recoxKLcPM3v81Aji",
@@ -8116,7 +8607,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.356Z"
+          "updatedAt": "2026-03-07T18:34:40.461Z"
         },
         {
           "id": "recEuBWgLwUctDYOG",
@@ -8158,7 +8649,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.353Z"
+          "updatedAt": "2026-03-07T18:34:40.459Z"
         },
         {
           "id": "recwW754z8P6IG8w4",
@@ -8194,7 +8685,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.357Z"
+          "updatedAt": "2026-03-07T18:34:40.464Z"
         },
         {
           "id": "rec0cbpcmaxWceTkU",
@@ -8224,7 +8715,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.351Z"
+          "updatedAt": "2026-03-07T18:34:40.458Z"
         },
         {
           "id": "recyNxVCYFulwreSJ",
@@ -8260,7 +8751,43 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.357Z"
+          "updatedAt": "2026-03-07T18:34:40.465Z"
+        },
+        {
+          "id": "recoB9MbSOg2pRNOV",
+          "number": "01-21-121",
+          "name": "Bronte",
+          "thumbnail": "./data/collections/coordinates/thumbnails/bronte.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/coordinates/layers/bronte_oval-patern_layer-1.jpg",
+              "proofPath": "./data/collections/coordinates/proof-layers/bronte_oval-patern_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/coordinates/layers/bronte_brush-stroke_layer-2.jpg",
+              "proofPath": "./data/collections/coordinates/proof-layers/bronte_brush-stroke_layer-2.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Oval Patern",
+            "Brush Stroke"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW7636 ORIGAMI WHITE",
+            "SW6524 COMMODORE",
+            "SW7066 GRAY MATTERS"
+          ],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-07T18:34:40.461Z"
         },
         {
           "id": "reckFyoMTsgWFWZbz",
@@ -8290,7 +8817,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.355Z"
+          "updatedAt": "2026-03-07T18:34:40.461Z"
         },
         {
           "id": "recUnlhf5NMmMSRwi",
@@ -8320,7 +8847,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.354Z"
+          "updatedAt": "2026-03-07T18:34:40.460Z"
         },
         {
           "id": "reczqLQfyiqpQVSXE",
@@ -8334,12 +8861,12 @@
           "repeat": "yes",
           "layers": [
             {
-              "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_bamboo-background_layer-1.jpg",
-              "proofPath": "./data/collections/coordinates/proof-layers/bamboo-latice-full-color_bamboo-background_layer-1.jpg"
+              "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_shadow_layer-1.jpg",
+              "proofPath": "./data/collections/coordinates/proof-layers/bamboo-latice-full-color_shadow_layer-1.jpg"
             },
             {
-              "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_shadow_layer-2.jpg",
-              "proofPath": "./data/collections/coordinates/proof-layers/bamboo-latice-full-color_shadow_layer-2.jpg"
+              "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_bamboo-background_layer-2.jpg",
+              "proofPath": "./data/collections/coordinates/proof-layers/bamboo-latice-full-color_bamboo-background_layer-2.jpg"
             },
             {
               "path": "./data/collections/coordinates/layers/bamboo-latice-full-color_outline_layer-3.jpg",
@@ -8347,8 +8874,8 @@
             }
           ],
           "layerLabels": [
-            "Bamboo Background",
             "Shadows",
+            "Bamboo Background",
             "Outline"
           ],
           "tilingType": "straight",
@@ -8362,7 +8889,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.357Z"
+          "updatedAt": "2026-03-07T18:34:40.465Z"
         },
         {
           "id": "recjm4hFVA4KgloI9",
@@ -8392,7 +8919,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.355Z"
+          "updatedAt": "2026-03-07T18:34:40.460Z"
         },
         {
           "id": "rec19DxtQO6zlAtnj",
@@ -8440,7 +8967,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.352Z"
+          "updatedAt": "2026-03-07T18:34:40.458Z"
         },
         {
           "id": "reccaTPNiMvopBfWP",
@@ -8476,7 +9003,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.355Z"
+          "updatedAt": "2026-03-07T18:34:40.460Z"
         },
         {
           "id": "recYZELPya35k6ac7",
@@ -8506,7 +9033,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.354Z"
+          "updatedAt": "2026-03-07T18:34:40.460Z"
         },
         {
           "id": "recgRH6qyvqSgwMit",
@@ -8536,7 +9063,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.355Z"
+          "updatedAt": "2026-03-07T18:34:40.460Z"
         },
         {
           "id": "rec34yVosVEb2A7fx",
@@ -8566,7 +9093,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.352Z"
+          "updatedAt": "2026-03-07T18:34:40.459Z"
         },
         {
           "id": "recCvKdNM2pDAQ5aP",
@@ -8596,7 +9123,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:57:32.353Z"
+          "updatedAt": "2026-03-07T18:34:40.459Z"
         },
         {
           "id": "recPfmlAbxkpOnIBS",
@@ -8632,7 +9159,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T15:49:59.782Z"
+          "updatedAt": "2026-03-07T18:34:40.460Z"
         },
         {
           "id": "recWG6RSeOSGMUhlO",
@@ -8674,7 +9201,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T15:49:59.782Z"
+          "updatedAt": "2026-03-07T18:34:40.460Z"
         },
         {
           "id": "recyQ1ok63VsBLtZZ",
@@ -8704,7 +9231,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T15:49:59.783Z"
+          "updatedAt": "2026-03-07T18:34:40.465Z"
         },
         {
           "id": "rec4ktdjwmEqXJT6U",
@@ -8734,10 +9261,9 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T15:49:59.781Z"
+          "updatedAt": "2026-03-07T18:34:40.459Z"
         }
-      ],
-      "mockupId": "wallpaper-mockup-39"
+      ]
     },
     {
       "name": "coordinates-clo",
@@ -11193,7 +11719,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.221Z"
+          "updatedAt": "2026-03-07T18:34:38.014Z"
         },
         {
           "id": "recydDhwONotbT5Ra",
@@ -11265,7 +11791,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.224Z"
+          "updatedAt": "2026-03-07T18:34:38.018Z"
         },
         {
           "id": "reciTrhAIDDWZI6Vr",
@@ -11331,7 +11857,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.221Z"
+          "updatedAt": "2026-03-07T18:34:38.014Z"
         },
         {
           "id": "recdf8iQ5eBUxQfdr",
@@ -11361,7 +11887,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.219Z"
+          "updatedAt": "2026-03-07T18:34:38.012Z"
         },
         {
           "id": "rec6uiCIWZAESs1yb",
@@ -11409,7 +11935,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.218Z"
+          "updatedAt": "2026-03-07T18:34:38.011Z"
         },
         {
           "id": "recgvKuuTZyiJrKdD",
@@ -11457,7 +11983,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.220Z"
+          "updatedAt": "2026-03-07T18:34:38.013Z"
         },
         {
           "id": "recA3WvJkrI4Ma9aT",
@@ -11499,7 +12025,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.219Z"
+          "updatedAt": "2026-03-07T18:34:38.012Z"
         },
         {
           "id": "recxJb8s6z7Cb4utC",
@@ -11552,7 +12078,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.222Z"
+          "updatedAt": "2026-03-07T18:34:38.014Z"
         },
         {
           "id": "recE5KPnpvWuTvLpK",
@@ -11566,23 +12092,29 @@
           "repeat": "yes",
           "layers": [
             {
-              "path": "./data/collections/cottage-sketch-book/layers/margot_design_layer-1.jpg",
-              "proofPath": "./data/collections/cottage-sketch-book/proof-layers/margot_design_layer-1.jpg"
+              "path": "./data/collections/cottage-sketch-book/layers/margot_texture_layer-1.jpg",
+              "proofPath": "./data/collections/cottage-sketch-book/proof-layers/margot_texture_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/cottage-sketch-book/layers/margot_design_layer-2.jpg",
+              "proofPath": "./data/collections/cottage-sketch-book/proof-layers/margot_design_layer-2.jpg"
             }
           ],
           "layerLabels": [
+            "Texture",
             "Design"
           ],
           "tilingType": "straight",
           "designer_colors": [
             "SW6138 ARTIFACT",
+            "SW6076 TURKISH COFFEE",
             "SW0053 PORCELAIN"
           ],
           "colorFlex": true,
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.219Z"
+          "updatedAt": "2026-03-07T18:34:38.012Z"
         },
         {
           "id": "recVqUxZpWn2BtYa9",
@@ -11630,7 +12162,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.219Z"
+          "updatedAt": "2026-03-07T18:34:38.012Z"
         },
         {
           "id": "rec5ZfWAMC6HnmB52",
@@ -11678,7 +12210,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.213Z"
+          "updatedAt": "2026-03-07T18:34:38.011Z"
         },
         {
           "id": "recXuTz2AL28cT8qK",
@@ -11720,7 +12252,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.219Z"
+          "updatedAt": "2026-03-07T18:34:38.012Z"
         },
         {
           "id": "recfMFm88o9LBJ8gM",
@@ -11762,7 +12294,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.220Z"
+          "updatedAt": "2026-03-07T18:34:38.013Z"
         },
         {
           "id": "rechGz5kv7mCzTnMX",
@@ -11827,7 +12359,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.221Z"
+          "updatedAt": "2026-03-07T18:34:38.014Z"
         },
         {
           "id": "recfhO8AEutUOqUjV",
@@ -11881,7 +12413,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.220Z"
+          "updatedAt": "2026-03-07T18:34:38.013Z"
         },
         {
           "id": "rec9BvrQcyKDebsWw",
@@ -11929,7 +12461,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-04T18:40:47.218Z"
+          "updatedAt": "2026-03-07T18:34:38.011Z"
         }
       ]
     },
@@ -12734,7 +13266,7 @@
         }
       ],
       "colorFlex": true,
-      "mockupId": "english-countryside-fireplace",
+      "mockupId": "scallop-console",
       "patterns": [
         {
           "id": "recFTfxTNBMSac4C2",
@@ -12795,7 +13327,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.108Z"
+          "updatedAt": "2026-03-07T18:34:34.737Z"
         },
         {
           "id": "recvRWXkpLczXEhlW",
@@ -12850,7 +13382,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.113Z"
+          "updatedAt": "2026-03-07T18:34:34.741Z"
         },
         {
           "id": "recVT5iZdAj0yCwzU",
@@ -12911,7 +13443,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.109Z"
+          "updatedAt": "2026-03-07T18:34:34.738Z"
         },
         {
           "id": "recH8qZYY0QnRu5YP",
@@ -12972,7 +13504,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.108Z"
+          "updatedAt": "2026-03-07T18:34:34.737Z"
         },
         {
           "id": "recXXFAOZrk79iRjE",
@@ -13027,7 +13559,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.110Z"
+          "updatedAt": "2026-03-07T18:34:34.738Z"
         },
         {
           "id": "recyJXPmIiYCPTHiS",
@@ -13100,7 +13632,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.115Z"
+          "updatedAt": "2026-03-07T18:34:34.742Z"
         },
         {
           "id": "recvgWPhbStqghvy7",
@@ -13155,7 +13687,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.114Z"
+          "updatedAt": "2026-03-07T18:34:34.742Z"
         },
         {
           "id": "recqoTluLJ3iLl8kj",
@@ -13216,7 +13748,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.113Z"
+          "updatedAt": "2026-03-07T18:34:34.741Z"
         },
         {
           "id": "recbymB9JZno6Knbw",
@@ -13277,7 +13809,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.111Z"
+          "updatedAt": "2026-03-07T18:34:34.741Z"
         },
         {
           "id": "reclCDCowoQHNhTUj",
@@ -13338,7 +13870,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.113Z"
+          "updatedAt": "2026-03-07T18:34:34.741Z"
         },
         {
           "id": "recCNa1tDOQiOOE5N",
@@ -13399,7 +13931,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.107Z"
+          "updatedAt": "2026-03-07T18:34:34.737Z"
         },
         {
           "id": "recxzNAjEXKDtkd99",
@@ -13461,7 +13993,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.114Z"
+          "updatedAt": "2026-03-07T18:34:34.742Z"
         },
         {
           "id": "recyvXphcTrmxO4eJ",
@@ -13522,7 +14054,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.115Z"
+          "updatedAt": "2026-03-07T18:34:34.742Z"
         },
         {
           "id": "rec8l5PPRC1jf9Dok",
@@ -13583,7 +14115,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.101Z"
+          "updatedAt": "2026-03-07T18:34:34.736Z"
         },
         {
           "id": "recZOzsHAIGONOQi4",
@@ -13656,7 +14188,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.110Z"
+          "updatedAt": "2026-03-07T18:34:34.739Z"
         },
         {
           "id": "recNEFb9qUIXicKFU",
@@ -13723,7 +14255,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.108Z"
+          "updatedAt": "2026-03-07T18:34:34.738Z"
         },
         {
           "id": "recC6ZIeLw1gOINvN",
@@ -13784,7 +14316,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.107Z"
+          "updatedAt": "2026-03-07T18:34:34.736Z"
         },
         {
           "id": "recboKzrFc9xDMPz5",
@@ -13863,7 +14395,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.111Z"
+          "updatedAt": "2026-03-07T18:34:34.741Z"
         },
         {
           "id": "recXCyxrtZNmkm3Ic",
@@ -13930,7 +14462,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.109Z"
+          "updatedAt": "2026-03-07T18:34:34.738Z"
         },
         {
           "id": "reczodoii9qGvM3Sa",
@@ -13985,7 +14517,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.115Z"
+          "updatedAt": "2026-03-07T18:34:34.742Z"
         },
         {
           "id": "recFj0bhQxsj1wkzi",
@@ -14040,7 +14572,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.108Z"
+          "updatedAt": "2026-03-07T18:34:34.737Z"
         },
         {
           "id": "recYnch7DZCLfa68s",
@@ -14095,7 +14627,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.110Z"
+          "updatedAt": "2026-03-07T18:34:34.739Z"
         },
         {
           "id": "recfafj590SCUFCLk",
@@ -14150,7 +14682,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.112Z"
+          "updatedAt": "2026-03-07T18:34:34.741Z"
         },
         {
           "id": "recWZpvVDtOVYlZXU",
@@ -14205,7 +14737,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.109Z"
+          "updatedAt": "2026-03-07T18:34:34.738Z"
         },
         {
           "id": "recg2zQWyDHhqMRT1",
@@ -14260,7 +14792,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.113Z"
+          "updatedAt": "2026-03-07T18:34:34.741Z"
         },
         {
           "id": "recEbTfoTYuxvl3lc",
@@ -14315,7 +14847,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-28T23:28:27.107Z"
+          "updatedAt": "2026-03-07T18:34:34.737Z"
         }
       ]
     },
@@ -15871,17 +16403,20 @@
     {
       "name": "dished-up",
       "tableName": "7 - DISHED UP",
+      "collectionNumber": 7,
       "collection_thumbnail": "./data/collections/dished-up/dished-up-thumb.jpg",
       "curatedColors": [
         "COLOR FIXED"
       ],
       "coordinates": null,
+      "colorFlex": false,
+      "mockupId": "fireplace-mantle",
       "patterns": [
         {
           "id": "reclaMAPj6Fn5d8JZ",
           "number": "01-07-101\n",
-          "name": "Blue",
-          "thumbnail": "./data/collections/dished-up/thumbnails/blue.jpg",
+          "name": "Dished Up Blue",
+          "thumbnail": "./data/collections/dished-up/thumbnails/dished-up-blue.jpg",
           "size": [
             24,
             24
@@ -15897,13 +16432,13 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T01:03:45.828Z"
+          "updatedAt": "2026-03-09T23:36:48.879Z"
         },
         {
           "id": "recrUb6E6oi2GPIZ6",
           "number": "01-07-102",
-          "name": "Avocado",
-          "thumbnail": "./data/collections/dished-up/thumbnails/avocado.jpg",
+          "name": "Dished Up Avocado",
+          "thumbnail": "./data/collections/dished-up/thumbnails/dished-up-avocado.jpg",
           "size": [
             24,
             24
@@ -15919,13 +16454,13 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T01:03:45.829Z"
+          "updatedAt": "2026-03-09T23:36:48.879Z"
         },
         {
           "id": "recxTz4nrX3bH7lUV",
           "number": "01-07-103",
-          "name": "Spruce",
-          "thumbnail": "./data/collections/dished-up/thumbnails/spruce.jpg",
+          "name": "Dished Up Spruce",
+          "thumbnail": "./data/collections/dished-up/thumbnails/dished-up-spruce.jpg",
           "size": [
             24,
             24
@@ -15941,13 +16476,13 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T01:03:45.830Z"
+          "updatedAt": "2026-03-09T23:36:48.879Z"
         },
         {
           "id": "recOLZqy6TtcnW4gs",
           "number": "01-07-104\n\n",
-          "name": "Alphabets",
-          "thumbnail": "./data/collections/dished-up/thumbnails/alphabets.jpg",
+          "name": "Dished Up Alphabets",
+          "thumbnail": "./data/collections/dished-up/thumbnails/dished-up-alphabets.jpg",
           "size": [
             24,
             24
@@ -15963,13 +16498,13 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T01:03:45.828Z"
+          "updatedAt": "2026-03-09T23:36:48.879Z"
         },
         {
           "id": "recq0Joa5qaZovY8m",
           "number": "01-07-105\n\n",
-          "name": "Brown",
-          "thumbnail": "./data/collections/dished-up/thumbnails/brown.jpg",
+          "name": "Dished Up Brown",
+          "thumbnail": "./data/collections/dished-up/thumbnails/dished-up-brown.jpg",
           "size": [
             24,
             24
@@ -15985,13 +16520,13 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T01:03:45.828Z"
+          "updatedAt": "2026-03-09T23:36:48.879Z"
         },
         {
           "id": "rec3UuQY8lXPOv91W",
           "number": "01-07-106",
-          "name": "Purple",
-          "thumbnail": "./data/collections/dished-up/thumbnails/purple.jpg",
+          "name": "Dished Up Purple",
+          "thumbnail": "./data/collections/dished-up/thumbnails/dished-up-purple.jpg",
           "size": [
             24,
             24
@@ -16007,13 +16542,13 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T01:03:45.827Z"
+          "updatedAt": "2026-03-09T23:36:48.873Z"
         },
         {
           "id": "recgpVlTVzhpqMKJM",
           "number": "01-07-107",
-          "name": "Pink",
-          "thumbnail": "./data/collections/dished-up/thumbnails/pink.jpg",
+          "name": "Dished Up Pink",
+          "thumbnail": "./data/collections/dished-up/thumbnails/dished-up-pink.jpg",
           "size": [
             24,
             24
@@ -16029,13 +16564,13 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T01:03:45.828Z"
+          "updatedAt": "2026-03-09T23:36:48.879Z"
         },
         {
           "id": "recDHkxd7kU2r8I09",
           "number": "01-07-108",
-          "name": "Black",
-          "thumbnail": "./data/collections/dished-up/thumbnails/black.jpg",
+          "name": "Dished Up Black",
+          "thumbnail": "./data/collections/dished-up/thumbnails/dished-up-black.jpg",
           "size": [
             24,
             24
@@ -16051,13 +16586,13 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T01:03:45.828Z"
+          "updatedAt": "2026-03-09T23:36:48.879Z"
         },
         {
           "id": "recMvUY2gAMICtusH",
           "number": "01-07-109",
-          "name": "Sepia Castles",
-          "thumbnail": "./data/collections/dished-up/thumbnails/sepia-castles.jpg",
+          "name": "Dished Up Sepia Castles",
+          "thumbnail": "./data/collections/dished-up/thumbnails/dished-up-sepia-castles.jpg",
           "size": [
             24,
             24
@@ -16073,10 +16608,9 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T01:03:45.828Z"
+          "updatedAt": "2026-03-09T23:36:48.879Z"
         }
-      ],
-      "mockupId": "cupboard"
+      ]
     },
     {
       "name": "english-cottage",
@@ -16119,7 +16653,8 @@
           ]
         }
       ],
-      "mockupId": "English-Countryside-Bedroom-1-W60H40",
+      "colorFlex": true,
+      "mockupId": "cozy-chair",
       "patterns": [
         {
           "id": "recMxtEnkmVh0NlhV",
@@ -16131,15 +16666,8 @@
             24
           ],
           "repeat": "yes",
-          "layers": [
-            {
-              "path": "./data/collections/english-cottage/layers/greenwich-time_layer-1_layer-1.jpg",
-              "proofPath": "./data/collections/english-cottage/proof-layers/greenwich-time_layer-1_layer-1.jpg"
-            }
-          ],
-          "layerLabels": [
-            "Layer 1"
-          ],
+          "layers": [],
+          "layerLabels": [],
           "tilingType": "half-drop",
           "designer_colors": [
             "SW6990 CAVIAR",
@@ -16159,7 +16687,7 @@
             "SW0033 REMBRANDT RUBY",
             "SW0034 ROYCROFT ROSE"
           ],
-          "colorFlex": true,
+          "colorFlex": false,
           "coordinates": [
             {
               "collection": "coordinates",
@@ -16180,7 +16708,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.652Z"
+          "updatedAt": "2026-03-07T18:34:35.337Z"
         },
         {
           "id": "recd9114xx3tC7tRT",
@@ -16245,7 +16773,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.658Z"
+          "updatedAt": "2026-03-07T18:34:35.343Z"
         },
         {
           "id": "recdzB2YWBLIQWhbR",
@@ -16298,7 +16826,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.658Z"
+          "updatedAt": "2026-03-07T18:34:35.343Z"
         },
         {
           "id": "rec2unzmFc9sEtZsS",
@@ -16375,7 +16903,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.641Z"
+          "updatedAt": "2026-03-07T18:34:35.330Z"
         },
         {
           "id": "recElprQ6zTMgrH9n",
@@ -16428,7 +16956,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.650Z"
+          "updatedAt": "2026-03-07T18:34:35.336Z"
         },
         {
           "id": "recMCH5gj5tfTArL3",
@@ -16481,7 +17009,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.651Z"
+          "updatedAt": "2026-03-07T18:34:35.337Z"
         },
         {
           "id": "recfVsru84C1QVHha",
@@ -16534,7 +17062,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.658Z"
+          "updatedAt": "2026-03-07T18:34:35.343Z"
         },
         {
           "id": "recNCtZJpRmRsb938",
@@ -16605,7 +17133,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.652Z"
+          "updatedAt": "2026-03-07T18:34:35.338Z"
         },
         {
           "id": "recEZOPTgvtbmNo4S",
@@ -16664,7 +17192,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.650Z"
+          "updatedAt": "2026-03-07T18:34:35.336Z"
         },
         {
           "id": "recDLeHjr8iVIA8XL",
@@ -16759,7 +17287,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.649Z"
+          "updatedAt": "2026-03-07T18:34:35.336Z"
         },
         {
           "id": "recRujuNISoOdZsQS",
@@ -16830,7 +17358,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.657Z"
+          "updatedAt": "2026-03-07T18:34:35.342Z"
         },
         {
           "id": "reczeVZW4NQ3FbTlz",
@@ -16895,7 +17423,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.665Z"
+          "updatedAt": "2026-03-07T18:34:35.348Z"
         },
         {
           "id": "recFVDDDrzjudTpE3",
@@ -16966,7 +17494,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.650Z"
+          "updatedAt": "2026-03-07T18:34:35.336Z"
         },
         {
           "id": "recpEYaYTMqhZ2U38",
@@ -17037,7 +17565,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.664Z"
+          "updatedAt": "2026-03-07T18:34:35.348Z"
         },
         {
           "id": "recBU7tm1kkpu4Zf6",
@@ -17102,7 +17630,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.646Z"
+          "updatedAt": "2026-03-07T18:34:35.334Z"
         },
         {
           "id": "recOoNbqHlbuF0Eum",
@@ -17155,7 +17683,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.652Z"
+          "updatedAt": "2026-03-07T18:34:35.341Z"
         },
         {
           "id": "recPmljLXfMwiUGFg",
@@ -17202,7 +17730,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.653Z"
+          "updatedAt": "2026-03-07T18:34:35.341Z"
         },
         {
           "id": "rec7fuzDuTFh1V1EX",
@@ -17303,7 +17831,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.645Z"
+          "updatedAt": "2026-03-07T18:34:35.332Z"
         },
         {
           "id": "recRKNvjooe8gBhEO",
@@ -17350,7 +17878,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.656Z"
+          "updatedAt": "2026-03-07T18:34:35.342Z"
         },
         {
           "id": "recvZD8F1KnZPhOC7",
@@ -17397,7 +17925,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.665Z"
+          "updatedAt": "2026-03-07T18:34:35.348Z"
         },
         {
           "id": "recaEW7L1CG3II2R7",
@@ -17450,7 +17978,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.657Z"
+          "updatedAt": "2026-03-07T18:34:35.342Z"
         },
         {
           "id": "recPJL0LW6Imeeu5T",
@@ -17503,7 +18031,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.653Z"
+          "updatedAt": "2026-03-07T18:34:35.341Z"
         },
         {
           "id": "recHYMfBhv3Qcl1we",
@@ -17550,7 +18078,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.650Z"
+          "updatedAt": "2026-03-07T18:34:35.336Z"
         },
         {
           "id": "rec3wpBgUuj9aX3fj",
@@ -17597,7 +18125,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.642Z"
+          "updatedAt": "2026-03-07T18:34:35.330Z"
         },
         {
           "id": "recgWwc932TT5RhVI",
@@ -17650,7 +18178,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.658Z"
+          "updatedAt": "2026-03-07T18:34:35.343Z"
         },
         {
           "id": "rec8VPSfxkeabADrl",
@@ -17703,7 +18231,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.646Z"
+          "updatedAt": "2026-03-07T18:34:35.332Z"
         },
         {
           "id": "recRD9u6boNf7Yk2h",
@@ -17816,7 +18344,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.656Z"
+          "updatedAt": "2026-03-07T18:34:35.342Z"
         },
         {
           "id": "rec5fTLEJ2HeHCgHP",
@@ -17911,7 +18439,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.644Z"
+          "updatedAt": "2026-03-07T18:34:35.331Z"
         },
         {
           "id": "recQUXtxY0JLVocpr",
@@ -17982,7 +18510,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.653Z"
+          "updatedAt": "2026-03-07T18:34:35.341Z"
         },
         {
           "id": "rect7gBXgtW6czQb9",
@@ -18041,7 +18569,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.665Z"
+          "updatedAt": "2026-03-07T18:34:35.348Z"
         },
         {
           "id": "recoiqZqc5hoyXIqa",
@@ -18100,7 +18628,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.658Z"
+          "updatedAt": "2026-03-07T18:34:35.348Z"
         },
         {
           "id": "recMGdmFlU6te7gL6",
@@ -18183,7 +18711,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.651Z"
+          "updatedAt": "2026-03-07T18:34:35.337Z"
         },
         {
           "id": "recgeWTqvc28SErwa",
@@ -18248,7 +18776,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.658Z"
+          "updatedAt": "2026-03-07T18:34:35.347Z"
         },
         {
           "id": "recb7axlHqLz86wK8",
@@ -18325,7 +18853,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.657Z"
+          "updatedAt": "2026-03-07T18:34:35.342Z"
         },
         {
           "id": "recLCo6szkIJXpmaB",
@@ -18372,7 +18900,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:15:39.650Z"
+          "updatedAt": "2026-03-07T18:34:35.336Z"
         }
       ]
     },
@@ -21593,6 +22121,7 @@
     {
       "name": "farmhouse",
       "tableName": "5 - FARMHOUSE",
+      "collectionNumber": 5,
       "collection_thumbnail": "./data/collections/farmhouse/farmhouse-thumb.jpg",
       "curatedColors": [
         "SC0001 COTTAGE LINEN",
@@ -21605,7 +22134,9 @@
         "SW6186 Dried Thyme",
         "SW1472 Slate Tile",
         "SW0006 Toile Red",
-        "SW6990 CAVIAR"
+        "SW6425 RELENTLESS OLIVE",
+        "SW6215 ROCKY RIVER",
+        "SW9006 ROJO DUST"
       ],
       "coordinates": [
         {
@@ -21642,6 +22173,8 @@
           ]
         }
       ],
+      "colorFlex": true,
+      "mockupId": "cottage-door",
       "patterns": [
         {
           "id": "recDIcaInOiyoWHT1",
@@ -21705,7 +22238,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.342Z"
+          "updatedAt": "2026-03-10T20:35:58.295Z"
         },
         {
           "id": "recox0GQYj6r1PYtU",
@@ -21769,7 +22302,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.348Z"
+          "updatedAt": "2026-03-10T20:35:58.298Z"
         },
         {
           "id": "recGTQYj2YWVTJG9N",
@@ -21787,31 +22320,25 @@
               "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_isshadows_layer-1.jpg"
             },
             {
-              "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_scraps_layer-2.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_scraps_layer-2.jpg"
+              "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_layer-2_layer-2.jpg",
+              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_layer-2_layer-2.jpg"
             },
             {
               "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_veggies-1_layer-3.jpg",
               "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_veggies-1_layer-3.jpg"
-            },
-            {
-              "path": "./data/collections/farmhouse/layers/root-vegetables-paper-scraps_veggies-2_layer-4.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/root-vegetables-paper-scraps_veggies-2_layer-4.jpg"
             }
           ],
           "layerLabels": [
             "Shadows",
-            "Scraps",
-            "Veggies 1",
-            "Veggies 2"
+            "Layer 2",
+            "Veggies 1"
           ],
           "tilingType": "half-drop",
           "designer_colors": [
             "SW3441 FOOTHILLS",
             "SW7069 IRON ORE",
             "SC0001 COTTAGE LINEN",
-            "SW3441 FOOTHILLS",
-            "SC0001 COTTAGE LINEN"
+            "SW3441 FOOTHILLS"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -21851,7 +22378,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.343Z"
+          "updatedAt": "2026-03-10T20:35:58.296Z"
         },
         {
           "id": "recoih400HWGEFR2H",
@@ -21915,7 +22442,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.348Z"
+          "updatedAt": "2026-03-10T20:35:58.298Z"
         },
         {
           "id": "recjYRt1rtzDNrNae",
@@ -21979,13 +22506,13 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.347Z"
+          "updatedAt": "2026-03-10T20:35:58.297Z"
         },
         {
           "id": "recA4ZEQSfLEQpbFc",
           "number": "01-05-106",
-          "name": "On Antique Letters",
-          "thumbnail": "./data/collections/farmhouse/thumbnails/on-antique-letters.jpg",
+          "name": "A Little Birdie Told Me On Antique Letters",
+          "thumbnail": "./data/collections/farmhouse/thumbnails/a-little-birdie-told-me-on-antique-letters.jpg",
           "size": [
             24,
             24
@@ -21993,8 +22520,8 @@
           "repeat": "yes",
           "layers": [
             {
-              "path": "./data/collections/farmhouse/layers/on-antique-letters_on-antique-letters_layer-1.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/on-antique-letters_on-antique-letters_layer-1.jpg"
+              "path": "./data/collections/farmhouse/layers/a-little-birdie-told-me-on-antique-letters_on-antique-letters_layer-1.jpg",
+              "proofPath": "./data/collections/farmhouse/proof-layers/a-little-birdie-told-me-on-antique-letters_on-antique-letters_layer-1.jpg"
             }
           ],
           "layerLabels": [
@@ -22012,7 +22539,9 @@
             "SW6186 Dried Thyme",
             "SW1472 Slate Tile",
             "SW0006 Toile Red",
-            "SW6990 CAVIAR"
+            "SW6425 RELENTLESS OLIVE",
+            "SW6215 ROCKY RIVER",
+            "SW9006 ROJO DUST"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -22052,7 +22581,89 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.342Z"
+          "updatedAt": "2026-03-10T20:35:58.295Z"
+        },
+        {
+          "id": "recAkM01wHZJaW6nS",
+          "number": "01-05-107",
+          "name": "Bee & Vine",
+          "thumbnail": "./data/collections/farmhouse/thumbnails/bee-&-vine.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/farmhouse/layers/bee-&-vine_leaves_layer-1.jpg",
+              "proofPath": "./data/collections/farmhouse/proof-layers/bee-&-vine_leaves_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/farmhouse/layers/bee-&-vine_bee-color_layer-2.jpg",
+              "proofPath": "./data/collections/farmhouse/proof-layers/bee-&-vine_bee-color_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/farmhouse/layers/bee-&-vine_bee-outline_layer-3.jpg",
+              "proofPath": "./data/collections/farmhouse/proof-layers/bee-&-vine_bee-outline_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/farmhouse/layers/bee-&-vine_outlines_layer-4.jpg",
+              "proofPath": "./data/collections/farmhouse/proof-layers/bee-&-vine_outlines_layer-4.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Leaves",
+            "Bee Color",
+            "Bee Outline",
+            "Outlines"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6371 VANILLIN",
+            "SW6424 TANSY GREEN",
+            "SW6395 ALCHEMY",
+            "SW7069 IRON ORE",
+            "SW6209 RIPE OLIVE"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "dakota-plaid.jpg",
+              "path": "./data/collections/coordinates/thumbnails/dakota-plaid.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/dakota-plaid_thick_layer-1.jpg",
+                "./data/collections/coordinates/layers/dakota-plaid_thin_layer-2.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "gingham-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/gingham-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/gingham-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "utica-ticking.jpg",
+              "path": "./data/collections/coordinates/thumbnails/utica-ticking.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/utica-ticking_stripes_layer-1.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T20:35:58.295Z"
         },
         {
           "id": "rec7qUyRxUmQSifZf",
@@ -22116,7 +22727,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.341Z"
+          "updatedAt": "2026-03-10T20:35:58.295Z"
         },
         {
           "id": "recspvaz2Pw3VVGnT",
@@ -22180,7 +22791,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.348Z"
+          "updatedAt": "2026-03-10T20:35:58.298Z"
         },
         {
           "id": "recLeyUD2GFMDv9QV",
@@ -22268,7 +22879,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.344Z"
+          "updatedAt": "2026-03-10T20:35:58.296Z"
         },
         {
           "id": "reclaiPSynyjLmCSN",
@@ -22332,7 +22943,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.348Z"
+          "updatedAt": "2026-03-10T20:35:58.298Z"
         },
         {
           "id": "recR5W5IQr3nbYj9r",
@@ -22365,7 +22976,9 @@
             "SW6186 Dried Thyme",
             "SW1472 Slate Tile",
             "SW0006 Toile Red",
-            "SW6990 CAVIAR"
+            "SW6425 RELENTLESS OLIVE",
+            "SW6215 ROCKY RIVER",
+            "SW9006 ROJO DUST"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -22405,7 +23018,71 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.345Z"
+          "updatedAt": "2026-03-10T20:35:58.297Z"
+        },
+        {
+          "id": "recuQ0SdYilLQoIud",
+          "number": "01-05-113",
+          "name": "Sewing Daze",
+          "thumbnail": "./data/collections/farmhouse/thumbnails/sewing-daze.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/farmhouse/layers/sewing-daze_24x24_layer-1.jpg",
+              "proofPath": "./data/collections/farmhouse/proof-layers/sewing-daze_24x24_layer-1.jpg"
+            }
+          ],
+          "layerLabels": [
+            "24x24"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SC0001 COTTAGE LINEN",
+            "SW7069 IRON ORE"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "dakota-plaid.jpg",
+              "path": "./data/collections/coordinates/thumbnails/dakota-plaid.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/dakota-plaid_thick_layer-1.jpg",
+                "./data/collections/coordinates/layers/dakota-plaid_thin_layer-2.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "gingham-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/gingham-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/gingham-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "utica-ticking.jpg",
+              "path": "./data/collections/coordinates/thumbnails/utica-ticking.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/utica-ticking_stripes_layer-1.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T20:35:58.298Z"
         },
         {
           "id": "recbAMMDmL6NgxZw2",
@@ -22438,7 +23115,9 @@
             "SW6186 Dried Thyme",
             "SW1472 Slate Tile",
             "SW0006 Toile Red",
-            "SW6990 CAVIAR"
+            "SW6425 RELENTLESS OLIVE",
+            "SW6215 ROCKY RIVER",
+            "SW9006 ROJO DUST"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -22478,13 +23157,13 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.345Z"
+          "updatedAt": "2026-03-10T20:35:58.297Z"
         },
         {
           "id": "recTmdRnyNyHIHS9o",
           "number": "01-05-115",
-          "name": "Sewing Daze Version 2",
-          "thumbnail": "./data/collections/farmhouse/thumbnails/sewing-daze-version-2.jpg",
+          "name": "Sewing Daze Nature Labels",
+          "thumbnail": "./data/collections/farmhouse/thumbnails/sewing-daze-nature-labels.jpg",
           "size": [
             24,
             24
@@ -22492,8 +23171,8 @@
           "repeat": "yes",
           "layers": [
             {
-              "path": "./data/collections/farmhouse/layers/sewing-daze-version-2_advertising-cards-v2_layer-1.jpg",
-              "proofPath": "./data/collections/farmhouse/proof-layers/sewing-daze-version-2_advertising-cards-v2_layer-1.jpg"
+              "path": "./data/collections/farmhouse/layers/sewing-daze-nature-labels_advertising-cards-v2_layer-1.jpg",
+              "proofPath": "./data/collections/farmhouse/proof-layers/sewing-daze-nature-labels_advertising-cards-v2_layer-1.jpg"
             }
           ],
           "layerLabels": [
@@ -22511,7 +23190,9 @@
             "SW6186 Dried Thyme",
             "SW1472 Slate Tile",
             "SW0006 Toile Red",
-            "SW6990 CAVIAR"
+            "SW6425 RELENTLESS OLIVE",
+            "SW6215 ROCKY RIVER",
+            "SW9006 ROJO DUST"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -22551,7 +23232,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.345Z"
+          "updatedAt": "2026-03-10T20:35:58.297Z"
         },
         {
           "id": "rectFwjI7LVWeB3yY",
@@ -22584,7 +23265,9 @@
             "SW6186 Dried Thyme",
             "SW1472 Slate Tile",
             "SW0006 Toile Red",
-            "SW6990 CAVIAR"
+            "SW6425 RELENTLESS OLIVE",
+            "SW6215 ROCKY RIVER",
+            "SW9006 ROJO DUST"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -22624,7 +23307,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.349Z"
+          "updatedAt": "2026-03-10T20:35:58.298Z"
         },
         {
           "id": "recjGx99A996YEUsc",
@@ -22694,7 +23377,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.346Z"
+          "updatedAt": "2026-03-10T20:35:58.297Z"
         },
         {
           "id": "rec4wMpcLC9gDw4Eo",
@@ -22758,7 +23441,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.339Z"
+          "updatedAt": "2026-03-10T20:35:58.295Z"
         },
         {
           "id": "recu6C32Hfe5crZn8",
@@ -22822,7 +23505,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.349Z"
+          "updatedAt": "2026-03-10T20:35:58.298Z"
         },
         {
           "id": "recqp5UrKp7DIDUXq",
@@ -22886,7 +23569,71 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:51:58.348Z"
+          "updatedAt": "2026-03-10T20:35:58.298Z"
+        },
+        {
+          "id": "rec33QtHzjB6LyLzc",
+          "number": "01-05-127",
+          "name": "Farmhouse Gingham Lg Check",
+          "thumbnail": "./data/collections/farmhouse/thumbnails/farmhouse-gingham-lg-check.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/farmhouse/layers/farmhouse-gingham-lg-check_check_layer-1.jpg",
+              "proofPath": "./data/collections/farmhouse/proof-layers/farmhouse-gingham-lg-check_check_layer-1.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Check"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6035 ECRU",
+            "SW7069 IRON ORE"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "dakota-plaid.jpg",
+              "path": "./data/collections/coordinates/thumbnails/dakota-plaid.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/dakota-plaid_thick_layer-1.jpg",
+                "./data/collections/coordinates/layers/dakota-plaid_thin_layer-2.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "gingham-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/gingham-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/gingham-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "utica-ticking.jpg",
+              "path": "./data/collections/coordinates/thumbnails/utica-ticking.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/utica-ticking_stripes_layer-1.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T20:35:58.288Z"
         },
         {
           "id": "recbfk88iWNARZzt3",
@@ -22956,7 +23703,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T15:48:10.422Z"
+          "updatedAt": "2026-03-10T20:35:58.297Z"
         },
         {
           "id": "recrkB5otqHW132dF",
@@ -23020,7 +23767,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T15:48:10.423Z"
+          "updatedAt": "2026-03-10T20:35:58.298Z"
         },
         {
           "id": "recGyM1zcb0IUgmQw",
@@ -23090,10 +23837,79 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T15:48:10.421Z"
+          "updatedAt": "2026-03-10T20:35:58.296Z"
+        },
+        {
+          "id": "recFhZzOV2zLSO7DE",
+          "number": "01-05-131",
+          "name": "Petals",
+          "thumbnail": "./data/collections/farmhouse/thumbnails/petals.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/farmhouse/layers/petals_dots_layer-1.jpg",
+              "proofPath": "./data/collections/farmhouse/proof-layers/petals_dots_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/farmhouse/layers/petals_petals_layer-2.jpg",
+              "proofPath": "./data/collections/farmhouse/proof-layers/petals_petals_layer-2.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Dots",
+            "Petals"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SC0001 COTTAGE LINEN",
+            "SW6186 DDRIED THYME",
+            "SW7699 RUSTIC CITY"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "dakota-plaid.jpg",
+              "path": "./data/collections/coordinates/thumbnails/dakota-plaid.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/dakota-plaid_thick_layer-1.jpg",
+                "./data/collections/coordinates/layers/dakota-plaid_thin_layer-2.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "gingham-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/gingham-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/gingham-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "utica-ticking.jpg",
+              "path": "./data/collections/coordinates/thumbnails/utica-ticking.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/utica-ticking_stripes_layer-1.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T20:35:58.296Z"
         }
-      ],
-      "mockupId": "cottage-door"
+      ]
     },
     {
       "name": "farmhouse-clo",
@@ -24604,6 +25420,7 @@
     {
       "name": "folksie",
       "tableName": "18 - FOLKSIE",
+      "collectionNumber": 18,
       "collection_thumbnail": "./data/collections/folksie/folksie-thumb.jpg",
       "curatedColors": [
         "SC0002 COTTAGE COAL",
@@ -24669,10 +25486,8 @@
           ]
         }
       ],
-      "mockup": "./data/mockups/wallpaper-mockup-39-W60H45.png",
-      "mockupShadow": "./data/mockups/wallpaper-mockup-39-shadow-W60H45.jpg",
-      "mockupWidthInches": 60,
-      "mockupHeightInches": 45,
+      "colorFlex": true,
+      "mockupId": "modern-hall-lamp",
       "patterns": [
         {
           "id": "recchJjB0eUEf4A3o",
@@ -24776,7 +25591,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.037Z"
+          "updatedAt": "2026-03-07T18:34:40.166Z"
         },
         {
           "id": "recJfXb0WbfY9pObr",
@@ -24868,7 +25683,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.033Z"
+          "updatedAt": "2026-03-07T18:34:40.161Z"
         },
         {
           "id": "rec83sDT9T5rp7aby",
@@ -24990,7 +25805,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.031Z"
+          "updatedAt": "2026-03-07T18:34:40.160Z"
         },
         {
           "id": "rec0xo58GppLqNCSf",
@@ -25070,7 +25885,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.027Z"
+          "updatedAt": "2026-03-07T18:34:40.158Z"
         },
         {
           "id": "recqSdagDeqlKMmEn",
@@ -25144,7 +25959,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.039Z"
+          "updatedAt": "2026-03-07T18:34:40.167Z"
         },
         {
           "id": "recYzcSxCvsotlmYh",
@@ -25266,7 +26081,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.037Z"
+          "updatedAt": "2026-03-07T18:34:40.166Z"
         },
         {
           "id": "recXFqmGGeJvcUSJ6",
@@ -25358,7 +26173,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.036Z"
+          "updatedAt": "2026-03-07T18:34:40.165Z"
         },
         {
           "id": "recqVcDke2qYLyESD",
@@ -25432,7 +26247,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.039Z"
+          "updatedAt": "2026-03-07T18:34:40.167Z"
         },
         {
           "id": "recvFozYpS3kWQHzJ",
@@ -25536,7 +26351,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.041Z"
+          "updatedAt": "2026-03-07T18:34:40.174Z"
         },
         {
           "id": "rec8uxiBoTuuF3xDM",
@@ -25639,7 +26454,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.032Z"
+          "updatedAt": "2026-03-07T18:34:40.160Z"
         },
         {
           "id": "recJCTOK4OoOARDr7",
@@ -25731,7 +26546,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.032Z"
+          "updatedAt": "2026-03-07T18:34:40.161Z"
         },
         {
           "id": "rect3ktkW9bJytbCc",
@@ -25823,7 +26638,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.039Z"
+          "updatedAt": "2026-03-07T18:34:40.167Z"
         },
         {
           "id": "rec4zj2P8WdycPe2W",
@@ -25871,11 +26686,12 @@
           ],
           "tilingType": "straight",
           "designer_colors": [
-            "SC0001 COTTAGE LINEN",
-            "SW6306 CORDIAL",
-            "SW0034 ROYCROFT ROSE",
-            "SW6424 TANSY GREEN",
             "SW6395 ALCHEMY",
+            "SW6811 HONORABLE BLUE",
+            "SW9065 PERFECT PERIWINKLE",
+            "SW7726 LEMON VERBENA",
+            "SW6394 SEQUIN",
+            "SW6811 HONORABLE BLUE",
             "SW7069 IRON ORE"
           ],
           "colorFlex": true,
@@ -25926,7 +26742,167 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.030Z"
+          "updatedAt": "2026-03-07T18:34:40.159Z"
+        },
+        {
+          "id": "recxZYvKa3ev6vm0Z",
+          "number": "01-18-115",
+          "name": "Potted Tree",
+          "thumbnail": "./data/collections/folksie/thumbnails/potted-tree.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/folksie/layers/potted-tree_pots_layer-1.jpg",
+              "proofPath": "./data/collections/folksie/proof-layers/potted-tree_pots_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/folksie/layers/potted-tree_diagonal_layer-2.jpg",
+              "proofPath": "./data/collections/folksie/proof-layers/potted-tree_diagonal_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/folksie/layers/potted-tree_trees_layer-3.jpg",
+              "proofPath": "./data/collections/folksie/proof-layers/potted-tree_trees_layer-3.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Pots",
+            "Diagonal",
+            "Trees"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6990 CAVIAR",
+            "SW6371 VANILLIN",
+            "SW0043 PERISTYLE BRASS",
+            "SW6356 COPPER MOUNTAIN"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "dottie.jpg",
+              "path": "./data/collections/coordinates/thumbnails/dottie.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/dottie_dots_layer-1.jpg",
+                "./data/collections/coordinates/layers/dottie_dots_layer-2.jpg",
+                "./data/collections/coordinates/layers/dottie_dots_layer-3.jpg",
+                "./data/collections/coordinates/layers/dottie_dots_layer-4.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "gingham-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/gingham-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/gingham-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "garden-path.jpg",
+              "path": "./data/collections/coordinates/thumbnails/garden-path.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/garden-path_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "xena-tweed.jpg",
+              "path": "./data/collections/coordinates/thumbnails/xena-tweed.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/xena-tweed_xenatweed_layer-1.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-07T18:34:40.174Z"
+        },
+        {
+          "id": "reczYb6bi8k25SEJC",
+          "number": "01-18-116",
+          "name": "Polkaplaid",
+          "thumbnail": "./data/collections/folksie/thumbnails/polkaplaid.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/folksie/layers/polkaplaid_design_layer-1.jpg",
+              "proofPath": "./data/collections/folksie/proof-layers/polkaplaid_design_layer-1.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Design"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6990 CAVIAR",
+            "SW0043 PERISTYLE BRASS"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "dottie.jpg",
+              "path": "./data/collections/coordinates/thumbnails/dottie.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/dottie_dots_layer-1.jpg",
+                "./data/collections/coordinates/layers/dottie_dots_layer-2.jpg",
+                "./data/collections/coordinates/layers/dottie_dots_layer-3.jpg",
+                "./data/collections/coordinates/layers/dottie_dots_layer-4.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "gingham-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/gingham-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/gingham-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "garden-path.jpg",
+              "path": "./data/collections/coordinates/thumbnails/garden-path.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/garden-path_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "xena-tweed.jpg",
+              "path": "./data/collections/coordinates/thumbnails/xena-tweed.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/xena-tweed_xenatweed_layer-1.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-07T18:34:40.174Z"
         },
         {
           "id": "recNl3gTaL2PtSoQ5",
@@ -26042,7 +27018,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.035Z"
+          "updatedAt": "2026-03-07T18:34:40.165Z"
         },
         {
           "id": "recdjfVVpI9FAXNft",
@@ -26146,7 +27122,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.038Z"
+          "updatedAt": "2026-03-07T18:34:40.167Z"
         },
         {
           "id": "rec9DaYX527Zy0v8V",
@@ -26174,8 +27150,8 @@
           ],
           "tilingType": "straight",
           "designer_colors": [
-            "SW0053 PORCELAIN",
             "SW7069 IRON ORE",
+            "SW6204 SEA SALT",
             "SW3174 LENNOX HILL"
           ],
           "colorFlex": true,
@@ -26226,7 +27202,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.032Z"
+          "updatedAt": "2026-03-07T18:34:40.160Z"
         },
         {
           "id": "recN07vrKKqvRlor2",
@@ -26269,12 +27245,12 @@
           ],
           "tilingType": "straight",
           "designer_colors": [
-            "SC0001 COTTAGE LINEN",
             "SW7069 IRON ORE",
-            "SW7069 IRON ORE",
-            "SW3174 LENNOX HILL TAN",
-            "SW3174 LENNOX HILL TAN",
-            "SW3174 LENNOX HILL TAN"
+            "SW6396 DIFFERENT GOLD",
+            "SW6394 SEQUIN",
+            "SW6396 DIFFERENT GOLD",
+            "SW6394 SEQUIN",
+            "SW6356 COPPER MOUNTAIN"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -26324,7 +27300,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-01-19T19:59:55.033Z"
+          "updatedAt": "2026-03-07T18:34:40.161Z"
         }
       ]
     },
@@ -28106,9 +29082,12 @@
     {
       "name": "galleria",
       "tableName": "10 - GALLERIA",
+      "collectionNumber": 10,
       "collection_thumbnail": "./data/collections/galleria/galleria-thumb.jpg",
       "curatedColors": [],
       "coordinates": null,
+      "colorFlex": false,
+      "mockupId": "table-bisque-lamp",
       "patterns": [
         {
           "id": "recZbYEIKIp1QcNHP",
@@ -28128,7 +29107,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:59:11.524Z"
+          "updatedAt": "2026-03-07T18:34:37.656Z"
         },
         {
           "id": "recfX4ImTSrml7eX8",
@@ -28148,7 +29127,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:59:11.525Z"
+          "updatedAt": "2026-03-07T18:34:37.656Z"
         },
         {
           "id": "recfsCHJ26yqH3AZM",
@@ -28168,7 +29147,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:59:11.525Z"
+          "updatedAt": "2026-03-07T18:34:37.656Z"
         },
         {
           "id": "rectxL0lFo1uE43OI",
@@ -28188,7 +29167,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:59:11.525Z"
+          "updatedAt": "2026-03-07T18:34:37.656Z"
         },
         {
           "id": "rec724duhEbTLYX7q",
@@ -28208,7 +29187,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:59:11.522Z"
+          "updatedAt": "2026-03-07T18:34:37.656Z"
         },
         {
           "id": "recazzjHko2i5lmlH",
@@ -28228,14 +29207,14 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-25T00:59:11.525Z"
+          "updatedAt": "2026-03-07T18:34:37.656Z"
         }
-      ],
-      "mockupId": "english-countryside-bedroom"
+      ]
     },
     {
       "name": "geometry",
       "tableName": "14 - GEOMETRY",
+      "collectionNumber": 14,
       "collection_thumbnail": "./data/collections/geometry/geometry-thumb.jpg",
       "curatedColors": [
         "SC0002 COTTAGE COAL",
@@ -28261,6 +29240,8 @@
           ]
         }
       ],
+      "colorFlex": true,
+      "mockupId": "blue-desk",
       "patterns": [
         {
           "id": "recqh6YRjVJ5oCBD1",
@@ -28323,7 +29304,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.889Z"
+          "updatedAt": "2026-03-07T18:34:38.780Z"
         },
         {
           "id": "recvMxTtEBECYMXb5",
@@ -28404,7 +29385,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.890Z"
+          "updatedAt": "2026-03-07T18:34:38.781Z"
         },
         {
           "id": "recuIpqAmZtEDZJDK",
@@ -28473,7 +29454,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.889Z"
+          "updatedAt": "2026-03-07T18:34:38.781Z"
         },
         {
           "id": "recEunqa1Gqt55V9W",
@@ -28536,7 +29517,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.888Z"
+          "updatedAt": "2026-03-07T18:34:38.775Z"
         },
         {
           "id": "recjZYWJ5JtrlPAYK",
@@ -28587,7 +29568,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.889Z"
+          "updatedAt": "2026-03-07T18:34:38.777Z"
         },
         {
           "id": "recJ4OKocoOymRXRW",
@@ -28638,7 +29619,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.888Z"
+          "updatedAt": "2026-03-07T18:34:38.776Z"
         },
         {
           "id": "recdtb8dzpEx3XGus",
@@ -28707,7 +29688,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.889Z"
+          "updatedAt": "2026-03-07T18:34:38.777Z"
         },
         {
           "id": "recdyOlzYClWJNTLW",
@@ -28746,7 +29727,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.889Z"
+          "updatedAt": "2026-03-07T18:34:38.777Z"
         },
         {
           "id": "rec5Kmn5VOXf5KCIh",
@@ -28791,7 +29772,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.885Z"
+          "updatedAt": "2026-03-07T18:34:38.775Z"
         },
         {
           "id": "recEqEMY3fm3YZlF6",
@@ -28830,7 +29811,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.887Z"
+          "updatedAt": "2026-03-07T18:34:38.775Z"
         },
         {
           "id": "recvWGJncjp493HqM",
@@ -28869,7 +29850,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.890Z"
+          "updatedAt": "2026-03-07T18:34:38.782Z"
         },
         {
           "id": "recYacBdreFDo5sVh",
@@ -28920,7 +29901,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.888Z"
+          "updatedAt": "2026-03-07T18:34:38.776Z"
         },
         {
           "id": "rec9EOlZ4KvetpgVr",
@@ -28959,10 +29940,9 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-07T16:43:24.887Z"
+          "updatedAt": "2026-03-07T18:34:38.775Z"
         }
-      ],
-      "mockupId": "english-countryside-bedroom-alt"
+      ]
     },
     {
       "name": "geometry-clo",
@@ -30293,6 +31273,7 @@
     {
       "name": "ikats",
       "tableName": "22 - IKATS",
+      "collectionNumber": 22,
       "collection_thumbnail": "./data/collections/ikats/ikats-thumb.jpg",
       "curatedColors": [
         "SC0001 COTTAGE LINEN",
@@ -30311,10 +31292,8 @@
         "SW0032 NEEDLEPOINT NAVY"
       ],
       "coordinates": null,
-      "mockup": "./data/mockups/Dresser-W100H80.png",
-      "mockupShadow": "./data/mockups/Dresser-shadows-W100H80.jpg",
-      "mockupWidthInches": 100,
-      "mockupHeightInches": 80,
+      "colorFlex": true,
+      "mockupId": "Dresser-W100H80",
       "patterns": [
         {
           "id": "recqFqkAnxwHDK2uF",
@@ -30362,7 +31341,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-19T01:00:38.772Z"
+          "updatedAt": "2026-03-07T18:34:40.732Z"
         },
         {
           "id": "recjVSHaxgAnd7osS",
@@ -30422,7 +31401,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-19T01:00:38.770Z"
+          "updatedAt": "2026-03-07T18:34:40.732Z"
         },
         {
           "id": "rec3WHvAMKcA9nPKk",
@@ -30458,7 +31437,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-19T01:00:38.757Z"
+          "updatedAt": "2026-03-07T18:34:40.729Z"
         },
         {
           "id": "recR2R0bxZmeCemV2",
@@ -30517,7 +31496,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-19T01:00:38.765Z"
+          "updatedAt": "2026-03-07T18:34:40.731Z"
         },
         {
           "id": "recWhEGx3Kj70geaH",
@@ -30577,7 +31556,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-19T01:00:38.767Z"
+          "updatedAt": "2026-03-07T18:34:40.731Z"
         },
         {
           "id": "recFVuBUz6yCI4cVP",
@@ -30619,7 +31598,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-19T01:00:38.763Z"
+          "updatedAt": "2026-03-07T18:34:40.730Z"
         },
         {
           "id": "recYZT6nDbTVyEhW1",
@@ -30678,7 +31657,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-19T01:00:38.769Z"
+          "updatedAt": "2026-03-07T18:34:40.732Z"
         },
         {
           "id": "recAser2P0t8rGEpi",
@@ -30720,7 +31699,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-19T01:00:38.758Z"
+          "updatedAt": "2026-03-07T18:34:40.730Z"
         }
       ]
     },
@@ -31676,6 +32655,7 @@
     {
       "name": "new-orleans",
       "tableName": "17 - NEW ORLEANS",
+      "collectionNumber": 17,
       "collection_thumbnail": "./data/collections/new-orleans/new-orleans-thumb.jpg",
       "curatedColors": [
         "SC001 COTTAGE COAL",
@@ -31731,6 +32711,8 @@
           ]
         }
       ],
+      "colorFlex": true,
+      "mockupId": "cupboard",
       "patterns": [
         {
           "id": "recCwpIUh1JIIcSKO",
@@ -31799,7 +32781,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.390Z"
+          "updatedAt": "2026-03-07T18:34:39.807Z"
         },
         {
           "id": "rec5rx7EKmWEH5hB6",
@@ -31874,7 +32856,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.388Z"
+          "updatedAt": "2026-03-07T18:34:39.805Z"
         },
         {
           "id": "reconanxV7tP0pyEu",
@@ -31943,7 +32925,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.394Z"
+          "updatedAt": "2026-03-07T18:34:39.811Z"
         },
         {
           "id": "recCM05XU8xI1aoOQ",
@@ -32030,7 +33012,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.390Z"
+          "updatedAt": "2026-03-07T18:34:39.806Z"
         },
         {
           "id": "recDGsZ0SYv3vN8Uf",
@@ -32093,7 +33075,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.390Z"
+          "updatedAt": "2026-03-07T18:34:39.807Z"
         },
         {
           "id": "recq5noQoTgxEr7tG",
@@ -32162,7 +33144,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.395Z"
+          "updatedAt": "2026-03-07T18:34:39.811Z"
         },
         {
           "id": "rec55D2H8JGeflZcp",
@@ -32231,7 +33213,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.381Z"
+          "updatedAt": "2026-03-07T18:34:39.805Z"
         },
         {
           "id": "recqj0l7ucB4tQoQn",
@@ -32300,7 +33282,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.395Z"
+          "updatedAt": "2026-03-07T18:34:39.812Z"
         },
         {
           "id": "recAmRxxuo5zSp85R",
@@ -32369,7 +33351,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.389Z"
+          "updatedAt": "2026-03-07T18:34:39.806Z"
         },
         {
           "id": "rece8GCFEIS8ckeWd",
@@ -32432,7 +33414,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.393Z"
+          "updatedAt": "2026-03-07T18:34:39.811Z"
         },
         {
           "id": "rec8SfZnO1O0KdRGN",
@@ -32501,7 +33483,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.389Z"
+          "updatedAt": "2026-03-07T18:34:39.805Z"
         },
         {
           "id": "rec9Kk4TDNiGZS4DF",
@@ -32570,7 +33552,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.389Z"
+          "updatedAt": "2026-03-07T18:34:39.805Z"
         },
         {
           "id": "recmIfaGAmj67B0pt",
@@ -32645,7 +33627,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.394Z"
+          "updatedAt": "2026-03-07T18:34:39.811Z"
         },
         {
           "id": "recaNNEKo8d3ejsfE",
@@ -32714,7 +33696,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.393Z"
+          "updatedAt": "2026-03-07T18:34:39.811Z"
         },
         {
           "id": "rec7aSoFkXX5b18gG",
@@ -32777,7 +33759,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.388Z"
+          "updatedAt": "2026-03-07T18:34:39.805Z"
         },
         {
           "id": "recEXK3h1ynpPanIg",
@@ -32870,10 +33852,84 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-10-24T23:26:06.391Z"
+          "updatedAt": "2026-03-07T18:34:39.808Z"
+        },
+        {
+          "id": "recTT9tmfcTBF9p2i",
+          "number": "01-17-119",
+          "name": "St Bernard",
+          "thumbnail": "./data/collections/new-orleans/thumbnails/st-bernard.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/new-orleans/layers/st-bernard_circles_layer-1.jpg",
+              "proofPath": "./data/collections/new-orleans/proof-layers/st-bernard_circles_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/new-orleans/layers/st-bernard_swags_layer-2.jpg",
+              "proofPath": "./data/collections/new-orleans/proof-layers/st-bernard_swags_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/new-orleans/layers/st-bernard_small-designs_layer-3.jpg",
+              "proofPath": "./data/collections/new-orleans/proof-layers/st-bernard_small-designs_layer-3.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Circles",
+            "Swags",
+            "Small Designs"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6313 KIRSH RED",
+            "SW0050 CLASSIC LIGHT BUFF",
+            "SW6310 LOTUS FLOWER",
+            "SW9003 RITA'S ROUGE"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "ashbourne.jpg",
+              "path": "./data/collections/coordinates/thumbnails/ashbourne.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/ashbourne_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "gingham-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/gingham-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/gingham-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "utica-ticking.jpg",
+              "path": "./data/collections/coordinates/thumbnails/utica-ticking.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/utica-ticking_stripes_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "northwich.jpg",
+              "path": "./data/collections/coordinates/thumbnails/northwich.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/northwich_pattern_layer-1.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-07T18:34:39.811Z"
         }
-      ],
-      "mockupId": "cupboard"
+      ]
     },
     {
       "name": "new-orleans-clo",
@@ -34238,10 +35294,7 @@
       "curatedColors": [],
       "coordinates": null,
       "colorFlex": false,
-      "mockup": "./data/mockups/bath-tub-W150H112.png.png",
-      "mockupShadow": "./data/mockups/bath-tub-shadow-W150H112.jpg.jpg",
-      "mockupWidthInches": 150,
-      "mockupHeightInches": 112,
+      "mockupId": "farmhouse-bathroom",
       "patterns": [
         {
           "id": "recH1Xk90LaGcVIZ4",
@@ -34261,7 +35314,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T23:28:51.336Z"
+          "updatedAt": "2026-03-07T18:34:38.245Z"
         },
         {
           "id": "recHQnyf9XoDnO6pz",
@@ -34281,7 +35334,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T23:28:51.336Z"
+          "updatedAt": "2026-03-07T18:34:38.245Z"
         },
         {
           "id": "recRQwNxoEAJKlN7Y",
@@ -34301,7 +35354,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T23:28:51.336Z"
+          "updatedAt": "2026-03-07T18:34:38.246Z"
         },
         {
           "id": "recdZT8ltQ96Hb591",
@@ -34321,7 +35374,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T23:28:51.336Z"
+          "updatedAt": "2026-03-07T18:34:38.246Z"
         },
         {
           "id": "rec030IxccJKTtIQN",
@@ -34341,7 +35394,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T23:28:51.329Z"
+          "updatedAt": "2026-03-07T18:34:38.245Z"
         },
         {
           "id": "recJL4I4whsZxQoGI",
@@ -34361,7 +35414,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T23:28:51.336Z"
+          "updatedAt": "2026-03-07T18:34:38.245Z"
         },
         {
           "id": "recuBswfO4JrZQg22",
@@ -34381,273 +35434,14 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T23:28:51.336Z"
+          "updatedAt": "2026-03-07T18:34:38.246Z"
         }
       ]
     },
     {
-      "name": "pages",
-      "tableName": "9 - PAGES",
-      "collection_thumbnail": "./data/collections/pages/pages-thumb.jpg",
-      "curatedColors": [
-        "SW7069 Iron Ore",
-        "SW7067 Cityscape",
-        "SW3441 Foothills",
-        "SW6135 Ecru",
-        "SW7699 Rustic City",
-        "SW6206 Oyster Bay",
-        "SW6186 Dried Thyme",
-        "SW1472 Slate Tile",
-        "SW0006 Toile Red"
-      ],
-      "coordinates": null,
-      "patterns": [
-        {
-          "id": "rec2oOMSqDYOM3I6p",
-          "number": "01-09-101",
-          "name": "Alice",
-          "thumbnail": "./data/collections/pages/thumbnails/alice.jpg",
-          "size": [
-            24,
-            24
-          ],
-          "repeat": "yes",
-          "layers": [],
-          "layerLabels": [],
-          "tilingType": "half-drop",
-          "designer_colors": [
-            "SW7069 Iron Ore",
-            "SW7067 Cityscape",
-            "SW3441 Foothills",
-            "SW6135 Ecru",
-            "SW7699 Rustic City",
-            "SW6206 Oyster Bay",
-            "SW6186 Dried Thyme",
-            "SW1472 Slate Tile",
-            "SW0006 Toile Red"
-          ],
-          "colorFlex": false,
-          "coordinates": null,
-          "baseComposite": null,
-          "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:38.859Z"
-        },
-        {
-          "id": "rec6dplBlila6lxDT",
-          "number": "01-09-102",
-          "name": "Alice Framed",
-          "thumbnail": "./data/collections/pages/thumbnails/alice-framed.jpg",
-          "size": [
-            24,
-            24
-          ],
-          "repeat": "yes",
-          "layers": [],
-          "layerLabels": [],
-          "tilingType": "half-drop",
-          "designer_colors": [
-            "SW7069 Iron Ore",
-            "SW7067 Cityscape",
-            "SW3441 Foothills",
-            "SW6135 Ecru",
-            "SW7699 Rustic City",
-            "SW6206 Oyster Bay",
-            "SW6186 Dried Thyme",
-            "SW1472 Slate Tile",
-            "SW0006 Toile Red"
-          ],
-          "colorFlex": false,
-          "coordinates": null,
-          "baseComposite": null,
-          "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:38.861Z"
-        },
-        {
-          "id": "rece3xqzrebErvMmi",
-          "number": "01-09-103",
-          "name": "Antique Cards",
-          "thumbnail": "./data/collections/pages/thumbnails/antique-cards.jpg",
-          "size": [
-            24,
-            24
-          ],
-          "repeat": "yes",
-          "layers": [],
-          "layerLabels": [],
-          "tilingType": "half-drop",
-          "designer_colors": [
-            "SW7069 Iron Ore",
-            "SW7067 Cityscape",
-            "SW3441 Foothills",
-            "SW6135 Ecru",
-            "SW7699 Rustic City",
-            "SW6206 Oyster Bay",
-            "SW6186 Dried Thyme",
-            "SW1472 Slate Tile",
-            "SW0006 Toile Red"
-          ],
-          "colorFlex": false,
-          "coordinates": null,
-          "baseComposite": null,
-          "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:38.861Z"
-        },
-        {
-          "id": "recay2NByc0V7ky0o",
-          "number": "01-09-104",
-          "name": "Antiques Cards Color Flex",
-          "thumbnail": "./data/collections/pages/thumbnails/antiques-cards-color-flex.jpg",
-          "size": [
-            24,
-            24
-          ],
-          "repeat": "yes",
-          "layers": [],
-          "layerLabels": [],
-          "tilingType": "half-drop",
-          "designer_colors": [
-            "SW7069 Iron Ore",
-            "SW7067 Cityscape",
-            "SW3441 Foothills",
-            "SW6135 Ecru",
-            "SW7699 Rustic City",
-            "SW6206 Oyster Bay",
-            "SW6186 Dried Thyme",
-            "SW1472 Slate Tile",
-            "SW0006 Toile Red"
-          ],
-          "colorFlex": false,
-          "coordinates": null,
-          "baseComposite": null,
-          "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:38.861Z"
-        },
-        {
-          "id": "recyY6vFzl8QilZ8W",
-          "number": "01-09-105",
-          "name": "De Materia Medica",
-          "thumbnail": "./data/collections/pages/thumbnails/de-materia-medica.jpg",
-          "size": [
-            24,
-            24
-          ],
-          "repeat": "yes",
-          "layers": [],
-          "layerLabels": [],
-          "tilingType": "half-drop",
-          "designer_colors": [
-            "SW7069 Iron Ore",
-            "SW7067 Cityscape",
-            "SW3441 Foothills",
-            "SW6135 Ecru",
-            "SW7699 Rustic City",
-            "SW6206 Oyster Bay",
-            "SW6186 Dried Thyme",
-            "SW1472 Slate Tile",
-            "SW0006 Toile Red"
-          ],
-          "colorFlex": false,
-          "coordinates": null,
-          "baseComposite": null,
-          "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:38.861Z"
-        },
-        {
-          "id": "recR7334J6hCD1oa1",
-          "number": "01-09-107",
-          "name": "Piere",
-          "thumbnail": "./data/collections/pages/thumbnails/piere.jpg",
-          "size": [
-            24,
-            24
-          ],
-          "repeat": "yes",
-          "layers": [],
-          "layerLabels": [],
-          "tilingType": "half-drop",
-          "designer_colors": [
-            "SW7069 Iron Ore",
-            "SW7067 Cityscape",
-            "SW3441 Foothills",
-            "SW6135 Ecru",
-            "SW7699 Rustic City",
-            "SW6206 Oyster Bay",
-            "SW6186 Dried Thyme",
-            "SW1472 Slate Tile",
-            "SW0006 Toile Red"
-          ],
-          "colorFlex": false,
-          "coordinates": null,
-          "baseComposite": null,
-          "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:38.861Z"
-        },
-        {
-          "id": "recHQCMQiuIKBEh9I",
-          "number": "01-09-108",
-          "name": "Sketches In Blue",
-          "thumbnail": "./data/collections/pages/thumbnails/sketches-in-blue.jpg",
-          "size": [
-            24,
-            24
-          ],
-          "repeat": "yes",
-          "layers": [],
-          "layerLabels": [],
-          "tilingType": "half-drop",
-          "designer_colors": [
-            "SW7069 Iron Ore",
-            "SW7067 Cityscape",
-            "SW3441 Foothills",
-            "SW6135 Ecru",
-            "SW7699 Rustic City",
-            "SW6206 Oyster Bay",
-            "SW6186 Dried Thyme",
-            "SW1472 Slate Tile",
-            "SW0006 Toile Red"
-          ],
-          "colorFlex": false,
-          "coordinates": null,
-          "baseComposite": null,
-          "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:38.861Z"
-        },
-        {
-          "id": "recMm94rLZcH9KbIo",
-          "number": "01-09-109",
-          "name": "Werner's Nomenclature Of Colours",
-          "thumbnail": "./data/collections/pages/thumbnails/werner's-nomenclature-of-colours.jpg",
-          "size": [
-            24,
-            24
-          ],
-          "repeat": "yes",
-          "layers": [],
-          "layerLabels": [],
-          "tilingType": "straight",
-          "designer_colors": [
-            "SW7069 Iron Ore",
-            "SW7067 Cityscape",
-            "SW3441 Foothills",
-            "SW6135 Ecru",
-            "SW7699 Rustic City",
-            "SW6206 Oyster Bay",
-            "SW6186 Dried Thyme",
-            "SW1472 Slate Tile",
-            "SW0006 Toile Red"
-          ],
-          "colorFlex": false,
-          "coordinates": null,
-          "baseComposite": null,
-          "tintWhite": false,
-          "updatedAt": "2025-10-25T00:58:38.861Z"
-        }
-      ],
-      "mockupId": "english-countryside-bedroom-alt"
-    },
-    {
       "name": "silk-road",
       "tableName": "15 - SILK ROAD",
+      "collectionNumber": 15,
       "collection_thumbnail": "./data/collections/silk-road/silk-road-thumb.jpg",
       "curatedColors": [
         "SC0001 COTTAGE LINEN",
@@ -34692,6 +35486,8 @@
           ]
         }
       ],
+      "colorFlex": true,
+      "mockupId": "dresser",
       "patterns": [
         {
           "id": "recTU3JNRvgge3hN2",
@@ -34764,7 +35560,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.916Z"
+          "updatedAt": "2026-03-07T18:34:39.055Z"
         },
         {
           "id": "rec5ANsdMU6KDfMEe",
@@ -34843,7 +35639,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.913Z"
+          "updatedAt": "2026-03-07T18:34:39.049Z"
         },
         {
           "id": "recOvopIwOFj7gYwQ",
@@ -34928,7 +35724,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.915Z"
+          "updatedAt": "2026-03-07T18:34:39.055Z"
         },
         {
           "id": "reclY31vAv37bx4Up",
@@ -35013,7 +35809,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.917Z"
+          "updatedAt": "2026-03-07T18:34:39.056Z"
         },
         {
           "id": "recKHvx3Rg04xNvZC",
@@ -35092,7 +35888,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.915Z"
+          "updatedAt": "2026-03-07T18:34:39.051Z"
         },
         {
           "id": "recWFRDi9NzKbbu9B",
@@ -35165,7 +35961,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.917Z"
+          "updatedAt": "2026-03-07T18:34:39.055Z"
         },
         {
           "id": "recZaTnZJ0NigBUkJ",
@@ -35226,7 +36022,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.917Z"
+          "updatedAt": "2026-03-07T18:34:39.056Z"
         },
         {
           "id": "rec2qp8Nd3pP2ltJJ",
@@ -35299,7 +36095,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.910Z"
+          "updatedAt": "2026-03-07T18:34:39.048Z"
         },
         {
           "id": "recMEcJIZmULcoNWy",
@@ -35378,7 +36174,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.915Z"
+          "updatedAt": "2026-03-07T18:34:39.051Z"
         },
         {
           "id": "rec7MU8auqjhEudX7",
@@ -35470,7 +36266,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.913Z"
+          "updatedAt": "2026-03-07T18:34:39.049Z"
         },
         {
           "id": "rec8GEdqHPs1ypvmK",
@@ -35549,7 +36345,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.914Z"
+          "updatedAt": "2026-03-07T18:34:39.050Z"
         },
         {
           "id": "recnui7FqLy37VzzV",
@@ -35622,7 +36418,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.918Z"
+          "updatedAt": "2026-03-07T18:34:39.056Z"
         },
         {
           "id": "recFnUSZRSgHNV4sv",
@@ -35701,7 +36497,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.914Z"
+          "updatedAt": "2026-03-07T18:34:39.051Z"
         },
         {
           "id": "recMUzU4qq1XJDLbd",
@@ -35769,10 +36565,9 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-11-09T13:36:45.915Z"
+          "updatedAt": "2026-03-07T18:34:39.052Z"
         }
-      ],
-      "mockupId": "dresser"
+      ]
     },
     {
       "name": "silk-road-clo",
@@ -37453,6 +38248,7 @@
     {
       "name": "traditions",
       "tableName": "4 - TRADITIONS",
+      "collectionNumber": 4,
       "collection_thumbnail": "./data/collections/traditions/traditions-thumb.jpg",
       "curatedColors": [
         "SC0001 COTTAGE LINEN",
@@ -37498,10 +38294,8 @@
           ]
         }
       ],
-      "mockup": "./data/mockups/library-W120H90.png",
-      "mockupShadow": null,
-      "mockupWidthInches": 120,
-      "mockupHeightInches": 90,
+      "colorFlex": true,
+      "mockupId": "slapples",
       "patterns": [
         {
           "id": "recYwdz6xCknngWkU",
@@ -37592,7 +38386,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.245Z"
+          "updatedAt": "2026-03-07T18:34:35.786Z"
         },
         {
           "id": "rec3c9JS3jAvKDGCT",
@@ -37659,7 +38453,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.240Z"
+          "updatedAt": "2026-03-07T18:34:35.784Z"
         },
         {
           "id": "reces9lCFgzQFvukg",
@@ -37750,13 +38544,13 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.246Z"
+          "updatedAt": "2026-03-07T18:34:35.786Z"
         },
         {
           "id": "recsccWYqhCA0VAEf",
           "number": "01-04-105",
-          "name": "Valencia",
-          "thumbnail": "./data/collections/traditions/thumbnails/valencia.jpg",
+          "name": "Folk Vine",
+          "thumbnail": "./data/collections/traditions/thumbnails/folk-vine.jpg",
           "size": [
             24,
             24
@@ -37764,8 +38558,8 @@
           "repeat": "yes",
           "layers": [
             {
-              "path": "./data/collections/traditions/layers/valencia_design_layer-1.jpg",
-              "proofPath": "./data/collections/traditions/proof-layers/valencia_design_layer-1.jpg"
+              "path": "./data/collections/traditions/layers/folk-vine_design_layer-1.jpg",
+              "proofPath": "./data/collections/traditions/proof-layers/folk-vine_design_layer-1.jpg"
             }
           ],
           "layerLabels": [
@@ -37805,7 +38599,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.247Z"
+          "updatedAt": "2026-03-07T18:34:35.787Z"
         },
         {
           "id": "recnSWdrA9hib3WAU",
@@ -37838,10 +38632,10 @@
           ],
           "tilingType": "straight",
           "designer_colors": [
-            "SW0050 CLASSIC LIGHT BUFF",
-            "SW6214 UNDERSEAS",
-            "SW6558 PLUMMY",
-            "SW9075 BERRY CREAM"
+            "SW7069 IRON ORE",
+            "SW7728 LEMON VERBENA",
+            "SW0043 PERISTYLE BRASS",
+            "sc0001 COTTAGE LINEN"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -37872,7 +38666,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.246Z"
+          "updatedAt": "2026-03-07T18:34:35.787Z"
         },
         {
           "id": "recIb9ORmZmOLLkDy",
@@ -37905,10 +38699,10 @@
           ],
           "tilingType": "straight",
           "designer_colors": [
-            "SW6186 DRIED THYME",
-            "SW6204 SEA SALT",
-            "SW6212 QUIETUDE",
-            "SW6135 ECRU"
+            "SW7728 LEMON VERBENA",
+            "SW6158 SAWDUST",
+            "SW0043 PERISTYLE BRASS",
+            "SW7698 STRAW HARVEST"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -37939,7 +38733,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.243Z"
+          "updatedAt": "2026-03-07T18:34:35.786Z"
         },
         {
           "id": "recpomYQN4kmgRInC",
@@ -38018,7 +38812,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.247Z"
+          "updatedAt": "2026-03-07T18:34:35.787Z"
         },
         {
           "id": "rechgWluFOKLTOQda",
@@ -38079,7 +38873,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.246Z"
+          "updatedAt": "2026-03-07T18:34:35.786Z"
         },
         {
           "id": "rec8Qr8T7Vxjk5tla",
@@ -38152,7 +38946,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.240Z"
+          "updatedAt": "2026-03-07T18:34:35.785Z"
         },
         {
           "id": "rec12BHzakz4qS6U5",
@@ -38231,7 +39025,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.239Z"
+          "updatedAt": "2026-03-07T18:34:35.783Z"
         },
         {
           "id": "recWvL6Qn5wXwTDkI",
@@ -38310,7 +39104,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.244Z"
+          "updatedAt": "2026-03-07T18:34:35.786Z"
         },
         {
           "id": "recYAEXBQs5fkGnL9",
@@ -38365,7 +39159,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.244Z"
+          "updatedAt": "2026-03-07T18:34:35.786Z"
         },
         {
           "id": "recGztAlKOCYOKscA",
@@ -38450,7 +39244,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.242Z"
+          "updatedAt": "2026-03-07T18:34:35.785Z"
         },
         {
           "id": "recHznpZ0K8XaiYd6",
@@ -38529,7 +39323,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.243Z"
+          "updatedAt": "2026-03-07T18:34:35.786Z"
         },
         {
           "id": "rec0xCpdPHgbSTGIS",
@@ -38584,62 +39378,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.238Z"
-        },
-        {
-          "id": "recclMavJF9SddSav",
-          "number": "01-04-117",
-          "name": "Frithwynn",
-          "thumbnail": "./data/collections/traditions/thumbnails/frithwynn.jpg",
-          "size": [
-            24,
-            24
-          ],
-          "repeat": "yes",
-          "layers": [
-            {
-              "path": "./data/collections/traditions/layers/frithwynn_design_layer-1.jpg",
-              "proofPath": "./data/collections/traditions/proof-layers/frithwynn_design_layer-1.jpg"
-            }
-          ],
-          "layerLabels": [
-            "Design"
-          ],
-          "tilingType": "straight",
-          "designer_colors": [
-            "SW003 REMBRANDT RUBY",
-            "SW7697 SAFARI"
-          ],
-          "colorFlex": true,
-          "coordinates": [
-            {
-              "collection": "coordinates",
-              "filename": "gingham-small.jpg",
-              "path": "./data/collections/coordinates/thumbnails/gingham-small.jpg",
-              "layerPaths": [
-                "./data/collections/coordinates/layers/gingham-small_pattern_layer-1.jpg"
-              ]
-            },
-            {
-              "collection": "coordinates",
-              "filename": "xena-tweed.jpg",
-              "path": "./data/collections/coordinates/thumbnails/xena-tweed.jpg",
-              "layerPaths": [
-                "./data/collections/coordinates/layers/xena-tweed_xenatweed_layer-1.jpg"
-              ]
-            },
-            {
-              "collection": "coordinates",
-              "filename": "trenton-ticking-small.jpg",
-              "path": "./data/collections/coordinates/thumbnails/trenton-ticking-small.jpg",
-              "layerPaths": [
-                "./data/collections/coordinates/layers/trenton-ticking-small_pattern_layer-1.jpg"
-              ]
-            }
-          ],
-          "baseComposite": null,
-          "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.245Z"
+          "updatedAt": "2026-03-07T18:34:35.783Z"
         },
         {
           "id": "recjOhBzjnTASgfyU",
@@ -38653,12 +39392,12 @@
           "repeat": "yes",
           "layers": [
             {
-              "path": "./data/collections/traditions/layers/osburg_24x24_layer-1.jpg",
-              "proofPath": "./data/collections/traditions/proof-layers/osburg_24x24_layer-1.jpg"
+              "path": "./data/collections/traditions/layers/osburg_pattern_layer-1.jpg",
+              "proofPath": "./data/collections/traditions/proof-layers/osburg_pattern_layer-1.jpg"
             }
           ],
           "layerLabels": [
-            "24x24"
+            "Pattern"
           ],
           "tilingType": "straight",
           "designer_colors": [
@@ -38694,7 +39433,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.246Z"
+          "updatedAt": "2026-03-07T18:34:35.786Z"
         },
         {
           "id": "rec2daNg1b3BwDyt0",
@@ -38767,7 +39506,91 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.240Z"
+          "updatedAt": "2026-03-07T18:34:35.784Z"
+        },
+        {
+          "id": "rec1Nzx0D2qS0KHT2",
+          "number": "01-04-120",
+          "name": "Jacobean Tapestry",
+          "thumbnail": "./data/collections/traditions/thumbnails/jacobean-tapestry.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/traditions/layers/jacobean-tapestry_layer-1_layer-1.jpg",
+              "proofPath": "./data/collections/traditions/proof-layers/jacobean-tapestry_layer-1_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/traditions/layers/jacobean-tapestry_layer-2_layer-2.jpg",
+              "proofPath": "./data/collections/traditions/proof-layers/jacobean-tapestry_layer-2_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/traditions/layers/jacobean-tapestry_layer-3_layer-3.jpg",
+              "proofPath": "./data/collections/traditions/proof-layers/jacobean-tapestry_layer-3_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/traditions/layers/jacobean-tapestry_layer-4_layer-4.jpg",
+              "proofPath": "./data/collections/traditions/proof-layers/jacobean-tapestry_layer-4_layer-4.jpg"
+            },
+            {
+              "path": "./data/collections/traditions/layers/jacobean-tapestry_layer-5_layer-5.jpg",
+              "proofPath": "./data/collections/traditions/proof-layers/jacobean-tapestry_layer-5_layer-5.jpg"
+            },
+            {
+              "path": "./data/collections/traditions/layers/jacobean-tapestry_layer-6_layer-6.jpg",
+              "proofPath": "./data/collections/traditions/proof-layers/jacobean-tapestry_layer-6_layer-6.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Layer 1",
+            "Layer 2",
+            "Layer 3",
+            "Layer 4",
+            "Layer 5",
+            "Layer 6"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW2802 ROOKWOOD RED",
+            "SW6425 RELENTLESS OLIVE",
+            "SW6396 DIFFERENT GOLD",
+            "SW6394 SEQUIN",
+            "SW6423 RYEGRASS",
+            "SW9133 JASPER STONE"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "gingham-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/gingham-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/gingham-small_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "xena-tweed.jpg",
+              "path": "./data/collections/coordinates/thumbnails/xena-tweed.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/xena-tweed_xenatweed_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "trenton-ticking-small.jpg",
+              "path": "./data/collections/coordinates/thumbnails/trenton-ticking-small.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/trenton-ticking-small_pattern_layer-1.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-07T18:34:35.784Z"
         },
         {
           "id": "recEmtBqtkru8lDAd",
@@ -38840,7 +39663,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2025-12-17T13:56:56.241Z"
+          "updatedAt": "2026-03-07T18:34:35.785Z"
         }
       ]
     },
@@ -73272,13 +74095,14 @@
         "SW6204 SEA SALT"
       ],
       "coordinates": null,
+      "colorFlex": true,
       "mockupId": "white-dresser",
       "patterns": [
         {
           "id": "recbixcgTV1vK1Ch2",
-          "number": "27 - 101",
-          "name": "Moral Copass",
-          "thumbnail": "./data/collections/hip-to-be-square/thumbnails/moral-copass.jpg",
+          "number": "27-101",
+          "name": "Moral Compass",
+          "thumbnail": "./data/collections/hip-to-be-square/thumbnails/moral-compass.jpg",
           "size": [
             24,
             24
@@ -73286,24 +74110,24 @@
           "repeat": "yes",
           "layers": [
             {
-              "path": "./data/collections/hip-to-be-square/layers/moral-copass_center_layer-1.jpg",
-              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-copass_center_layer-1.jpg"
+              "path": "./data/collections/hip-to-be-square/layers/moral-compass_center_layer-1.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-compass_center_layer-1.jpg"
             },
             {
-              "path": "./data/collections/hip-to-be-square/layers/moral-copass_scallop_layer-2.jpg",
-              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-copass_scallop_layer-2.jpg"
+              "path": "./data/collections/hip-to-be-square/layers/moral-compass_scallop_layer-2.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-compass_scallop_layer-2.jpg"
             },
             {
-              "path": "./data/collections/hip-to-be-square/layers/moral-copass_outter-flowers_layer-3.jpg",
-              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-copass_outter-flowers_layer-3.jpg"
+              "path": "./data/collections/hip-to-be-square/layers/moral-compass_outter-flowers_layer-3.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-compass_outter-flowers_layer-3.jpg"
             },
             {
-              "path": "./data/collections/hip-to-be-square/layers/moral-copass_inner-flowers_layer-4.jpg",
-              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-copass_inner-flowers_layer-4.jpg"
+              "path": "./data/collections/hip-to-be-square/layers/moral-compass_inner-flowers_layer-4.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-compass_inner-flowers_layer-4.jpg"
             },
             {
-              "path": "./data/collections/hip-to-be-square/layers/moral-copass_outline_layer-5.jpg",
-              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-copass_outline_layer-5.jpg"
+              "path": "./data/collections/hip-to-be-square/layers/moral-compass_outline_layer-5.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/moral-compass_outline_layer-5.jpg"
             }
           ],
           "layerLabels": [
@@ -73326,7 +74150,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:30:21.813Z"
+          "updatedAt": "2026-03-07T18:34:40.996Z"
         },
         {
           "id": "recJ3HqUHaCM8GWzb",
@@ -73380,7 +74204,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:30:21.812Z"
+          "updatedAt": "2026-03-07T18:34:40.996Z"
         },
         {
           "id": "rec3eVi8VGJn0xLnV",
@@ -73414,8 +74238,8 @@
               "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_inner-zone_layer-5.jpg"
             },
             {
-              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_inner-zone_layer-6.jpg",
-              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_inner-zone_layer-6.jpg"
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_star_layer-6.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_star_layer-6.jpg"
             },
             {
               "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_flowers_layer-7.jpg",
@@ -73440,7 +74264,7 @@
             "Design Background",
             "Leaves",
             "Inner Zone",
-            "Inner Zone",
+            "Star",
             "Flowers",
             "Tiny Flowers",
             "Centers",
@@ -73464,7 +74288,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:30:21.812Z"
+          "updatedAt": "2026-03-07T18:34:40.995Z"
         },
         {
           "id": "recrcOrW6kSuC150M",
@@ -73517,7 +74341,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:30:21.815Z"
+          "updatedAt": "2026-03-07T18:34:41.000Z"
         },
         {
           "id": "rec9y0o32XosTUhT7",
@@ -73547,7 +74371,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:30:21.812Z"
+          "updatedAt": "2026-03-07T18:34:40.995Z"
         },
         {
           "id": "recfOnXrjaHLQGuEE",
@@ -73589,7 +74413,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:30:21.813Z"
+          "updatedAt": "2026-03-07T18:34:40.996Z"
         },
         {
           "id": "rec2AkbVqW0ZwIKeZ",
@@ -73637,7 +74461,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:30:21.810Z"
+          "updatedAt": "2026-03-07T18:34:40.993Z"
         },
         {
           "id": "rec4uQdgEfyWZNeQ6",
@@ -73685,7 +74509,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:30:21.812Z"
+          "updatedAt": "2026-03-07T18:34:40.995Z"
         },
         {
           "id": "recgoXhArUbZTBKnC",
@@ -73715,7 +74539,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:30:21.814Z"
+          "updatedAt": "2026-03-07T18:34:40.996Z"
         }
       ]
     },
@@ -73724,22 +74548,10 @@
       "tableName": "16 - CABIN FEVER",
       "collectionNumber": 16,
       "collection_thumbnail": "./data/collections/cabin-fever/cabin-fever-thumb.jpg",
-      "curatedColors": [
-        "SC0001 COTTAGE LINEN",
-        "SW6371 VANILLIN",
-        "SW0053 PORCELAIN",
-        "SW6159 HIGH TEA",
-        "SW6426 BASQUE GREEN",
-        "SW6424 TANSY GREEN",
-        "SW6138 ARTIFACT",
-        "SW0042 RUSKIN ROOM GREEN",
-        "SW7040 SMOKEHOUSE",
-        "SW6076 TURKISH COFFEE",
-        "SW0043 PERISTYLE BRASS",
-        "SW7065 ARGOS"
-      ],
+      "curatedColors": [],
       "coordinates": null,
-      "mockupId": "white-dresser",
+      "colorFlex": true,
+      "mockupId": "rustic-console",
       "patterns": [
         {
           "id": "recxoBNbXsvx3f9e5",
@@ -73793,7 +74605,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:13:47.924Z"
+          "updatedAt": "2026-03-07T18:34:39.307Z"
         },
         {
           "id": "rec6MwB2hXhr7oYx9",
@@ -73829,7 +74641,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:13:47.921Z"
+          "updatedAt": "2026-03-07T18:34:39.306Z"
         },
         {
           "id": "recq1pNQzlkpqrixy",
@@ -73871,7 +74683,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:13:47.923Z"
+          "updatedAt": "2026-03-07T18:34:39.307Z"
         },
         {
           "id": "recdwG5n74qmyg6ZM",
@@ -73907,7 +74719,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:13:47.922Z"
+          "updatedAt": "2026-03-07T18:34:39.306Z"
         },
         {
           "id": "recgURfypV4koAWKB",
@@ -73943,7 +74755,437 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-02-26T01:13:47.923Z"
+          "updatedAt": "2026-03-07T18:34:39.306Z"
+        }
+      ]
+    },
+    {
+      "name": "stripes",
+      "tableName": "30 - STRIPES",
+      "collectionNumber": 30,
+      "collection_thumbnail": "./data/collections/stripes/stripes-thumb.jpg",
+      "curatedColors": [],
+      "coordinates": null,
+      "colorFlex": true,
+      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
+      "mockupShadow": null,
+      "mockupWidthInches": 60,
+      "mockupHeightInches": 45,
+      "patterns": [
+        {
+          "id": "recS2xntrsgXpIcQi",
+          "number": "30-101",
+          "name": "Handwrought Stripe",
+          "thumbnail": "./data/collections/stripes/thumbnails/handwrought-stripe.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/stripes/layers/handwrought-stripe_stripes_layer-1.jpg",
+              "proofPath": "./data/collections/stripes/proof-layers/handwrought-stripe_stripes_layer-1.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Stripes"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-08T02:32:43.046Z"
+        },
+        {
+          "id": "recuzqdEzzfvWPjCv",
+          "number": "30-105",
+          "name": "Awning Stripe",
+          "thumbnail": "./data/collections/stripes/thumbnails/awning-stripe.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/stripes/layers/awning-stripe_thin-stripe_layer-1.jpg",
+              "proofPath": "./data/collections/stripes/proof-layers/awning-stripe_thin-stripe_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/stripes/layers/awning-stripe_wide-stripe_layer-2.jpg",
+              "proofPath": "./data/collections/stripes/proof-layers/awning-stripe_wide-stripe_layer-2.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Thin Stripe",
+            "Wide Stripe"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-08T02:32:43.046Z"
+        },
+        {
+          "id": "rec2uteYrpbWltBeA",
+          "number": "30-107",
+          "name": "Adalaid",
+          "thumbnail": "./data/collections/stripes/thumbnails/adalaid.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/stripes/layers/adalaid_stripes_layer-1.jpg",
+              "proofPath": "./data/collections/stripes/proof-layers/adalaid_stripes_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/stripes/layers/adalaid_ragged-stripes_layer-2.jpg",
+              "proofPath": "./data/collections/stripes/proof-layers/adalaid_ragged-stripes_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/stripes/layers/adalaid_vines_layer-3.jpg",
+              "proofPath": "./data/collections/stripes/proof-layers/adalaid_vines_layer-3.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Stripes",
+            "Ragged Stripes",
+            "Vines"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-08T02:32:43.040Z"
+        },
+        {
+          "id": "recwjA9BiVgHwtwnf",
+          "number": "30-108",
+          "name": "Polkadot Parade",
+          "thumbnail": "./data/collections/stripes/thumbnails/polkadot-parade.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/stripes/layers/polkadot-parade_dots_layer-1.jpg",
+              "proofPath": "./data/collections/stripes/proof-layers/polkadot-parade_dots_layer-1.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Dots"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-08T02:32:43.046Z"
+        }
+      ]
+    },
+    {
+      "name": "pages",
+      "tableName": "9 - PAGES",
+      "collectionNumber": 9,
+      "collection_thumbnail": "./data/collections/pages/pages-thumb.jpg",
+      "curatedColors": [
+        "SW7069 Iron Ore",
+        "SW7067 Cityscape",
+        "SW3441 Foothills",
+        "SW6135 Ecru",
+        "SW7699 Rustic City",
+        "SW6206 Oyster Bay",
+        "SW6186 Dried Thyme",
+        "SW1472 Slate Tile",
+        "SW0006 Toile Red"
+      ],
+      "coordinates": null,
+      "colorFlex": false,
+      "mockupId": "english-countryside-bedroom",
+      "patterns": [
+        {
+          "id": "rec2oOMSqDYOM3I6p",
+          "number": "01-09-101",
+          "name": "Pages Alice",
+          "thumbnail": "./data/collections/pages/thumbnails/pages-alice.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [],
+          "layerLabels": [],
+          "tilingType": "half-drop",
+          "designer_colors": [
+            "SW7069 Iron Ore",
+            "SW7067 Cityscape",
+            "SW3441 Foothills",
+            "SW6135 Ecru",
+            "SW7699 Rustic City",
+            "SW6206 Oyster Bay",
+            "SW6186 Dried Thyme",
+            "SW1472 Slate Tile",
+            "SW0006 Toile Red"
+          ],
+          "colorFlex": false,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T21:07:21.581Z"
+        },
+        {
+          "id": "rec6dplBlila6lxDT",
+          "number": "01-09-102",
+          "name": "Pages Alice Framed",
+          "thumbnail": "./data/collections/pages/thumbnails/pages-alice-framed.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [],
+          "layerLabels": [],
+          "tilingType": "half-drop",
+          "designer_colors": [
+            "SW7069 Iron Ore",
+            "SW7067 Cityscape",
+            "SW3441 Foothills",
+            "SW6135 Ecru",
+            "SW7699 Rustic City",
+            "SW6206 Oyster Bay",
+            "SW6186 Dried Thyme",
+            "SW1472 Slate Tile",
+            "SW0006 Toile Red"
+          ],
+          "colorFlex": false,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T21:07:21.587Z"
+        },
+        {
+          "id": "rece3xqzrebErvMmi",
+          "number": "01-09-103",
+          "name": "Pages Antique Cards",
+          "thumbnail": "./data/collections/pages/thumbnails/pages-antique-cards.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [],
+          "layerLabels": [],
+          "tilingType": "half-drop",
+          "designer_colors": [
+            "SW7069 Iron Ore",
+            "SW7067 Cityscape",
+            "SW3441 Foothills",
+            "SW6135 Ecru",
+            "SW7699 Rustic City",
+            "SW6206 Oyster Bay",
+            "SW6186 Dried Thyme",
+            "SW1472 Slate Tile",
+            "SW0006 Toile Red"
+          ],
+          "colorFlex": false,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T21:07:21.587Z"
+        },
+        {
+          "id": "recay2NByc0V7ky0o",
+          "number": "01-09-104",
+          "name": "Pages Antiques Cards Color Flex",
+          "thumbnail": "./data/collections/pages/thumbnails/pages-antiques-cards-color-flex.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [],
+          "layerLabels": [],
+          "tilingType": "half-drop",
+          "designer_colors": [
+            "SW7069 Iron Ore",
+            "SW7067 Cityscape",
+            "SW3441 Foothills",
+            "SW6135 Ecru",
+            "SW7699 Rustic City",
+            "SW6206 Oyster Bay",
+            "SW6186 Dried Thyme",
+            "SW1472 Slate Tile",
+            "SW0006 Toile Red"
+          ],
+          "colorFlex": false,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T21:07:21.587Z"
+        },
+        {
+          "id": "recyY6vFzl8QilZ8W",
+          "number": "01-09-105",
+          "name": "Pages De Materia Medica",
+          "thumbnail": "./data/collections/pages/thumbnails/pages-de-materia-medica.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [],
+          "layerLabels": [],
+          "tilingType": "half-drop",
+          "designer_colors": [
+            "SW7069 Iron Ore",
+            "SW7067 Cityscape",
+            "SW3441 Foothills",
+            "SW6135 Ecru",
+            "SW7699 Rustic City",
+            "SW6206 Oyster Bay",
+            "SW6186 Dried Thyme",
+            "SW1472 Slate Tile",
+            "SW0006 Toile Red"
+          ],
+          "colorFlex": false,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T21:07:21.588Z"
+        },
+        {
+          "id": "reczEC8LUxG72iLOo",
+          "number": "01-09-106",
+          "name": "Pages Piere Joseph Redoute' Blues",
+          "thumbnail": "./data/collections/pages/thumbnails/pages-piere-joseph-redoute'-blues.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [],
+          "layerLabels": [],
+          "tilingType": "half-drop",
+          "designer_colors": [
+            "SW7069 Iron Ore",
+            "SW7067 Cityscape",
+            "SW3441 Foothills",
+            "SW6135 Ecru",
+            "SW7699 Rustic City",
+            "SW6206 Oyster Bay",
+            "SW6186 Dried Thyme",
+            "SW1472 Slate Tile",
+            "SW0006 Toile Red"
+          ],
+          "colorFlex": false,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T21:07:21.588Z"
+        },
+        {
+          "id": "recR7334J6hCD1oa1",
+          "number": "01-09-107",
+          "name": "Pages Piere Joseph Redoute' Whites",
+          "thumbnail": "./data/collections/pages/thumbnails/pages-piere-joseph-redoute'-whites.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [],
+          "layerLabels": [],
+          "tilingType": "half-drop",
+          "designer_colors": [
+            "SW7069 Iron Ore",
+            "SW7067 Cityscape",
+            "SW3441 Foothills",
+            "SW6135 Ecru",
+            "SW7699 Rustic City",
+            "SW6206 Oyster Bay",
+            "SW6186 Dried Thyme",
+            "SW1472 Slate Tile",
+            "SW0006 Toile Red"
+          ],
+          "colorFlex": false,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T21:07:21.587Z"
+        },
+        {
+          "id": "recHQCMQiuIKBEh9I",
+          "number": "01-09-108",
+          "name": "Pages Sketches In Blue",
+          "thumbnail": "./data/collections/pages/thumbnails/pages-sketches-in-blue.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [],
+          "layerLabels": [],
+          "tilingType": "half-drop",
+          "designer_colors": [
+            "SW7069 Iron Ore",
+            "SW7067 Cityscape",
+            "SW3441 Foothills",
+            "SW6135 Ecru",
+            "SW7699 Rustic City",
+            "SW6206 Oyster Bay",
+            "SW6186 Dried Thyme",
+            "SW1472 Slate Tile",
+            "SW0006 Toile Red"
+          ],
+          "colorFlex": false,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T21:07:21.587Z"
+        },
+        {
+          "id": "recMm94rLZcH9KbIo",
+          "number": "01-09-109",
+          "name": "Pages Werner's Nomenclature Of Colours",
+          "thumbnail": "./data/collections/pages/thumbnails/pages-werner's-nomenclature-of-colours.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [],
+          "layerLabels": [],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW7069 Iron Ore",
+            "SW7067 Cityscape",
+            "SW3441 Foothills",
+            "SW6135 Ecru",
+            "SW7699 Rustic City",
+            "SW6206 Oyster Bay",
+            "SW6186 Dried Thyme",
+            "SW1472 Slate Tile",
+            "SW0006 Toile Red"
+          ],
+          "colorFlex": false,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-10T21:07:21.587Z"
         }
       ]
     }

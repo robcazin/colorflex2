@@ -71,7 +71,7 @@ Commands:
 Collection Names:
   abundance, cabin-fever, english-cottage, ancient-tiles, botanicals, bombay,
   coordinates, coverlets, dished-up, farmhouse, folksie, galleria, geometry,
-  hip-to-be-square, ikats, new-orleans, pages, silk-road, traditions
+  hip-to-be-square, ikats, new-orleans, pages, silk-road, stripes, traditions
   OR use 'all' to update all collections
 
 Examples:
@@ -620,7 +620,10 @@ main() {
     fi
 
     # Deploy collections.json to Shopify assets (CRITICAL - needed for wallpaper page)
-    if ! deploy_collections_to_shopify; then
+    COLLECTIONS_DEPLOYED=0
+    if deploy_collections_to_shopify; then
+        COLLECTIONS_DEPLOYED=1
+    else
         print_warning "collections.json not uploaded to Shopify - check output above"
         print_warning "You can manually upload data/collections.json to Shopify assets"
     fi
@@ -650,7 +653,11 @@ main() {
     [ "$FORCE_DOWNLOAD" = true ] && echo "  ✅ Images downloaded"
     [ "$GENERATE_CSV" = true ] && echo "  ✅ Shopify CSV generated: deployment/csv/"
     [ "$DEPLOY" = true ] && echo "  ✅ Data path: $LOCAL_DATA_PATH (Synology → Backblaze)"
-    echo "  ✅ collections.json uploaded to Shopify assets"
+    if [ "$COLLECTIONS_DEPLOYED" = 1 ]; then
+        echo "  ✅ collections.json uploaded to Shopify assets"
+    else
+        echo "  ⚠️  collections.json was NOT uploaded - upload manually (see warnings above)"
+    fi
     [ "$CREATE_BACKUP" = true ] && echo "  ✅ Backup created in: $BACKUP_DIR"
     echo
 
