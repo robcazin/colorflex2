@@ -605,7 +605,7 @@
       </div>
 
       <!-- Left Sidebar - Scrollable Thumbnails Only -->
-      <div id="leftSidebar" style="position: fixed; left: 0; top: 144px; width: 140px; background: #000; padding: 0.675rem; z-index: 25; border-radius: 0 0 8px 8px; overflow-y: auto; height: 884px; scrollbar-width: none; -ms-overflow-style: none;">
+      <div id="leftSidebar" style="position: fixed; left: 0; top: 144px; width: 140px; background: #000; padding: 0.675rem; z-index: 25; border-radius: 0 0 8px 8px; overflow-y: auto; overflow-x: hidden; height: 884px; max-height: calc(100vh - 150px); -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; scrollbar-width: thin; -ms-overflow-style: scrollbar;">
         <div id="collectionThumbnails"></div>
       </div>
 

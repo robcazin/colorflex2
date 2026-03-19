@@ -85,7 +85,7 @@
       </div>
       
       <!-- Left Sidebar - Scrollable Thumbnails Only -->
-      <div id="leftSidebar" style="position: fixed; left: 0; top: 160px; width: 140px; background: #2d3748; padding: 0.75rem; z-index: 25; border-radius: 0 0 8px 8px; overflow-y: auto; height: 760px; scrollbar-width: none; -ms-overflow-style: none;" data-tooltip="Click a pattern to customize colors">
+      <div id="leftSidebar" style="position: fixed; left: 0; top: 160px; width: 140px; background: #2d3748; padding: 0.75rem; z-index: 25; border-radius: 0 0 8px 8px; overflow-y: auto; overflow-x: hidden; height: 760px; max-height: calc(100vh - 180px); -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; scrollbar-width: thin; -ms-overflow-style: scrollbar;" data-tooltip="Click a pattern to customize colors">
         <div id="collectionThumbnails"></div>
       </div>
 

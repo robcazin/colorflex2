@@ -11423,8 +11423,12 @@ function populateLayerInputs(pattern = appState.currentPattern) {
       if (colorLockBtn) colorLockBtn.style.display = "none";
       if (dom.layerInputsContainer) {
         const collectionDescription = appState.selectedCollection?.description || "";
+        const sizeIn = pattern.size && Array.isArray(pattern.size) && pattern.size.length >= 2
+          ? pattern.size
+          : [24, 24];
+        const sizeStr = `${sizeIn[0]}×${sizeIn[1]}`;
         dom.layerInputsContainer.style.gridTemplateColumns = "repeat(1, 1fr)";
-        dom.layerInputsContainer.innerHTML = `<div style="text-align:center;padding:30px 20px;color:#d4af37;font-family:'IM Fell English',serif;font-size:1.1rem;line-height:1.8;max-width:800px;margin:0 auto;">${collectionDescription ? collectionDescription + "<br><br>" : ""}Each pattern repeat is 24x24 inches and can be scaled to suite your need.</div>`;
+        dom.layerInputsContainer.innerHTML = `<div style="text-align:center;padding:30px 20px;color:#d4af37;font-family:'IM Fell English',serif;font-size:1.1rem;line-height:1.8;max-width:800px;margin:0 auto;">${collectionDescription ? collectionDescription + "<br><br>" : ""}Each pattern repeat is ${sizeStr} inches and can be scaled to suit your need.</div>`;
       }
       handlePatternSelection(pattern.name, appState.colorsLocked);
       addSaveButton();
@@ -14279,7 +14283,7 @@ async function updateBassettRoomMockup() {
             var ly = layersForTiling[lIdx];
             var layerPathB = typeof ly === "string" ? ly : (ly && (ly.path || ly.proofPath));
             var isShadowB = (ly && typeof ly === "object" && ly.isShadow === true) ||
-              (layerPathB && (String(layerPathB).toUpperCase().includes("_SHADOW_") || String(layerPathB).toUpperCase().includes("SHADOW_LAYER")));
+              (layerPathB && (String(layerPathB).toUpperCase().includes("_SHADOW_") || String(layerPathB).toUpperCase().includes("SHADOW_LAYER") || String(layerPathB).toUpperCase().includes("ISSHADOW")));
             var inputIdx = patternStartIdx + lIdx;
             var layerColorB = isShadowB ? null : (appState.currentLayers && appState.currentLayers[inputIdx] ? lookupColor(appState.currentLayers[inputIdx].color || "Snowbound") : "#7f817e");
             await new Promise(function(resolve) {
@@ -14436,7 +14440,7 @@ async function updateBassettRoomMockup() {
                   var ly = layersForTiling[lIdx];
                   var layerPathB = typeof ly === "string" ? ly : (ly && (ly.path || ly.proofPath));
                   var isShadowB = (ly && typeof ly === "object" && ly.isShadow === true) ||
-                    (layerPathB && (String(layerPathB).toUpperCase().includes("_SHADOW_") || String(layerPathB).toUpperCase().includes("SHADOW_LAYER")));
+                    (layerPathB && (String(layerPathB).toUpperCase().includes("_SHADOW_") || String(layerPathB).toUpperCase().includes("SHADOW_LAYER") || String(layerPathB).toUpperCase().includes("ISSHADOW")));
                   var inputIdx = patternStartIdx + lIdx;
                   var layerColorB = isShadowB ? null : (appState.currentLayers && appState.currentLayers[inputIdx] ? lookupColor(appState.currentLayers[inputIdx].color || "Snowbound") : "#7f817e");
                   await new Promise(function(resolve) {
@@ -19290,8 +19294,13 @@ async function generatePatternProof(patternName, collectionName, colorArray, use
             
         } else if (targetPattern.layers?.length) {
             console.log("🎨 Rendering layered pattern for proof");
-            
-            const firstLayer = targetPattern.layers.find(l => !l.isShadow);
+            // Path-based shadow detection (match updatePreview/print): JSON isShadow or path contains _SHADOW_ etc.
+            const layerIsShadow = (l) => {
+                if (l && l.isShadow === true) return true;
+                const pathStr = (l && (l.path || l.proofPath)) ? String(l.path || l.proofPath) : '';
+                return pathStr && (pathStr.toUpperCase().includes('_SHADOW_') || pathStr.toUpperCase().includes('SHADOW_LAYER') || pathStr.toUpperCase().includes('ISSHADOW'));
+            };
+            const firstLayer = targetPattern.layers.find(l => !layerIsShadow(l));
             if (firstLayer) {
                 const tempImg = new Image();
                 tempImg.crossOrigin = "Anonymous";
@@ -19337,13 +19346,14 @@ async function generatePatternProof(patternName, collectionName, colorArray, use
                 });
                 
                 if (patternBounds) {
+                    // colorArray = [background, ...pattern non-shadow colors]. We already used colorArray[0] for canvas fill.
+                    // Pattern layers (shadow, bamboo, outline): only non-shadow get a color, from colorArray[1], colorArray[2], ...
+                    let nonShadowColorIndex = 1;
                     // Render each layer using the exact same logic as updatePreview
                     for (let layerIndex = 0; layerIndex < targetPattern.layers.length; layerIndex++) {
                         const layer = targetPattern.layers[layerIndex];
-                        const isShadow = layer.isShadow === true;
-                        
-                        // Use colors from colorArray in order (skip first color since it's background)
-                        const layerColor = !isShadow ? lookupColor(colorArray[layerIndex + 1] || colorArray[layerIndex] || "Snowbound") : null;
+                        const isShadow = layerIsShadow(layer);
+                        const layerColor = !isShadow ? lookupColor(colorArray[nonShadowColorIndex++] || "Snowbound") : null;
 
                         console.log(`🔧 Proof layer ${layerIndex} with color:`, layerColor, 'using', layer.proofPath ? 'PROOF PATH (high-res)' : 'preview path (fallback)');
                         

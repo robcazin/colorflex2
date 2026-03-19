@@ -256,8 +256,7 @@ button[data-multiplier] {
     display: flex !important;
     flex-direction: column !important;
     gap: 0.5rem !important;
-    max-height: calc(100vh - 220px) !important;
-    overflow-y: auto !important;
+    /* No overflow here: leftSidebar is the single scroll container (fixes Magic Mouse / nested scroll) */
     padding-right: 4px !important;
 }
 
@@ -413,7 +412,7 @@ button[data-multiplier] {
       </div>
       
       <!-- Left Sidebar - Fixed Position -->
-      <div id="leftSidebar" style="position: fixed; left: 0; top: 120px; width: 140px; background: #2d3748; padding: 0.75rem; z-index: 25; border-radius: 0 8px 8px 0; overflow-y: auto; max-height: calc(100vh - 140px); scrollbar-width: none; -ms-overflow-style: none;">
+      <div id="leftSidebar" style="position: fixed; left: 0; top: 120px; width: 140px; background: #2d3748; padding: 0.75rem; z-index: 25; border-radius: 0 8px 8px 0; overflow-y: auto; overflow-x: hidden; max-height: calc(100vh - 140px); -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; scrollbar-width: thin; -ms-overflow-style: scrollbar;">
         <h6 id="collectionHeader" style="background: #2d3748; margin-bottom: 0.75rem; font-family: 'IM Fell English', serif !important; font-size: 1.2rem !important; color: white !important; font-weight: normal !important; text-transform: uppercase !important;">BOTANICALS Collection</h6>
         <div id="collectionThumbnails"></div>
       </div>

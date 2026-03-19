@@ -600,7 +600,7 @@ console.log('📁 Clothing mode asset URLs configured:', window.ColorFlexAssets)
       </div>
 
       <!-- Left Sidebar -->
-      <div id="leftSidebar" style="position: fixed; left: 0; top: 160px; width: 140px; background: #2d3748; padding: 0.75rem; z-index: 25; border-radius: 0 0 8px 8px; overflow-y: auto; height: 960px;">
+      <div id="leftSidebar" style="position: fixed; left: 0; top: 160px; width: 140px; background: #2d3748; padding: 0.75rem; z-index: 25; border-radius: 0 0 8px 8px; overflow-y: auto; overflow-x: hidden; max-height: calc(100vh - 180px); -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; scrollbar-width: thin;">
         <div id="collectionThumbnails"></div>
       </div>
 

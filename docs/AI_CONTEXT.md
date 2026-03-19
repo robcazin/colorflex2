@@ -42,6 +42,18 @@
 
 ---
 
+## When context is lost (new session / summarization)
+
+- **Read the most recently modified `.md` files** in the repo (e.g. sort by mtime in `docs/`, root, and key subdirs). They often reflect the latest workflows, fixes, and decisions and are a fast way to re-anchor.
+
+---
+
+## Significant fixes / milestones
+
+- **2026-03** — **Proof download and preview/mockup colors (Bamboo Lattice Full Color, Coordinates).** Pattern proof was missing the top outline and background/layer colors were wrong. Fixes in `generatePatternProof` (CFM.js): (1) Path-based shadow detection (match preview: `_SHADOW_` / `SHADOW_LAYER` / `ISSHADOW`) so shadow uses multiply, not tint. (2) Color index for pattern layers: `colorArray` = `[background, …pattern colors]`; canvas fill uses `colorArray[0]`, pattern layers use `colorArray[1]`, `colorArray[2]`, … (start `nonShadowColorIndex` at 1). (3) Room mockup: added `ISSHADOW` to path-based shadow check so shadow is never tinted. Proof and preview/mockup now match.
+
+---
+
 ## When you add to this file
 
 - Add a **short dated bullet** under a clear heading (e.g. “Common mistakes” or “Clarifications”).

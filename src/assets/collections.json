@@ -1110,7 +1110,7 @@
         }
       ],
       "colorFlex": true,
-      "mockupId": "[object Object]",
+      "mockupId": "white-dresser",
       "patterns": [
         {
           "id": "recNMLJww2XtYk5Nv",
@@ -1185,7 +1185,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.177Z"
+          "updatedAt": "2026-03-12T02:49:55.592Z"
         },
         {
           "id": "rec0YgzbbxikypVMj",
@@ -1242,7 +1242,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.175Z"
+          "updatedAt": "2026-03-12T02:49:55.582Z"
         },
         {
           "id": "recepcpv8bkCoNrML",
@@ -1291,8 +1291,7 @@
           "tilingType": "straight",
           "designer_colors": [
             "SC0001 COTTAGE LINEN",
-            "SW",
-            "6811 HONORABLE BLUE",
+            "SW6811 HONORABLE BLUE",
             "SW6810 LUPINE",
             "SW6810 LUPINE",
             "SW6810 LUPINE",
@@ -1330,7 +1329,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.178Z"
+          "updatedAt": "2026-03-12T02:49:55.593Z"
         },
         {
           "id": "rectlBxCvxvMFVazh",
@@ -1387,7 +1386,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.182Z"
+          "updatedAt": "2026-03-12T02:49:55.597Z"
         },
         {
           "id": "rec2tEHnoLYiL9EtN",
@@ -1450,7 +1449,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.175Z"
+          "updatedAt": "2026-03-12T02:49:55.590Z"
         },
         {
           "id": "rec3kKu0gymKtgUQc",
@@ -1507,7 +1506,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.176Z"
+          "updatedAt": "2026-03-12T02:49:55.590Z"
         },
         {
           "id": "recPlE8c9XvSs0wIJ",
@@ -1564,7 +1563,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.177Z"
+          "updatedAt": "2026-03-12T02:49:55.592Z"
         },
         {
           "id": "recpY4vY9CoJ5UE12",
@@ -1621,7 +1620,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.182Z"
+          "updatedAt": "2026-03-12T02:49:55.597Z"
         },
         {
           "id": "recGZg3JFBpwUOJAq",
@@ -1678,7 +1677,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.176Z"
+          "updatedAt": "2026-03-12T02:49:55.591Z"
         },
         {
           "id": "recrXjjnthuLDkHWf",
@@ -1741,7 +1740,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.182Z"
+          "updatedAt": "2026-03-12T02:49:55.597Z"
         },
         {
           "id": "recFq72D26IObtAvy",
@@ -1798,7 +1797,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.176Z"
+          "updatedAt": "2026-03-12T02:49:55.591Z"
         },
         {
           "id": "recUsgvZJNjAmIb09",
@@ -1855,7 +1854,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.178Z"
+          "updatedAt": "2026-03-12T02:49:55.592Z"
         },
         {
           "id": "recZrIQnNd9aSt7IE",
@@ -1918,7 +1917,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.178Z"
+          "updatedAt": "2026-03-12T02:49:55.593Z"
         },
         {
           "id": "recieFYEmarxrRhPg",
@@ -1975,7 +1974,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.179Z"
+          "updatedAt": "2026-03-12T02:49:55.596Z"
         },
         {
           "id": "recmkr3Rv5NdR5RSl",
@@ -2032,7 +2031,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.182Z"
+          "updatedAt": "2026-03-12T02:49:55.597Z"
         },
         {
           "id": "recLBCj6Ohzrd9cNV",
@@ -2095,7 +2094,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.177Z"
+          "updatedAt": "2026-03-12T02:49:55.591Z"
         },
         {
           "id": "recpAx9VPhqxnQzxE",
@@ -2125,7 +2124,7 @@
           "designer_colors": [
             "SC0001 COTTAGE LINEN",
             "SW6425 RELENTLESS OLIVE",
-            "SW6811 HORORABLE BLUE"
+            "SW6811 HONORABLE BLUE"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -2158,7 +2157,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.182Z"
+          "updatedAt": "2026-03-12T02:49:55.597Z"
         },
         {
           "id": "rec8dB9EXmURmAr48",
@@ -2215,7 +2214,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.176Z"
+          "updatedAt": "2026-03-12T02:49:55.591Z"
         },
         {
           "id": "recfnzISFU32JqEVv",
@@ -2278,7 +2277,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.178Z"
+          "updatedAt": "2026-03-12T02:49:55.596Z"
         },
         {
           "id": "recu3BiG4MCL8UQlP",
@@ -2335,7 +2334,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.189Z"
+          "updatedAt": "2026-03-12T02:49:55.597Z"
         },
         {
           "id": "recH6789vfsgDWPxz",
@@ -2392,7 +2391,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.176Z"
+          "updatedAt": "2026-03-12T02:49:55.591Z"
         },
         {
           "id": "rec5QB3YqzHT1ixw4",
@@ -2449,7 +2448,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.176Z"
+          "updatedAt": "2026-03-12T02:49:55.591Z"
         },
         {
           "id": "recsGjmH0GtA7ITlB",
@@ -2506,7 +2505,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.182Z"
+          "updatedAt": "2026-03-12T02:49:55.597Z"
         },
         {
           "id": "recVwrw9QY2TOCF2s",
@@ -2563,7 +2562,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.178Z"
+          "updatedAt": "2026-03-12T02:49:55.592Z"
         },
         {
           "id": "recWTtmpuM29ijFun",
@@ -2620,7 +2619,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.178Z"
+          "updatedAt": "2026-03-12T02:49:55.592Z"
         },
         {
           "id": "reciT6BiyBOyhHdMI",
@@ -2683,7 +2682,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.179Z"
+          "updatedAt": "2026-03-12T02:49:55.596Z"
         },
         {
           "id": "rectW3O1DJaS1cLQ9",
@@ -2740,7 +2739,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.182Z"
+          "updatedAt": "2026-03-12T02:49:55.597Z"
         },
         {
           "id": "rec1CWyg0tKEMe19I",
@@ -2797,7 +2796,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.175Z"
+          "updatedAt": "2026-03-12T02:49:55.590Z"
         },
         {
           "id": "recDE5IAltG8jVJtP",
@@ -2860,7 +2859,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.176Z"
+          "updatedAt": "2026-03-12T02:49:55.591Z"
         },
         {
           "id": "recMT2q5PlqcL4tsl",
@@ -2923,7 +2922,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.177Z"
+          "updatedAt": "2026-03-12T02:49:55.592Z"
         },
         {
           "id": "rec6FuvXjb9PHv0OU",
@@ -2992,7 +2991,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.176Z"
+          "updatedAt": "2026-03-12T02:49:55.591Z"
         },
         {
           "id": "recSWkr2w6QQ8t5N9",
@@ -3055,7 +3054,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.177Z"
+          "updatedAt": "2026-03-12T02:49:55.592Z"
         },
         {
           "id": "recTuYp9CdX0yuOCE",
@@ -3118,7 +3117,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.177Z"
+          "updatedAt": "2026-03-12T02:49:55.592Z"
         },
         {
           "id": "recmj4L93grqoI3xl",
@@ -3181,7 +3180,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.180Z"
+          "updatedAt": "2026-03-12T02:49:55.596Z"
         },
         {
           "id": "recql93mLpgwhX9DZ",
@@ -3238,7 +3237,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.182Z"
+          "updatedAt": "2026-03-12T02:49:55.597Z"
         },
         {
           "id": "recnxNmWbUA7IE2MG",
@@ -3295,7 +3294,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.182Z"
+          "updatedAt": "2026-03-12T02:49:55.597Z"
         },
         {
           "id": "rec1ltrsYJpCtk7v7",
@@ -3358,7 +3357,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.175Z"
+          "updatedAt": "2026-03-12T02:49:55.590Z"
         },
         {
           "id": "recQI6wqKHgPNobWe",
@@ -3427,7 +3426,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.177Z"
+          "updatedAt": "2026-03-12T02:49:55.592Z"
         },
         {
           "id": "recaOcdQBv6kjJ7HI",
@@ -3502,7 +3501,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:37.178Z"
+          "updatedAt": "2026-03-12T02:49:55.593Z"
         }
       ]
     },
@@ -6040,7 +6039,7 @@
             "Fiddleheads",
             "Ferns"
           ],
-          "tilingType": "straight",
+          "tilingType": "half-drop",
           "designer_colors": [
             "SC0001 COTTAGE LINEN",
             "SW0033 REMBRANDT RUBY",
@@ -6084,7 +6083,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.686Z"
+          "updatedAt": "2026-03-12T22:58:39.240Z"
         },
         {
           "id": "recRGK7SUhPF0ZBqg",
@@ -6115,7 +6114,7 @@
             "Shadows",
             "Flower"
           ],
-          "tilingType": "straight",
+          "tilingType": "half-drop",
           "designer_colors": [
             "SC0001 COTTAGE LINEN",
             "SW6135 ECRU",
@@ -6159,7 +6158,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.688Z"
+          "updatedAt": "2026-03-12T22:58:39.242Z"
         },
         {
           "id": "recMVyHLV5mHRdBbC",
@@ -6197,11 +6196,11 @@
           ],
           "tilingType": "straight",
           "designer_colors": [
-            "SW6990 CAVIAR",
-            "SW0043 PERISTYLE BRASS",
-            "SW7726 LEMON VERBENA",
-            "SW6135 ECRU",
-            "SW0033 REMBRANDT RUBY"
+            "SW7069 IRON ORE",
+            "SW6239 UPWARD",
+            "6423 RYEGRASS",
+            "SC0001 COTTAGE LINEN",
+            "SW6395 ALCHEMY"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -6240,7 +6239,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.687Z"
+          "updatedAt": "2026-03-12T22:58:39.241Z"
         },
         {
           "id": "recYei4sRdf0KDsng",
@@ -6333,7 +6332,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.688Z"
+          "updatedAt": "2026-03-12T22:58:39.242Z"
         },
         {
           "id": "recxF8MU3bOLHMajd",
@@ -6408,7 +6407,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.690Z"
+          "updatedAt": "2026-03-12T22:58:39.244Z"
         },
         {
           "id": "recs3yUdz15AaFGTP",
@@ -6471,7 +6470,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.690Z"
+          "updatedAt": "2026-03-12T22:58:39.243Z"
         },
         {
           "id": "recD8V5tnkDE3y8r3",
@@ -6534,7 +6533,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.687Z"
+          "updatedAt": "2026-03-12T22:58:39.241Z"
         },
         {
           "id": "rec4ddVXYhRbGOEtn",
@@ -6597,7 +6596,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.683Z"
+          "updatedAt": "2026-03-12T22:58:39.235Z"
         },
         {
           "id": "recZvocapOmMJNdpl",
@@ -6660,7 +6659,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.688Z"
+          "updatedAt": "2026-03-12T22:58:39.242Z"
         },
         {
           "id": "rec77e5r66j8KyvUz",
@@ -6723,7 +6722,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.686Z"
+          "updatedAt": "2026-03-12T22:58:39.241Z"
         },
         {
           "id": "recoBtv4Zug2qFe3D",
@@ -6804,7 +6803,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.690Z"
+          "updatedAt": "2026-03-12T22:58:39.243Z"
         },
         {
           "id": "receuL4maZxTcRAXf",
@@ -6867,7 +6866,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.688Z"
+          "updatedAt": "2026-03-12T22:58:39.243Z"
         },
         {
           "id": "rec93z0Ica9yKOdr0",
@@ -6942,7 +6941,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.687Z"
+          "updatedAt": "2026-03-12T22:58:39.241Z"
         },
         {
           "id": "recmwtfUroOTMNkNK",
@@ -7023,7 +7022,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.689Z"
+          "updatedAt": "2026-03-12T22:58:39.243Z"
         },
         {
           "id": "recl9ql54T6gqpNqJ",
@@ -7098,7 +7097,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T16:54:01.689Z"
+          "updatedAt": "2026-03-12T22:58:39.243Z"
         }
       ]
     },
@@ -8127,7 +8126,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.460Z"
+          "updatedAt": "2026-03-14T22:18:16.045Z"
         },
         {
           "id": "rec5ai87MMEfSpztu",
@@ -8157,7 +8156,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.459Z"
+          "updatedAt": "2026-03-14T22:18:16.044Z"
         },
         {
           "id": "rectAlAn5KvibSFEA",
@@ -8187,7 +8186,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.463Z"
+          "updatedAt": "2026-03-14T22:18:16.049Z"
         },
         {
           "id": "recFnHcwyUaVzcDoF",
@@ -8217,7 +8216,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.459Z"
+          "updatedAt": "2026-03-14T22:18:16.045Z"
         },
         {
           "id": "recbgFHMgqtzcrQ2K",
@@ -8247,7 +8246,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.460Z"
+          "updatedAt": "2026-03-14T22:18:16.046Z"
         },
         {
           "id": "recqliYNR4TBJielv",
@@ -8277,7 +8276,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.461Z"
+          "updatedAt": "2026-03-14T22:18:16.049Z"
         },
         {
           "id": "recrfGxRzfTJKNUFm",
@@ -8307,7 +8306,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.462Z"
+          "updatedAt": "2026-03-14T22:18:16.049Z"
         },
         {
           "id": "rec8Re25iINiJhoqQ",
@@ -8343,7 +8342,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.459Z"
+          "updatedAt": "2026-03-14T22:18:16.044Z"
         },
         {
           "id": "recpcZNJ8KPBAdW0O",
@@ -8373,7 +8372,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.461Z"
+          "updatedAt": "2026-03-14T22:18:16.048Z"
         },
         {
           "id": "rec5u4BaSkBIisSbk",
@@ -8403,7 +8402,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.459Z"
+          "updatedAt": "2026-03-14T22:18:16.044Z"
         },
         {
           "id": "recjvdRoIZz5N0knm",
@@ -8433,7 +8432,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.460Z"
+          "updatedAt": "2026-03-14T22:18:16.046Z"
         },
         {
           "id": "recpCj7kfdPtPYv9I",
@@ -8463,7 +8462,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.461Z"
+          "updatedAt": "2026-03-14T22:18:16.048Z"
         },
         {
           "id": "recq31BCJ0gpH5tLZ",
@@ -8493,7 +8492,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.461Z"
+          "updatedAt": "2026-03-14T22:18:16.049Z"
         },
         {
           "id": "recPaypNnoZ1JBFy6",
@@ -8523,7 +8522,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.459Z"
+          "updatedAt": "2026-03-14T22:18:16.045Z"
         },
         {
           "id": "reczkPngeoNcBDTmH",
@@ -8559,7 +8558,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.465Z"
+          "updatedAt": "2026-03-14T22:18:16.050Z"
         },
         {
           "id": "recoxKLcPM3v81Aji",
@@ -8607,7 +8606,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.461Z"
+          "updatedAt": "2026-03-14T22:18:16.048Z"
         },
         {
           "id": "recEuBWgLwUctDYOG",
@@ -8649,7 +8648,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.459Z"
+          "updatedAt": "2026-03-14T22:18:16.045Z"
         },
         {
           "id": "recwW754z8P6IG8w4",
@@ -8685,7 +8684,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.464Z"
+          "updatedAt": "2026-03-14T22:18:16.050Z"
         },
         {
           "id": "rec0cbpcmaxWceTkU",
@@ -8715,7 +8714,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.458Z"
+          "updatedAt": "2026-03-14T22:18:16.037Z"
         },
         {
           "id": "recyNxVCYFulwreSJ",
@@ -8751,7 +8750,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.465Z"
+          "updatedAt": "2026-03-14T22:18:16.050Z"
         },
         {
           "id": "recoB9MbSOg2pRNOV",
@@ -8787,7 +8786,55 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.461Z"
+          "updatedAt": "2026-03-14T22:18:16.047Z"
+        },
+        {
+          "id": "rectT5uG9FXSy6IeO",
+          "number": "01-21-122",
+          "name": "Basket Case",
+          "thumbnail": "./data/collections/coordinates/thumbnails/basket-case.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/coordinates/layers/basket-case_vertical-one_layer-1.jpg",
+              "proofPath": "./data/collections/coordinates/proof-layers/basket-case_vertical-one_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/coordinates/layers/basket-case_vertical-two_layer-2.jpg",
+              "proofPath": "./data/collections/coordinates/proof-layers/basket-case_vertical-two_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/coordinates/layers/basket-case_horizontal-one_layer-3.jpg",
+              "proofPath": "./data/collections/coordinates/proof-layers/basket-case_horizontal-one_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/coordinates/layers/basket-case_horizontal-two_layer-4.jpg",
+              "proofPath": "./data/collections/coordinates/proof-layers/basket-case_horizontal-two_layer-4.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Vertical One",
+            "Vertical Two",
+            "Horizontal One",
+            "Horizontal Two"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6076 TURKISH COFFEE",
+            "SW7694 DROMEDARY CAMEL",
+            "SW6138 ARTIFACT",
+            "SW0043 PERISTYLE BRASS",
+            "SW3174 LENNOX HILL TAN"
+          ],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-14T22:18:16.050Z"
         },
         {
           "id": "reckFyoMTsgWFWZbz",
@@ -8817,7 +8864,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.461Z"
+          "updatedAt": "2026-03-14T22:18:16.047Z"
         },
         {
           "id": "recUnlhf5NMmMSRwi",
@@ -8847,7 +8894,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.460Z"
+          "updatedAt": "2026-03-14T22:18:16.045Z"
         },
         {
           "id": "reczqLQfyiqpQVSXE",
@@ -8889,7 +8936,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.465Z"
+          "updatedAt": "2026-03-14T22:18:16.050Z"
         },
         {
           "id": "recjm4hFVA4KgloI9",
@@ -8919,7 +8966,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.460Z"
+          "updatedAt": "2026-03-14T22:18:16.046Z"
         },
         {
           "id": "rec19DxtQO6zlAtnj",
@@ -8967,7 +9014,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.458Z"
+          "updatedAt": "2026-03-14T22:18:16.043Z"
         },
         {
           "id": "reccaTPNiMvopBfWP",
@@ -9003,7 +9050,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.460Z"
+          "updatedAt": "2026-03-14T22:18:16.046Z"
         },
         {
           "id": "recYZELPya35k6ac7",
@@ -9033,7 +9080,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.460Z"
+          "updatedAt": "2026-03-14T22:18:16.046Z"
         },
         {
           "id": "recgRH6qyvqSgwMit",
@@ -9063,7 +9110,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.460Z"
+          "updatedAt": "2026-03-14T22:18:16.046Z"
         },
         {
           "id": "rec34yVosVEb2A7fx",
@@ -9093,7 +9140,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.459Z"
+          "updatedAt": "2026-03-14T22:18:16.044Z"
         },
         {
           "id": "recCvKdNM2pDAQ5aP",
@@ -9123,7 +9170,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.459Z"
+          "updatedAt": "2026-03-14T22:18:16.044Z"
         },
         {
           "id": "recPfmlAbxkpOnIBS",
@@ -9141,17 +9188,29 @@
               "proofPath": "./data/collections/coordinates/proof-layers/asian-trellis_flowers_layer-1.jpg"
             },
             {
-              "path": "./data/collections/coordinates/layers/asian-trellis_trellis_layer-2.jpg",
-              "proofPath": "./data/collections/coordinates/proof-layers/asian-trellis_trellis_layer-2.jpg"
+              "path": "./data/collections/coordinates/layers/asian-trellis_squares_layer-2.jpg",
+              "proofPath": "./data/collections/coordinates/proof-layers/asian-trellis_squares_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/coordinates/layers/asian-trellis_centers_layer-3.jpg",
+              "proofPath": "./data/collections/coordinates/proof-layers/asian-trellis_centers_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/coordinates/layers/asian-trellis_trellis_layer-4.jpg",
+              "proofPath": "./data/collections/coordinates/proof-layers/asian-trellis_trellis_layer-4.jpg"
             }
           ],
           "layerLabels": [
             "Flowers",
+            "Squares",
+            "Centers",
             "Trellis"
           ],
           "tilingType": "straight",
           "designer_colors": [
+            "SW6239 UPWARD",
             "SC0001 COTTAGE LINEN",
+            "SW6423 RYEGRASS",
             "SW6395 ALCHEMY",
             "SW6990 CAVIAR"
           ],
@@ -9159,7 +9218,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.460Z"
+          "updatedAt": "2026-03-14T22:18:16.045Z"
         },
         {
           "id": "recWG6RSeOSGMUhlO",
@@ -9201,7 +9260,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.460Z"
+          "updatedAt": "2026-03-14T22:18:16.045Z"
         },
         {
           "id": "recyQ1ok63VsBLtZZ",
@@ -9231,7 +9290,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.465Z"
+          "updatedAt": "2026-03-14T22:18:16.050Z"
         },
         {
           "id": "rec4ktdjwmEqXJT6U",
@@ -9261,7 +9320,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.459Z"
+          "updatedAt": "2026-03-14T22:18:16.044Z"
         }
       ]
     },
@@ -13266,7 +13325,10 @@
         }
       ],
       "colorFlex": true,
-      "mockupId": "scallop-console",
+      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
+      "mockupShadow": null,
+      "mockupWidthInches": 60,
+      "mockupHeightInches": 40,
       "patterns": [
         {
           "id": "recFTfxTNBMSac4C2",
@@ -13327,7 +13389,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.737Z"
+          "updatedAt": "2026-03-12T02:06:40.307Z"
         },
         {
           "id": "recvRWXkpLczXEhlW",
@@ -13382,7 +13444,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.741Z"
+          "updatedAt": "2026-03-12T02:06:40.308Z"
         },
         {
           "id": "recVT5iZdAj0yCwzU",
@@ -13443,7 +13505,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.738Z"
+          "updatedAt": "2026-03-12T02:06:40.307Z"
         },
         {
           "id": "recH8qZYY0QnRu5YP",
@@ -13504,7 +13566,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.737Z"
+          "updatedAt": "2026-03-12T02:06:40.307Z"
         },
         {
           "id": "recXXFAOZrk79iRjE",
@@ -13559,7 +13621,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.738Z"
+          "updatedAt": "2026-03-12T02:06:40.307Z"
         },
         {
           "id": "recyJXPmIiYCPTHiS",
@@ -13632,7 +13694,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.742Z"
+          "updatedAt": "2026-03-12T02:06:40.309Z"
         },
         {
           "id": "recvgWPhbStqghvy7",
@@ -13687,7 +13749,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.742Z"
+          "updatedAt": "2026-03-12T02:06:40.308Z"
         },
         {
           "id": "recqoTluLJ3iLl8kj",
@@ -13748,7 +13810,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.741Z"
+          "updatedAt": "2026-03-12T02:06:40.308Z"
         },
         {
           "id": "recbymB9JZno6Knbw",
@@ -13809,7 +13871,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.741Z"
+          "updatedAt": "2026-03-12T02:06:40.308Z"
         },
         {
           "id": "reclCDCowoQHNhTUj",
@@ -13870,7 +13932,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.741Z"
+          "updatedAt": "2026-03-12T02:06:40.308Z"
         },
         {
           "id": "recCNa1tDOQiOOE5N",
@@ -13931,7 +13993,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.737Z"
+          "updatedAt": "2026-03-12T02:06:40.306Z"
         },
         {
           "id": "recxzNAjEXKDtkd99",
@@ -13960,9 +14022,9 @@
           "tilingType": "straight",
           "designer_colors": [
             "SW3174 LENNOX HILL TAN",
+            "SW6135 ECRU",
             "SW0050",
-            "CLASSIC LIGHT BUFF",
-            "SC0001 COTTAGE LINEN"
+            "CLASSIC LIGHT BUFF"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -13993,7 +14055,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.742Z"
+          "updatedAt": "2026-03-12T02:06:40.309Z"
         },
         {
           "id": "recyvXphcTrmxO4eJ",
@@ -14022,7 +14084,7 @@
           "tilingType": "straight",
           "designer_colors": [
             "SW6244 NAVAL",
-            "SW6242 BRACING BLUE",
+            "SW6243 DISTANCE",
             "SW6135 ECRU"
           ],
           "colorFlex": true,
@@ -14054,7 +14116,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.742Z"
+          "updatedAt": "2026-03-12T02:06:40.309Z"
         },
         {
           "id": "rec8l5PPRC1jf9Dok",
@@ -14115,7 +14177,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.736Z"
+          "updatedAt": "2026-03-12T02:06:40.300Z"
         },
         {
           "id": "recZOzsHAIGONOQi4",
@@ -14153,8 +14215,9 @@
           ],
           "tilingType": "straight",
           "designer_colors": [
+            "SW6138 ARTIFACT",
             "SW3174 LENNOX HILL TAN",
-            "SW3505 INTERTWINED",
+            "SW6135 ECRU",
             "SC0001 COTTAGE LINEN",
             "SW6035 ECRU",
             "SW6035 ECRU"
@@ -14188,7 +14251,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.739Z"
+          "updatedAt": "2026-03-12T02:06:40.308Z"
         },
         {
           "id": "recNEFb9qUIXicKFU",
@@ -14255,7 +14318,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.738Z"
+          "updatedAt": "2026-03-12T02:06:40.307Z"
         },
         {
           "id": "recC6ZIeLw1gOINvN",
@@ -14283,8 +14346,8 @@
           ],
           "tilingType": "straight",
           "designer_colors": [
-            "SW6135 ECRU",
-            "SW0050 CLASSIC LIGHT BUFF",
+            "SW6138 ARTIFACT",
+            "SW3174 LENNOX HILL TAN",
             "SW7069 IRON ORE"
           ],
           "colorFlex": true,
@@ -14316,7 +14379,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.736Z"
+          "updatedAt": "2026-03-12T02:06:40.306Z"
         },
         {
           "id": "recboKzrFc9xDMPz5",
@@ -14395,7 +14458,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.741Z"
+          "updatedAt": "2026-03-12T02:06:40.308Z"
         },
         {
           "id": "recXCyxrtZNmkm3Ic",
@@ -14431,7 +14494,7 @@
             "SW3441 FOOTHILLS",
             "SW7548 PORTICO",
             "SW6212 QUIETUDE",
-            "SW0053 PORCELAIN"
+            "SW7556 CREME"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -14462,7 +14525,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.738Z"
+          "updatedAt": "2026-03-12T02:06:40.307Z"
         },
         {
           "id": "reczodoii9qGvM3Sa",
@@ -14517,7 +14580,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.742Z"
+          "updatedAt": "2026-03-12T02:06:40.309Z"
         },
         {
           "id": "recFj0bhQxsj1wkzi",
@@ -14572,7 +14635,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.737Z"
+          "updatedAt": "2026-03-12T02:06:40.307Z"
         },
         {
           "id": "recYnch7DZCLfa68s",
@@ -14627,7 +14690,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.739Z"
+          "updatedAt": "2026-03-12T02:06:40.308Z"
         },
         {
           "id": "recfafj590SCUFCLk",
@@ -14682,7 +14745,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.741Z"
+          "updatedAt": "2026-03-12T02:06:40.308Z"
         },
         {
           "id": "recWZpvVDtOVYlZXU",
@@ -14737,7 +14800,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.738Z"
+          "updatedAt": "2026-03-12T02:06:40.307Z"
         },
         {
           "id": "recg2zQWyDHhqMRT1",
@@ -14751,12 +14814,12 @@
           "repeat": "yes",
           "layers": [
             {
-              "path": "./data/collections/coverlets/layers/youngstown_patern_layer-1.jpg",
-              "proofPath": "./data/collections/coverlets/proof-layers/youngstown_patern_layer-1.jpg"
+              "path": "./data/collections/coverlets/layers/youngstown_pattern_layer-1.jpg",
+              "proofPath": "./data/collections/coverlets/proof-layers/youngstown_pattern_layer-1.jpg"
             }
           ],
           "layerLabels": [
-            "Patern"
+            "Pattern"
           ],
           "tilingType": "straight",
           "designer_colors": [
@@ -14792,7 +14855,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.741Z"
+          "updatedAt": "2026-03-12T02:06:40.308Z"
         },
         {
           "id": "recEbTfoTYuxvl3lc",
@@ -14847,7 +14910,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:34.737Z"
+          "updatedAt": "2026-03-12T02:06:40.306Z"
         }
       ]
     },
@@ -16410,7 +16473,10 @@
       ],
       "coordinates": null,
       "colorFlex": false,
-      "mockupId": "fireplace-mantle",
+      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
+      "mockupShadow": null,
+      "mockupWidthInches": 60,
+      "mockupHeightInches": 40,
       "patterns": [
         {
           "id": "reclaMAPj6Fn5d8JZ",
@@ -16432,7 +16498,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-09T23:36:48.879Z"
+          "updatedAt": "2026-03-12T03:47:23.875Z"
         },
         {
           "id": "recrUb6E6oi2GPIZ6",
@@ -16454,7 +16520,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-09T23:36:48.879Z"
+          "updatedAt": "2026-03-12T03:47:23.875Z"
         },
         {
           "id": "recxTz4nrX3bH7lUV",
@@ -16476,7 +16542,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-09T23:36:48.879Z"
+          "updatedAt": "2026-03-12T03:47:23.875Z"
         },
         {
           "id": "recOLZqy6TtcnW4gs",
@@ -16498,7 +16564,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-09T23:36:48.879Z"
+          "updatedAt": "2026-03-12T03:47:23.875Z"
         },
         {
           "id": "recq0Joa5qaZovY8m",
@@ -16520,7 +16586,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-09T23:36:48.879Z"
+          "updatedAt": "2026-03-12T03:47:23.875Z"
         },
         {
           "id": "rec3UuQY8lXPOv91W",
@@ -16542,7 +16608,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-09T23:36:48.873Z"
+          "updatedAt": "2026-03-12T03:47:23.870Z"
         },
         {
           "id": "recgpVlTVzhpqMKJM",
@@ -16564,7 +16630,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-09T23:36:48.879Z"
+          "updatedAt": "2026-03-12T03:47:23.875Z"
         },
         {
           "id": "recDHkxd7kU2r8I09",
@@ -16586,7 +16652,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-09T23:36:48.879Z"
+          "updatedAt": "2026-03-12T03:47:23.875Z"
         },
         {
           "id": "recMvUY2gAMICtusH",
@@ -16608,7 +16674,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-09T23:36:48.879Z"
+          "updatedAt": "2026-03-12T03:47:23.875Z"
         }
       ]
     },
@@ -16654,7 +16720,10 @@
         }
       ],
       "colorFlex": true,
-      "mockupId": "cozy-chair",
+      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
+      "mockupShadow": null,
+      "mockupWidthInches": 60,
+      "mockupHeightInches": 40,
       "patterns": [
         {
           "id": "recMxtEnkmVh0NlhV",
@@ -16666,8 +16735,15 @@
             24
           ],
           "repeat": "yes",
-          "layers": [],
-          "layerLabels": [],
+          "layers": [
+            {
+              "path": "./data/collections/english-cottage/layers/greenwich-time_layer-1_layer-1.jpg",
+              "proofPath": "./data/collections/english-cottage/proof-layers/greenwich-time_layer-1_layer-1.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Layer 1"
+          ],
           "tilingType": "half-drop",
           "designer_colors": [
             "SW6990 CAVIAR",
@@ -16687,7 +16763,7 @@
             "SW0033 REMBRANDT RUBY",
             "SW0034 ROYCROFT ROSE"
           ],
-          "colorFlex": false,
+          "colorFlex": true,
           "coordinates": [
             {
               "collection": "coordinates",
@@ -16708,7 +16784,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.337Z"
+          "updatedAt": "2026-03-12T02:27:40.526Z"
         },
         {
           "id": "recd9114xx3tC7tRT",
@@ -16773,7 +16849,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.343Z"
+          "updatedAt": "2026-03-12T02:27:40.529Z"
         },
         {
           "id": "recdzB2YWBLIQWhbR",
@@ -16826,7 +16902,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.343Z"
+          "updatedAt": "2026-03-12T02:27:40.530Z"
         },
         {
           "id": "rec2unzmFc9sEtZsS",
@@ -16903,7 +16979,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.330Z"
+          "updatedAt": "2026-03-12T02:27:40.514Z"
         },
         {
           "id": "recElprQ6zTMgrH9n",
@@ -16956,7 +17032,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.336Z"
+          "updatedAt": "2026-03-12T02:27:40.524Z"
         },
         {
           "id": "recMCH5gj5tfTArL3",
@@ -17009,7 +17085,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.337Z"
+          "updatedAt": "2026-03-12T02:27:40.525Z"
         },
         {
           "id": "recfVsru84C1QVHha",
@@ -17062,7 +17138,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.343Z"
+          "updatedAt": "2026-03-12T02:27:40.530Z"
         },
         {
           "id": "recNCtZJpRmRsb938",
@@ -17133,7 +17209,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.338Z"
+          "updatedAt": "2026-03-12T02:27:40.527Z"
         },
         {
           "id": "recEZOPTgvtbmNo4S",
@@ -17192,7 +17268,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.336Z"
+          "updatedAt": "2026-03-12T02:27:40.524Z"
         },
         {
           "id": "recDLeHjr8iVIA8XL",
@@ -17287,7 +17363,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.336Z"
+          "updatedAt": "2026-03-12T02:27:40.524Z"
         },
         {
           "id": "recRujuNISoOdZsQS",
@@ -17358,7 +17434,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.342Z"
+          "updatedAt": "2026-03-12T02:27:40.528Z"
         },
         {
           "id": "reczeVZW4NQ3FbTlz",
@@ -17423,7 +17499,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.348Z"
+          "updatedAt": "2026-03-12T02:27:40.538Z"
         },
         {
           "id": "recFVDDDrzjudTpE3",
@@ -17494,7 +17570,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.336Z"
+          "updatedAt": "2026-03-12T02:27:40.525Z"
         },
         {
           "id": "recpEYaYTMqhZ2U38",
@@ -17565,7 +17641,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.348Z"
+          "updatedAt": "2026-03-12T02:27:40.533Z"
         },
         {
           "id": "recBU7tm1kkpu4Zf6",
@@ -17630,7 +17706,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.334Z"
+          "updatedAt": "2026-03-12T02:27:40.523Z"
         },
         {
           "id": "recOoNbqHlbuF0Eum",
@@ -17683,7 +17759,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.341Z"
+          "updatedAt": "2026-03-12T02:27:40.527Z"
         },
         {
           "id": "recPmljLXfMwiUGFg",
@@ -17730,7 +17806,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.341Z"
+          "updatedAt": "2026-03-12T02:27:40.527Z"
         },
         {
           "id": "rec7fuzDuTFh1V1EX",
@@ -17831,7 +17907,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.332Z"
+          "updatedAt": "2026-03-12T02:27:40.523Z"
         },
         {
           "id": "recRKNvjooe8gBhEO",
@@ -17878,7 +17954,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.342Z"
+          "updatedAt": "2026-03-12T02:27:40.528Z"
         },
         {
           "id": "recvZD8F1KnZPhOC7",
@@ -17925,7 +18001,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.348Z"
+          "updatedAt": "2026-03-12T02:27:40.538Z"
         },
         {
           "id": "recaEW7L1CG3II2R7",
@@ -17978,7 +18054,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.342Z"
+          "updatedAt": "2026-03-12T02:27:40.529Z"
         },
         {
           "id": "recPJL0LW6Imeeu5T",
@@ -18031,7 +18107,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.341Z"
+          "updatedAt": "2026-03-12T02:27:40.527Z"
         },
         {
           "id": "recHYMfBhv3Qcl1we",
@@ -18078,7 +18154,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.336Z"
+          "updatedAt": "2026-03-12T02:27:40.525Z"
         },
         {
           "id": "rec3wpBgUuj9aX3fj",
@@ -18125,7 +18201,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.330Z"
+          "updatedAt": "2026-03-12T02:27:40.519Z"
         },
         {
           "id": "recgWwc932TT5RhVI",
@@ -18178,7 +18254,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.343Z"
+          "updatedAt": "2026-03-12T02:27:40.532Z"
         },
         {
           "id": "rec8VPSfxkeabADrl",
@@ -18207,7 +18283,7 @@
           "tilingType": "straight",
           "designer_colors": [
             "SC0001 COTTAGE LINEN",
-            "SW0053 PORCELAIN",
+            "SW6099 SAND DOLLAR",
             "SW7509 TIKI HUT"
           ],
           "colorFlex": true,
@@ -18231,7 +18307,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.332Z"
+          "updatedAt": "2026-03-12T02:27:40.523Z"
         },
         {
           "id": "recRD9u6boNf7Yk2h",
@@ -18344,7 +18420,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.342Z"
+          "updatedAt": "2026-03-12T02:27:40.528Z"
         },
         {
           "id": "rec5fTLEJ2HeHCgHP",
@@ -18439,7 +18515,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.331Z"
+          "updatedAt": "2026-03-12T02:27:40.520Z"
         },
         {
           "id": "recQUXtxY0JLVocpr",
@@ -18510,7 +18586,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.341Z"
+          "updatedAt": "2026-03-12T02:27:40.528Z"
         },
         {
           "id": "rect7gBXgtW6czQb9",
@@ -18569,7 +18645,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.348Z"
+          "updatedAt": "2026-03-12T02:27:40.533Z"
         },
         {
           "id": "recoiqZqc5hoyXIqa",
@@ -18628,7 +18704,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.348Z"
+          "updatedAt": "2026-03-12T02:27:40.532Z"
         },
         {
           "id": "recMGdmFlU6te7gL6",
@@ -18711,7 +18787,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.337Z"
+          "updatedAt": "2026-03-12T02:27:40.526Z"
         },
         {
           "id": "recgeWTqvc28SErwa",
@@ -18776,7 +18852,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.347Z"
+          "updatedAt": "2026-03-12T02:27:40.532Z"
         },
         {
           "id": "recb7axlHqLz86wK8",
@@ -18853,7 +18929,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.342Z"
+          "updatedAt": "2026-03-12T02:27:40.529Z"
         },
         {
           "id": "recLCo6szkIJXpmaB",
@@ -18900,7 +18976,96 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:35.336Z"
+          "updatedAt": "2026-03-12T02:27:40.525Z"
+        },
+        {
+          "id": "recg7dT0RqC4zxru1",
+          "number": "01-03-139",
+          "name": "Garden Pals",
+          "thumbnail": "./data/collections/english-cottage/thumbnails/garden-pals.jpg",
+          "size": [
+            24,
+            36
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/english-cottage/layers/garden-pals_branches_layer-1.jpg",
+              "proofPath": "./data/collections/english-cottage/proof-layers/garden-pals_branches_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/english-cottage/layers/garden-pals_bunnies_layer-2.jpg",
+              "proofPath": "./data/collections/english-cottage/proof-layers/garden-pals_bunnies_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/english-cottage/layers/garden-pals_oak-leaves_layer-3.jpg",
+              "proofPath": "./data/collections/english-cottage/proof-layers/garden-pals_oak-leaves_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/english-cottage/layers/garden-pals_med-leaves_layer-4.jpg",
+              "proofPath": "./data/collections/english-cottage/proof-layers/garden-pals_med-leaves_layer-4.jpg"
+            },
+            {
+              "path": "./data/collections/english-cottage/layers/garden-pals_huge-leaves_layer-5.jpg",
+              "proofPath": "./data/collections/english-cottage/proof-layers/garden-pals_huge-leaves_layer-5.jpg"
+            },
+            {
+              "path": "./data/collections/english-cottage/layers/garden-pals_flowers_layer-6.jpg",
+              "proofPath": "./data/collections/english-cottage/proof-layers/garden-pals_flowers_layer-6.jpg"
+            },
+            {
+              "path": "./data/collections/english-cottage/layers/garden-pals_tiny-leaves_layer-7.jpg",
+              "proofPath": "./data/collections/english-cottage/proof-layers/garden-pals_tiny-leaves_layer-7.jpg"
+            },
+            {
+              "path": "./data/collections/english-cottage/layers/garden-pals_birds_layer-8.jpg",
+              "proofPath": "./data/collections/english-cottage/proof-layers/garden-pals_birds_layer-8.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Branches",
+            "Bunnies",
+            "Oak Leaves",
+            "Med Leaves",
+            "Huge Leaves",
+            "Flowers",
+            "Tiny Leaves",
+            "Birds"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6990 CAVIAR",
+            "SW3174 LENNOX HILL TAN",
+            "SW7509 TIKI HUT",
+            "SW6423 RYEGRASS",
+            "SW6425 RELENTLESS OLIVE",
+            "SW6213 HALCYON GREEN",
+            "SW6396 DIFFERENT GOLD",
+            "SW6394 SEQUIN",
+            "SW9148 SMOKY AZURE"
+          ],
+          "colorFlex": true,
+          "coordinates": [
+            {
+              "collection": "coordinates",
+              "filename": "garden-path.jpg",
+              "path": "./data/collections/coordinates/thumbnails/garden-path.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/garden-path_pattern_layer-1.jpg"
+              ]
+            },
+            {
+              "collection": "coordinates",
+              "filename": "ashbourne.jpg",
+              "path": "./data/collections/coordinates/thumbnails/ashbourne.jpg",
+              "layerPaths": [
+                "./data/collections/coordinates/layers/ashbourne_pattern_layer-1.jpg"
+              ]
+            }
+          ],
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-12T02:27:40.532Z"
         }
       ]
     },
@@ -22238,7 +22403,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.295Z"
+          "updatedAt": "2026-03-11T18:50:31.726Z"
         },
         {
           "id": "recox0GQYj6r1PYtU",
@@ -22302,7 +22467,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.298Z"
+          "updatedAt": "2026-03-11T18:50:31.731Z"
         },
         {
           "id": "recGTQYj2YWVTJG9N",
@@ -22378,7 +22543,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.296Z"
+          "updatedAt": "2026-03-11T18:50:31.727Z"
         },
         {
           "id": "recoih400HWGEFR2H",
@@ -22442,7 +22607,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.298Z"
+          "updatedAt": "2026-03-11T18:50:31.731Z"
         },
         {
           "id": "recjYRt1rtzDNrNae",
@@ -22506,7 +22671,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.297Z"
+          "updatedAt": "2026-03-11T18:50:31.731Z"
         },
         {
           "id": "recA4ZEQSfLEQpbFc",
@@ -22581,7 +22746,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.295Z"
+          "updatedAt": "2026-03-11T18:50:31.725Z"
         },
         {
           "id": "recAkM01wHZJaW6nS",
@@ -22663,7 +22828,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.295Z"
+          "updatedAt": "2026-03-11T18:50:31.726Z"
         },
         {
           "id": "rec7qUyRxUmQSifZf",
@@ -22727,7 +22892,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.295Z"
+          "updatedAt": "2026-03-11T18:50:31.725Z"
         },
         {
           "id": "recspvaz2Pw3VVGnT",
@@ -22791,7 +22956,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.298Z"
+          "updatedAt": "2026-03-11T18:50:31.731Z"
         },
         {
           "id": "recLeyUD2GFMDv9QV",
@@ -22879,7 +23044,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.296Z"
+          "updatedAt": "2026-03-11T18:50:31.729Z"
         },
         {
           "id": "reclaiPSynyjLmCSN",
@@ -22943,7 +23108,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.298Z"
+          "updatedAt": "2026-03-11T18:50:31.731Z"
         },
         {
           "id": "recR5W5IQr3nbYj9r",
@@ -23018,7 +23183,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.297Z"
+          "updatedAt": "2026-03-11T18:50:31.729Z"
         },
         {
           "id": "recuQ0SdYilLQoIud",
@@ -23082,7 +23247,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.298Z"
+          "updatedAt": "2026-03-11T18:50:31.732Z"
         },
         {
           "id": "recbAMMDmL6NgxZw2",
@@ -23157,7 +23322,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.297Z"
+          "updatedAt": "2026-03-11T18:50:31.730Z"
         },
         {
           "id": "recTmdRnyNyHIHS9o",
@@ -23232,7 +23397,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.297Z"
+          "updatedAt": "2026-03-11T18:50:31.730Z"
         },
         {
           "id": "rectFwjI7LVWeB3yY",
@@ -23307,7 +23472,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.298Z"
+          "updatedAt": "2026-03-11T18:50:31.732Z"
         },
         {
           "id": "recjGx99A996YEUsc",
@@ -23377,7 +23542,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.297Z"
+          "updatedAt": "2026-03-11T18:50:31.730Z"
         },
         {
           "id": "rec4wMpcLC9gDw4Eo",
@@ -23441,7 +23606,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.295Z"
+          "updatedAt": "2026-03-11T18:50:31.725Z"
         },
         {
           "id": "recu6C32Hfe5crZn8",
@@ -23505,7 +23670,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.298Z"
+          "updatedAt": "2026-03-11T18:50:31.732Z"
         },
         {
           "id": "recqp5UrKp7DIDUXq",
@@ -23569,7 +23734,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.298Z"
+          "updatedAt": "2026-03-11T18:50:31.731Z"
         },
         {
           "id": "rec33QtHzjB6LyLzc",
@@ -23633,7 +23798,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.288Z"
+          "updatedAt": "2026-03-11T18:50:31.723Z"
         },
         {
           "id": "recbfk88iWNARZzt3",
@@ -23703,7 +23868,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.297Z"
+          "updatedAt": "2026-03-11T18:50:31.730Z"
         },
         {
           "id": "recrkB5otqHW132dF",
@@ -23767,7 +23932,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.298Z"
+          "updatedAt": "2026-03-11T18:50:31.731Z"
         },
         {
           "id": "recGyM1zcb0IUgmQw",
@@ -23837,7 +24002,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.296Z"
+          "updatedAt": "2026-03-11T18:50:31.728Z"
         },
         {
           "id": "recFhZzOV2zLSO7DE",
@@ -23907,7 +24072,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T20:35:58.296Z"
+          "updatedAt": "2026-03-11T18:50:31.727Z"
         }
       ]
     },
@@ -25591,7 +25756,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.166Z"
+          "updatedAt": "2026-03-12T23:02:30.739Z"
         },
         {
           "id": "recJfXb0WbfY9pObr",
@@ -25683,7 +25848,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.161Z"
+          "updatedAt": "2026-03-12T23:02:30.735Z"
         },
         {
           "id": "rec83sDT9T5rp7aby",
@@ -25805,7 +25970,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.160Z"
+          "updatedAt": "2026-03-12T23:02:30.733Z"
         },
         {
           "id": "rec0xo58GppLqNCSf",
@@ -25885,7 +26050,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.158Z"
+          "updatedAt": "2026-03-12T23:02:30.731Z"
         },
         {
           "id": "recqSdagDeqlKMmEn",
@@ -25959,7 +26124,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.167Z"
+          "updatedAt": "2026-03-12T23:02:30.740Z"
         },
         {
           "id": "recYzcSxCvsotlmYh",
@@ -26081,7 +26246,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.166Z"
+          "updatedAt": "2026-03-12T23:02:30.738Z"
         },
         {
           "id": "recXFqmGGeJvcUSJ6",
@@ -26173,7 +26338,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.165Z"
+          "updatedAt": "2026-03-12T23:02:30.737Z"
         },
         {
           "id": "recqVcDke2qYLyESD",
@@ -26247,7 +26412,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.167Z"
+          "updatedAt": "2026-03-12T23:02:30.741Z"
         },
         {
           "id": "recvFozYpS3kWQHzJ",
@@ -26351,7 +26516,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.174Z"
+          "updatedAt": "2026-03-12T23:02:30.742Z"
         },
         {
           "id": "rec8uxiBoTuuF3xDM",
@@ -26454,7 +26619,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.160Z"
+          "updatedAt": "2026-03-12T23:02:30.733Z"
         },
         {
           "id": "recJCTOK4OoOARDr7",
@@ -26546,7 +26711,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.161Z"
+          "updatedAt": "2026-03-12T23:02:30.734Z"
         },
         {
           "id": "rect3ktkW9bJytbCc",
@@ -26638,7 +26803,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.167Z"
+          "updatedAt": "2026-03-12T23:02:30.741Z"
         },
         {
           "id": "rec4zj2P8WdycPe2W",
@@ -26742,7 +26907,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.159Z"
+          "updatedAt": "2026-03-12T23:02:30.732Z"
         },
         {
           "id": "recxZYvKa3ev6vm0Z",
@@ -26828,7 +26993,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.174Z"
+          "updatedAt": "2026-03-12T23:02:30.743Z"
         },
         {
           "id": "reczYb6bi8k25SEJC",
@@ -26902,7 +27067,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.174Z"
+          "updatedAt": "2026-03-12T23:02:30.743Z"
         },
         {
           "id": "recNl3gTaL2PtSoQ5",
@@ -27018,7 +27183,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.165Z"
+          "updatedAt": "2026-03-12T23:02:30.737Z"
         },
         {
           "id": "recdjfVVpI9FAXNft",
@@ -27122,7 +27287,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.167Z"
+          "updatedAt": "2026-03-12T23:02:30.739Z"
         },
         {
           "id": "rec9DaYX527Zy0v8V",
@@ -27202,7 +27367,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.160Z"
+          "updatedAt": "2026-03-12T23:02:30.733Z"
         },
         {
           "id": "recN07vrKKqvRlor2",
@@ -27300,7 +27465,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.161Z"
+          "updatedAt": "2026-03-12T23:02:30.736Z"
         }
       ]
     },
@@ -32781,7 +32946,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.807Z"
+          "updatedAt": "2026-03-12T23:00:30.454Z"
         },
         {
           "id": "rec5rx7EKmWEH5hB6",
@@ -32856,7 +33021,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.805Z"
+          "updatedAt": "2026-03-12T23:00:30.452Z"
         },
         {
           "id": "reconanxV7tP0pyEu",
@@ -32882,10 +33047,10 @@
             "Stripes",
             "Pattern"
           ],
-          "tilingType": "half-drop",
+          "tilingType": "straight",
           "designer_colors": [
-            "SW6209 RIPE OLIVE",
-            "SW6187 ROSEMARY",
+            "DE6138 ARTIFACT",
+            "SW9179 ANCHORS AWEIGH",
             "SW7698 STRAW HARVEST"
           ],
           "colorFlex": true,
@@ -32925,7 +33090,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.811Z"
+          "updatedAt": "2026-03-12T23:00:30.456Z"
         },
         {
           "id": "recCM05XU8xI1aoOQ",
@@ -32939,29 +33104,34 @@
           "repeat": "yes",
           "layers": [
             {
-              "path": "./data/collections/new-orleans/layers/beauregard-full-color_hearts_layer-1.jpg",
-              "proofPath": "./data/collections/new-orleans/proof-layers/beauregard-full-color_hearts_layer-1.jpg"
+              "path": "./data/collections/new-orleans/layers/beauregard-full-color_stripes_layer-1.jpg",
+              "proofPath": "./data/collections/new-orleans/proof-layers/beauregard-full-color_stripes_layer-1.jpg"
             },
             {
-              "path": "./data/collections/new-orleans/layers/beauregard-full-color_flowers_layer-2.jpg",
-              "proofPath": "./data/collections/new-orleans/proof-layers/beauregard-full-color_flowers_layer-2.jpg"
+              "path": "./data/collections/new-orleans/layers/beauregard-full-color_hearts_layer-2.jpg",
+              "proofPath": "./data/collections/new-orleans/proof-layers/beauregard-full-color_hearts_layer-2.jpg"
             },
             {
-              "path": "./data/collections/new-orleans/layers/beauregard-full-color_pettals_layer-3.jpg",
-              "proofPath": "./data/collections/new-orleans/proof-layers/beauregard-full-color_pettals_layer-3.jpg"
+              "path": "./data/collections/new-orleans/layers/beauregard-full-color_leaves_layer-3.jpg",
+              "proofPath": "./data/collections/new-orleans/proof-layers/beauregard-full-color_leaves_layer-3.jpg"
             },
             {
-              "path": "./data/collections/new-orleans/layers/beauregard-full-color_vines_layer-4.jpg",
-              "proofPath": "./data/collections/new-orleans/proof-layers/beauregard-full-color_vines_layer-4.jpg"
+              "path": "./data/collections/new-orleans/layers/beauregard-full-color_pettals_layer-4.jpg",
+              "proofPath": "./data/collections/new-orleans/proof-layers/beauregard-full-color_pettals_layer-4.jpg"
             },
             {
-              "path": "./data/collections/new-orleans/layers/beauregard-full-color_outline_layer-5.jpg",
-              "proofPath": "./data/collections/new-orleans/proof-layers/beauregard-full-color_outline_layer-5.jpg"
+              "path": "./data/collections/new-orleans/layers/beauregard-full-color_vines_layer-5.jpg",
+              "proofPath": "./data/collections/new-orleans/proof-layers/beauregard-full-color_vines_layer-5.jpg"
+            },
+            {
+              "path": "./data/collections/new-orleans/layers/beauregard-full-color_outline_layer-6.jpg",
+              "proofPath": "./data/collections/new-orleans/proof-layers/beauregard-full-color_outline_layer-6.jpg"
             }
           ],
           "layerLabels": [
+            "Stripes",
             "Hearts",
-            "Flowers",
+            "Leaves",
             "Pettals",
             "Vines",
             "Outline"
@@ -32973,6 +33143,7 @@
             "SW7726 LELMON VERBENA",
             "SW0043 PERISTYLE BRASS",
             "SW6158 SAWDUST",
+            "SW0043 PERISTYLE BRASS",
             "SW7069 IRON ORE"
           ],
           "colorFlex": true,
@@ -33012,7 +33183,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.806Z"
+          "updatedAt": "2026-03-12T23:00:30.454Z"
         },
         {
           "id": "recDGsZ0SYv3vN8Uf",
@@ -33075,7 +33246,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.807Z"
+          "updatedAt": "2026-03-12T23:00:30.454Z"
         },
         {
           "id": "recq5noQoTgxEr7tG",
@@ -33105,7 +33276,7 @@
           "designer_colors": [
             "SW7069 IRON ORE",
             "SW0043 PERISTYLE BRASS",
-            "SW0050 CLASSIC LIGHT BUFF"
+            "SW7698 STRAW HARVEST"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -33144,7 +33315,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.811Z"
+          "updatedAt": "2026-03-12T23:00:30.456Z"
         },
         {
           "id": "rec55D2H8JGeflZcp",
@@ -33213,7 +33384,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.805Z"
+          "updatedAt": "2026-03-12T23:00:30.451Z"
         },
         {
           "id": "recqj0l7ucB4tQoQn",
@@ -33282,7 +33453,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.812Z"
+          "updatedAt": "2026-03-12T23:00:30.457Z"
         },
         {
           "id": "recAmRxxuo5zSp85R",
@@ -33351,7 +33522,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.806Z"
+          "updatedAt": "2026-03-12T23:00:30.453Z"
         },
         {
           "id": "rece8GCFEIS8ckeWd",
@@ -33414,7 +33585,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.811Z"
+          "updatedAt": "2026-03-12T23:00:30.456Z"
         },
         {
           "id": "rec8SfZnO1O0KdRGN",
@@ -33442,9 +33613,9 @@
           ],
           "tilingType": "straight",
           "designer_colors": [
-            "SW7069 IRON ORE",
-            "SW2848 ROYCROFT PEWTER",
-            "SW0053 PORCELAIN"
+            "SW7698 STRAW HARVEST",
+            "SW7678 Cottage Cream",
+            "SW0043 PERISTYLE BRASS"
           ],
           "colorFlex": true,
           "coordinates": [
@@ -33483,7 +33654,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.805Z"
+          "updatedAt": "2026-03-12T23:00:30.452Z"
         },
         {
           "id": "rec9Kk4TDNiGZS4DF",
@@ -33552,7 +33723,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.805Z"
+          "updatedAt": "2026-03-12T23:00:30.453Z"
         },
         {
           "id": "recmIfaGAmj67B0pt",
@@ -33627,7 +33798,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.811Z"
+          "updatedAt": "2026-03-12T23:00:30.456Z"
         },
         {
           "id": "recaNNEKo8d3ejsfE",
@@ -33696,7 +33867,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.811Z"
+          "updatedAt": "2026-03-12T23:00:30.455Z"
         },
         {
           "id": "rec7aSoFkXX5b18gG",
@@ -33759,7 +33930,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.805Z"
+          "updatedAt": "2026-03-12T23:00:30.452Z"
         },
         {
           "id": "recEXK3h1ynpPanIg",
@@ -33852,7 +34023,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.808Z"
+          "updatedAt": "2026-03-12T23:00:30.455Z"
         },
         {
           "id": "recTT9tmfcTBF9p2i",
@@ -33927,7 +34098,7 @@
           ],
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:39.811Z"
+          "updatedAt": "2026-03-12T23:00:30.455Z"
         }
       ]
     },
@@ -74150,7 +74321,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.996Z"
+          "updatedAt": "2026-03-11T17:24:38.463Z"
         },
         {
           "id": "recJ3HqUHaCM8GWzb",
@@ -74204,7 +74375,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.996Z"
+          "updatedAt": "2026-03-11T17:24:38.463Z"
         },
         {
           "id": "rec3eVi8VGJn0xLnV",
@@ -74288,7 +74459,73 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.995Z"
+          "updatedAt": "2026-03-11T17:24:38.462Z"
+        },
+        {
+          "id": "recgdLlAaXdyWMKoo",
+          "number": "27-104A",
+          "name": "D00 See Doo Companion",
+          "thumbnail": "./data/collections/hip-to-be-square/thumbnails/d00-see-doo-companion.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/hip-to-be-square/layers/d00-see-doo-companion_center_layer-1.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/d00-see-doo-companion_center_layer-1.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/d00-see-doo-companion_center_layer-2.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/d00-see-doo-companion_center_layer-2.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/d00-see-doo-companion_center_layer-3.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/d00-see-doo-companion_center_layer-3.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/d00-see-doo-companion_center_layer-4.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/d00-see-doo-companion_center_layer-4.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/d00-see-doo-companion_center_layer-5.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/d00-see-doo-companion_center_layer-5.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/d00-see-doo-companion_center_layer-6.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/d00-see-doo-companion_center_layer-6.jpg"
+            },
+            {
+              "path": "./data/collections/hip-to-be-square/layers/d00-see-doo-companion_center_layer-7.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/d00-see-doo-companion_center_layer-7.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Center",
+            "Center",
+            "Center",
+            "Center",
+            "Center",
+            "Center",
+            "Center"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6159 HIGH TEA",
+            "SW6371 VANILLIN",
+            "SW6215 ROCKY RIVER",
+            "SW6394 SEQUIN",
+            "SW9133 JASPER STONE",
+            "SW6371 VANILLIN",
+            "SW6395 ALCHEMY",
+            "SW7069 IRON ORE"
+          ],
+          "colorFlex": true,
+          "coordinates": null,
+          "baseComposite": null,
+          "tintWhite": false,
+          "updatedAt": "2026-03-11T17:24:38.464Z"
         },
         {
           "id": "recrcOrW6kSuC150M",
@@ -74341,7 +74578,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:41.000Z"
+          "updatedAt": "2026-03-11T17:24:38.464Z"
         },
         {
           "id": "rec9y0o32XosTUhT7",
@@ -74371,7 +74608,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.995Z"
+          "updatedAt": "2026-03-11T17:24:38.463Z"
         },
         {
           "id": "recfOnXrjaHLQGuEE",
@@ -74413,7 +74650,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.996Z"
+          "updatedAt": "2026-03-11T17:24:38.463Z"
         },
         {
           "id": "rec2AkbVqW0ZwIKeZ",
@@ -74461,7 +74698,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.993Z"
+          "updatedAt": "2026-03-11T17:24:38.455Z"
         },
         {
           "id": "rec4uQdgEfyWZNeQ6",
@@ -74509,7 +74746,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.995Z"
+          "updatedAt": "2026-03-11T17:24:38.462Z"
         },
         {
           "id": "recgoXhArUbZTBKnC",
@@ -74539,7 +74776,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-07T18:34:40.996Z"
+          "updatedAt": "2026-03-11T17:24:38.464Z"
         }
       ]
     },
@@ -74792,12 +75029,15 @@
             "Stripes"
           ],
           "tilingType": "straight",
-          "designer_colors": [],
+          "designer_colors": [
+            "SW6158 SAWDUST",
+            "SW0053 PORCELAIN"
+          ],
           "colorFlex": true,
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-08T02:32:43.046Z"
+          "updatedAt": "2026-03-11T18:49:49.599Z"
         },
         {
           "id": "recuzqdEzzfvWPjCv",
@@ -74824,12 +75064,16 @@
             "Wide Stripe"
           ],
           "tilingType": "straight",
-          "designer_colors": [],
+          "designer_colors": [
+            "SC0001 COTTAGE LINEN",
+            "SW3441 FOOTHILLS",
+            "SW6212 QUIETUDE"
+          ],
           "colorFlex": true,
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-08T02:32:43.046Z"
+          "updatedAt": "2026-03-11T18:49:49.599Z"
         },
         {
           "id": "rec2uteYrpbWltBeA",
@@ -74861,12 +75105,16 @@
             "Vines"
           ],
           "tilingType": "straight",
-          "designer_colors": [],
+          "designer_colors": [
+            "SW6159 HIGH TEA",
+            "SW6158 SAWDUST",
+            "SW0053 PORCELAIN"
+          ],
           "colorFlex": true,
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-08T02:32:43.040Z"
+          "updatedAt": "2026-03-11T18:49:49.593Z"
         },
         {
           "id": "recwjA9BiVgHwtwnf",
@@ -74888,12 +75136,15 @@
             "Dots"
           ],
           "tilingType": "straight",
-          "designer_colors": [],
+          "designer_colors": [
+            "SC0001 COTTAGE LINEN",
+            "SW6524 COMMODORE"
+          ],
           "colorFlex": true,
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-08T02:32:43.046Z"
+          "updatedAt": "2026-03-11T18:49:49.600Z"
         }
       ]
     },
@@ -74945,7 +75196,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T21:07:21.581Z"
+          "updatedAt": "2026-03-11T18:43:19.653Z"
         },
         {
           "id": "rec6dplBlila6lxDT",
@@ -74975,7 +75226,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T21:07:21.587Z"
+          "updatedAt": "2026-03-11T18:43:19.660Z"
         },
         {
           "id": "rece3xqzrebErvMmi",
@@ -75005,7 +75256,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T21:07:21.587Z"
+          "updatedAt": "2026-03-11T18:43:19.660Z"
         },
         {
           "id": "recay2NByc0V7ky0o",
@@ -75035,7 +75286,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T21:07:21.587Z"
+          "updatedAt": "2026-03-11T18:43:19.660Z"
         },
         {
           "id": "recyY6vFzl8QilZ8W",
@@ -75065,7 +75316,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T21:07:21.588Z"
+          "updatedAt": "2026-03-11T18:43:19.660Z"
         },
         {
           "id": "reczEC8LUxG72iLOo",
@@ -75095,7 +75346,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T21:07:21.588Z"
+          "updatedAt": "2026-03-11T18:43:19.660Z"
         },
         {
           "id": "recR7334J6hCD1oa1",
@@ -75125,7 +75376,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T21:07:21.587Z"
+          "updatedAt": "2026-03-11T18:43:19.660Z"
         },
         {
           "id": "recHQCMQiuIKBEh9I",
@@ -75155,7 +75406,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T21:07:21.587Z"
+          "updatedAt": "2026-03-11T18:43:19.660Z"
         },
         {
           "id": "recMm94rLZcH9KbIo",
@@ -75185,7 +75436,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-10T21:07:21.587Z"
+          "updatedAt": "2026-03-11T18:43:19.660Z"
         }
       ]
     }
