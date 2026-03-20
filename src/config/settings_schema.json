@@ -1459,7 +1459,7 @@
         "type": "text",
         "id": "colorflex_data_base_url",
         "label": "ColorFlex data base URL",
-        "info": "Base URL for pattern images and data (e.g. Backblaze B2). Leave empty to use default. Main site must use your B2 bucket URL, not so-animation.",
+        "info": "Base URL for pattern images and data (e.g. Backblaze B2). Leave empty to use default. If you get CORS errors with coordinates/thumbnails, deploy scripts/cf-cors-proxy-worker.js as a Cloudflare Worker and set this to the Worker URL (e.g. https://colorflex-proxy.yourdomain.com).",
         "default": "https://s3.us-east-005.backblazeb2.com/cf-data"
       },
       {

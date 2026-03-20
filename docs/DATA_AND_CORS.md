@@ -105,6 +105,9 @@ We don’t use the AWS CLI. We use:
 
 Details and options (e.g. restrict origins) are in **`docs/BACKBLAZE_CORS_FIX.md`**.
 
+4. **If CORS still won't stick (proxy workaround)**  
+   When the Python script reports success but curl and the browser still get no CORS header, use the **Cloudflare Worker proxy**. Deploy `scripts/cf-cors-proxy-worker.js` as a Cloudflare Worker, then set the theme's **"ColorFlex data base URL"** to the Worker URL. All image requests go through the proxy, which adds CORS headers. See **`docs/CLOUDFLARE_CORS_PROXY.md`** and **`docs/CORS_QUICK_FIX.md`**.
+
 ---
 
 ## 6. Short answers to your questions
