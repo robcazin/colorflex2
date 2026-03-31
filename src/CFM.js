@@ -496,7 +496,8 @@ window.appState = {
     selectedFurnitureType: null, // e.g., 'sofa-capitol', 'sofa-kite'
     colorsLocked: false,  // When true, preserves colors when switching patterns
     colorLockFullBuffer: null,  // When lock is on: full palette (max colorable layers seen), so switching to fewer then back to more layers restores all
-    selectedMockupId: null  // User override for room mockup (id from mockups.json); null = use collection default
+    selectedMockupId: null,  // User override for room mockup (id from mockups.json); null = use collection default
+    roomMockupHasSeenAlt: false // UI copy state: first visit shows "More Views"; after selecting an alternate view, show default mockup name
 };
 
 const BACKGROUND_INDEX = 0;
@@ -5660,6 +5661,9 @@ function getColorFlexDataBaseUrl() {
     return base;
 }
 
+// Canonical Backblaze base (known-good CORS). Used as fallback when theme points at a proxy/worker without CORS.
+var _COLORFLEX_CANONICAL_B2_BASE = 'https://s3.us-east-005.backblazeb2.com/cf-data';
+
 // Path normalization: use theme data base URL (Backblaze); no so-animation on main site
 var _colorFlexBaseUrlLogged = false;
 var _colorFlexLayerUrlLogCount = 0;
@@ -5671,6 +5675,132 @@ function urlForCorsFetch(url) {
     var sep = url.indexOf('?') >= 0 ? '&' : '?';
     return url + sep + '_cf=cors';
 }
+
+/** Same paths as mockups.json `white-dresser`; used when mockups.json cannot be loaded. */
+var WHITE_DRESSER_FALLBACK_MAP_ENTRY = {
+    id: 'white-dresser',
+    name: 'White Dresser',
+    image: './data/mockups/white-dresser-W72H72.png',
+    shadow: './data/mockups/white-dresser-shadow-W72H72.jpg',
+    widthInches: 72,
+    heightInches: 72
+};
+
+/** Airtable / legacy ids that do not match mockups.json object keys or inner `id` (normalize before lookup). */
+var MOCKUP_ID_ALIASES = {
+    'dresser-green': 'green-dresser',
+    'dresser-w100h80': 'dresser'
+};
+
+function canonicalMockupId(rawId) {
+    if (rawId == null || rawId === '') return rawId;
+    var s = String(rawId).trim();
+    var lower = s.toLowerCase();
+    if (MOCKUP_ID_ALIASES[s]) return MOCKUP_ID_ALIASES[s];
+    if (MOCKUP_ID_ALIASES[lower]) return MOCKUP_ID_ALIASES[lower];
+    return s;
+}
+
+/**
+ * Resolve a mockup entry from the mockups map by key, internal `id`, or canonical alias.
+ */
+function resolveMockupFromMap(mockupsMap, rawId) {
+    if (!rawId || !mockupsMap || typeof mockupsMap !== 'object') return null;
+    var id = canonicalMockupId(rawId);
+    if (mockupsMap[rawId]) return mockupsMap[rawId];
+    if (mockupsMap[id]) return mockupsMap[id];
+    var lower = String(id).toLowerCase();
+    if (mockupsMap[lower]) return mockupsMap[lower];
+    var rawLower = String(rawId).toLowerCase();
+    if (mockupsMap[rawLower]) return mockupsMap[rawLower];
+    return Object.values(mockupsMap).find(function (m) {
+        if (!m || !m.id) return false;
+        var mid = String(m.id);
+        return mid === id || mid === rawId || mid.toLowerCase() === lower || mid.toLowerCase() === rawLower;
+    }) || null;
+}
+
+function mockupEntryImagePath(mockup) {
+    if (!mockup) return '';
+    return typeof mockup.image === 'string' ? mockup.image : (mockup.image?.path || mockup.image?.url || mockup.path || '');
+}
+
+function _mockupSlugFromPath(p) {
+    if (!p || typeof p !== 'string') return '';
+    var s = String(p).split('?')[0].split('#')[0];
+    // basename
+    var parts = s.split('/');
+    var base = parts[parts.length - 1] || s;
+    // strip extension
+    base = base.replace(/\.[a-z0-9]+$/i, '');
+    // common legacy suffixes: -W60H40, _W60H40, -1, _1, etc.
+    base = base
+        .replace(/[-_]?w\d+h\d+$/i, '')
+        .replace(/[-_]?(\d+)$/i, '');
+    return base
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')   // normalize separators
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+}
+
+/**
+ * Infer a mockup id from a legacy `collection.mockup` image path by comparing
+ * normalized slugs against mockup `id` and mockup image basenames.
+ */
+function inferMockupIdFromLegacyCollectionMockupPath(collectionMockupPath, mockupsMap) {
+    if (!collectionMockupPath || !mockupsMap || typeof mockupsMap !== 'object') return null;
+    var slug = _mockupSlugFromPath(collectionMockupPath);
+    if (!slug) return null;
+
+    // 1) Exact match against mockup ids (canonicalized)
+    var direct = resolveMockupFromMap(mockupsMap, slug);
+    if (direct && direct.id) return direct.id;
+
+    // 2) Match against mockup image basename slugs
+    var found = Object.values(mockupsMap).find(function (m) {
+        var img = mockupEntryImagePath(m);
+        if (!img) return false;
+        var imgSlug = _mockupSlugFromPath(img);
+        if (!imgSlug) return false;
+        return imgSlug === slug || imgSlug.indexOf(slug) !== -1 || slug.indexOf(imgSlug) !== -1;
+    });
+    return found && found.id ? found.id : null;
+}
+
+function isValidMockupsPayload(d) {
+    return !!(d && d.mockups && typeof d.mockups === 'object' && Object.keys(d.mockups).length > 0);
+}
+
+function ensureMinimalColorFlexMockups() {
+    if (!window.ColorFlexMockups || typeof window.ColorFlexMockups !== 'object') {
+        window.ColorFlexMockups = {};
+    }
+    if (!window.ColorFlexMockups['white-dresser']) {
+        window.ColorFlexMockups['white-dresser'] = Object.assign({}, WHITE_DRESSER_FALLBACK_MAP_ENTRY);
+    }
+}
+
+/** When mockups.json is missing or merge skipped, collections that only have mockupId still need a `mockup` path. */
+function applyWhiteDresserMockupToCollectionsMissingPath(collections) {
+    if (!Array.isArray(collections)) return;
+    ensureMinimalColorFlexMockups();
+    var fb = window.ColorFlexMockups['white-dresser'];
+    var img = mockupEntryImagePath(fb);
+    var sh = typeof fb.shadow === 'string' ? fb.shadow : (fb.shadow?.path || fb.shadow?.url || '');
+    if (!img) return;
+    collections.forEach(function (collection) {
+        if (!collection || typeof collection !== 'object') return;
+        var existing = collection.mockup && String(collection.mockup).trim();
+        if (existing) return;
+        collection.mockup = typeof fb.image === 'string' ? fb.image : img;
+        if (sh) collection.mockupShadow = sh;
+        if (typeof fb.widthInches === 'number') collection.mockupWidthInches = fb.widthInches;
+        if (typeof fb.heightInches === 'number') collection.mockupHeightInches = fb.heightInches;
+        console.warn('⚠️ Collection "' + (collection.name || '') + '" had no resolved mockup path; applied white-dresser fallback.');
+    });
+}
+
 /**
  * Returns the effective room mockup (image, shadow, dimensions) for the given collection.
  * If appState.selectedMockupId is set and exists in ColorFlexMockups, uses that; otherwise collection default.
@@ -5679,7 +5809,7 @@ function getEffectiveRoomMockup(collection) {
     if (!collection) return { mockup: '', mockupShadow: '', mockupWidthInches: 90, mockupHeightInches: 60, tintMask: '' };
     const id = appState.selectedMockupId;
     const mockups = window.ColorFlexMockups || {};
-    const m = id && mockups[id] ? mockups[id] : null;
+    const m = id ? resolveMockupFromMap(mockups, id) : null;
     if (m) {
         const image = typeof m.image === 'string' ? m.image : (m.image?.path || m.image?.url || m.path || '');
         const shadow = typeof m.shadow === 'string' ? m.shadow : (m.shadow?.path || m.shadow?.url || '');
@@ -5702,38 +5832,165 @@ function getEffectiveRoomMockup(collection) {
 }
 
 /**
- * Ensures the room mockup dropdown exists inside #roomMockup and re-appends it (e.g. after canvas is drawn).
- * Only for wallpaper mode; call after appending the room canvas so the dropdown floats over it.
+ * Resolves the selected collection's default mockup label for the dropdown's "reset to default" row.
+ * Prefers collection.mockupId -> mockups map; falls back to matching collection.mockup image path.
+ */
+function getCollectionDefaultMockupLabel(collection, mockups) {
+    if (!collection || !mockups) return 'Collection Default';
+    const map = mockups || {};
+    const fromId = resolveMockupFromMap(map, collection.mockupId);
+    if (fromId && fromId.name) return fromId.name;
+
+    const collMockup = normalizePath(collection.mockup || '');
+    if (collMockup) {
+        const byImage = Object.values(map).find((m) => {
+            const p = normalizePath(typeof m?.image === 'string' ? m.image : (m?.image?.path || m?.image?.url || m?.path || ''));
+            return p && p === collMockup;
+        });
+        if (byImage && byImage.name) return byImage.name;
+    }
+    return 'Collection Default';
+}
+
+function closeRoomMockupCustomMenu() {
+    if (window._roomMockupDdDocClose) {
+        document.removeEventListener('click', window._roomMockupDdDocClose, true);
+        window._roomMockupDdDocClose = null;
+    }
+    if (window._roomMockupDdEscape) {
+        document.removeEventListener('keydown', window._roomMockupDdEscape, true);
+        window._roomMockupDdEscape = null;
+    }
+    const menu = document.getElementById('roomMockupDropdownMenu');
+    const trig = document.getElementById('roomMockupDropdownTrigger');
+    if (menu) menu.hidden = true;
+    if (trig) trig.setAttribute('aria-expanded', 'false');
+}
+
+function openRoomMockupCustomMenu() {
+    const menu = document.getElementById('roomMockupDropdownMenu');
+    const trig = document.getElementById('roomMockupDropdownTrigger');
+    if (!menu || !trig) return;
+    menu.hidden = false;
+    trig.setAttribute('aria-expanded', 'true');
+    const closer = function (e) {
+        const wrap = document.getElementById('roomMockupDropdown');
+        if (wrap && !wrap.contains(e.target)) closeRoomMockupCustomMenu();
+    };
+    window._roomMockupDdDocClose = closer;
+    window._roomMockupDdEscape = function (e) {
+        if (e.key === 'Escape') closeRoomMockupCustomMenu();
+    };
+    setTimeout(function () {
+        document.addEventListener('click', closer, true);
+        document.addEventListener('keydown', window._roomMockupDdEscape, true);
+    }, 0);
+}
+
+/**
+ * Width for custom mockup picker: fit longest label, capped by mockup box (right-aligned, grows left).
+ */
+function setRoomMockupCustomDropdownWidth(wrap, labels) {
+    if (!wrap || !dom.roomMockup) return;
+    const ctx = document.createElement('canvas').getContext('2d');
+    ctx.font = '17px "Special Elite", monospace';
+    let max = 0;
+    labels.forEach((t) => {
+        const w = ctx.measureText(t).width;
+        if (w > max) max = w;
+    });
+    const pad = 52;
+    const roomW = dom.roomMockup.clientWidth || dom.roomMockup.offsetWidth || 700;
+    const cap = Math.max(100, roomW - 24);
+    const width = Math.min(Math.ceil(max + pad), cap);
+    wrap.style.width = `${Math.max(100, Math.floor(width * 0.85))}px`;
+}
+
+/**
+ * Custom dropdown (not native <select>) so Special Elite applies to the open list — OS menus ignore web fonts.
+ * Ensures control exists inside #roomMockup; call after room canvas is drawn.
  */
 function ensureRoomMockupDropdown() {
     if (!dom.roomMockup || !window.ColorFlexMockups) return;
+    closeRoomMockupCustomMenu();
     const existing = document.getElementById('roomMockupDropdown');
     if (existing) existing.remove();
+
     const mockups = window.ColorFlexMockups;
-    const select = document.createElement('select');
-    select.id = 'roomMockupDropdown';
-    select.title = 'Change room preview';
-    select.style.cssText = 'position:absolute;top:8px;right:8px;z-index:20;font-size:11px;padding:4px 6px;background:rgba(0,0,0,0.75);color:#eee;border:1px solid #666;border-radius:4px;cursor:pointer;max-width:160px;';
-    const optDefault = document.createElement('option');
-    optDefault.value = '';
-    optDefault.textContent = 'Collection default';
-    select.appendChild(optDefault);
-    const ids = Object.keys(mockups); // preserve order from mockups.json
-    ids.forEach(id => {
+    const wrap = document.createElement('div');
+    wrap.id = 'roomMockupDropdown';
+    wrap.className = 'room-mockup-dd-wrap';
+
+    const trigger = document.createElement('button');
+    trigger.type = 'button';
+    trigger.id = 'roomMockupDropdownTrigger';
+    trigger.className = 'room-mockup-dd-trigger';
+    trigger.setAttribute('aria-haspopup', 'listbox');
+    trigger.setAttribute('aria-expanded', 'false');
+    trigger.title = 'Change room preview';
+
+    const menu = document.createElement('div');
+    menu.id = 'roomMockupDropdownMenu';
+    menu.className = 'room-mockup-dd-menu';
+    menu.setAttribute('role', 'listbox');
+    menu.hidden = true;
+
+    const defaultLabel = getCollectionDefaultMockupLabel(appState.selectedCollection, mockups);
+    const topLabel = appState.roomMockupHasSeenAlt ? defaultLabel : 'More Views';
+    const entries = [{ value: '', label: topLabel }];
+    Object.keys(mockups).forEach((id) => {
         const m = mockups[id];
-        const name = (m && m.name) || id;
-        const opt = document.createElement('option');
-        opt.value = id;
-        opt.textContent = name;
-        select.appendChild(opt);
+        entries.push({ value: id, label: (m && m.name) || id });
     });
-    select.value = appState.selectedMockupId || '';
-    select.addEventListener('change', function() {
-        appState.selectedMockupId = this.value || null;
-        if (typeof updateRoomMockup === 'function') updateRoomMockup();
+
+    function labelForValue(v) {
+        const found = entries.find((x) => x.value === (v || ''));
+        return found ? found.label : defaultLabel;
+    }
+
+    function syncTriggerAndSelection() {
+        const v = appState.selectedMockupId || '';
+        trigger.textContent = labelForValue(v);
+        menu.querySelectorAll('.room-mockup-dd-item').forEach((btn) => {
+            btn.setAttribute('aria-selected', btn.dataset.value === v ? 'true' : 'false');
+        });
+    }
+
+    entries.forEach((ent) => {
+        const btn = document.createElement('button');
+        btn.type = 'button';
+        btn.className = 'room-mockup-dd-item';
+        btn.setAttribute('role', 'option');
+        btn.dataset.value = ent.value;
+        btn.textContent = ent.label;
+        btn.addEventListener('click', (ev) => {
+            ev.stopPropagation();
+            if (ent.value) appState.roomMockupHasSeenAlt = true;
+            appState.selectedMockupId = ent.value || null;
+            syncTriggerAndSelection();
+            closeRoomMockupCustomMenu();
+            if (typeof updateRoomMockup === 'function') updateRoomMockup();
+        });
+        menu.appendChild(btn);
     });
+
+    trigger.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (menu.hidden) openRoomMockupCustomMenu();
+        else closeRoomMockupCustomMenu();
+    });
+
+    wrap.appendChild(trigger);
+    wrap.appendChild(menu);
+
     if (getComputedStyle(dom.roomMockup).position === 'static') dom.roomMockup.style.position = 'relative';
-    dom.roomMockup.appendChild(select);
+    dom.roomMockup.appendChild(wrap);
+
+    syncTriggerAndSelection();
+
+    requestAnimationFrame(() => {
+        setRoomMockupCustomDropdownWidth(wrap, entries.map((e) => e.label));
+    });
 }
 
 function normalizePath(path) {
@@ -5746,9 +6003,6 @@ function normalizePath(path) {
     // Correct known wrong server filenames (e.g. old collections.json on Shopify)
     if (path.includes('shadow-dance_shadow_layer-1')) {
         path = path.replace(/shadow-dance_shadow_layer-1/g, 'shadow-dance_isshadow_layer-1');
-    }
-    if (path.includes('English-Countryside-Bedroom-1-W60H45')) {
-        path = path.replace(/English-Countryside-Bedroom-1-W60H45/g, 'English-Countryside-Bedroom-1-W60H40');
     }
     // If path is an absolute filesystem path (e.g. /Volumes/jobs/cf-data/collections/... or .../mockups/...), convert to relative data/... so base URL applies correctly
     if (path.startsWith('/') && !path.startsWith('//')) {
@@ -7718,28 +7972,53 @@ async function loadColors() {
             }
             return;
         }
-        
-        // Load directly from Shopify assets
-        console.log("📁 Loading colors from Shopify assets");
-        const colorsUrl = window.ColorFlexAssets?.colorsUrl || "/assets/colors.json";
-        const response = await fetch(colorsUrl, {
-            method: 'GET',
-            cache: 'no-cache',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        });
-        if (!response.ok) {
-            if (response.status === 0 || response.status === 403) {
-                throw new Error('CORS Error: Cross-origin request blocked');
-            }
-            throw new Error(`HTTP error: ${response.status}`);
+
+        function isValidColorsPayload(d) {
+            return Array.isArray(d) && d.length > 0;
         }
-        
-        const data = await response.json();
-        if (!Array.isArray(data) || data.length === 0) {
-            throw new Error("Colors data is empty or invalid");
+
+        async function fetchColors(url, label) {
+            const res = await fetch(url, {
+                method: 'GET',
+                cache: 'no-store',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!res.ok) {
+                if (res.status === 0 || res.status === 403) {
+                    throw new Error(`CORS Error (${label}): Cross-origin request blocked`);
+                }
+                throw new Error(`HTTP ${res.status} (${label})`);
+            }
+            const d = await res.json();
+            if (!isValidColorsPayload(d)) throw new Error(`Invalid/empty colors payload (${label})`);
+            return d;
         }
+
+        const themeColorsUrl = window.ColorFlexAssets?.colorsUrl || "/assets/colors.json";
+        const base = (typeof getColorFlexDataBaseUrl === 'function') ? getColorFlexDataBaseUrl() : '';
+        const cfDataColorsUrl = base ? `${String(base).replace(/\/$/, '')}/data/colors.json` : '';
+        const canonicalB2ColorsUrl = `${String(_COLORFLEX_CANONICAL_B2_BASE).replace(/\/$/, '')}/data/colors.json`;
+
+        const candidates = [];
+        if (cfDataColorsUrl) candidates.push({ label: 'cf-data', url: cfDataColorsUrl });
+        if (!cfDataColorsUrl || cfDataColorsUrl !== canonicalB2ColorsUrl) {
+            candidates.push({ label: 'backblaze', url: canonicalB2ColorsUrl });
+        }
+        candidates.push({ label: 'theme-asset', url: themeColorsUrl });
+
+        let data = null;
+        for (const c of candidates) {
+            try {
+                console.log(`🎨 Loading colors from ${c.label}:`, c.url);
+                data = await fetchColors(c.url, c.label);
+                console.log(`✅ Colors loaded from ${c.label}:`, data.length);
+                break;
+            } catch (e) {
+                console.warn(`⚠️ Colors fetch failed from ${c.label}:`, c.url, e && e.message ? e.message : e);
+            }
+        }
+
+        if (!data) throw new Error("Failed to load colors from all sources");
 
         appState.colorsData = data;
         console.log("✅ Colors loaded:", appState.colorsData.length);
@@ -9138,8 +9417,27 @@ const createColorInput = (label, id, initialColor, isBackground = false) => {
         console.log(`updateColor called for ${label}, input value changed from "${previousValue}" to "${userInput}"`);
         previousValue = normalizedInput;
 
+        // If user entered a pure SW/SC number (e.g. "SW7006"), expand input to the color name.
+        // We keep the stored value as "SW#### Name" for downstream IDs/exports, but show the human name in the field.
+        let expandedStoredValue = null;
+        const swOnlyMatch = userInput.match(/^(SW|SC)\s*(\d+)$/i);
+        if (swOnlyMatch && Array.isArray(appState.colorsData) && appState.colorsData.length) {
+            const swKey = (swOnlyMatch[1] + swOnlyMatch[2]).toLowerCase().replace(/\s+/g, '');
+            const hit = appState.colorsData.find(c => c && c.sw_number && String(c.sw_number).toLowerCase().replace(/\s+/g, '') === swKey);
+            if (hit && (hit.color_name || hit.name)) {
+                const displayName = toInitialCaps(String(hit.color_name || hit.name).trim());
+                const swNum = String(hit.sw_number).toUpperCase().replace(/\s+/g, '');
+                input.value = displayName;
+                expandedStoredValue = `${swNum} ${displayName}`.trim();
+                previousValue = input.value.trim().toLowerCase();
+                console.log(`✅ Expanded ${userInput} → "${displayName}" (stored: "${expandedStoredValue}")`);
+            } else {
+                console.warn(`⚠️ SW/SC number entered but not found in colorsData: ${userInput}`);
+            }
+        }
+
         // Try to lookup the color (lookupColor handles SW/SC prefixes internally)
-        const hex = lookupColor(userInput);
+        const hex = lookupColor(expandedStoredValue || userInput);
 
         if (!userInput || hex === "#FFFFFF") {
             // Invalid input - restore to initial color
@@ -9148,8 +9446,8 @@ const createColorInput = (label, id, initialColor, isBackground = false) => {
             previousValue = input.value.trim().toLowerCase(); // Update normalized previous value
             console.log(`${label} input restored to initial color: ${colorValue}`);
         } else {
-            // Valid color - keep user's input format (with or without SW prefix)
-            input.value = userInput;
+            // Valid color - keep user's input format unless we expanded a pure SW/SC number to a name
+            if (!expandedStoredValue) input.value = userInput;
             colorCircle.style.backgroundColor = hex;
             console.log(`${label} input updated to: ${hex} (kept user format: ${userInput})`);
             // previousValue already updated above
@@ -9157,7 +9455,8 @@ const createColorInput = (label, id, initialColor, isBackground = false) => {
 
         const layerIndex = appState.currentLayers.findIndex(layer => layer.label === label);
         if (layerIndex !== -1) {
-            appState.currentLayers[layerIndex].color = input.value;
+            // Store SW+Name when known, but keep field human-readable.
+            appState.currentLayers[layerIndex].color = expandedStoredValue || input.value;
 
             console.log("🎯 COLOR UPDATE DEBUG:");
             console.log(`  Changed input: ${label} (index ${layerIndex})`);
@@ -9759,36 +10058,35 @@ async function initializeApp() {
 
     try {
         // ✅ Step 2: Load Collections
-        // Check if data is embedded in window object (Shopify mode)
+        // Prefer centralized cf-data collections.json first so Shopify does not require asset pushes for every data change.
+        // Fallback order: embedded metafield -> Shopify asset.
         let data;
-        if (window.ColorFlexData && window.ColorFlexData.collections) {
-            console.log("🎯 Using embedded ColorFlex data");
+        const dataBase = getColorFlexDataBaseUrl();
+        if (dataBase) {
+            const remoteUrl = dataBase.replace(/\/$/, '') + '/data/collections.json';
+            const remoteRes = await fetch(remoteUrl, { method: 'GET', cache: 'no-store' }).catch(function() { return null; });
+            if (remoteRes && remoteRes.ok) {
+                console.log("📁 Loading collections from data base:", remoteUrl);
+                const raw = await remoteRes.json();
+                data = Array.isArray(raw) ? { collections: raw } : (raw && raw.collections ? raw : { collections: [] });
+            } else {
+                console.warn("⚠️ Could not load collections from data base URL, falling back");
+            }
+        }
+        if ((!data || !data.collections) && window.ColorFlexData && window.ColorFlexData.collections) {
+            console.log("🎯 Using embedded ColorFlex data (fallback)");
             data = { collections: window.ColorFlexData.collections };
-        } else {
-            // BASSETT: prefer full data from data base URL so we get all standard collections + Farmhouse (theme asset may be minimal)
-            let collectionsUrl = window.ColorFlexAssets?.collectionsUrl || "/assets/collections.json";
-            if (window.COLORFLEX_MODE === 'BASSETT') {
-                const dataBase = getColorFlexDataBaseUrl();
-                if (dataBase) {
-                    const remoteUrl = dataBase.replace(/\/$/, '') + '/data/collections.json';
-                    const remoteRes = await fetch(remoteUrl, { method: 'GET', cache: 'no-store' }).catch(function() { return null; });
-                    if (remoteRes && remoteRes.ok) {
-                        console.log("📁 BASSETT: Loading full collections from data base:", remoteUrl);
-                        const raw = await remoteRes.json();
-                        data = Array.isArray(raw) ? { collections: raw } : (raw && raw.collections ? raw : { collections: [] });
-                    }
-                }
-            }
-            if (!data || !data.collections) {
-                console.log("📁 Loading collections from Shopify assets");
-                const response = await fetch(collectionsUrl, {
-                    method: 'GET',
-                    cache: "no-store",
-                    headers: { 'Content-Type': 'application/json' }
-                });
-                if (!response.ok) throw new Error(`Failed to fetch collections: ${response.status}`);
-                data = await response.json();
-            }
+        }
+        if (!data || !data.collections) {
+            const collectionsUrl = window.ColorFlexAssets?.collectionsUrl || "/assets/collections.json";
+            console.log("📁 Loading collections from Shopify assets (fallback):", collectionsUrl);
+            const response = await fetch(collectionsUrl, {
+                method: 'GET',
+                cache: "no-store",
+                headers: { 'Content-Type': 'application/json' }
+            });
+            if (!response.ok) throw new Error(`Failed to fetch collections: ${response.status}`);
+            data = await response.json();
         }
 
         // ADD THIS DEBUG:
@@ -9808,17 +10106,47 @@ async function initializeApp() {
         // ✅ Step 2.5: Load Mockups Data and merge with collections
         console.log("📦 Loading centralized mockups data...");
         try {
-            const mockupsUrl = window.ColorFlexAssets?.mockupsUrl || "/assets/mockups.json";
-            const mockupsResponse = await fetch(mockupsUrl, {
-                method: 'GET',
-                cache: "no-store",
-                headers: {
-                    'Content-Type': 'application/json',
-                }
-            });
+            const themeMockupsUrl = window.ColorFlexAssets?.mockupsUrl || "/assets/mockups.json";
+            const base = (typeof getColorFlexDataBaseUrl === 'function') ? getColorFlexDataBaseUrl() : '';
+            const cfDataMockupsUrl = base ? `${String(base).replace(/\/$/, '')}/data/mockups.json` : '';
+            const canonicalB2MockupsUrl = `${String(_COLORFLEX_CANONICAL_B2_BASE).replace(/\/$/, '')}/data/mockups.json`;
 
-            if (mockupsResponse.ok) {
-                const mockupsData = await mockupsResponse.json();
+            async function fetchJson(url) {
+                if (!url) return null;
+                const res = await fetch(url, {
+                    method: 'GET',
+                    cache: "no-store",
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return await res.json();
+            }
+
+            let mockupsData = null;
+            const candidates = [];
+            if (cfDataMockupsUrl) candidates.push({ label: 'cf-data', url: cfDataMockupsUrl });
+            // If theme base points at a proxy/worker without CORS, canonical B2 still works in-browser.
+            if (!cfDataMockupsUrl || cfDataMockupsUrl !== canonicalB2MockupsUrl) {
+                candidates.push({ label: 'backblaze', url: canonicalB2MockupsUrl });
+            }
+            candidates.push({ label: 'theme-asset', url: themeMockupsUrl });
+
+            for (const c of candidates) {
+                if (mockupsData) break;
+                try {
+                    const d = await fetchJson(c.url);
+                    if (isValidMockupsPayload(d)) {
+                        mockupsData = d;
+                        console.log(`✅ Mockups loaded from ${c.label}:`, c.url);
+                    } else {
+                        console.warn(`⚠️ ${c.label} mockups.json missing or empty \`mockups\`:`, c.url);
+                    }
+                } catch (e) {
+                    console.warn(`⚠️ ${c.label} mockups.json fetch failed:`, c.url, e && e.message ? e.message : e);
+                }
+            }
+
+            if (mockupsData && isValidMockupsPayload(mockupsData)) {
                 console.log("✅ Mockups data loaded:", Object.keys(mockupsData.mockups || {}).length, "mockups");
 
                 // Store mockups globally for reference
@@ -9826,33 +10154,27 @@ async function initializeApp() {
 
                 // Merge mockup data into collections that reference mockupId
                 const mockupsMap = mockupsData.mockups || {};
-                const FALLBACK_MOCKUP_ID = 'white-dresser'; // Used when Airtable mockupId is wrong/missing or mockup has no image
-                const resolveMockupById = (mockupId) => {
-                    if (!mockupId) return null;
-                    if (mockupsMap[mockupId]) return mockupsMap[mockupId];
-                    const lower = String(mockupId).toLowerCase();
-                    if (mockupsMap[lower]) return mockupsMap[lower];
-                    return Object.values(mockupsMap).find(m => (m && (m.id === mockupId || (m.id && m.id.toLowerCase() === lower)))) || null;
-                };
+                /** Only allowed mockup fallback id when data is missing (see mockups.json). */
+                const FALLBACK_MOCKUP_ID = 'white-dresser';
                 data.collections.forEach(collection => {
-                    // Some legacy/mixed collections may be missing mockupId in collections.json.
-                    // Provide stable fallbacks so standard patterns can still render a room mockup.
-                    const fallbackMockupId =
-                        (collection && typeof collection.name === 'string' && collection.name.toLowerCase() === 'farmhouse')
-                            ? 'farmhouse-bathroom'
-                            : null;
-
-                    const effectiveMockupId = collection.mockupId || fallbackMockupId;
-                    let mockup = resolveMockupById(effectiveMockupId);
-                    let mockupImagePath = mockup ? (typeof mockup.image === 'string' ? mockup.image : (mockup.image?.path || mockup.image?.url || mockup.path || '')) : '';
+                    const inferredId = (!collection.mockupId && collection.mockup)
+                        ? inferMockupIdFromLegacyCollectionMockupPath(collection.mockup, mockupsMap)
+                        : null;
+                    const effectiveMockupId = collection.mockupId || inferredId;
+                    let mockup = resolveMockupFromMap(mockupsMap, effectiveMockupId);
+                    let mockupImagePath = mockup ? mockupEntryImagePath(mockup) : '';
                     if (!mockup || !mockupImagePath) {
-                        mockup = resolveMockupById(FALLBACK_MOCKUP_ID);
-                        mockupImagePath = mockup ? (typeof mockup.image === 'string' ? mockup.image : (mockup.image?.path || mockup.image?.url || mockup.path || '')) : '';
+                        mockup = resolveMockupFromMap(mockupsMap, FALLBACK_MOCKUP_ID);
+                        mockupImagePath = mockup ? mockupEntryImagePath(mockup) : '';
                         if (mockup && mockupImagePath) {
                             console.warn(`⚠️ Collection "${collection.name}" using fallback mockup "${FALLBACK_MOCKUP_ID}" (invalid/missing mockupId from Airtable)`);
                         }
                     }
                     if (mockup && mockupImagePath) {
+                        if (!collection.mockupId && inferredId) {
+                            collection.mockupId = inferredId;
+                            console.log(`  🧩 Inferred mockupId "${inferredId}" for collection "${collection.name}" from legacy mockup path`);
+                        }
                         collection.mockup = mockupImagePath;
                         collection.mockupShadow = typeof mockup.shadow === 'string' ? mockup.shadow : (mockup.shadow?.path || mockup.shadow?.url || '');
                         collection.tintMask = typeof mockup.tintMask === 'string' ? mockup.tintMask : (mockup.tintMask?.path || mockup.tintMask?.url || '');
@@ -9861,12 +10183,15 @@ async function initializeApp() {
                         console.log(`  🔗 Merged mockup "${mockup.name}" into collection "${collection.name}" (path: ${mockupImagePath})`);
                     }
                 });
+                applyWhiteDresserMockupToCollectionsMissingPath(data.collections);
             } else {
-                console.warn("⚠️ Mockups.json not found, using mockup data from collections.json");
+                console.warn("⚠️ Mockups.json missing or empty — applying white-dresser paths where collection has no mockup image");
+                applyWhiteDresserMockupToCollectionsMissingPath(data.collections);
             }
         } catch (mockupError) {
             console.warn("⚠️ Failed to load mockups.json:", mockupError.message);
-            console.warn("   Continuing with mockup data from collections.json");
+            console.warn("   Applying white-dresser fallback for collections without mockup paths");
+            applyWhiteDresserMockupToCollectionsMissingPath(data.collections);
         }
 
         // Check if a specific collection is being requested via URL (e.g., from product page)
@@ -11400,6 +11725,23 @@ function populatePatternSidebar(patterns) {
 
 // REMOVED: populateLayerThumbnails - now handled directly in populateLayerInputs for simple mode
 
+/** Plain text → safe HTML paragraphs; leave Airtable HTML-ish content as-is */
+function formatStandardPatternSidebarHtml(text) {
+  if (text == null || !String(text).trim()) return "";
+  const raw = String(text).trim();
+  if (/<[a-z][\s\S]*>/i.test(raw)) return raw;
+  const esc = (s) =>
+    String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  return raw
+    .split(/\n\n+/)
+    .map((block) => `<p>${esc(block).replace(/\n/g, "<br>")}</p>`)
+    .join("");
+}
+
 // Populate the layer inputs UI
 function populateLayerInputs(pattern = appState.currentPattern) {
   try {
@@ -11422,13 +11764,19 @@ function populateLayerInputs(pattern = appState.currentPattern) {
       const colorLockBtn = document.getElementById("colorLockBtn");
       if (colorLockBtn) colorLockBtn.style.display = "none";
       if (dom.layerInputsContainer) {
-        const collectionDescription = appState.selectedCollection?.description || "";
+        const patternDesc = pattern.description && String(pattern.description).trim();
+        const collectionDesc =
+          appState.selectedCollection?.description && String(appState.selectedCollection.description).trim();
+        const primarySource = patternDesc || collectionDesc;
+        const primaryHtml = primarySource ? formatStandardPatternSidebarHtml(primarySource) : "";
         const sizeIn = pattern.size && Array.isArray(pattern.size) && pattern.size.length >= 2
           ? pattern.size
           : [24, 24];
         const sizeStr = `${sizeIn[0]}×${sizeIn[1]}`;
+        const fallbackHtml = `<p>Each pattern repeat is ${sizeStr} inches and can be scaled to suit your need.</p>`;
+        const inner = primaryHtml || fallbackHtml;
         dom.layerInputsContainer.style.gridTemplateColumns = "repeat(1, 1fr)";
-        dom.layerInputsContainer.innerHTML = `<div style="text-align:center;padding:30px 20px;color:#d4af37;font-family:'IM Fell English',serif;font-size:1.1rem;line-height:1.8;max-width:800px;margin:0 auto;">${collectionDescription ? collectionDescription + "<br><br>" : ""}Each pattern repeat is ${sizeStr} inches and can be scaled to suit your need.</div>`;
+        dom.layerInputsContainer.innerHTML = `<div style="text-align:center;padding:30px 20px;color:#d4af37;font-family:'IM Fell English',serif;font-size:1.1rem;line-height:1.8;max-width:800px;margin:0 auto;">${inner}</div>`;
       }
       handlePatternSelection(pattern.name, appState.colorsLocked);
       addSaveButton();
@@ -13407,8 +13755,7 @@ let updatePreview = async () => {
                             previewCtx.clip();
 
                             // Check for half-drop tiling
-                            const tilingType = appState.currentPattern.tilingType || "";
-                            const isHalfDrop = tilingType === "half-drop" || appState.currentPattern.name.toLowerCase().includes("hd");
+                            const isHalfDrop = isHalfDropTiling(appState.currentPattern.tilingType) || appState.currentPattern.name.toLowerCase().includes("hd");
                             console.log(`  🔄 Half-drop: ${isHalfDrop}`);
 
                             // Tile within the clipped area
@@ -13717,8 +14064,7 @@ let updatePreview = async () => {
                                 const tileWidth = processedCanvas.width * finalScale;
                                 const tileHeight = processedCanvas.height * finalScale;
 
-                                const tilingType = patternToRender.tilingType || "";
-                                const isHalfDrop = tilingType === "half-drop";
+                                const isHalfDrop = isHalfDropTiling(patternToRender.tilingType);
 
                                 previewCtx.save();
                                 previewCtx.beginPath();
@@ -13801,9 +14147,9 @@ function formatPatternInfo(pattern) {
         repeatStr = `${width}x${height}`;
 
         // Add tiling suffix
-        if (pattern.tilingType === 'half-drop') {
+        if (isHalfDropTiling(pattern?.tilingType)) {
             repeatStr += 'HD';
-        } else if (pattern.tilingType === 'straight') {
+        } else if (normalizeTilingType(pattern?.tilingType) === 'straight') {
             repeatStr += 'S';
         }
     }
@@ -13813,6 +14159,18 @@ function formatPatternInfo(pattern) {
     }
 
     return '';
+}
+
+function normalizeTilingType(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[_\s]+/g, '-');
+}
+
+function isHalfDropTiling(value) {
+    const t = normalizeTilingType(value);
+    return t === 'half-drop' || t === 'halfdrop' || t === 'hd';
 }
 
 /**
@@ -14271,7 +14629,7 @@ async function updateBassettRoomMockup() {
         var layerMappingB = getLayerMappingForPreview(false);
         var patternStartIdx = layerMappingB.patternStartIndex;
         var tilingTypeB = (patternForTiling && patternForTiling.tilingType) || "";
-        var isHalfDropB = tilingTypeB === "half-drop";
+        var isHalfDropB = isHalfDropTiling(tilingTypeB);
         masterTiledCanvas = document.createElement("canvas");
         masterTiledCanvas.width = outW;
         masterTiledCanvas.height = outH;
@@ -14434,7 +14792,7 @@ async function updateBassettRoomMockup() {
               var layerMappingB = getLayerMappingForPreview(false);
               var patternStartIdx = layerMappingB.patternStartIndex;
               var tilingTypeB = (patternForTiling && patternForTiling.tilingType) || "";
-              var isHalfDropB = tilingTypeB === "half-drop";
+              var isHalfDropB = isHalfDropTiling(tilingTypeB);
               if (layersForTiling) {
                 for (var lIdx = 0; lIdx < layersForTiling.length; lIdx++) {
                   var ly = layersForTiling[lIdx];
@@ -14739,6 +15097,7 @@ let updateRoomMockup = async () => {
       console.log("🔍 Skipping updateRoomMockup - no collection/pattern selected");
       return;
     }
+    console.log("🔍 ROOM MOCKUP tilingType:", appState.currentPattern?.name, "→", appState.currentPattern?.tilingType);
 
     // BASSETT: show Bassett result in room mockup (upload or pipeline result)
     if (window.COLORFLEX_MODE === 'BASSETT') {
@@ -14749,15 +15108,23 @@ let updateRoomMockup = async () => {
     // Loading indicator removed
 
     // --- Canvas setup (CSS px -> DPR backing) ---
-    const cssW = 600, cssH = 450;
+    // Width comes from the element, but height should match the selected mockup aspect ratio
+    // so we don't get letterbox bars above/below the room image.
+    const effectiveMockup = getEffectiveRoomMockup(appState.selectedCollection);
+    const mockupWidthInches = effectiveMockup.mockupWidthInches || 90;
+    const mockupHeightInches = effectiveMockup.mockupHeightInches || 60;
+    // Force the room mockup preview box to a stable 4:3 aspect (width:height),
+    // so the room scene fills the box without letterbox bars.
+    const mockupAspect = 3 / 4;
+
+    const rect = dom.roomMockup.getBoundingClientRect();
+    const cssW = Math.max(1, Math.round(rect.width || dom.roomMockup.clientWidth || dom.roomMockup.offsetWidth || 600));
+    const cssH = Math.max(1, Math.round(cssW * mockupAspect));
     const dpr = window.devicePixelRatio || 1;
     const snap = v => Math.round(v * dpr) / dpr;           // align to device grid
     const mod  = (a,b)=>((a%b)+b)%b;
 
     // Calculate px per inch based on actual mockup dimensions (collection or user override)
-    const effectiveMockup = getEffectiveRoomMockup(appState.selectedCollection);
-    const mockupWidthInches = effectiveMockup.mockupWidthInches || 90;
-    const mockupHeightInches = effectiveMockup.mockupHeightInches || 60;
     const pxPerInRoom = cssW / mockupWidthInches;
 
     console.log(`📐 Room mockup dimensions: ${mockupWidthInches}x${mockupHeightInches} inches`);
@@ -14897,8 +15264,16 @@ let updateRoomMockup = async () => {
         console.log("  Calculated tile size: tileW =", tileW, ", tileH =", tileH);
 
           const isHalfDrop =
-            (appState.currentPattern.tilingType || "") === "half-drop" ||
+            isHalfDropTiling(appState.currentPattern.tilingType) ||
             /hd/i.test(appState.currentPattern.name);
+
+          // Clip the tiled pattern to the visible mockup image area so it doesn't show
+          // in any letterboxed margins around the room scene.
+          const fit = scaleToFit(roomImg, cssW, cssH); // expects CSS px
+          ctx.save();
+          ctx.beginPath();
+          ctx.rect(fit.x, fit.y, fit.width, fit.height);
+          ctx.clip();
 
           const startX = 0 - mod(0, tileW) - tileW;
           const endX   = cssW + tileW;
@@ -14913,7 +15288,7 @@ let updateRoomMockup = async () => {
             }
           }
 
-          const fit = scaleToFit(roomImg, cssW, cssH); // expects CSS px
+          ctx.restore();
           ctx.drawImage(roomImg, fit.x, fit.y, fit.width, fit.height);
 
           // ----- Shadow overlay for standard patterns -----
@@ -15012,7 +15387,7 @@ let updateRoomMockup = async () => {
           }
 
           const tilingType = appState.currentPattern.tilingType || "";
-          const isHalfDrop = tilingType === "half-drop";
+          const isHalfDrop = isHalfDropTiling(tilingType);
 
           await new Promise((resolve) => {
             processImage(layer.path, (processedCanvas) => {
@@ -15070,7 +15445,7 @@ let updateRoomMockup = async () => {
           baseImage.onload = () => {
             const { tileW, tileH } = computeTileSizeFromInches(appState.currentPattern, appState.scaleMultiplier || 1);
 
-            const isHalfDrop = (appState.currentPattern.tilingType || "") === "half-drop";
+            const isHalfDrop = isHalfDropTiling(appState.currentPattern.tilingType);
             const sx = 0 - mod(0, tileW) - tileW, ex = cssW + tileW;
             const sy = 0 - tileH,                ey = cssH + tileH;
 
@@ -15132,17 +15507,12 @@ let updateRoomMockup = async () => {
             inputIdx++;
           }
 
-          const isHalfDrop = (appState.currentPattern.tilingType || "") === "half-drop";
-
           await new Promise((resolve) => {
             processImage(layer.path, (processedCanvas) => {
               if (!(processedCanvas instanceof HTMLCanvasElement)) return resolve();
 
-              console.log("🔍 COLORFLEX PATTERN ROOM MOCKUP DEBUG:");
-              console.log("  appState.scaleMultiplier:", appState.scaleMultiplier);
-              console.log("  Default will use:", appState.scaleMultiplier || 1);
               const { tileW, tileH } = computeTileSizeFromInches(appState.currentPattern, appState.scaleMultiplier || 1);
-              console.log("  Calculated tile size: tileW =", tileW, ", tileH =", tileH);
+              const isHalfDrop = isHalfDropTiling(appState.currentPattern.tilingType);
 
               patternCtx.globalCompositeOperation = isShadow ? "multiply" : "source-over";
               patternCtx.globalAlpha = isShadow ? 0.3 : 1.0;
@@ -16619,6 +16989,24 @@ const updateFurniturePreview = async () => {
         }
     }
 
+    /**
+     * Find the coordinates collection pattern that matches a coordinate record.
+     * Coordinate filenames use kebab-case (e.g. trenton-ticking.jpg) while pattern
+     * names use spaces (e.g. "Trenton Ticking"). Match by thumbnail path.
+     */
+    function findCoordinatesPatternByFilename(filenameNoExt) {
+        if (!appState.collections || !filenameNoExt) return null;
+        const collection = appState.collections.find(
+            c => c && typeof c.name === 'string' && c.name.toLowerCase() === "coordinates"
+        );
+        if (!collection || !collection.patterns) return null;
+        const lower = String(filenameNoExt).toLowerCase();
+        return collection.patterns.find(p => {
+            const thumb = (p.thumbnail || '').toLowerCase();
+            return thumb && (thumb.includes(`/${lower}.`) || thumb.endsWith(`/${lower}`) || thumb.includes(`/${lower}.jpg`));
+        }) || null;
+    }
+
     // ✅ FIX: Define handleCoordinateClick outside setupCoordinateImageHandlers
     // This ensures stable function reference for removeEventListener to work correctly
     async function handleCoordinateClick() {
@@ -16701,13 +17089,22 @@ const updateFurniturePreview = async () => {
                 const layers = layerPaths.map(path => ({ path }));
                 const layerLabels = layerPaths.map((_, index) => index === 0 ? "Flowers" : `Layer ${index + 1}`);
         
-                // Update currentPattern with coordinate data
+                // Look up the coordinates collection pattern for correct size/tiling (room mockup scale)
+                const coordsPattern = findCoordinatesPatternByFilename(coordinate.filename.replace(/\.jpg$/, ''));
+                const patternSize = coordsPattern?.size && Array.isArray(coordsPattern.size) && coordsPattern.size.length >= 2
+                    ? coordsPattern.size : [24, 24];
+                const patternTilingType = coordsPattern?.tilingType || "straight";
+                const patternRepeat = coordsPattern?.repeat || "yes";
+
+                // Update currentPattern with coordinate data - use coordinates pattern size for room mockup
                 appState.currentPattern = {
                     ...appState.currentPattern,
                     name: coordinate.filename.replace(/\.jpg$/, ''),
                     thumbnail: coordinate.path,
-                    size: [imageWidth / 100, imageHeight / 100], // Convert pixels to inches (assuming 100 DPI)
-                    layers: layers, // All coordinate layers
+                    size: patternSize,
+                    repeat: patternRepeat,
+                    tilingType: patternTilingType,
+                    layers: layers,
                     layerLabels: layerLabels,
                     tintWhite: false
                 };
@@ -16790,7 +17187,7 @@ const updateFurniturePreview = async () => {
                         font-size: 1.8rem !important;
                         text-align: center !important;
                         cursor: pointer !important;
-                        margin-top: 6rem !important;
+                        margin-top: 0.5rem !important;
                         padding: 0.5rem !important;
                         transition: color 0.2s !important;
                         display: block !important;
@@ -17274,7 +17671,7 @@ const generatePrintPreview = () => {
 
         // Generate HTML content
         // Determine tiling method and scale display
-        const tilingMethod = appState.currentPattern?.tilingType === 'half-drop' ? 'Half-Drop' :
+        const tilingMethod = isHalfDropTiling(appState.currentPattern?.tilingType) ? 'Half-Drop' :
                            appState.currentPattern?.tilingType === 'brick' ? 'Brick' :
                            'Normal';
         const scaleDisplay = appState.currentScale === 50 ? '0.5X' :
@@ -19167,8 +19564,39 @@ async function parseColorEnhanced(colorStr) {
     if (!window.colorFlexColors) {
         console.log('🔄 Loading colors from colors.json...');
         try {
-            const response = await fetch('/assets/colors.json');
-            const colorsData = await response.json();
+            const existingColors = Array.isArray(appState?.colorsData) && appState.colorsData.length ? appState.colorsData : null;
+
+            async function fetchColorsArray(url) {
+                const res = await fetch(url, { method: 'GET', cache: 'no-store', headers: { 'Content-Type': 'application/json' } });
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const d = await res.json();
+                if (!Array.isArray(d) || d.length === 0) throw new Error('Colors payload empty/invalid');
+                return d;
+            }
+
+            let colorsData = existingColors;
+            if (!colorsData) {
+                const themeColorsUrl = window.ColorFlexAssets?.colorsUrl || "/assets/colors.json";
+                const base = (typeof getColorFlexDataBaseUrl === 'function') ? getColorFlexDataBaseUrl() : '';
+                const cfDataColorsUrl = base ? `${String(base).replace(/\/$/, '')}/data/colors.json` : '';
+                const canonicalB2ColorsUrl = `${String(_COLORFLEX_CANONICAL_B2_BASE).replace(/\/$/, '')}/data/colors.json`;
+
+                const candidates = [];
+                if (cfDataColorsUrl) candidates.push(cfDataColorsUrl);
+                if (!cfDataColorsUrl || cfDataColorsUrl !== canonicalB2ColorsUrl) candidates.push(canonicalB2ColorsUrl);
+                candidates.push(themeColorsUrl);
+
+                let lastErr = null;
+                for (const url of candidates) {
+                    try {
+                        colorsData = await fetchColorsArray(url);
+                        break;
+                    } catch (e) {
+                        lastErr = e;
+                    }
+                }
+                if (!colorsData) throw lastErr || new Error('Failed to load colors');
+            }
             
             window.colorFlexColors = {};
             colorsData.forEach(color => {
@@ -19382,7 +19810,7 @@ async function generatePatternProof(patternName, collectionName, colorArray, use
 
                                 // Check for half-drop tiling
                                 const tilingType = targetPattern.tilingType || "";
-                                const isHalfDrop = tilingType === "half-drop";
+                                const isHalfDrop = isHalfDropTiling(tilingType);
                                 console.log(`🔧 Proof tiling: ${isHalfDrop ? 'HALF-DROP' : 'NORMAL'} (tilingType: "${tilingType}")`);
 
                                 // Tile the pattern across the canvas at the scaled size
@@ -19634,7 +20062,7 @@ async function generatePatternProofWithInfo(patternName, collectionName, colorAr
 
             // Add tiling type if half-drop
             const tilingType = targetPattern?.tilingType || '';
-            if (tilingType === 'half-drop') {
+            if (isHalfDropTiling(tilingType)) {
                 finalCtx.fillText(`Tiling: Half-Drop`, rightMargin, yPosition);
                 yPosition += smallFontSize + 6;
             }
