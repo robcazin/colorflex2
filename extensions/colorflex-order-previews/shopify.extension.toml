@@ -1,0 +1,12 @@
+# Drop this folder into a Shopify CLI app under extensions/colorflex-order-previews
+# See README.md in this folder.
+api_version = "2025-01"
+
+[[extensions]]
+name = "t:name"
+handle = "colorflex-order-previews"
+type = "ui_extension"
+
+[[extensions.targeting]]
+module = "./src/OrderPreviewBlock.jsx"
+target = "admin.order-details.block.render"

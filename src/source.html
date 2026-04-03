@@ -499,9 +499,7 @@ await import("//saffroncottage.shop/cdn/shopifycloud/shop-js/modules/v2/chunk.mo
       ><!-- ColorFlex Shopify Configuration -->
     <script>
       console.log('🔧🔧🔧 COLORFLEX CONFIG LOADED 🔧🔧🔧');
-      // Set Shopify credentials for direct thumbnail uploads to Shopify Files
-      // Get your Admin API access token from: Shopify Admin → Apps → Develop apps → Your app → API credentials
-      window.SHOPIFY_STORE = 'f63bae-86'; // Your store name (without .myshopify.com)
+      // Admin API tokens belong only on api/server.js (env), not in the storefront.
       
       // API server URL for thumbnail uploads (avoids CORS issues)
       // Change colorflex_api_base in Liquid below for local vs production:
@@ -511,12 +509,7 @@ await import("//saffroncottage.shop/cdn/shopifycloud/shop-js/modules/v2/chunk.mo
       
       window.COLORFLEX_API_URL = 'http://localhost:3001/api/upload-thumbnail';
       
-      console.log('🔧 SHOPIFY_STORE set:', window.SHOPIFY_STORE);
-      console.log('🔧 SHOPIFY_ADMIN_API_TOKEN set:', window.SHOPIFY_ADMIN_API_TOKEN ? 'YES (' + window.SHOPIFY_ADMIN_API_TOKEN.substring(0, 15) + '...)' : 'NO');
       console.log('🔧 COLORFLEX_API_URL set:', window.COLORFLEX_API_URL);
-      
-      // Note: The API server endpoint handles thumbnail uploads to Shopify Files
-      // The API server uses SHOPIFY_ADMIN_API_TOKEN from its environment variables
     </script>
     
     <script>

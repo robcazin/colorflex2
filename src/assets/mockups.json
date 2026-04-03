@@ -4,7 +4,7 @@
       "id": "modern-hall-lamp",
       "name": "Modern Hall Lamp",
       "image": "./data/mockups/hallway-table-with-with-white-lamp.png",
-      "shadow": "./data/mockups/mhallway-table-with-with-white-lamp-shadow.jpg ",
+      "shadow": "./data/mockups/hallway-table-with-with-white-lamp-shadow.jpg",
       "widthInches": 72,
       "heightInches": 60,
       "description": "Hall with Modern Lamp"
@@ -22,7 +22,7 @@
       "id": "table-bisque-lamp",
       "name": "Table Bisque Lamp",
       "image": "./data/mockups/table-bisque-lamp.png",
-      "shadow": "./data/mockups/table-bisque-lamp-shadow.jpg ",
+      "shadow": "./data/mockups/table-bisque-lamp-shadow.jpg",
       "widthInches": 72,
       "heightInches": 60,
       "description": "fire"
@@ -49,26 +49,17 @@
     "english-countryside-bedroom": {
       "id": "english-countryside-bedroom",
       "name": "English Countryside Bedroom",
-      "image": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
-      "shadow": "./data/mockups/English-Countryside-Bedroom-1-shadow-W60H40.jpg",
+      "image": "./data/mockups/english-countryside-bedroom.png",
+      "shadow": "./data/mockups/english-countryside-bedroom-shadow.jpg",
       "widthInches": 96,
       "heightInches": 72,
       "description": "Elegant English countryside bedroom with window"
     },
-    "english-countryside-bedroom-alt": {
-      "id": "english-countryside-bedroom-alt",
-      "name": "English Countryside Bedroom (Alt)",
-      "image": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
-      "shadow": "./data/mockups/English-Countryside-Bedroom-1-shadow-W60H40.jpg",
-      "widthInches": 96,
-      "heightInches": 72,
-      "description": "English countryside bedroom (alternative resolution)"
-    },
     "english-countryside-fireplace": {
       "id": "english-countryside-fireplace",
       "name": "English Countryside Fireplace",
-      "image": "./data/mockups/English-Countryside-fireplace-W90H60.png",
-      "shadow": "./data/mockups/English-Countryside-fireplace-shadow-W90H60.jpg",
+      "image": "./data/mockups/english-countryside-fireplace.png",
+      "shadow": "./data/mockups/english-countryside-fireplace-shadow.jpg",
       "widthInches": 90,
       "heightInches": 60,
       "description": "Cozy fireplace scene with mantel"
@@ -130,7 +121,7 @@
     },
     "wallpaper-mockup-39": {
       "id": "blue-desk",
-      "name": "Wallpaper Room 39",
+      "name": "Blue Desk",
       "image": "./data/mockups/wallpaper-mockup-39-W60H45.png",
       "shadow": "./data/mockups/wallpaper-mockup-39-shadow-W60H45.jpg",
       "widthInches": 60,
@@ -145,15 +136,6 @@
       "widthInches": 150,
       "heightInches": 112.5,
       "description": "Elegant bathroom with clawfoot tub"
-    },
-    "t-shirt": {
-      "id": "t-shirt",
-      "name": "T-Shirt Mockup",
-      "image": "./data/mockups/clothing/t-shirt-mockup-W60H60.png",
-      "shadow": "./data/mockups/clothing/t-shirt-mockup-shadow-W60H60.jpg",
-      "widthInches": 60,
-      "heightInches": 60,
-      "description": "T-shirt clothing mockup"
     },
     "mudroom": {
       "id": "mudroom",
@@ -195,7 +177,7 @@
       "id": "rustic-console",
       "name": "Rustic Console",
       "image": "./data/mockups/rustic-console.png",
-      "shadow": "./data/mockups/rustic-console-shadow.jpg ",
+      "shadow": "./data/mockups/rustic-console-shadow.jpg",
       "widthInches": 72,
       "heightInches": 60,
       "description": "Console"
@@ -204,7 +186,7 @@
       "id": "slapples",
       "name": "Still Life - Apples",
       "image": "./data/mockups/slapples.png",
-      "shadow": "./data/mockups/slapples-shadow.jpg ",
+      "shadow": "./data/mockups/slapples-shadow.jpg",
       "widthInches": 72,
       "heightInches": 60,
       "description": "Console"
@@ -223,7 +205,7 @@
       "id": "cozy-chair",
       "name": "Cozy Chair",
       "image": "./data/mockups/cozy-chair.png",
-      "shadow": "./data/mockups/cozy-chair-shadow.jpg ",
+      "shadow": "./data/mockups/cozy-chair-shadow.jpg",
       "widthInches": 72,
       "heightInches": 60,
       "description": "Console"
@@ -232,7 +214,7 @@
       "id": "fireplace-mantle",
       "name": "Fireplace Mantle",
       "image": "./data/mockups/fireplace-mantle.png",
-      "shadow": "./data/mockups/fireplace-mantle-shadow.jpg ",
+      "shadow": "./data/mockups/fireplace-mantle-shadow.jpg",
       "widthInches": 72,
       "heightInches": 60,
       "description": "fire"
@@ -241,11 +223,19 @@
       "id": "green-dresser",
       "name": "Green Dresser",
       "image": "./data/mockups/dresser-green.png",
-      "shadow": "./data/mockups/dresser-green-shadow.jpg ",
+      "shadow": "./data/mockups/dresser-green-shadow.jpg",
       "widthInches": 84,
       "heightInches": 60,
       "description": "Wide Vintage dresser with Basket"
+    },
+    "pedestalSink": {
+      "id": "pedestal-sink",
+      "name": "Pedestal Sink",
+      "image": "./data/mockups/pedestalSink.png",
+      "shadow": "./data/mockups/pedestalSink-shadow.jpg",
+      "widthInches": 64,
+      "heightInches": 48,
+      "description": "Close-up pedestal sink with antique mirror"
     }
-
   }
 }

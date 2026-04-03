@@ -184,6 +184,34 @@ function patternExists(collectionName, patternName, patternLookup) {
     return patternLookup.has(key);
 }
 
+function normalizePatternKey(value) {
+    return String(value || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+function findPatternIndexByIdentity(patterns, candidate) {
+    if (!Array.isArray(patterns) || !candidate) return -1;
+    const candidateId = normalizePatternKey(candidate.id);
+    if (candidateId) {
+        const idx = patterns.findIndex((p) => normalizePatternKey(p && p.id) === candidateId);
+        if (idx !== -1) return idx;
+    }
+    const candidateNumber = normalizePatternKey(candidate.number);
+    if (candidateNumber) {
+        const idx = patterns.findIndex((p) => normalizePatternKey(p && p.number) === candidateNumber);
+        if (idx !== -1) return idx;
+    }
+    const candidateSlug = normalizePatternKey(candidate.slug);
+    if (candidateSlug) {
+        const idx = patterns.findIndex((p) => normalizePatternKey(p && p.slug) === candidateSlug);
+        if (idx !== -1) return idx;
+    }
+    const candidateName = normalizePatternKey(cleanPatternName(candidate.name || ''));
+    if (candidateName) {
+        return patterns.findIndex((p) => normalizePatternKey(cleanPatternName((p && p.name) || '')) === candidateName);
+    }
+    return -1;
+}
+
 // All collections configuration
 const collections = [
     { name: '1 - ABUNDANCE' },
@@ -466,11 +494,22 @@ async function updateCollectionsJson(existingData, newPatternsData) {
         );
         
         if (existingCollectionIndex !== -1) {
-            // Add new patterns to existing collection
+            // Upsert patterns into existing collection (replace matching, append only truly new)
             const existingCollection = existingData.collections[existingCollectionIndex];
-            existingCollection.patterns.push(...newCollection.patterns);
+            let added = 0;
+            let updated = 0;
+            newCollection.patterns.forEach((incomingPattern) => {
+                const idx = findPatternIndexByIdentity(existingCollection.patterns, incomingPattern);
+                if (idx >= 0) {
+                    existingCollection.patterns[idx] = incomingPattern;
+                    updated++;
+                } else {
+                    existingCollection.patterns.push(incomingPattern);
+                    added++;
+                }
+            });
             
-            console.log(`✅ Added ${newCollection.patterns.length} new patterns to existing collection: ${newCollection.name}`);
+            console.log(`✅ Collection ${newCollection.name}: added ${added}, updated ${updated} patterns`);
         } else {
             // Add entire new collection
             existingData.collections.push(newCollection);

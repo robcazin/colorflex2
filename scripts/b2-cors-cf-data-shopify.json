@@ -1,0 +1,17 @@
+[
+  {
+    "corsRuleName": "allowShopify",
+    "allowedOrigins": [
+      "https://saffroncottage.shop",
+      "https://*.myshopify.com"
+    ],
+    "allowedOperations": [
+      "s3_get"
+    ],
+    "allowedHeaders": [
+      "*"
+    ],
+    "exposeHeaders": [],
+    "maxAgeSeconds": 3600
+  }
+]

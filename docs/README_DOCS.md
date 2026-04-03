@@ -1,5 +1,16 @@
 # Docs index
 
+**Shopify theme deploy & collection/product pipeline (canonical — use these before guessing)**
+
+- **`DEPLOYMENT.md`** — All theme uploads via `./deploy-shopify-cli.sh` from repo root (`all`, `sections`, `assets`, `data`, etc.). Run `./deploy-shopify-cli.sh help` for the full list.
+- **`DEPLOYMENT GUIDE.md`** — `update-collection.sh` commands vs images/CSV/products, flags `--skip-products` / `--update-products`, and when to run `node scripts/shopify-create-products.js`.
+- **`GENERAL_USAGE.md`** — High-level `update-collection.sh complete <slug>` for new collections; points to **`ADD_NEW_COLLECTION_FROM_AIRTABLE.md`** for full setup.
+- **`SETUP_AFTER_REBUILD.md`** — Shopify CLI / env when (re)setting up the machine.
+
+Note: **`DEPLOYMENT_QUICK_REF.md`** and **`WORKFLOW.md`** are older; prefer **`DEPLOYMENT.md`** and **`update-collection.sh`** / **`DEPLOYMENT GUIDE.md`** for current paths (e.g. `src/`, not `dist/`).
+
+---
+
 - **`AI_CONTEXT.md`** — **Read this first** after a new session or context loss. Restores correct understanding (e.g. Bassett Local has nothing to do with Shopify).
 - **`BASSETT_WORKFLOW.md`** — Bassett workflow, layer stack, data path, milestones, progress log.
 - **`GIT_LOCAL_WORKFLOW.md`** — Worktrees, branches, safety checklist, merge direction.

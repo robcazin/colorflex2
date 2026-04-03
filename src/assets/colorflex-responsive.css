@@ -1,0 +1,235 @@
+/**
+ * ColorFlex Responsive Overrides
+ * Additive only: applies ONLY at smaller viewports. Desktop layout unchanged.
+ * Load after color-flex-core.min.css. Safe to remove if issues occur.
+ */
+
+/* Desktop tweaks (loaded after core CSS) */
+@media screen and (min-width: 1025px) {
+  /* Pull "Matching Coordinates" block up */
+  #coordinatesSection {
+    margin-top: -2rem !important;
+  }
+
+  /* Pull coordinate thumbnail cluster up */
+  #coordinatesContainer .coordinate-item {
+    transform: translate(-50%, -50%)
+      translate(calc(var(--x-offset) - 240px), calc(var(--y-offset) - 200px)) !important;
+  }
+
+  #coordinatesContainer .coordinate-item:hover {
+    transform: translate(-50%, -50%)
+      translate(calc(var(--x-offset) - 240px), calc(var(--y-offset) - 200px)) scale(1.3) !important;
+  }
+}
+
+/* Curated colors: viewport-based centering at all responsive breakpoints.
+   At full width (1920px) they align with content; when the window narrows,
+   they center within the visible viewport instead of the offset content area. */
+@media screen and (max-width: 1280px) {
+  #curatedColorsSection {
+    width: 100vw !important;
+    margin-left: calc(-160px) !important; /* Match .colorflex-main-grid margin-left */
+  }
+}
+
+/* Tablet: stack grid, narrow sidebar, reduce margins */
+@media screen and (max-width: 1024px) {
+  #curatedColorsSection {
+    margin-left: calc(-100px) !important; /* Match tablet grid margin-left */
+  }
+  .colorflex-main-grid {
+    grid-template-columns: 1fr !important;
+    margin-left: 100px !important;
+    padding: 0 1rem !important;
+    gap: 1.5rem !important;
+  }
+
+  #preview {
+    max-width: min(90vw, 600px) !important;
+  }
+
+  #roomMockup {
+    max-width: min(90vw, 500px) !important;
+    width: 100% !important;
+  }
+
+  #leftSidebar {
+    width: 90px !important;
+    padding: 0.5rem !important;
+  }
+
+  #collectionHeaderContainer {
+    width: 90px !important;
+    padding: 0.5rem !important;
+  }
+
+  #collectionHeader {
+    font-size: 0.8rem !important;
+  }
+
+  #backButton {
+    top: 70px !important;
+    left: 10px !important;
+  }
+}
+
+/* Mobile: full-width content, minimal sidebar */
+@media screen and (max-width: 768px) {
+  #curatedColorsSection {
+    margin-left: calc(-70px) !important; /* Match mobile grid margin-left */
+  }
+
+  .colorflex-main-grid {
+    margin-left: 70px !important; /* Room for sidebar */
+    padding: 0 0.75rem !important;
+  }
+
+  #leftSidebar {
+    width: 70px !important;
+    top: 120px !important;
+    height: calc(100vh - 130px) !important;
+    padding: 0.35rem !important;
+  }
+
+  #collectionHeaderContainer {
+    width: 70px !important;
+    top: 70px !important;
+    padding: 0.35rem !important;
+  }
+
+  #collectionHeader {
+    font-size: 0.7rem !important;
+  }
+
+  #preview {
+    max-width: 100% !important;
+    min-height: 180px !important;
+  }
+
+  #roomMockup {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  #colorControls {
+    margin-left: 0 !important;
+  }
+
+  #layerInputsContainer {
+    min-width: 0 !important;
+  }
+
+  .colorflex-section h3 {
+    font-size: 2rem !important;
+  }
+
+  #backButton {
+    top: 60px !important;
+    left: 8px !important;
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 14px !important;
+  }
+
+  /* Stack action buttons on very small screens */
+  #downloadProofContainer + button,
+  #printButton,
+  #saveToListButton,
+  #buyItNowButton {
+    font-size: 0.75rem !important;
+    padding: 0.35rem 0.6rem !important;
+  }
+}
+
+/* Phone & narrow tablet: no sidebar, collection header above, pattern preview + color controls centered.
+   Thumbnails open in patterns modal (triggered by Patterns button). */
+@media screen and (max-width: 768px) {
+  #curatedColorsSection {
+    margin-left: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  #curatedColorsContainer {
+    max-width: 100% !important;
+  }
+
+  .colorflex-main-grid {
+    margin-left: 0 !important;
+    padding: 0 0.5rem !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important; /* Full-width children, no shrinking */
+  }
+
+  /* All grid children full width */
+  .colorflex-main-grid > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important; /* Allow flex items to shrink below content size */
+  }
+
+  /* Hide fixed sidebar completely; thumbnails in modal */
+  #leftSidebar {
+    display: none !important;
+  }
+
+  /* Hide fixed collection header; use in-flow mobile header instead */
+  #collectionHeaderContainer {
+    display: none !important;
+  }
+
+  /* Mobile collection + patterns bar: above pattern preview */
+  #mobileCollectionBar {
+    width: 100% !important;
+    max-width: 100% !important;
+    text-align: center !important;
+  }
+
+  /* Color controls full width; remove min-width that causes overflow */
+  #colorControls {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin-left: 0 !important;
+  }
+
+  #layerInputsContainer {
+    min-width: 0 !important;
+  }
+
+  /* Pattern preview heading: prevent vertical letter-by-letter wrap */
+  .colorflex-main-grid h3 {
+    white-space: normal !important;
+    word-break: normal !important;
+    overflow-wrap: break-word !important;
+  }
+
+  /* Prevent horizontal overflow */
+  #mainContainer,
+  .colorflex-section {
+    overflow-x: hidden !important;
+  }
+
+  #preview,
+  #roomMockup {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* Ensure parent chain allows full width */
+  .colorflex-section,
+  .colorflex-section > div,
+  #mainContainer {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Patterns button: prevent text clipping */
+  #patternsModalBtn {
+    min-width: 120px !important;
+  }
+}

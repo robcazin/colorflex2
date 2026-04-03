@@ -1053,7 +1053,13 @@ class ProductConfigurationFlow {
                 
                 // Custom colors - format as comma-separated list with SW normalization
                 if (pattern.colors && pattern.colors.length > 0) {
-                    const colorNames = pattern.colors.map(colorObj => {
+                    const colorRows = pattern.colors.filter((colorObj) => {
+                        if (colorObj == null) return false;
+                        if (typeof colorObj === 'string') return colorObj.trim() !== '';
+                        const raw = colorObj.color != null ? colorObj.color : colorObj.name;
+                        return raw != null && String(raw).trim() !== '';
+                    });
+                    const colorNames = colorRows.map((colorObj) => {
                         let colorName;
                         if (typeof colorObj === 'string') {
                             colorName = colorObj;
@@ -1065,7 +1071,7 @@ class ProductConfigurationFlow {
 
                         // 🎯 NORMALIZE TO SW FORMAT
                         return this.normalizeColorToSwFormat(colorName);
-                    }).filter(color => color && color !== 'Unknown Color');
+                    }).filter((color) => color && color !== 'Unknown Color');
 
                     properties['Custom Colors'] = colorNames.join(', ');
                     console.log('🔍 CART FIX: Built normalized colors list:', properties['Custom Colors']);
@@ -1114,8 +1120,11 @@ class ProductConfigurationFlow {
                     console.warn('⚠️ No pattern preview available for cart');
                 }
                 
-                // Technical properties for thumbnail restoration
-                const thumbnailKey = pattern.id || `${pattern.name}-${Date.now()}`;
+                // Technical properties for thumbnail restoration (must match theme + CFM localStorage)
+                const rawId = pattern.id || this.generatePatternId(pattern, pattern.currentScale);
+                const thumbnailKey = rawId
+                    ? ('cart_thumbnail_' + String(rawId).replace(/[^a-zA-Z0-9-]/g, '_'))
+                    : ('cart_thumbnail_' + String(pattern.name || 'pattern').replace(/[^a-zA-Z0-9-]/g, '_') + '_' + Date.now());
                 properties['Thumbnail Key'] = thumbnailKey;
 
                 // Promo code metadata (if applied)
@@ -1244,16 +1253,22 @@ class ProductConfigurationFlow {
             params.set('colorflex_design', 'true');
             params.set('source', 'colorflex_configuration_flow');
             
-            // Color information with SW normalization
-            const colorNames = this.state.pattern.colors.map(colorObj => {
+            // Color information with SW normalization (skip null/empty/shadow slots from older saves)
+            const colorRows = (this.state.pattern.colors || []).filter((colorObj) => {
+                if (colorObj == null) return false;
+                if (typeof colorObj === 'string') return colorObj.trim() !== '';
+                const raw = colorObj.color != null ? colorObj.color : colorObj.name;
+                return raw != null && String(raw).trim() !== '';
+            });
+            const colorNames = colorRows.map((colorObj) => {
                 let colorName;
                 if (typeof colorObj === 'string') {
                     colorName = colorObj;
                 } else {
-                    colorName = colorObj.color || colorObj.name || String(colorObj);
+                    colorName = colorObj.color || colorObj.name || '';
                 }
                 return this.normalizeColorToSwFormat(colorName);
-            }).filter(color => color && color !== 'Unknown Color');
+            }).filter((color) => color && color !== 'Unknown Color');
 
             if (colorNames.length > 0) {
                 params.set('custom_colors', colorNames.join(','));

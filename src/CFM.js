@@ -1020,6 +1020,25 @@ function generatePatternId(patternName, layers, currentScale) {
     return id; // Return format like: agnes-7069-0055-2x or agnes-7069-0055 (normal scale)
 }
 
+/**
+ * localStorage / line-item key for cart thumbnails. Must stay in sync with theme
+ * (main-product.liquid) and ProductConfigurationFlow Thumbnail Key.
+ * Uses pattern.id so changing colors changes the key (avoids stale cart images).
+ */
+function cartThumbnailStorageKeyFromPattern(pattern) {
+    if (!pattern) return '';
+    const rawId = pattern.id || pattern.patternId;
+    if (rawId && String(rawId).trim()) {
+        return 'cart_thumbnail_' + String(rawId).replace(/[^a-zA-Z0-9-]/g, '_');
+    }
+    const pn = pattern.patternName;
+    const cn = pattern.collectionName;
+    if (pn && cn) {
+        return 'cart_thumbnail_' + String(pn).replace(/[^a-zA-Z0-9-]/g, '_') + '_' + String(cn).replace(/[^a-zA-Z0-9-]/g, '_');
+    }
+    return '';
+}
+
 window.saveToMyList = function() {
     console.log('🎯 saveToMyList() function called!');
     try {
@@ -1049,11 +1068,20 @@ window.saveToMyList = function() {
         const thumbnailDataUrl = capturePatternThumbnail();
         console.log('📸 Thumbnail capture result:', thumbnailDataUrl ? 'Success' : 'Failed');
         
+        // Only persist layers that actually carry a user color (skip shadow / null — avoids "Unknown Color" in cart + thumbnails)
+        const colorLayersForSave = state.currentLayers.filter(
+            (layer) =>
+                layer &&
+                !layer.isShadow &&
+                layer.color != null &&
+                String(layer.color).trim() !== ''
+        );
+
         // Capture current pattern state - match Liquid template structure
         const currentState = {
             collectionName: state.selectedCollection?.name || 'Unknown',
             patternName: state.currentPattern.name,
-            colors: state.currentLayers.map(layer => ({
+            colors: colorLayersForSave.map((layer) => ({
                 label: layer.label,
                 color: layer.color,
                 // Store original SW-formatted color for pattern ID generation
@@ -3906,6 +3934,7 @@ function showMaterialSelectionModal(pattern) {
                 const updatedItemData = {
                     pattern: pattern.patternName,
                     collectionName: pattern.collectionName,
+                    patternId: pattern.id,
                     colors: pattern.colors || [],
                     productType: selectedMaterial,
                     productTypeName: getMaterialDisplayName(selectedMaterial),
@@ -3933,7 +3962,7 @@ function showMaterialSelectionModal(pattern) {
 
                     // Store thumbnail for cart display
                     if (pattern.thumbnail) {
-                        const thumbnailKey = `cart_thumbnail_${pattern.patternName}_${pattern.collectionName}`;
+                        const thumbnailKey = cartThumbnailStorageKeyFromPattern(pattern);
                         const thumbnailInfo = {
                             thumbnail: pattern.thumbnail,
                             colors: pattern.colors,
@@ -4444,11 +4473,19 @@ function fallbackDirectRedirect(pattern, material) {
     console.log('🏷️ Product handle:', productHandle);
 
     // Build URL parameters using saved pattern structure
+    const customColorsParam = pattern.colors
+        ? pattern.colors
+              .filter((c) => c && c.color != null && String(c.color).trim() !== '')
+              .map((c) => normalizeColorToSwFormat(c.color))
+              .filter((s) => s && s !== 'Unknown Color')
+              .join(',')
+        : '';
+
     const params = new URLSearchParams({
         'pattern_name': pattern.name || pattern.patternName, // Saved patterns use 'name'
         'collection': pattern.collection || pattern.collectionName || '', // Saved patterns use 'collection'
         'pattern_id': pattern.id, // Already correct format with SW numbers
-        'custom_colors': pattern.colors ? pattern.colors.map(c => normalizeColorToSwFormat(c.color)).join(',') : '',
+        'custom_colors': customColorsParam,
         'scale': pattern.currentScale || 100, // Include scale information
         'source': 'colorflex_saved_patterns',
         'preferred_material': material,
@@ -8044,7 +8081,62 @@ function getCleanColorName(colorName) {
         return colorName;
     }
     const cleaned = colorName.replace(/^(SW|SC)\d+\s*/i, "").trim();
-    return toInitialCaps(cleaned);
+    return toColorInitialCaps(cleaned);
+}
+
+// Color-specific initial caps (avoid filename/pattern heuristics in toInitialCaps)
+function toColorInitialCaps(str) {
+    if (!str || typeof str !== 'string') return '';
+    return str
+        .toLowerCase()
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean)
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+function buildCuratedDragPayload(found) {
+    if (!found) return null;
+    const sw = found.sw_number ? String(found.sw_number).toUpperCase().replace(/\s+/g, '') : '';
+    const name = toColorInitialCaps(String(found.color_name || found.name || '').trim());
+    const hex = found.hex ? String(found.hex).replace(/^#/, '').toUpperCase() : '';
+    return {
+        sw_number: sw,
+        color_name: name,
+        hex: hex,
+        display: (sw && name) ? `${sw} ${name}` : (name || sw || '')
+    };
+}
+
+function parseCuratedDragPayload(dt) {
+    if (!dt) return null;
+    const tryJson = () => {
+        try {
+            const raw = dt.getData('application/colorflex-color') || dt.getData('application/json');
+            if (!raw) return null;
+            const obj = JSON.parse(raw);
+            if (!obj) return null;
+            const sw = obj.sw_number ? String(obj.sw_number).toUpperCase().replace(/\s+/g, '') : '';
+            const name = obj.color_name ? toColorInitialCaps(String(obj.color_name).trim()) : '';
+            const hex = obj.hex ? String(obj.hex).replace(/^#/, '').toUpperCase() : '';
+            const display = obj.display ? String(obj.display) : ((sw && name) ? `${sw} ${name}` : (name || sw || ''));
+            if (!sw && !name && !hex && !display) return null;
+            return { sw_number: sw, color_name: name, hex, display };
+        } catch {
+            return null;
+        }
+    };
+    const fromJson = tryJson();
+    if (fromJson) return fromJson;
+
+    // Fallback: plain text like "SW7006 Eider White" or "Eider White"
+    const txt = (dt.getData('text/plain') || '').trim();
+    if (!txt) return null;
+    const m = txt.match(/\b(SW|SC)\s*(\d{3,6})\b/i);
+    const sw = m ? `${m[1].toUpperCase()}${m[2]}` : '';
+    const name = toColorInitialCaps(txt.replace(/\b(SW|SC)\s*\d+\b/i, '').trim());
+    return { sw_number: sw, color_name: name, hex: '', display: (sw && name) ? `${sw} ${name}` : (name || sw || txt) };
 }
 
 // Helper function to format colors consistently with SW numbers for display
@@ -8059,7 +8151,7 @@ function formatColorWithSW(colorName) {
         const prefix = swMatch[1].toUpperCase();
         const number = swMatch[2];
         const name = swMatch[3].trim();
-        return `${prefix}${number} ${toInitialCaps(name)}`;
+        return `${prefix}${number} ${toColorInitialCaps(name)}`;
     }
 
     // If no SW number, try to look it up in colorsData
@@ -8071,12 +8163,12 @@ function formatColorWithSW(colorName) {
         );
 
         if (colorEntry && colorEntry.sw_number) {
-            return `${colorEntry.sw_number.toUpperCase()} ${toInitialCaps(colorEntry.color_name || colorEntry.name)}`;
+            return `${colorEntry.sw_number.toUpperCase()} ${toColorInitialCaps(colorEntry.color_name || colorEntry.name)}`;
         }
     }
 
     // Fallback: just format the name consistently
-    return toInitialCaps(colorName);
+    return toColorInitialCaps(colorName);
 }
 
 // Lookup color from colors.json data
@@ -9367,6 +9459,63 @@ const createColorInput = (label, id, initialColor, isBackground = false) => {
     console.log(`Setting ${label} circle background to: ${colorValue}`);
     colorCircle.style.backgroundColor = colorValue;
 
+    // Drop target: allow dragging curated colors onto this layer's circle.
+    // Desktop only (native DnD); mobile would need pointer/touch alternative.
+    colorCircle.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'copy';
+        colorCircle.classList.add('cf-drop-target');
+    });
+    colorCircle.addEventListener('dragleave', () => {
+        colorCircle.classList.remove('cf-drop-target');
+    });
+    colorCircle.addEventListener('drop', (e) => {
+        e.preventDefault();
+        colorCircle.classList.remove('cf-drop-target');
+        const payload = parseCuratedDragPayload(e.dataTransfer);
+        if (!payload) return;
+
+        const displayName = payload.color_name || getCleanColorName(payload.display || '');
+        const stored = payload.display || displayName;
+        const hex = payload.hex ? (`#${payload.hex.replace(/^#/, '')}`) : lookupColor(stored);
+        if (!hex || hex === '#FFFFFF') return;
+
+        // Apply to this layer UI
+        input.value = displayName || input.value;
+        colorCircle.style.backgroundColor = hex;
+        previousValue = input.value.trim().toLowerCase();
+
+        // Update appState (store SW+Name if present; otherwise name)
+        const i = appState.currentLayers.findIndex(l => l.label === label);
+        if (i !== -1) appState.currentLayers[i].color = stored;
+
+        const j = appState.layerInputs.findIndex(li => li.label === label);
+        if (j !== -1) {
+            appState.layerInputs[j].input.value = input.value;
+            appState.layerInputs[j].circle.style.backgroundColor = hex;
+        }
+
+        // Make it the selected layer so subsequent curated clicks affect it
+        appState.lastSelectedLayer = { input, circle: colorCircle, label };
+        appState.lastSelectedColor = { name: stored, hex };
+
+        // Re-render (same mode routing as other changes)
+        const isFurnitureMode = window.COLORFLEX_MODE === 'FURNITURE' || appState.isInFurnitureMode;
+        const isClothingMode = window.COLORFLEX_MODE === 'CLOTHING' || (window.COLORFLEX_SIMPLE_MODE === true && window.location.pathname.includes('clothing'));
+        if (isFurnitureMode) {
+            updatePreview();
+            if (typeof updateFurniturePreview === 'function') updateFurniturePreview();
+        } else if (appState.isInFabricMode || isClothingMode) {
+            updatePreview();
+            renderFabricMockup();
+        } else {
+            updatePreview();
+            updateRoomMockup();
+        }
+        populateCoordinates();
+        if (typeof updateDisplays === 'function') updateDisplays();
+    });
+
     // Assemble color controls (darker button + circle + lighter button)
     colorControlsWrapper.appendChild(darkerButton);
     colorControlsWrapper.appendChild(colorCircle);
@@ -9425,7 +9574,7 @@ const createColorInput = (label, id, initialColor, isBackground = false) => {
             const swKey = (swOnlyMatch[1] + swOnlyMatch[2]).toLowerCase().replace(/\s+/g, '');
             const hit = appState.colorsData.find(c => c && c.sw_number && String(c.sw_number).toLowerCase().replace(/\s+/g, '') === swKey);
             if (hit && (hit.color_name || hit.name)) {
-                const displayName = toInitialCaps(String(hit.color_name || hit.name).trim());
+                const displayName = toColorInitialCaps(String(hit.color_name || hit.name).trim());
                 const swNum = String(hit.sw_number).toUpperCase().replace(/\s+/g, '');
                 input.value = displayName;
                 expandedStoredValue = `${swNum} ${displayName}`.trim();
@@ -9794,9 +9943,20 @@ function populateCuratedColors(colors) {
     const text = document.createElement("span");
     text.className = `text-xs font-bold text-center ${getContrastClass(hex)}`;
     text.style.cssText = 'white-space: pre-line; display: block;';
-    text.innerHTML = `${found.sw_number?.toUpperCase()}<br>${toInitialCaps(found.color_name)}`;
+    text.innerHTML = `${found.sw_number?.toUpperCase()}<br>${toColorInitialCaps(found.color_name)}`;
 
     circle.appendChild(text);
+    // Drag payload so a curated color can be dropped onto a layer circle.
+    circle.draggable = true;
+    circle.addEventListener('dragstart', (e) => {
+      const payload = buildCuratedDragPayload(found);
+      if (!payload) return;
+      try {
+        e.dataTransfer.setData('application/colorflex-color', JSON.stringify(payload));
+      } catch {}
+      e.dataTransfer.setData('text/plain', payload.display || label);
+      e.dataTransfer.effectAllowed = 'copy';
+    });
     circle.addEventListener("click", () => {
       const selectedLayer = appState.lastSelectedLayer;
       if (!selectedLayer) return alert("Please select a layer first.");
@@ -12247,8 +12407,11 @@ function handlePatternSelection(patternName, preserveColors = false, colorLockBu
     if (preserveColors && savedColors.length > 0) {
         let colorableIndex = 0;
         appState.currentLayers.forEach((layer) => {
-            if (layer.color != null && savedColors[colorableIndex]) {
-                layer.color = savedColors[colorableIndex];
+            if (layer.color != null) {
+                const saved = savedColors[colorableIndex];
+                if (saved !== undefined && saved !== null && String(saved).trim() !== '') {
+                    layer.color = saved;
+                }
                 colorableIndex++;
             }
         });
@@ -13052,9 +13215,10 @@ async function loadPatternData(collection, patternId) {
             if (bufferToRestore && bufferToRestore.length > 0) {
                 console.log('🔒 Color lock: Restoring colors from', bufferToRestore === appState.colorLockFullBuffer ? 'full buffer' : 'saved buffer', 'to', appState.layerInputs.length, 'layers');
                 appState.layerInputs.forEach((layer, index) => {
-                    const savedColor = index < bufferToRestore.length
-                        ? bufferToRestore[index]
-                        : bufferToRestore[index % bufferToRestore.length];
+                    const savedColor =
+                        index < bufferToRestore.length
+                            ? bufferToRestore[index]
+                            : bufferToRestore[bufferToRestore.length - 1];
 
                     layer.input.value = savedColor;
                     const hex = lookupColor(savedColor) || "#FFFFFF";
@@ -20374,6 +20538,10 @@ async function updateCartItemViaAPI(itemData) {
             return 'Normal';
         }
 
+        const thumbKey = itemData.patternId
+            ? ('cart_thumbnail_' + String(itemData.patternId).replace(/[^a-zA-Z0-9-]/g, '_'))
+            : `cart_thumbnail_${itemData.pattern}_${itemData.collectionName}`;
+
         // Build update payload
         const updatePayload = {
             id: itemToUpdate.key,
@@ -20385,7 +20553,8 @@ async function updateCartItemViaAPI(itemData) {
                 'ColorFlex Source': 'Cart Update - ColorFlex Page',
                 'Product Type': itemData.productTypeName,
                 'Pattern Scale': getScaleDisplayText(itemData.currentScale),
-                'Thumbnail Key': `cart_thumbnail_${itemData.pattern}_${itemData.collectionName}`
+                'Pattern ID': itemData.patternId || itemToUpdate.properties['Pattern ID'] || '',
+                'Thumbnail Key': thumbKey
             }
         };
 

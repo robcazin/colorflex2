@@ -1,0 +1,11 @@
+{% comment %}
+  Collection marketing from Airtable master row (NUMBER …-000), not hard-coded in the theme.
+  Sync path: cf-dl → collections.json → product metafield namespace `color_flex`, key `collection_description`.
+{% endcomment %}
+{%- assign col_mf = product.metafields.color_flex.collection_description -%}
+{%- assign col_v = col_mf.value | default: '' | strip -%}
+{%- if col_mf != blank and col_v != '' -%}
+  <div class="product__collection-description rte cf-collection-story">
+    {{ col_mf | metafield_tag }}
+  </div>
+{%- endif -%}

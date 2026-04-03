@@ -5,6 +5,8 @@
 # Updated: January 5, 2026 - Added auto-theme selection
 # Updated: January 15, 2026 - Added automatic backup system before deployment
 # Updated: February 2026 - Added --nodelete to full push; added layout option
+# Updated: March 2026 - changed-assets: push only git-changed files under src/assets/
+# Updated: April 2026 - last-edits: push the N most recently modified theme files (mtime), for small edits
 #
 # Theme root: theme files live under src/ (layout/, assets/, sections/, etc.),
 # so all ${SHOPIFY_CMD} theme push commands use --path src. Do not change to --path .
@@ -79,7 +81,10 @@ show_usage() {
     echo "  locales         - Push only locales (translations, fixes 'Translation missing')"
     echo "  sections        - Push only sections"
     echo "  snippets        - Push only snippets"
-    echo "  changed         - Push only modified/staged theme files under src/ (what you're working on)"
+    echo "  changed         - Push only modified/staged theme files under src/ (layout, sections, snippets, assets, …)"
+    echo "  changed-assets  - Same as changed, but only files under src/assets/ (CSS/JS/json in assets)"
+    echo "  last-edits [N]  - Push the N most recently modified theme files by save time (default N=2). Use after tiny edits."
+    echo "  pdp             - Push ColorFlex product-page set (layout + PDP CSS + main-product + both snippets)"
     echo "  only <path>      - Push a single file (path relative to src/, e.g. templates/page.colorflex.liquid)"
     echo "  furniture       - Deploy furniture mode (assets + template + snippet)"
     echo "  clothing        - Deploy clothing mode (assets + template)"
@@ -95,7 +100,12 @@ show_usage() {
     echo "  ./deploy-shopify-cli.sh templates  # Upload index.json + simple mode pages"
     echo "  ./deploy-shopify-cli.sh layout      # Upload layout/theme.liquid"
     echo "  ./deploy-shopify-cli.sh sections    # Upload main-product.liquid"
-    echo "  ./deploy-shopify-cli.sh changed     # Upload only modified/staged files (say n to cancel; use cfo <path> for one file)"
+    echo "  ./deploy-shopify-cli.sh changed --yes          # Upload all modified theme files (no prompt)"
+    echo "  ./deploy-shopify-cli.sh changed-assets --yes   # Upload only modified files in src/assets/"
+    echo "  ./deploy-shopify-cli.sh last-edits --yes       # Upload the 2 most recently saved theme files"
+    echo "  ./deploy-shopify-cli.sh last-edits 5 --yes     # Upload the 5 most recently saved theme files"
+    echo "  ./deploy-shopify-cli.sh pdp --yes              # Full PDP ColorFlex UI (after theme edits; not one file)"
+    echo "  ./deploy-shopify-cli.sh changed                # Same, with y/n confirm (use only <path> for one file)"
     echo "  ./deploy-shopify-cli.sh only templates/page.colorflex.liquid   # Upload one file only"
     echo "  ./deploy-shopify-cli.sh furniture   # Deploy furniture mode"
         echo "  ./deploy-shopify-cli.sh clothing    # Deploy clothing mode"
@@ -104,6 +114,15 @@ show_usage() {
     echo "  ./deploy-shopify-cli.sh all           # Push entire theme (safe: --nodelete)"
     echo "  ./deploy-shopify-cli.sh pull        # Pull theme from Shopify → theme-pull/"
     echo ""
+}
+
+# Epoch mtime for theme files (BSD stat on macOS, GNU stat elsewhere)
+_theme_mtime() {
+    if stat -f '%m' "$1" &>/dev/null; then
+        stat -f '%m' "$1"
+    else
+        stat -c '%Y' "$1" 2>/dev/null
+    fi
 }
 
 # Shopify CLI: use global if available, otherwise npx (avoids EACCES on npm install -g)
@@ -152,6 +171,8 @@ case "$DEPLOY_MODE" in
         echo "  - src/assets/unified-pattern-modal.js"
         echo "  - src/assets/ProductConfigurationFlow.js"
         echo "  - src/assets/colorflex-simple-mode.css"
+        echo "  - src/assets/colorflex-responsive.css"
+        echo "  - src/assets/colorflex-product-page.css (PDP button + collection story helpers)"
         echo "  - src/assets/mockups.json"
         echo "  - src/assets/*mask*.png (if any)"
         echo "  - src/assets/furniture-config.json (if exists)"
@@ -186,6 +207,8 @@ case "$DEPLOY_MODE" in
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/unified-pattern-modal.js
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/ProductConfigurationFlow.js
             ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/colorflex-simple-mode.css
+            [ -f "src/assets/colorflex-responsive.css" ] && ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/colorflex-responsive.css
+            [ -f "src/assets/colorflex-product-page.css" ] && ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/colorflex-product-page.css
             # Deploy mockups.json and any tint mask assets (used for mockup tinting)
             if [ -f "src/assets/mockups.json" ]; then
                 ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only assets/mockups.json
@@ -402,6 +425,173 @@ case "$DEPLOY_MODE" in
                 ((COUNT++)) || true
             done <<< "$THEME_PATHS"
             echo -e "${GREEN}✅ Deployed $COUNT file(s) successfully${NC}"
+        fi
+        ;;
+
+    changed-assets)
+        echo "🔬 Deploying only modified/staged files under src/assets/ (CSS, JS, JSON, images, …)..."
+        echo ""
+        if ! git rev-parse --is-inside-work-tree &>/dev/null; then
+            echo -e "${RED}❌ Not a git repository. Run from project root or use: ./deploy-shopify-cli.sh only assets/<file>${NC}"
+            exit 1
+        fi
+        CHANGED_FILES=$(
+            {
+                git diff --name-only HEAD -- src/assets/
+                git diff --name-only --cached -- src/assets/
+                git ls-files --others --exclude-standard -- src/assets/
+            } 2>/dev/null | sort -u
+        )
+        if [[ -z "$CHANGED_FILES" ]]; then
+            echo -e "${YELLOW}No modified, staged, or untracked files under src/assets/.${NC}"
+            echo "Tip: For layout/sections/snippets too, run: ./deploy-shopify-cli.sh changed"
+            exit 0
+        fi
+        THEME_PATHS=""
+        for f in $CHANGED_FILES; do
+            [[ -f "$f" ]] || continue
+            case "$f" in
+                src/assets/*) THEME_PATHS="${THEME_PATHS} ${f#src/}";;
+            esac
+        done
+        THEME_PATHS=$(echo "$THEME_PATHS" | tr ' ' '\n' | grep -v '^$' | sort -u)
+        if [[ -z "$THEME_PATHS" ]]; then
+            echo -e "${YELLOW}No trackable asset files in that set.${NC}"
+            exit 0
+        fi
+        echo "Asset files to deploy:"
+        echo "$THEME_PATHS" | sed 's/^/  - src\//'
+        echo ""
+        if [[ "$2" == "--yes" ]]; then
+            SKIP_CONFIRM=1
+        else
+            read -p "Continue? (y/n) " -n 1 -r
+            echo
+            [[ $REPLY =~ ^[Yy]$ ]] && SKIP_CONFIRM=1
+        fi
+        if [[ -n "$SKIP_CONFIRM" ]]; then
+            COUNT=0
+            while IFS= read -r relpath; do
+                [[ -z "$relpath" ]] && continue
+                ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only "$relpath" --nodelete --allow-live
+                echo "  ✓ $relpath"
+                ((COUNT++)) || true
+            done <<< "$THEME_PATHS"
+            echo -e "${GREEN}✅ Deployed $COUNT asset file(s) successfully${NC}"
+        fi
+        ;;
+
+    last-edits)
+        echo "🕐 Deploying the most recently saved theme files (by filesystem mtime, not git status)..."
+        echo ""
+        N=2
+        if [[ "$2" =~ ^[0-9]+$ ]]; then
+            N="$2"
+            SKIP_ARG="${3:-}"
+        else
+            SKIP_ARG="${2:-}"
+        fi
+        if [ "$N" -lt 1 ]; then
+            echo -e "${RED}❌ Count must be a positive integer (e.g. last-edits 3).${NC}"
+            exit 1
+        fi
+        if [ "$N" -gt 50 ]; then
+            echo -e "${YELLOW}⚠️  Capping at 50 files.${NC}"
+            N=50
+        fi
+        RECENT_TMP=$(mktemp)
+        find src/sections src/templates src/snippets src/layout src/assets src/locales src/config \
+            -type f 2>/dev/null | while IFS= read -r f; do
+            m=$(_theme_mtime "$f") || continue
+            printf '%s\t%s\n' "$m" "$f"
+        done | sort -t "$(printf '\t')" -k1 -rn | cut -f2- > "$RECENT_TMP"
+        THEME_PATHS=""
+        PICKED=0
+        while IFS= read -r f; do
+            [[ -z "$f" ]] && continue
+            [[ -f "$f" ]] || continue
+            case "$f" in
+                src/sections/*|src/templates/*|src/snippets/*|src/layout/*|src/assets/*|src/locales/*|src/config/*)
+                    relpath="${f#src/}"
+                    if [ "$IS_LIVE_THEME" = true ]; then
+                        case "$relpath" in
+                            templates/page.colorflex-bassett.liquid|assets/color-flex-bassett.min.js)
+                                continue
+                                ;;
+                        esac
+                    fi
+                    THEME_PATHS="${THEME_PATHS}${relpath}"$'\n'
+                    PICKED=$((PICKED + 1))
+                    [ "$PICKED" -ge "$N" ] && break
+                    ;;
+            esac
+        done < "$RECENT_TMP"
+        rm -f "$RECENT_TMP"
+        THEME_PATHS=$(echo "$THEME_PATHS" | grep -v '^$')
+        if [[ -z "$THEME_PATHS" ]]; then
+            echo -e "${YELLOW}No theme files found under sections, templates, snippets, layout, assets, locales, config.${NC}"
+            exit 0
+        fi
+        echo "Most recently saved files (up to $N) → deploy:"
+        echo "$THEME_PATHS" | sed 's/^/  - src\//'
+        echo ""
+        echo -e "${BLUE}Tip: This uses file save time. Use ${NC}changed${BLUE} for “everything git thinks changed under src/”.${NC}"
+        echo ""
+        if [[ "$SKIP_ARG" == "--yes" ]]; then
+            SKIP_CONFIRM=1
+        else
+            read -p "Continue? (y/n) " -n 1 -r
+            echo
+            [[ $REPLY =~ ^[Yy]$ ]] && SKIP_CONFIRM=1
+        fi
+        if [[ -n "$SKIP_CONFIRM" ]]; then
+            COUNT=0
+            while IFS= read -r relpath; do
+                [[ -z "$relpath" ]] && continue
+                ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only "$relpath" --nodelete --allow-live
+                echo "  ✓ $relpath"
+                ((COUNT++)) || true
+            done <<< "$(echo "$THEME_PATHS")"
+            echo -e "${GREEN}✅ Deployed $COUNT file(s) successfully${NC}"
+        fi
+        ;;
+
+    pdp)
+        echo "🛒 Deploying ColorFlex product page bundle (layout + assets + section + snippets)..."
+        echo ""
+        echo "Why: The live PDP uses snippets/shopify-product-colorflex-button (from product.json) plus"
+        echo "     main-product.liquid, theme.liquid (PDP CSS link), and product-collection-description."
+        echo "     Pushing one file often leaves another copy stale (e.g. duplicate button removed from price block)."
+        echo ""
+        PDP_FILES=(
+            layout/theme.liquid
+            assets/colorflex-product-page.css
+            snippets/shopify-product-colorflex-button.liquid
+            snippets/product-collection-description.liquid
+            snippets/product-pattern-description.liquid
+            sections/main-product.liquid
+        )
+        for rel in "${PDP_FILES[@]}"; do
+            if [[ ! -f "src/$rel" ]]; then
+                echo -e "${RED}❌ Missing: src/$rel${NC}"
+                exit 1
+            fi
+            echo "  - src/$rel"
+        done
+        echo ""
+        if [[ "$2" == "--yes" ]]; then
+            SKIP_CONFIRM=1
+        else
+            read -p "Continue? (y/n) " -n 1 -r
+            echo
+            [[ $REPLY =~ ^[Yy]$ ]] && SKIP_CONFIRM=1
+        fi
+        if [[ -n "$SKIP_CONFIRM" ]]; then
+            for rel in "${PDP_FILES[@]}"; do
+                ${SHOPIFY_CMD} theme push ${THEME_FLAG} --path src --only "$rel" --nodelete --allow-live
+                echo "  ✓ $rel"
+            done
+            echo -e "${GREEN}✅ PDP bundle deployed. Hard-refresh the product page (cache).${NC}"
         fi
         ;;
 

@@ -169,6 +169,96 @@ function parsePatternNumber(numberString) {
     return { category: '', collection: '', pattern: '', variant: '', full: numberString };
 }
 
+/** Normalize Airtable field values (string, long text, occasional object shapes) to plain text. */
+function airtableFieldToPlainString(raw) {
+    if (raw == null) return '';
+    if (typeof raw === 'string') return raw.trim();
+    if (typeof raw === 'number' && Number.isFinite(raw)) return String(raw);
+    if (Array.isArray(raw)) {
+        const parts = raw.map((x) => airtableFieldToPlainString(x)).filter(Boolean);
+        return parts.join('\n').trim();
+    }
+    if (typeof raw === 'object') {
+        if (raw.value != null && typeof raw.value === 'string') return raw.value.trim();
+        if (raw.text != null && typeof raw.text === 'string') return raw.text.trim();
+    }
+    return '';
+}
+
+/**
+ * Read long description from an Airtable record (master -000 or pattern row). Tries common field names.
+ */
+function readAirtableDescriptionField(record) {
+    if (!record || typeof record.get !== 'function') return '';
+    const names = ['Description', 'DESCRIPTION', 'description', 'Collection description', 'COLLECTION DESCRIPTION'];
+    for (const name of names) {
+        const text = airtableFieldToPlainString(record.get(name));
+        if (text) return text;
+    }
+    return '';
+}
+
+/** Shopify vendor line (replaces fixed "Saffron Cottage") — human-readable collection name */
+function formatCollectionVendorName(collectionName) {
+    if (!collectionName || typeof collectionName !== 'string') return 'Saffron Cottage';
+    return collectionName
+        .replace(/[._]+/g, '-')
+        .split(/[-\s]+/)
+        .filter(Boolean)
+        .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+        .join(' ');
+}
+
+function escapeHtmlForProductBody(s) {
+    return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;');
+}
+
+/** Airtable "Description" → Shopify body HTML (plain → wrapped <p>, existing HTML kept) */
+function patternDescriptionToBodyHtml(description) {
+    if (description == null) return '';
+    const raw = String(description).trim();
+    if (!raw) return '';
+    if (/<[a-z][\s\S]*>/i.test(raw)) return raw;
+    return `<p>${escapeHtmlForProductBody(raw)}</p>`;
+}
+
+function buildDefaultPatternBodyParagraph(pattern, collection, numberData, variantDescription) {
+    const pretty = formatCollectionVendorName(collection.name);
+    const numPart = numberData.full ? `Pattern #${numberData.full}. ` : '';
+    const isColorFlex = pattern.colorFlex === true;
+    const flexPart = isColorFlex
+        ? 'Customize colors to match your space perfectly with our ColorFlex system.'
+        : 'Classic design available in standard colorways.';
+    return `<p>${pattern.name} pattern from our ${pretty} collection. ${numPart}${flexPart} Available as ${variantDescription}</p>`;
+}
+
+/** Product body for Shopify CSV: prefer Airtable Description on each pattern row */
+function buildPatternProductBodyHtml(pattern, collection, numberData, variantDescription) {
+    const custom = pattern.description && String(pattern.description).trim();
+    if (custom) {
+        const main = patternDescriptionToBodyHtml(pattern.description);
+        const avail = variantDescription
+            ? `<p><em>Available as ${escapeHtmlForProductBody(variantDescription)}</em></p>`
+            : '';
+        return main + avail;
+    }
+    return buildDefaultPatternBodyParagraph(pattern, collection, numberData, variantDescription);
+}
+
+function buildPatternSeoDescription(pattern, collection, isColorFlex) {
+    const pretty = formatCollectionVendorName(collection.name);
+    const custom = pattern.description && String(pattern.description).trim();
+    if (custom) {
+        const plain = custom.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+        return plain.length > 320 ? `${plain.slice(0, 317)}...` : plain;
+    }
+    return `${pattern.name} pattern from our ${pretty} collection. ${isColorFlex ? 'Customize colors to match your space perfectly with our ColorFlex system.' : 'Classic design available in standard colorways.'} Available for wallpaper, fabric, and other applications.`;
+}
+
 /** Sort patterns by pattern number (01-02-101, 01-02-102, …). Mutates the array in place. */
 function sortCollectionPatternsByNumber(patterns) {
     if (!Array.isArray(patterns) || patterns.length === 0) return;
@@ -177,6 +267,50 @@ function sortCollectionPatternsByNumber(patterns) {
         const nb = (b.number != null && b.number !== '') ? String(b.number).trim() : '\uFFFF';
         return na.localeCompare(nb, undefined, { numeric: true });
     });
+}
+
+function normalizePatternKey(value) {
+    return String(value || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+}
+
+function getPatternIdentity(pattern) {
+    if (!pattern || typeof pattern !== 'object') return null;
+    const byId = normalizePatternKey(pattern.id);
+    if (byId) return `id:${byId}`;
+    const byNumber = normalizePatternKey(pattern.number);
+    if (byNumber) return `number:${byNumber}`;
+    const bySlug = normalizePatternKey(pattern.slug);
+    if (bySlug) return `slug:${bySlug}`;
+    const byName = normalizePatternKey(cleanPatternName(pattern.name || ''));
+    if (byName) return `name:${byName}`;
+    return null;
+}
+
+function findPatternIndexByIdentity(patterns, candidate) {
+    if (!Array.isArray(patterns) || !candidate) return -1;
+    const candidateId = normalizePatternKey(candidate.id);
+    if (candidateId) {
+        const idx = patterns.findIndex((p) => normalizePatternKey(p && p.id) === candidateId);
+        if (idx !== -1) return idx;
+    }
+    const candidateNumber = normalizePatternKey(candidate.number);
+    if (candidateNumber) {
+        const idx = patterns.findIndex((p) => normalizePatternKey(p && p.number) === candidateNumber);
+        if (idx !== -1) return idx;
+    }
+    const candidateSlug = normalizePatternKey(candidate.slug);
+    if (candidateSlug) {
+        const idx = patterns.findIndex((p) => normalizePatternKey(p && p.slug) === candidateSlug);
+        if (idx !== -1) return idx;
+    }
+    const candidateName = normalizePatternKey(cleanPatternName(candidate.name || ''));
+    if (candidateName) {
+        return patterns.findIndex((p) => normalizePatternKey(cleanPatternName((p && p.name) || '')) === candidateName);
+    }
+    return -1;
 }
 
 /**
@@ -407,7 +541,8 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
         'product.metafields.color_flex.pattern_number',
         'product.metafields.color_flex.collection_sequence',
         'product.metafields.color_flex.pattern_sequence',
-        'product.metafields.color_flex.pattern_variant'
+        'product.metafields.color_flex.pattern_variant',
+        'product.metafields.color_flex.collection_description'
     ];
     
     csvRows.push(headers);
@@ -496,9 +631,14 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
                 ? `${baseTags}, removable, custom-color, colorflex`
                 : `${baseTags}, standard`;
             
+            const vendorDisplay = formatCollectionVendorName(collection.name);
+            const collectionDescriptionForProducts =
+                collection.description && String(collection.description).trim()
+                    ? String(collection.description).trim()
+                    : '';
             // Generate SEO-optimized content
-            const seoTitle = `${pattern.name} - ${collection.name.charAt(0).toUpperCase() + collection.name.slice(1)} Collection | ColorFlex Wallpaper`;
-            const seoDescription = `${pattern.name} pattern from our ${collection.name.charAt(0).toUpperCase() + collection.name.slice(1)} collection. ${isColorFlex ? 'Customize colors to match your space perfectly with our ColorFlex system.' : 'Classic design available in standard colorways.'} Available for wallpaper, fabric, and other applications.`;
+            const seoTitle = `${pattern.name} - ${vendorDisplay} Collection | ColorFlex Wallpaper`;
+            const seoDescription = buildPatternSeoDescription(pattern, collection, isColorFlex);
             
             // Create multiple variants for different applications
             const variants = [
@@ -527,8 +667,8 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
                 const row = [
                     handle, // Handle (same for all variants)
                     pattern.name, // Title (same for all variants)
-                    `<p>${pattern.name} pattern from our ${collection.name.charAt(0).toUpperCase() + collection.name.slice(1)} collection. ${numberData.full ? `Pattern #${numberData.full}. ` : ''}${isColorFlex ? 'Customize colors to match your space perfectly with our ColorFlex system.' : 'Classic design available in standard colorways.'} Available as ${variant.description}</p>`, // Body HTML
-                    'Saffron Cottage', // Vendor
+                    buildPatternProductBodyHtml(pattern, collection, numberData, variant.description), // Body HTML (Airtable Description when set)
+                    vendorDisplay, // Vendor (collection display name)
                     productCategory, // Product Category
                     productType, // Type
                     tags, // Tags
@@ -560,7 +700,8 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
                     numberData.full, // Metafield: color_flex.pattern_number [single_line_text_field]
                     numberData.collection, // Metafield: color_flex.collection_sequence [single_line_text_field]
                     numberData.pattern, // Metafield: color_flex.pattern_sequence [single_line_text_field]
-                    numberData.variant // Metafield: color_flex.pattern_variant [single_line_text_field]
+                    numberData.variant, // Metafield: color_flex.pattern_variant [single_line_text_field]
+                    collectionDescriptionForProducts // Metafield: color_flex.collection_description [multi_line_text_field]
                 ];
                 
                 csvRows.push(row);
@@ -576,12 +717,12 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
                     fallbackHandle, // Handle
                     `Error Pattern ${index + 1}`, // Title
                     '<p>Pattern data could not be processed due to an error.</p>', // Body HTML
-                    'Saffron Cottage', // Vendor
+                    formatCollectionVendorName(collection.name), // Vendor
                     'Home & Garden > Decor', // Product Category
                     'Error Pattern', // Type
                     `${collection.name}, error`, // Tags
                     'FALSE', // Published - don't publish error patterns
-                    ...Array(40).fill('') // Fill remaining columns with empty values
+                    ...Array(41).fill('') // Fill remaining columns with empty values
                 ];
                 csvRows.push(fallbackRow);
             }
@@ -635,7 +776,8 @@ function generateShopifyTemplate() {
         'Metafield: color_flex.pattern_number',
         'Metafield: color_flex.collection_sequence',
         'Metafield: color_flex.pattern_sequence',
-        'Metafield: color_flex.pattern_variant'
+        'Metafield: color_flex.pattern_variant',
+        'Metafield: color_flex.collection_description'
     ];
     
     // Add example row showing data format
@@ -643,7 +785,7 @@ function generateShopifyTemplate() {
         'example-pattern-handle',
         'Example Pattern Name',
         '<p>Example pattern description with HTML formatting.</p>',
-        'Saffron Cottage',
+        'Example Collection',
         'Home & Garden > Decor',
         'ColorFlex Pattern',
         'collection-name, pattern, wallpaper, fabric, removable, custom-color, colorflex',
@@ -675,7 +817,8 @@ function generateShopifyTemplate() {
         '01-01-101A',
         '01',
         '101',
-        'A'
+        'A',
+        'Optional collection marketing copy from master (-000) row.'
     ];
     
     const csvContent = [headers, exampleRow]
@@ -1494,6 +1637,8 @@ const collections = await getCollectionsFromAirtable();
 
                 // ColorFlex: explicit Airtable checkbox, or infer from layers (so misnamed/missing "Color-Flex" field still yields ColorFlex when LAYER SEPARATIONS is filled)
                 const isColorFlex = record.get('Color-Flex') === true || record.get('ColorFlex') === true || layerData.length > 0;
+
+                const patternDescription = readAirtableDescriptionField(record);
                 
                 jsonRecords.push({
                     id: recordId,
@@ -1510,6 +1655,7 @@ const collections = await getCollectionsFromAirtable();
                     coordinates: collectionCoordinates.length > 0 ? collectionCoordinates : null,
                     baseComposite: baseCompositePath,
                     tintWhite: tintWhite,
+                    ...(patternDescription ? { description: patternDescription } : {}),
                     updatedAt: new Date().toISOString()
                 });
             }
@@ -1530,6 +1676,25 @@ const collections = await getCollectionsFromAirtable();
             const collectionNumber = parseInt(String(tableName).split(' - ')[0], 10) || 999;
             // If master row didn't set ColorFlex (no -000 or field unchecked/misnamed), infer from patterns so STRIPES etc. are ColorFlex when they have layers
             const effectiveCollectionColorFlex = collectionColorFlex || jsonRecords.some(p => p.colorFlex === true);
+
+            // Collection-level copy for ColorFlex sidebar / JSON: Airtable master row (-000) field "Description"
+            const existingIndexForMerge = existingData.collections.findIndex(c => c.name === baseName);
+            const prevCollectionSnapshot = existingIndexForMerge !== -1 ? existingData.collections[existingIndexForMerge] : null;
+            let collectionDescriptionForJson = '';
+            if (placeholderRecord) {
+                collectionDescriptionForJson = readAirtableDescriptionField(placeholderRecord);
+                if (collectionDescriptionForJson) {
+                    console.log(`[DESCRIPTION] Collection (${baseName}) master row Description: ${collectionDescriptionForJson.substring(0, 72)}${collectionDescriptionForJson.length > 72 ? '…' : ''}`);
+                } else {
+                    console.warn(
+                        `[DESCRIPTION] No usable collection Description on master row for "${baseName}" (NUMBER ${placeholderRecord.get('NUMBER') || '?'}). ` +
+                            'In Airtable, use a single-line or long-text field named **Description** (or rename to match). Checked: Description, DESCRIPTION, description, Collection description.'
+                    );
+                }
+            } else if (prevCollectionSnapshot?.description) {
+                collectionDescriptionForJson = String(prevCollectionSnapshot.description).trim();
+            }
+
             const newCollectionData = {
                 name: baseName,
                 tableName: tableName,
@@ -1542,6 +1707,7 @@ const collections = await getCollectionsFromAirtable();
                     ? { mockupId: resolvedMockupId }
                     : { mockup: mockupName, mockupShadow: mockupShadowName, mockupWidthInches: mockupDims.widthInches, mockupHeightInches: mockupDims.heightInches }
                 ),
+                ...(collectionDescriptionForJson ? { description: collectionDescriptionForJson } : {}),
                 patterns: jsonRecords
             };
 
@@ -1826,7 +1992,7 @@ async function main(downloadImages = true, collectionName = null, generateShopif
     let newPatternsData = null; // Track only new patterns for CSV generation
 
     if (incrementalMode) {
-        console.log(`[MAIN] 🔄 INCREMENTAL MODE: Using name comparison approach`);
+        console.log(`[MAIN] 🔄 INCREMENTAL MODE: Upsert by id/number/slug/name`);
         const collectionsPath = path.join(DATA_ROOT, 'collections.json');
 
         try {
@@ -1838,53 +2004,50 @@ async function main(downloadImages = true, collectionName = null, generateShopif
                 // Create structure to hold ONLY new patterns for CSV
                 newPatternsData = { collections: [] };
 
-                // For the specified collection, compare by cleanPatternName()
-                data.collections.forEach(newCollection => {
+                // Scope incremental merge to requested collection when provided.
+                // (Before this, single-collection runs still iterated every collection in existingData.)
+                const incrementalCollections = collectionName && collectionName !== 'null'
+                    ? data.collections.filter(c =>
+                        (c.name || '').toLowerCase().includes(String(collectionName).toLowerCase())
+                    )
+                    : data.collections;
+                if (collectionName && collectionName !== 'null') {
+                    console.log(`[MAIN] Incremental scope for "${collectionName}": ${incrementalCollections.length} collection(s)`);
+                }
+
+                incrementalCollections.forEach(newCollection => {
                     const existingCollection = existingData.collections.find(c =>
                         c.name.toLowerCase() === newCollection.name.toLowerCase()
                     );
 
                     if (existingCollection) {
-                        console.log(`[MAIN] 🔍 Comparing pattern names for "${newCollection.name}"...`);
+                        console.log(`[MAIN] 🔍 Upserting patterns for "${newCollection.name}" by id/number/slug/name...`);
+                        const trulyNewPatterns = [];
+                        let replacedPatterns = 0;
 
-                        // Build set of existing pattern names (cleaned and lowercase)
-                        const existingPatternNames = new Set(
-                            existingCollection.patterns.map(p => cleanPatternName(p.name).toLowerCase())
-                        );
-
-                        console.log(`[MAIN] Existing patterns (${existingPatternNames.size}):`);
-                        existingCollection.patterns.forEach(p => {
-                            console.log(`  - ${p.name} → cleaned: "${cleanPatternName(p.name)}"`);
+                        newCollection.patterns.forEach((incomingPattern) => {
+                            const existingIdx = findPatternIndexByIdentity(existingCollection.patterns, incomingPattern);
+                            if (existingIdx >= 0) {
+                                const previous = existingCollection.patterns[existingIdx];
+                                existingCollection.patterns[existingIdx] = incomingPattern;
+                                replacedPatterns++;
+                                console.log(`[MAIN] 🔁 Updated existing pattern: "${previous?.name || '(unknown)'}" -> "${incomingPattern.name}"`);
+                            } else {
+                                existingCollection.patterns.push(incomingPattern);
+                                trulyNewPatterns.push(incomingPattern);
+                                newPatternsAdded++;
+                                console.log(`[MAIN] ✨ Added new pattern: "${incomingPattern.name}"`);
+                            }
                         });
 
-                        console.log(`[MAIN] Fetched patterns (${newCollection.patterns.length}):`);
-                        newCollection.patterns.forEach(p => {
-                            const cleaned = cleanPatternName(p.name);
-                            const isNew = !existingPatternNames.has(cleaned.toLowerCase());
-                            console.log(`  - ${p.name} → cleaned: "${cleaned}" ${isNew ? '✨ NEW' : '(exists)'}`);
-                        });
+                        console.log(`[MAIN] Collection "${newCollection.name}": ${trulyNewPatterns.length} new, ${replacedPatterns} updated`);
 
-                        // Find truly NEW patterns by comparing cleaned names
-                        const newPatterns = newCollection.patterns.filter(p => {
-                            const cleanedName = cleanPatternName(p.name);
-                            return !existingPatternNames.has(cleanedName.toLowerCase());
-                        });
-
-                        if (newPatterns.length > 0) {
-                            console.log(`[MAIN] ✅ Found ${newPatterns.length} NEW patterns in "${newCollection.name}":`);
-                            newPatterns.forEach(p => console.log(`     - ${p.name} (cleaned: ${cleanPatternName(p.name)})`));
-
-                            // Append new patterns to existing collection
-                            existingCollection.patterns = [...existingCollection.patterns, ...newPatterns];
-                            newPatternsAdded += newPatterns.length;
-
-                            // Track new patterns separately for CSV generation
+                        // Track only truly NEW patterns for incremental CSV/product creation.
+                        if (trulyNewPatterns.length > 0) {
                             newPatternsData.collections.push({
                                 ...newCollection,
-                                patterns: newPatterns
+                                patterns: trulyNewPatterns
                             });
-                        } else {
-                            console.log(`[MAIN] ℹ️  No new patterns found in "${newCollection.name}"`);
                         }
                     } else {
                         // Entire collection is new

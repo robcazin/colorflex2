@@ -270,7 +270,8 @@
 
               <tbody>
                 {%- for item in cart.items -%}
-                  <tr class="cart-item{% if item.properties['ColorFlex Design'] == 'Yes' %} colorflex-cart-item{% endif %}" id="CartItem-{{ item.index | plus: 1 }}">
+                  {%- comment -%} id must match /cart.js item.line (1-based) for thumbnail restoration {%- endcomment -%}
+                  <tr class="cart-item{% if item.properties['ColorFlex Design'] == 'Yes' %} colorflex-cart-item{% endif %}" id="CartItem-{{ item.index }}">
                     <td class="cart-item__media">
                       {% if item.properties['ColorFlex Design'] == 'Yes' %}
                         {% comment %} ColorFlex custom pattern with generated preview {% endcomment %}
@@ -303,10 +304,16 @@
                                  alt="Custom {{ item.properties['Pattern Name'] | default: 'ColorFlex' }} Pattern"
                                  loading="lazy">
                           {% else %}
-                            {% comment %} Fallback placeholder if no preview generated {% endcomment %}
-                            <div style="width: 150px; height: 150px; background: #374151; border: 2px solid #d4af37; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 14px; text-align: center;">
-                              🎨<br>Custom<br>ColorFlex<br>Pattern
-                            </div>
+                            {% comment %} Real img required: global-cart-restoration.js sets src from localStorage (Thumbnail Key). Div-only placeholder had no img to update. {% endcomment %}
+                            <img
+                              class="cart-item__image colorflex-cart-thumb-target"
+                              src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                              data-thumbnail-key="{{ item.properties['Thumbnail Key'] | escape }}"
+                              width="150"
+                              height="150"
+                              style="width: 150px; height: 150px; object-fit: cover; border: 2px solid #d4af37; border-radius: 8px; background: #374151;"
+                              alt="Custom {% if pattern_name != blank %}{{ pattern_name | escape }}{% else %}ColorFlex{% endif %} pattern"
+                              loading="lazy">
                           {% endif %}
                           {% comment %} ColorFlex badge overlay {% endcomment %}
                           <div style="position: absolute; top: 4px; left: 4px; background: #d4af37; color: #1a202c; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: bold;">

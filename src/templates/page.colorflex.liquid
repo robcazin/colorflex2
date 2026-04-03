@@ -461,6 +461,67 @@
 })();
 </script>
 
+<!-- Patterns Modal (mobile): thumbnails in popup -->
+<div id="patternsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; overflow-y: auto; padding: 1rem;">
+  <div style="background: #000; border: 3px solid #d4af37; border-radius: 16px; padding: 1.5rem; max-width: 95vw; max-height: 85vh; overflow-y: auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="color: #d4af37; font-family: 'Island Moments', cursive; margin: 0;">Pick a Pattern</h3>
+      <button id="closePatternsModal" style="background: transparent; border: 2px solid #d4af37; color: #d4af37; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.2rem;">×</button>
+    </div>
+    <div id="patternsModalContent" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; padding: 0.5rem 0;"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const patternsModal = document.getElementById('patternsModal');
+  const patternsContent = document.getElementById('patternsModalContent');
+  const closeBtn = document.getElementById('closePatternsModal');
+  const leftSidebar = document.getElementById('leftSidebar');
+  const collectionThumbnails = document.getElementById('collectionThumbnails');
+
+  window.openPatternsModal = function() {
+    if (!collectionThumbnails || !leftSidebar) return;
+    patternsContent.appendChild(collectionThumbnails);
+    patternsModal.style.display = 'flex';
+  };
+
+  window.closePatternsModal = function() {
+    if (!collectionThumbnails || !leftSidebar) return;
+    leftSidebar.appendChild(collectionThumbnails);
+    patternsModal.style.display = 'none';
+  };
+
+  if (closeBtn) closeBtn.addEventListener('click', window.closePatternsModal);
+  patternsModal.addEventListener('click', function(e) {
+    if (e.target === patternsModal) window.closePatternsModal();
+    if (e.target.closest && e.target.closest('.thumbnail')) {
+      setTimeout(window.closePatternsModal, 400);
+    }
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && patternsModal.style.display === 'flex') window.closePatternsModal();
+  });
+
+  // Show mobile bar on narrow viewports; sync collection name
+  function updateMobileLayout() {
+    const bar = document.getElementById('mobileCollectionBar');
+    const mobileText = document.getElementById('mobileCollectionHeaderText');
+    const mainHeader = document.getElementById('collectionHeader');
+    if (!bar) return;
+    if (window.innerWidth <= 768) {
+      bar.style.display = 'flex';
+      if (mobileText && mainHeader) mobileText.textContent = mainHeader.textContent.replace(/\s*▼\s*$/,'').trim() || 'Collection';
+    } else {
+      bar.style.display = 'none';
+    }
+  }
+  window.addEventListener('resize', updateMobileLayout);
+  setInterval(updateMobileLayout, 1000);
+  updateMobileLayout();
+})();
+</script>
+
 <div class="colorflex-section">
   <div style="background: #000; color: white; padding: 0.45rem; border-radius: 8px; margin: 0.225rem 0;">
 
@@ -470,13 +531,22 @@
     <!-- ColorFlex App -->
     <div id="mainContainer" style="position: relative; min-height: 70vh;">
 
-      <div style="display: grid; grid-template-columns: 1fr 280px 1fr; gap: 1.8rem; max-width: 1500px; margin: 0 auto; margin-left: 160px; padding: 0 0.9rem; position: relative; z-index: 1;">
+      <div class="colorflex-main-grid" style="display: grid; grid-template-columns: 1fr 280px 1fr; gap: 1.8rem; max-width: 1500px; margin: 0 auto; margin-left: 160px; padding: 0 0.9rem; position: relative; z-index: 1;">
 
         <!-- MOVED: Curated Colors Section - Compact Version -->
         <div style="grid-column: 1 / -1; margin-bottom: 0;">
           <section id="curatedColorsSection" style="width: 100%; padding: 0.1125rem 0 0 0; text-align: center;">
             <div id="curatedColorsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 5.4px; max-width: 1300px; margin: 0 auto -13.5px auto; min-height: 27px;"></div>
           </section>
+        </div>
+
+        <!-- Mobile: Collection + Patterns bar (hidden on desktop) -->
+        <div id="mobileCollectionBar" style="grid-column: 1 / -1; display: none; flex-direction: column; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+          <div id="mobileCollectionHeader" onclick="window.openCollectionsModal()" style="cursor: pointer; padding: 0.5rem 1rem; background: rgba(212, 175, 55, 0.15); border: 2px solid #d4af37; border-radius: 8px; text-align: center;">
+            <span id="mobileCollectionHeaderText" style="font-family: 'IM Fell English', serif; font-size: 1rem; color: white;">Collection</span>
+            <div style="font-size: 0.7rem; color: #d4af37;">Tap to switch ▼</div>
+          </div>
+          <button id="patternsModalBtn" onclick="window.openPatternsModal()" style="padding: 0.5rem 1rem; background: #1a202c; border: 2px solid #d4af37; border-radius: 8px; color: #d4af37; font-size: 0.9rem; cursor: pointer;">Patterns</button>
         </div>
 
         <!-- Pattern Preview -->
@@ -574,10 +644,10 @@
             <button data-multiplier="0.25" onclick="setPatternScale(0.25)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0 !important; color: #1a202c !important; border: none; border-radius: 4px; font-size: 0.85rem; opacity: 1 !important;">4X</button>
           </div>
           
-          <p style="margin-top: 0.9rem; font-size: 1.5rem; color: #888888ff; text-align: center; font-style: italic;">Adjust pattern scale - higher numbers show more repetitions</p>
-          <div style="text-align: center;">
-            <h3 style="margin-top: 2.3rem; font-size: 2rem; font-family: 'Island Moments', cursive !important;">Matching Coordinates</h3>
-            <div id="coordinatesContainer" style="margin-top: 3rem; min-height: 100px; max-width: 550px; margin-left: auto; margin-right: auto;"></div>
+          <p style="margin-top: 1rem; font-size: 1.5rem; color: #888888ff; text-align: center; font-style: italic;">Adjust pattern scale - higher numbers show more repetitions</p>
+          <div id="coordinatesSection" style="text-align: center;">
+            <h3 style="font-size: 2rem; font-family: 'Island Moments', cursive !important;">Matching Coordinates</h3>
+            <div id="coordinatesContainer" style="min-height: 100px; max-width: 550px; margin-left: auto; margin-right: auto;"></div>
           </div>
           
         </div>
@@ -615,6 +685,7 @@
 </div>
 
 {{ 'color-flex-core.min.css' | asset_url | stylesheet_tag }}
+{{ 'colorflex-responsive.css' | asset_url | stylesheet_tag }}
 <!-- ColorFlex Core Application (includes promo code functionality) -->
 <script src="{{ 'color-flex-core.min.js' | asset_url }}" defer></script>
 <!-- Modular Testing Functions -->

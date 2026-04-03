@@ -218,9 +218,10 @@
                   {%- endif -%}
                 </p>
               {%- when 'description' -%}
-                {%- if product.description != blank -%}
-                  <div class="product__description rte quick-add-hidden" {{ block.shopify_attributes }}>
-                    {{ product.description }}
+                {%- if product.metafields.color_flex.collection_description.value != blank or product.description != blank -%}
+                  <div class="product__description-stack rte quick-add-hidden" {{ block.shopify_attributes }}>
+                    {% render 'product-collection-description', product: product %}
+                    {% render 'product-pattern-description', product: product %}
                   </div>
                 {%- endif -%}
 
@@ -2860,25 +2861,37 @@ function addCustomColorsDisplay(patternName, collection, material, customColors)
 
 // Show the Customize button and enhance it for ColorFlex products
 function showCustomizeButton() {
-  // Find and enhance the customize button since user has a ColorFlex pattern
   const customizeBtn = document.querySelector('#openColorFlexBtn');
-  
+  const label = 'Explore the color possibilities';
+
   if (customizeBtn) {
     customizeBtn.style.display = '';
-    customizeBtn.textContent = '🎨 Customize Options';
-    customizeBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-    customizeBtn.style.color = 'white';
+    const labelEl = customizeBtn.querySelector('.open-colorflex-btn__label');
+    if (labelEl) {
+      labelEl.textContent = label;
+    } else {
+      customizeBtn.textContent = label;
+    }
+    customizeBtn.style.removeProperty('background');
+    customizeBtn.style.removeProperty('background-image');
     console.log('✅ Customize button enhanced');
   } else {
-    // Try finding buttons by text content and enhance them
     const buttons = document.querySelectorAll('button');
     buttons.forEach(btn => {
       const btnText = btn.textContent.toLowerCase();
-      if (btnText.includes('customize') || btnText.includes('colors') || btnText.includes('patterns')) {
+      if (
+        btn.id === 'openColorFlexBtn' ||
+        btnText.includes('explore the color possibilities') ||
+        btnText.includes('customize') ||
+        btnText.includes('colors') ||
+        btnText.includes('patterns')
+      ) {
         btn.style.display = '';
-        btn.textContent = '🎨 Customize Options';
-        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-        btn.style.color = 'white';
+        const le = btn.querySelector('.open-colorflex-btn__label');
+        if (le) le.textContent = label;
+        else btn.textContent = label;
+        btn.style.removeProperty('background');
+        btn.style.removeProperty('background-image');
         btn.style.border = 'none';
         btn.style.borderRadius = '6px';
         btn.style.padding = '12px 20px';

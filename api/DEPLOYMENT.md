@@ -12,12 +12,12 @@ npm install
 
 ### 2. Configure Environment Variables
 
-Make sure `api/.env` has:
+Make sure `api/.env` has (use your real store and domains):
 ```bash
-SHOPIFY_STORE=f63bae-86.myshopify.com
+SHOPIFY_STORE=your-store-handle
 SHOPIFY_ACCESS_TOKEN=your_admin_api_token_here
 PORT=3001
-ALLOWED_ORIGINS=https://f63bae-86.myshopify.com,https://saffroncottage.shop
+ALLOWED_ORIGINS=https://your-store.myshopify.com,https://your-custom-domain.com
 ```
 
 ### 3. Test Locally
@@ -59,13 +59,14 @@ You need to deploy this API server so it's accessible from your Shopify store.
 
 ### 5. Update Theme Configuration
 
-Once deployed, update `src/layout/theme.liquid`:
+Once deployed, point the theme at your API **without editing Liquid by hand** (recommended):
 
-```javascript
-window.COLORFLEX_API_URL = 'https://your-api-server.com/api/upload-thumbnail';
-```
+1. **Shopify Admin** → **Online Store** → **Themes** → **Customize** → **Theme settings** → **ColorFlex**
+2. Set **“ColorFlex thumbnail upload API (base URL)”** to your deployed origin only, e.g. `https://your-api-server.railway.app` (no `/api/upload-thumbnail` suffix).
 
-Replace `https://your-api-server.com` with your actual API server URL.
+That sets `window.COLORFLEX_API_URL` for `product-form.js`.
+
+**End-to-end checklist (API + theme + Admin preview block):** see **`docs/COLORFLEX_MANAGER_PREVIEW_STEPS.md`** in this repo.
 
 ### 6. Test the Flow
 

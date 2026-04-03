@@ -9,6 +9,47 @@
     data-zoom-on-hover
   {% endif %}
 >
+  {%- comment -%} Ad traffic (Pinterest, Meta, etc.): skip product landing and open ColorFlex with pattern. Append ?skip_cf_redirect=1 to stay on PDP. {%- endcomment -%}
+  {%- assign _pd_title_l = product.title | downcase -%}
+  {%- assign _pd_type_l = product.type | downcase -%}
+  {%- assign _pd_skip_ad_redirect = false -%}
+  {%- if product.handle == 'custom-wallpaper' or product.handle == 'custom-fabric' or product.handle contains 'sample' or _pd_title_l contains 'sample' or _pd_type_l contains 'sample' -%}
+    {%- assign _pd_skip_ad_redirect = true -%}
+  {%- endif -%}
+  {%- unless _pd_skip_ad_redirect -%}
+    {%- assign _ad_cf_col = product.metafields.color_flex.collection.value -%}
+    {%- assign _ad_cf_pat = product.metafields.color_flex.pattern.value -%}
+    {%- if _ad_cf_col != blank and _ad_cf_pat != blank -%}
+      {%- assign _cf_page_path = routes.root_url | append: 'pages/colorflex' -%}
+      <script>
+        (function () {
+          try {
+            var q = new URLSearchParams(window.location.search);
+            if (q.get('skip_cf_redirect') === '1') return;
+            var utm = (q.get('utm_source') || '').toLowerCase();
+            var med = (q.get('utm_medium') || '').toLowerCase();
+            var ads = ['pinterest', 'facebook', 'instagram', 'fb', 'ig', 'meta', 'tiktok', 'twitter', 'x', 'linkedin'];
+            var isAd = ads.some(function (s) { return utm.indexOf(s) !== -1; }) ||
+              med === 'cpc' || med === 'paid' || med === 'social' || med === 'paidsocial' ||
+              q.has('gclid') || q.has('fbclid') || q.has('msclkid') || q.has('ttclid');
+            if (!isAd) return;
+            var col = {{ _ad_cf_col | json }};
+            var pat = {{ _ad_cf_pat | json }};
+            if (!col || !pat) return;
+            var dest = new URL({{ _cf_page_path | json }}, window.location.origin);
+            dest.searchParams.set('collection', col);
+            dest.searchParams.set('pattern', pat);
+            dest.searchParams.set('source', 'ad_direct');
+            ['utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(function (k) {
+              var v = q.get(k); if (v) dest.searchParams.set(k, v);
+            });
+            window.location.replace(dest.toString());
+          } catch (e) { console.warn('ColorFlex ad redirect:', e); }
+        })();
+      </script>
+    {%- endif -%}
+  {%- endunless -%}
+
   {{ 'section-main-product.css' | asset_url | stylesheet_tag }}
   {{ 'component-accordion.css' | asset_url | stylesheet_tag }}
   {{ 'component-price.css' | asset_url | stylesheet_tag }}
@@ -1251,47 +1292,11 @@
                   {%- endform -%}
                 </div>
 
-                            <!-- ColorFlex Button Integration -->
               {%- comment -%}
-              First check: Exclude custom products and sample packs entirely
+                ColorFlex CTA: use the theme-editor "Custom liquid" block (see templates/product*.json → colorflex_button)
+                which renders snippets/shopify-product-colorflex-button.liquid. Do not duplicate a second button here
+                (duplicate #openColorFlexBtn kept stale code when only the snippet was deployed).
               {%- endcomment -%}
-              {%- assign product_title_lower = product.title | downcase -%}
-              {%- assign product_type_lower = product.type | downcase -%}
-              {%- assign is_excluded_product = false -%}
-              {%- if product.handle == 'custom-wallpaper' or product.handle == 'custom-fabric' or product.handle contains 'sample' or product_title_lower contains 'sample' or product_type_lower contains 'sample' -%}
-                {%- assign is_excluded_product = true -%}
-              {%- endif -%}
-
-              {%- unless is_excluded_product -%}
-                {% # theme-check-disable UnusedAssign %}
-                {%- assign layer_count = product.metafields.color_flex.layer_count -%}
-                {%- assign pattern_name = product.metafields.custom.pattern.value -%}
-                {%- assign collection_name = product.metafields.custom.collection.value -%}
-
-                {%- comment -%}
-                Show ColorFlex button for ALL patterns that should be viewable in ColorFlex:
-                1. ColorFlex customizable patterns (layer_count > 0)
-                2. Standard patterns (layer_count 0/null) for scaling/mockup viewing
-                Check for pattern and collection metafields instead of just layer_count
-                {%- endcomment -%}
-                {%- if pattern_name and collection_name -%}
-              <div class="product__colorlex-button" style="margin: 2rem 0; text-align: left;">
-                <button id="openColorFlexBtn" style="
-                  background: #4a5568;
-                  color: white;
-                  padding: 1rem 2rem;
-                  border: none;
-                  border-radius: 8px;
-                  font-size: 1.1rem;
-                  cursor: pointer;
-                  transition: background 0.3s;
-                ">
-                  🎨 Customize
-                </button>
-              </div>
-                {%- endif -%}
-              {%- endunless -%}
-
 
               {%- when 'inventory' -%}
                 <p
@@ -1345,9 +1350,10 @@
                   {%- endif -%}
                 </p>
               {%- when 'description' -%}
-                {%- if product.description != blank -%}
-                  <div class="product__description rte quick-add-hidden" {{ block.shopify_attributes }}>
-                    {{ product.description }}
+                {%- if product.metafields.color_flex.collection_description.value != blank or product.description != blank -%}
+                  <div class="product__description-stack rte quick-add-hidden" {{ block.shopify_attributes }}>
+                    {% render 'product-collection-description', product: product %}
+                    {% render 'product-pattern-description', product: product %}
                   </div>
                 {%- endif -%}
 
@@ -1704,24 +1710,27 @@ if (colorFlexBtn) {
 
   console.log(`🎯 Mapped "${productData.productTitle}" → collection: "${colorFlexCollection}"`)
   
-  // Extract pattern name from product title for better URL
-  const patternName = productData.productTitle
+  // Pattern slug for ColorFlex URL
+  const patternNameFromTitle = productData.productTitle
     .replace(/\s*(wallpaper|wall\s*paper)\s*/gi, '')
     .trim();
+  const patternSlug = (metaPattern && String(metaPattern).trim())
+    ? String(metaPattern).trim()
+    : patternNameFromTitle.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
   
   // Build the URL with correct collection
   const baseUrl = '/pages/colorflex';
   const params = new URLSearchParams({
     variant_id: '{{ product.selected_or_first_available_variant.id }}',
     collection: colorFlexCollection, // Now uses the correct collection!
-    pattern: patternName,
+    pattern: patternSlug,
     product_title: '{{ product.title | url_param_escape }}',
     source: 'product_page'
   });
   
   const fullUrl = `${baseUrl}?${params.toString()}`;
   console.log('🔗 Opening URL:', fullUrl);
-  console.log(`✅ Fixed: Pattern "${patternName}" will now open with collection "${colorFlexCollection}" instead of default "botanicals"`);
+  console.log(`✅ Pattern slug "${patternSlug}" + collection "${colorFlexCollection}"`);
   
   // Open ColorFlex window - check window size first
   let colorFlexWindow;
@@ -4317,31 +4326,42 @@ function hideElementsForCustomizedProduct() {
   console.log('✅ Finished hiding elements for customized product');
 }
 
-// Show the Customize Colors & Patterns button and enhance it for ColorFlex products
+// Show the ColorFlex CTA and enhance styling when appropriate
 function showCustomizeButton() {
-  // Find and enhance the customize button since user has a ColorFlex pattern
   const customizeBtn = document.querySelector('#openColorFlexBtn');
-  
+  const label = 'Explore the color possibilities';
+
   if (customizeBtn) {
     customizeBtn.style.display = '';
-    customizeBtn.textContent = '🎨 Customize Options';
-    customizeBtn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-    customizeBtn.style.color = 'white';
-    console.log('✅ Customize Colors & Patterns button enhanced');
+    const labelEl = customizeBtn.querySelector('.open-colorflex-btn__label');
+    if (labelEl) {
+      labelEl.textContent = label;
+    } else {
+      customizeBtn.textContent = label;
+    }
+    customizeBtn.style.removeProperty('background');
+    customizeBtn.style.removeProperty('background-image');
+    console.log('✅ ColorFlex CTA enhanced');
   } else {
-    // Try finding buttons by text content and enhance them
     const buttons = document.querySelectorAll('button');
     buttons.forEach(btn => {
       const btnText = btn.textContent.toLowerCase();
-      if (btnText.includes('customize') || btnText.includes('colors') || btnText.includes('patterns')) {
+      if (
+        btn.id === 'openColorFlexBtn' ||
+        btnText.includes('explore the color possibilities') ||
+        btnText.includes('customize') ||
+        btnText.includes('colorflex')
+      ) {
         btn.style.display = '';
-        btn.textContent = '🎨 Customize Options';
-        btn.style.background = 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)';
-        btn.style.color = 'white';
+        const le = btn.querySelector('.open-colorflex-btn__label');
+        if (le) le.textContent = label;
+        else btn.textContent = label;
+        btn.style.removeProperty('background');
+        btn.style.removeProperty('background-image');
         btn.style.border = 'none';
         btn.style.borderRadius = '6px';
         btn.style.padding = '12px 20px';
-        console.log('✅ Customize button found and enhanced:', btn.textContent);
+        console.log('✅ ColorFlex CTA found and enhanced:', btn.textContent);
       }
     });
   }
@@ -4899,6 +4919,12 @@ function downloadProofImage(canvas, filename) {
 }
 
 
+/** Aligns with CFM pattern ids; used for cart_thumbnail_* localStorage keys (per colorway). */
+function colorflexSanitizeCartThumbSuffix(s) {
+  return String(s || '').replace(/[^a-zA-Z0-9-]/g, '_');
+}
+window.colorflexSanitizeCartThumbSuffix = colorflexSanitizeCartThumbSuffix;
+
 function formatPreferredMaterial(pm) {
   if (!pm) return '';
   const map = {
@@ -4983,8 +5009,8 @@ function populateColorFlexProperties(urlParams) {
   console.log('  Generated pattern ID:', generatePatternId(patternName, customColors));
   console.log('  Final pattern ID used:', patternId);
 
-  // Generate cart thumbnail key for restoration script
-  const cartThumbnailKey = patternName && collection ? `cart_thumbnail_${patternName}_${collection}` : '';
+  // Generate cart thumbnail key for restoration script (patternId includes colorway — avoids stale thumbs)
+  const cartThumbnailKey = patternId ? ('cart_thumbnail_' + colorflexSanitizeCartThumbSuffix(patternId)) : '';
 
   // Store thumbnail for cart restoration in saved pattern format
   const thumbnail = localStorage.getItem('colorflexCurrentThumbnail');
@@ -5424,7 +5450,10 @@ function protectColorFlexProperties() {
               const collection = currentUrlParams.get('collection') || currentUrlParams.get('pattern_collection') || '';
               
               if (patternName && collection) {
-                const cartThumbnailKey = `cart_thumbnail_${patternName}_${collection}`;
+                const urlPidFetch = currentUrlParams.get('pattern_id') || currentUrlParams.get('saved_pattern_id');
+                const cartThumbnailKey = urlPidFetch && String(urlPidFetch).trim()
+                  ? ('cart_thumbnail_' + colorflexSanitizeCartThumbSuffix(urlPidFetch))
+                  : `cart_thumbnail_${patternName}_${collection}`;
                 const cartThumbnailData = localStorage.getItem(cartThumbnailKey);
                 if (cartThumbnailData) {
                   try {
@@ -5999,6 +6028,28 @@ if (patternName && collection) {
 
   const cleanedCustomColors = cleanColorsForCart(customColors);
 
+  function productPageDerivePatternId(pn, ccStr, up) {
+    const fromUrl = up.get('pattern_id') || up.get('saved_pattern_id');
+    if (fromUrl && String(fromUrl).trim()) return String(fromUrl).trim();
+    let id = (pn || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    const swNumbers = [];
+    if (ccStr) {
+      ccStr.split(',').forEach(function (color) {
+        const m = color.trim().match(/\b(SW|SC)\s*(\d+)\b/i);
+        if (m) swNumbers.push(m[1].toUpperCase() === 'SC' ? 'sc' + m[2] : m[2]);
+      });
+    }
+    if (swNumbers.length > 0) id += '-' + swNumbers.join('-');
+    return id;
+  }
+  const resolvedPatternId = productPageDerivePatternId(patternName, cleanedCustomColors, urlParams);
+  const sanitizeThumb = window.colorflexSanitizeCartThumbSuffix || function (s) {
+    return String(s || '').replace(/[^a-zA-Z0-9-]/g, '_');
+  };
+  const formCartThumbnailKey = resolvedPatternId
+    ? ('cart_thumbnail_' + sanitizeThumb(resolvedPatternId))
+    : (patternName && collection ? 'cart_thumbnail_' + sanitizeThumb(patternName) + '_' + sanitizeThumb(collection) : '');
+
   // Convert scale number to user-friendly label
   const formatScaleForCart = (scaleValue) => {
     const scale = parseInt(scaleValue) || 100;
@@ -6027,8 +6078,6 @@ if (patternName && collection) {
   console.log('🔍 DEBUG: Product form found:', !!productForm);
   if (productForm) {
     console.log('🔍 DEBUG: Setting up form submit handler...');
-    // Ensure cartThumbnailKey is defined in this scope
-    const formCartThumbnailKey = patternName && collection ? `cart_thumbnail_${patternName}_${collection}` : '';
     // Create and add hidden fields
     const fields = {
       'properties[Custom Pattern]': patternName,
@@ -6038,7 +6087,7 @@ if (patternName && collection) {
       'properties[Thumbnail Key]': formCartThumbnailKey,
       'properties[Material Type]': urlParams.get('application') || urlParams.get('material') || formatPreferredMaterial(urlParams.get('preferred_material')),
       'properties[ColorFlex Design]': 'Yes',
-      'properties[Pattern ID]': urlParams.get('pattern_id'),
+      'properties[Pattern ID]': resolvedPatternId,
       'properties[Save Date]': new Date().toISOString(),
       'properties[Pattern Scale]': formattedScale
     };
@@ -6098,17 +6147,9 @@ if (patternName && collection) {
         const filename = `colorflex-${patternName || 'pattern'}-${Date.now()}.jpg`;
         const apiUrl = window.COLORFLEX_API_URL || '/api/upload-thumbnail';
         
-        // Store thumbnail key for cart restoration (fallback if upload fails)
-        const thumbnailKey = `cart_thumbnail_${patternName}_${collection}`;
-        const thumbnailKeyInput = document.createElement('input');
-        thumbnailKeyInput.type = 'hidden';
-        thumbnailKeyInput.name = 'properties[Thumbnail Key]';
-        thumbnailKeyInput.value = thumbnailKey;
-        productForm.appendChild(thumbnailKeyInput);
-        
-        // Store thumbnail in localStorage with the key (same as MyDesigns does)
-        localStorage.setItem(thumbnailKey, JSON.stringify({ thumbnail: thumbnail }));
-        console.log('✅ Added Thumbnail Key and stored thumbnail (upload will happen async)');
+        // Thumbnail Key already set on the form via fields[] — only persist to localStorage for cart page
+        localStorage.setItem(formCartThumbnailKey, JSON.stringify({ thumbnail: thumbnail }));
+        console.log('✅ Stored thumbnail for cart restoration key (upload will happen async):', formCartThumbnailKey);
         
         // Try to upload in background (non-blocking)
         fetch(apiUrl, {
@@ -6169,8 +6210,6 @@ if (patternName && collection) {
     productForm.addEventListener('submit', async function(e) {
       if (!THUMBNAIL_UPLOAD_ON_SUBMIT_ENABLED) return;
       console.log('📦 Form submitting - ensuring _pattern_preview is included');
-      console.log('🔍 Debug - window.SHOPIFY_STORE:', window.SHOPIFY_STORE);
-      console.log('🔍 Debug - window.SHOPIFY_ACCESS_TOKEN:', window.SHOPIFY_ACCESS_TOKEN ? 'SET (' + window.SHOPIFY_ACCESS_TOKEN.substring(0, 15) + '...)' : 'NOT SET');
       
       // Check if _pattern_preview already exists
       let existingPreview = productForm.querySelector('input[name="properties[_pattern_preview]"]');

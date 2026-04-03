@@ -26,14 +26,14 @@
 2. Add these environment variables:
 
 ```
-SHOPIFY_STORE=f63bae-86
+SHOPIFY_STORE=your-store-handle
+SHOPIFY_ADMIN_API_TOKEN=YOUR_SHOPIFY_ADMIN_API_ACCESS_TOKEN
 PORT=3001
-ALLOWED_ORIGINS=https://f63bae-86.myshopify.com,https://saffroncottage.shop
-SHOPIFY_API_VERSION=2025-10
+ALLOWED_ORIGINS=https://your-store.myshopify.com,https://your-custom-domain.com
 ```
 
 **Important:** 
-- Replace `SHOPIFY_ADMIN_API_TOKEN` with your actual token
+- Use a **Custom app** Admin API token with permission to create files; never commit real tokens to git
 - `SHOPIFY_STORE` should be just the store name (without .myshopify.com)
 - `ALLOWED_ORIGINS` should include your store URLs
 

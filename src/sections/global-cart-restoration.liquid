@@ -15,6 +15,74 @@ This enables cart thumbnail restoration on all pages
 
     console.log('🛒 Global Cart: Setting up thumbnail restoration...');
 
+    /**
+     * Parse cart_thumbnail_* keys:
+     * - Legacy: cart_thumbnail_<pattern name>_<collection> (split on last underscore in suffix)
+     * - Current: cart_thumbnail_<patternId> where patternId is hyphenated (no extra underscore) — encodes colorway
+     */
+    function parseCartThumbnailKey(key) {
+        if (!key || typeof key !== 'string') return null;
+        var prefix = 'cart_thumbnail_';
+        if (key.indexOf(prefix) !== 0) return null;
+        var rest = key.slice(prefix.length);
+        var li = rest.lastIndexOf('_');
+        if (li <= 0) {
+            return { patternId: rest, patternName: null, collectionName: null };
+        }
+        return {
+            patternName: rest.slice(0, li).trim(),
+            collectionName: rest.slice(li + 1).trim(),
+            patternId: null
+        };
+    }
+
+    function normPatternIdKey(s) {
+        return String(s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+
+    /** Prefer Pattern ID / Thumbnail Key match over "latest saved" when picking a fallback thumbnail. */
+    function findSavedPatternForCartFallback(savedPatterns, opts) {
+        opts = opts || {};
+        var pid = opts.patternId;
+        var thumbKey = opts.thumbnailKey;
+        var patternName = opts.patternName;
+        var collectionName = opts.collectionName;
+        if (!savedPatterns || !savedPatterns.length) return null;
+        if (pid) {
+            var want = normPatternIdKey(pid);
+            var byId = savedPatterns.filter(function (p) {
+                return p && p.id && normPatternIdKey(p.id) === want;
+            });
+            if (byId.length) {
+                byId.sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+                return byId[0];
+            }
+        }
+        if (thumbKey && thumbKey.indexOf('cart_thumbnail_') === 0) {
+            var pk = parseCartThumbnailKey(thumbKey);
+            if (pk && pk.patternId) {
+                var want2 = normPatternIdKey(pk.patternId);
+                var byKey = savedPatterns.filter(function (p) {
+                    return p && p.id && normPatternIdKey(p.id) === want2;
+                });
+                if (byKey.length) {
+                    byKey.sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+                    return byKey[0];
+                }
+            }
+        }
+        if (patternName) {
+            var matches = savedPatterns.filter(function (p) {
+                return p.patternName === patternName && (!collectionName || p.collectionName === collectionName || collectionName === 'unknown');
+            });
+            if (matches.length) {
+                matches.sort(function (a, b) { return new Date(b.timestamp) - new Date(a.timestamp); });
+                return matches[0];
+            }
+        }
+        return null;
+    }
+
     // Clean up old localStorage data on page load
     try {
         // Remove stale autoload data (older than 5 minutes)
@@ -73,8 +141,10 @@ This enables cart thumbnail restoration on all pages
                 console.log(`🎨 Parsed ${colors.length} colors from cart data:`, colors);
             }
 
-            // Get thumbnail from localStorage if available
-            const thumbnailKey = `cart_thumbnail_${patternName}_${collectionName}`;
+            // Get thumbnail from localStorage if available (prefer exact key from line item — includes colorway id)
+            const thumbnailKey = cartItem.properties['Thumbnail Key'] || (patternId
+                ? ('cart_thumbnail_' + String(patternId).replace(/[^a-zA-Z0-9-]/g, '_'))
+                : (patternName && collectionName ? `cart_thumbnail_${patternName}_${collectionName}` : ''));
             const storedThumbnail = localStorage.getItem(thumbnailKey);
             let thumbnail = null;
             if (storedThumbnail) {
@@ -159,28 +229,48 @@ This enables cart thumbnail restoration on all pages
                 }
             }
         }
+
+        if (!thumbnailData && cartItem.properties && cartItem.properties['Pattern ID']) {
+            var altKey = 'cart_thumbnail_' + String(cartItem.properties['Pattern ID']).replace(/[^a-zA-Z0-9-]/g, '_');
+            var stAlt = localStorage.getItem(altKey);
+            if (stAlt) {
+                try {
+                    var infoAlt = JSON.parse(stAlt);
+                    thumbnailData = infoAlt.thumbnail;
+                    console.log('💾 Found stored cart thumbnail via Pattern ID-derived key');
+                } catch (e1) {
+                    console.warn('⚠️ Could not parse thumbnail for Pattern ID key');
+                }
+            }
+        }
         
-        // Fallback: check saved patterns
+        // Fallback: check saved patterns (prefer Pattern ID / Thumbnail Key — not "any same name")
         if (!thumbnailData && patternName) {
             const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
-            const matchingPattern = savedPatterns.find(p => 
-                p.patternName === patternName && 
-                (p.collectionName === collection || collection === 'unknown')
-            );
-            
+            const matchingPattern = findSavedPatternForCartFallback(savedPatterns, {
+                patternId: cartItem.properties && cartItem.properties['Pattern ID'],
+                thumbnailKey: thumbnailKey,
+                patternName: patternName,
+                collectionName: collection
+            });
             if (matchingPattern && matchingPattern.thumbnail) {
                 thumbnailData = matchingPattern.thumbnail;
-                console.log('🎨 Using saved pattern thumbnail');
+                console.log('🎨 Using saved pattern thumbnail (matched by id or name)');
             }
         }
         
         if (thumbnailData) {
-            // Find the cart item in DOM and update its image
-            const cartItemElement = document.getElementById(`CartItem-${itemIndex + 1}`);
+            // Find the cart row: /cart.js uses 1-based `line` matching Liquid id CartItem-{{ item.index }}
+            var lineNo = (cartItem.line != null && cartItem.line !== '') ? cartItem.line : (itemIndex + 1);
+            var cartItemElement = document.getElementById('CartItem-' + lineNo);
+            if (!cartItemElement) {
+                cartItemElement = document.querySelector('.cart-item.colorflex-cart-item:nth-of-type(' + lineNo + ')') ||
+                    document.querySelectorAll('.cart-item')[itemIndex];
+            }
             if (cartItemElement) {
                 updateCartItemImageFromData(cartItemElement, thumbnailData, patternName);
             } else {
-                console.warn(`❌ Could not find cart item element for index ${itemIndex}`);
+                console.warn('❌ Could not find cart item element for line', lineNo);
             }
         } else {
             console.warn(`❌ No thumbnail data found for: ${patternName}`);
@@ -189,6 +279,17 @@ This enables cart thumbnail restoration on all pages
 
     // Function to update cart item image using thumbnail data
     function updateCartItemImageFromData(cartItemElement, thumbnailData, patternName) {
+        var preferred = cartItemElement.querySelectorAll('img.colorflex-cart-thumb-target');
+        if (preferred && preferred.length) {
+            preferred.forEach(function (img) {
+                if (!img.dataset.originalSrc) img.dataset.originalSrc = img.src;
+                img.src = thumbnailData;
+                img.alt = 'Custom Pattern: ' + patternName;
+                if (img.srcset) img.srcset = thumbnailData;
+            });
+            console.log('✅ updateCartItemImageFromData: updated .colorflex-cart-thumb-target');
+            return;
+        }
         const images = cartItemElement.querySelectorAll('img');
         
         console.log(`🖼️ Found ${images.length} images in cart item`);
@@ -478,23 +579,37 @@ This enables cart thumbnail restoration on all pages
 
         console.log(`🖼️ Restoring thumbnail for: ${patternName} from ${collectionName}`);
 
-        // Try to get stored thumbnail
-        const cartKey = `cart_thumbnail_${patternName}_${collectionName}`;
+        // Prefer exact Thumbnail Key from DOM (matches add-to-cart), else build key (pattern names may contain spaces)
+        var dataThumbEl = cartItem.querySelector && cartItem.querySelector('[data-thumbnail-key]');
+        var propKeyFromDom = dataThumbEl && dataThumbEl.getAttribute('data-thumbnail-key');
+        var cartKey = propKeyFromDom || ('cart_thumbnail_' + patternName + '_' + collectionName);
         console.log('🔍 Cart restoration debug:', {
             patternName: patternName,
             collectionName: collectionName,
             cartKey: cartKey,
-            searchingFor: `localStorage.getItem('${cartKey}')`
+            searchingFor: 'localStorage.getItem(\'' + cartKey + '\')'
         });
 
-        const storedThumbnail = localStorage.getItem(cartKey);
+        var storedThumbnail = localStorage.getItem(cartKey);
+        if (!storedThumbnail && cartKey) {
+            var pk = parseCartThumbnailKey(cartKey);
+            if (pk) {
+                var canonKey = null;
+                if (pk.patternId) {
+                    canonKey = 'cart_thumbnail_' + pk.patternId;
+                } else if (pk.patternName && pk.collectionName) {
+                    canonKey = 'cart_thumbnail_' + pk.patternName + '_' + pk.collectionName;
+                }
+                if (canonKey && canonKey !== cartKey) {
+                    storedThumbnail = localStorage.getItem(canonKey);
+                    if (storedThumbnail) cartKey = canonKey;
+                }
+            }
+        }
         console.log('📦 Retrieved from localStorage:', {
             key: cartKey,
             found: !!storedThumbnail,
-            dataLength: storedThumbnail ? storedThumbnail.length : 0,
-            isValidJSON: storedThumbnail ? (() => {
-                try { JSON.parse(storedThumbnail); return true; } catch { return false; }
-            })() : false
+            dataLength: storedThumbnail ? storedThumbnail.length : 0
         });
 
         let thumbnailData = null;
@@ -511,34 +626,34 @@ This enables cart thumbnail restoration on all pages
             } catch (e) {
                 console.warn('⚠️ Could not parse stored thumbnail:', e.message);
             }
-        } else {
-            // Debug: show all available localStorage keys
-            const allKeys = Object.keys(localStorage);
-            const cartKeys = allKeys.filter(k => k.startsWith('cart_thumbnail_'));
+        }
+        if (!storedThumbnail) {
+            var allKeys = Object.keys(localStorage);
+            var cartKeys = allKeys.filter(function (k) { return k.indexOf('cart_thumbnail_') === 0; });
             console.log('🔍 Available cart thumbnail keys:', cartKeys);
-
-            // Also check for similar keys (case sensitivity, etc.)
-            const similarKeys = allKeys.filter(k =>
-                k.toLowerCase().includes(patternName.toLowerCase()) ||
-                k.toLowerCase().includes(collectionName.toLowerCase())
-            );
+            var similarKeys = allKeys.filter(function (k) {
+                return k.toLowerCase().indexOf(patternName.toLowerCase()) !== -1 ||
+                    k.toLowerCase().indexOf(collectionName.toLowerCase()) !== -1;
+            });
             console.log('🔍 Keys containing pattern/collection name:', similarKeys);
         }
 
-        // Fallback: check saved patterns
+        // Fallback: check saved patterns (prefer Pattern ID from Thumbnail Key)
         if (!thumbnailData) {
             const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
             console.log(`🔍 Searching ${savedPatterns.length} saved patterns for fallback...`);
 
-            // REVERT TO SIMPLE WORKING LOGIC: Just find most recent matching pattern
-            const matchingPattern = savedPatterns
-                .filter(p => p.patternName === patternName &&
-                            (p.collectionName === collectionName || collectionName === 'unknown'))
-                .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp))[0]; // Get most recent
+            var pkThumb = parseCartThumbnailKey(cartKey);
+            var matchingPattern = findSavedPatternForCartFallback(savedPatterns, {
+                patternId: pkThumb && pkThumb.patternId,
+                thumbnailKey: cartKey,
+                patternName: patternName,
+                collectionName: collectionName
+            });
 
             if (matchingPattern && matchingPattern.thumbnail) {
                 thumbnailData = matchingPattern.thumbnail;
-                console.log('🎨 Using saved pattern thumbnail (most recent):', {
+                console.log('🎨 Using saved pattern thumbnail:', {
                     patternId: matchingPattern.id,
                     timestamp: matchingPattern.timestamp,
                     hasColors: matchingPattern.colors ? matchingPattern.colors.length : 0
@@ -570,6 +685,20 @@ This enables cart thumbnail restoration on all pages
     
     // Function to update cart item image
     function updateCartItemImage(cartItem, thumbnailData, patternName) {
+        // Prefer explicit ColorFlex target from main-cart-items.liquid
+        var preferred = cartItem.querySelectorAll('img.colorflex-cart-thumb-target, .colorflex-cart-thumb-target');
+        if (preferred && preferred.length) {
+            preferred.forEach(function (img) {
+                if (img.tagName === 'IMG') {
+                    if (!img.dataset.originalSrc) img.dataset.originalSrc = img.src;
+                    img.src = thumbnailData;
+                    img.alt = 'Custom Pattern: ' + patternName;
+                    if (img.srcset) img.srcset = thumbnailData;
+                }
+            });
+            console.log('✅ Updated .colorflex-cart-thumb-target');
+            return true;
+        }
         // Enhanced image detection - try multiple selectors
         let images = cartItem.querySelectorAll('img');
 
@@ -1352,16 +1481,22 @@ This enables cart thumbnail restoration on all pages
                 if (detailsText.includes('Custom Pattern') || detailsText.includes('ColorFlex')) {
                     console.log(`✅ ColorFlex item detected in cart item ${index}`);
 
-                    // Get saved patterns
                     const savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
-                    if (savedPatterns.length > 0) {
-                        const latestPattern = savedPatterns[savedPatterns.length - 1];
-                        if (latestPattern.thumbnail) {
-                            console.log(`🎯 Updating cart image with: ${latestPattern.patternName}`);
-                            img.src = latestPattern.thumbnail;
-                            img.alt = `Custom Pattern: ${latestPattern.patternName}`;
-                            console.log('✅ Simple cart thumbnail updated!');
-                        }
+                    var pidDom = (detailsText.match(/Pattern ID[:\s]+([a-zA-Z0-9-]+)/) || [])[1];
+                    var pNameDom = (detailsText.match(/Custom Pattern[:\s]+([^\n\r]+?)(?=\n|Pattern Collection|Pattern ID|$)/i) || [])[1];
+                    if (pNameDom) pNameDom = pNameDom.trim();
+                    var collDom = (detailsText.match(/Pattern Collection[:\s]+([^\n\r]+?)(?=\n|Custom Pattern|Pattern ID|$)/i) || [])[1];
+                    if (collDom) collDom = collDom.trim();
+                    var pick = findSavedPatternForCartFallback(savedPatterns, {
+                        patternId: pidDom,
+                        patternName: pNameDom,
+                        collectionName: collDom || 'unknown'
+                    });
+                    if (pick && pick.thumbnail) {
+                        console.log(`🎯 Updating cart image with: ${pick.patternName}`);
+                        img.src = pick.thumbnail;
+                        img.alt = 'Custom Pattern: ' + pick.patternName;
+                        console.log('✅ Simple cart thumbnail updated!');
                     }
                 }
             }

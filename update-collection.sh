@@ -59,14 +59,35 @@ show_usage() {
     cat << EOF
 ColorFlex Collection Update Script
 
-Usage: $0 <command> <collection-name>
+Usage: $0 <command> <collection-name> [flags]
+
+Quick pick (same idea as “refresh Folksie then Shopify”):
+  $0 sync <collection>              Airtable → JSON + CSV + upload collections.json + UPDATE existing Shopify products
+  $0 sync <collection> --skip-images   same, but API only touches body + metafields (no image PUT)
+  $0 sync all --skip-images         All collections, non-interactive (no y/n in this script; theme push uses --yes)
 
 Commands:
-  fetch       - Update collection state only: fetch from Airtable and write collections.json (colorFlex, mockupId, etc.). No CSV, no images, no Shopify.
+  fetch       - Airtable → collections.json ONLY. No CSV. No Shopify. Use when you only need JSON (e.g. before a manual step).
+  sync        - Like metadata, but always passes --update to Shopify API (existing products get new copy + metafields).
+  metadata    - Airtable → JSON + CSV + upload collections.json + create Shopify products for NEW handles only unless you pass --update-products
   complete    - Full pipeline: fetch data + download images + deploy server + generate CSV + create Shopify products
-  metadata    - Data-only update: fetch data + generate CSV (no images, no deploy, no product creation)
   images      - Images-only update: download images + deploy server (no CSV generation, no product creation)
   add-pattern - Incremental: check for NEW patterns only, append to collections.json, download + deploy new images, update CSV + create NEW Shopify products
+
+  ┌──────────┬───────┬─────┬───────────────────┬────────────────────────────┐
+  │ Command  │ CSV   │ Img │ collections.json  │ Shopify products           │
+  ├──────────┼───────┼─────┼───────────────────┼────────────────────────────┤
+  │ fetch    │  no   │ no  │ written locally   │ no                         │
+  │ sync     │  yes  │ no* │ yes (CLI upload)  │ yes, UPDATE existing       │
+  │ metadata │  yes  │ no  │ yes               │ yes (new only; use flags)  │
+  │ complete │  yes  │ yes │ yes               │ yes                        │
+  └──────────┴───────┴─────┴───────────────────┴────────────────────────────┘
+  * sync with --skip-images leaves images unchanged on Shopify (faster).
+
+Flags:
+  --update-products     With metadata: pass --update to shopify-create-products.js (refresh copy + metafields on existing)
+  --skip-products       Skip Shopify API (you will CSV import manually)
+  --skip-images         With sync: node script gets --skip-images (text/metafields only)
 
 Collection Names:
   abundance, cabin-fever, english-cottage, ancient-tiles, botanicals, bombay,
@@ -75,17 +96,16 @@ Collection Names:
   OR use 'all' to update all collections
 
 Examples:
-  $0 fetch all                # Refresh collection state from Airtable only (colorFlex, mockupId, etc.) - no CSV or uploads
-  $0 complete abundance       # Complete abundance collection update + create Shopify products
-  $0 metadata english-cottage # Generate CSV only for english-cottage (no images/deploy/products)
-  $0 images botanicals         # Download and deploy images only for botanicals (no products)
-  $0 add-pattern coordinates  # Check for new patterns in coordinates, append them + create NEW Shopify products
-  $0 complete all             # Full update for all collections + create all Shopify products
-  $0 complete cabin-fever     # New or fixed collection: full fetch from Airtable (all patterns) + products
-
-Options:
-  --skip-products             Skip Shopify product creation (manual CSV import instead)
-  --update-products           Update existing Shopify products (instead of skipping them)
+  $0 sync bombay --skip-images        # Recommended: refresh Bombay on Shopify (body + collection_description) without touching images
+  $0 sync folksie                     # Full API update for Folksie (includes image fields on product PUT)
+  $0 fetch bombay                    # JSON only — will NOT create a CSV (use metadata or sync if you need CSV)
+  $0 metadata bombay --update-products   # Same data/CSV path as sync, but opt-in to --update via flag
+  $0 complete abundance              # Complete abundance collection update + create Shopify products
+  $0 metadata english-cottage --skip-products   # CSV only, no Admin API
+  $0 images botanicals                # Download and deploy images only for botanicals (no products)
+  $0 add-pattern coordinates          # New patterns only + NEW Shopify products
+  $0 complete all                     # Full update for all collections + create all Shopify products
+  $0 complete cabin-fever             # New or fixed collection: full fetch from Airtable (all patterns) + products
 
 Environment Variables (can be set in config/local.env):
   COLORFLEX_DATA_PATH          Data folder: mount smb://soanimation._smb._tcp.local/jobs/cf-data and set to mount path (folder containing data/).
@@ -384,6 +404,11 @@ create_shopify_products() {
         print_status "Mode: Create new products only (skip existing)"
     fi
 
+    if [ "$SKIP_IMAGES_SHOPIFY" = true ]; then
+        cmd="$cmd --skip-images"
+        print_status "Shopify: --skip-images (body + metafields only)"
+    fi
+
     # Execute the command
     print_status "Running: $cmd"
 
@@ -469,6 +494,7 @@ COLLECTION_NAME=${2:-""}
 # Parse optional flags
 SKIP_PRODUCTS=false
 UPDATE_PRODUCTS=false
+SKIP_IMAGES_SHOPIFY=false
 
 # Shift past command to parse remaining options
 shift
@@ -482,6 +508,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --update-products)
             UPDATE_PRODUCTS=true
+            shift
+            ;;
+        --skip-images)
+            SKIP_IMAGES_SHOPIFY=true
             shift
             ;;
         --help|help)
@@ -526,6 +556,14 @@ case $COMMAND in
         GENERATE_CSV=false
         INCREMENTAL_MODE=false
         CREATE_PRODUCTS=false
+        ;;
+    sync)
+        FORCE_DOWNLOAD=false
+        DEPLOY=false
+        GENERATE_CSV=true
+        INCREMENTAL_MODE=false
+        CREATE_PRODUCTS=true
+        UPDATE_PRODUCTS=true
         ;;
     metadata)
         FORCE_DOWNLOAD=false
@@ -592,6 +630,7 @@ main() {
     echo "  Create Shopify Products: $CREATE_PRODUCTS"
     if [ "$CREATE_PRODUCTS" = true ]; then
         echo "  Update Existing Products: $UPDATE_PRODUCTS"
+        echo "  Shopify skip-images: $SKIP_IMAGES_SHOPIFY"
     fi
     echo
 
@@ -663,7 +702,7 @@ main() {
 
     # Show command-specific next steps
     case $COMMAND in
-        complete|metadata|add-pattern)
+        complete|metadata|add-pattern|sync)
             print_status "Next steps:"
             if [ "$CREATE_PRODUCTS" = true ]; then
                 echo "  1. ✅ Shopify products created/updated via API"

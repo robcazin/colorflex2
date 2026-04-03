@@ -1,0 +1,39 @@
+{% comment %}
+  Shopify body (product.description) often still embeds the same copy as color_flex.collection_description.
+  Show the metafield via product-collection-description; this snippet outputs the body with that duplicate removed when possible.
+{% endcomment %}
+{%- assign col_v = product.metafields.color_flex.collection_description.value | default: '' | strip -%}
+{%- assign body = product.description | default: '' | strip -%}
+{%- if body == '' -%}
+{%- elsif col_v == '' -%}
+  <div class="product__description rte">{{ product.description }}</div>
+{%- else -%}
+  {%- assign r = product.description | remove: col_v | strip -%}
+  {%- assign p_wrap = '<p>' | append: col_v | append: '</p>' -%}
+  {%- if r == product.description -%}
+    {%- assign r = product.description | remove: p_wrap | strip -%}
+  {%- endif -%}
+  {%- if r == product.description -%}
+    {%- assign col_n = col_v | replace: '
+', ' ' | replace: '  ', ' ' | strip -%}
+    {%- assign segs = product.description | split: '</p>' -%}
+    {%- if segs.size > 1 -%}
+      {%- assign first_plain = segs[0] | strip_html | replace: '
+', ' ' | replace: '  ', ' ' | strip -%}
+      {%- if first_plain == col_n -%}
+        {%- assign r = '' -%}
+        {%- for part in segs -%}
+          {%- unless forloop.first -%}
+            {%- if r != '' -%}{%- assign r = r | append: '</p>' -%}{%- endif -%}
+            {%- assign r = r | append: part -%}
+          {%- endunless -%}
+        {%- endfor -%}
+        {%- assign r = r | strip -%}
+      {%- endif -%}
+    {%- endif -%}
+  {%- endif -%}
+  {%- assign r_plain = r | strip_html | strip -%}
+  {%- if r_plain != '' -%}
+    <div class="product__description rte">{{ r }}</div>
+  {%- endif -%}
+{%- endif -%}

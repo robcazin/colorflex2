@@ -1,28 +1,18 @@
 <!-- ColorFlex Button Integration for Shopify Product Pages -->
 
 <div class="product__colorlex-button" style="margin: 1rem 0; text-align: left;">
-  <button id="openColorFlexBtn" style="
-    background: rgba(116, 88, 35, 1);
-    color: white;
-    padding: .5rem 2rem;
-    border: none;
-    border-radius: 8px;
-    font-size: 1.1rem;
-    font-family: 'Special Elite', monospace;
-    cursor: pointer;
-    transition: background 0.3s;
-    width: 100%;
-    text-align: center;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-  ">
-      Customize
-    <img src="https://so-animation.com/colorflex/img/camelion-sm-clear.png"
-         alt="ColorFlex"
-         style="width: 36px; height: 36px; border-radius: 50%; border: 2px solid rgba(255, 171, 46, 0.7);">
-    with ColorFlex
+  <button type="button" id="openColorFlexBtn">
+    <span class="open-colorflex-btn__inner">
+      <img
+        class="open-colorflex-btn__icon"
+        src="https://so-animation.com/colorflex/img/camelion-sm-clear.png"
+        width="36"
+        height="36"
+        alt="ColorFlex"
+        loading="lazy"
+      >
+      <span class="open-colorflex-btn__label">Explore the color possibilities</span>
+    </span>
   </button>
 </div>
 
