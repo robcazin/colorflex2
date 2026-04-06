@@ -1467,7 +1467,7 @@
         "id": "colorflex_api_base_url",
         "label": "ColorFlex thumbnail upload API (base URL)",
         "info": "HTTPS origin of your thumbnail upload service (no trailing slash), e.g. https://colorflex-api.railway.app. The theme sets window.COLORFLEX_API_URL to {base}/api/upload-thumbnail so add-to-cart can store properties[_pattern_preview] (required for checkout extensions and cart Liquid). Leave empty to fall back to /api/upload-thumbnail on the shop domain (only works if you host that route).",
-        "default": ""
+        "default": "https://colorflex2-production.up.railway.app"
       },
       {
         "type": "checkbox",
