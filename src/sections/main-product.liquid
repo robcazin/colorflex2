@@ -1045,6 +1045,11 @@
           <product-form data-section-id="{{ section.id }}">
             {%- form 'product', product, id: product_form_id, class: 'product-form', novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
               <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}" class="product-variant-id"{% if product.selected_or_first_available_variant.available == false %} disabled{% endif %}>
+          {%- if product.handle == 'custom-wallpaper' or product.handle == 'custom-fabric' -%}
+          <script type="application/json" id="colorflex-variants-json">
+{{ product.variants | json }}
+          </script>
+          {%- endif -%}
 
           <!-- ColorFlex Material Info Box - Always rendered, positioned by JavaScript -->
           <div id="colorflexMaterialInfo" style="display: none; margin: 20px 0; padding: 15px; background: rgb(204, 171, 108); border-radius: 6px; border: 1px solid rgb(204, 171, 108);">
@@ -5740,6 +5745,181 @@ function restoreColorFlexProperties() {
   console.log('✅ ColorFlex properties restored after variant change');
 }
 
+/** Set line-item variant from Liquid {{ product.variants | json }} when option titles contain preferred material keywords. */
+function trySetVariantFromProductJson(preferredMaterial) {
+  const el = document.getElementById('colorflex-variants-json');
+  if (!el) return false;
+  let variants;
+  try {
+    variants = JSON.parse(el.textContent);
+  } catch (e) {
+    return false;
+  }
+  if (!Array.isArray(variants) || variants.length === 0) return false;
+
+  const materialToVariantMap = getMaterialToVariantSearchMap();
+  const searchTerms = materialToVariantMap[preferredMaterial];
+  if (!searchTerms) return false;
+
+  for (let i = 0; i < variants.length; i++) {
+    const v = variants[i];
+    const opts = Array.isArray(v.options) ? v.options : [v.option1, v.option2, v.option3].filter(Boolean);
+    const hay = [v.title, ...opts].filter(Boolean).join(' ').toLowerCase();
+    const matchesAny = searchTerms.some((term) => hay.includes(term));
+    if (matchesAny) {
+      const idInputs = document.querySelectorAll('form[action*="/cart/add"] input[name="id"]');
+      idInputs.forEach((inp) => {
+        inp.value = String(v.id);
+        inp.removeAttribute('disabled');
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+      });
+      document.dispatchEvent(new CustomEvent('variant:change'));
+      document.dispatchEvent(new CustomEvent('product:variant:change'));
+      console.log('✅ ColorFlex: matched variant from product JSON — id', v.id, 'title:', v.title);
+      return true;
+    }
+  }
+  return false;
+}
+
+// Map ColorFlex material IDs → substrings to match option labels/values (radios, selects, buttons)
+function getMaterialToVariantSearchMap() {
+  return {
+    'wallpaper-prepasted': ['prepasted', 'pre-pasted', 'pre pasted', 'prepasted wallpaper'],
+    'wallpaper-peel-stick': ['peel', 'stick', 'peel & stick', 'peel and stick', 'removable'],
+    'wallpaper-grasscloth': ['grasscloth', 'grass cloth', 'grass-cloth'],
+    'fabric-soft-velvet': ['soft velvet', 'soft-velvet', 'velvet'],
+    'fabric-decorator-linen': ['decorator linen', 'decorator-linen', 'linen', 'decorator'],
+    'fabric-drapery-sheer': ['drapery sheer', 'drapery-sheer', 'sheer'],
+    'fabric-lightweight-linen': ['lightweight linen', 'lightweight-linen', 'light linen', 'lightweight'],
+    'fabric-faux-suede': ['faux suede', 'faux-suede', 'suede'],
+    'fabric-drapery-light-block': ['light block', 'lightblock', 'light-block', 'blackout', 'drapery light']
+  };
+}
+
+/** Apply preferred_material from URL to radios, <select> options, or swatch buttons. Returns true if a control was matched. */
+function applyPreferredMaterialFromUrl() {
+  const urlParams = new URLSearchParams(window.location.search);
+  let preferredMaterial = urlParams.get('preferred_material');
+  if (preferredMaterial === 'wallpaper-unpasted') preferredMaterial = 'wallpaper-prepasted';
+  if (!preferredMaterial) return false;
+
+  console.log('🎯 Preferred material from URL:', preferredMaterial);
+
+  const materialToVariantMap = getMaterialToVariantSearchMap();
+  const searchTerms = materialToVariantMap[preferredMaterial];
+  if (!searchTerms) {
+    console.warn('⚠️ No search terms defined for material:', preferredMaterial);
+    return false;
+  }
+  console.log('🔍 Searching for terms:', searchTerms);
+
+  if (trySetVariantFromProductJson(preferredMaterial)) {
+    return true;
+  }
+
+  const formRoot = document.querySelector('form[action*="/cart/add"]') || document;
+
+  const materialRadios = formRoot.querySelectorAll(`
+    input[type="radio"][name*="options"],
+    input[type="radio"][name*="Wallpaper"],
+    input[type="radio"][name*="Texture"],
+    input[type="radio"][name*="Material"],
+    input[type="radio"][name*="Fabric"],
+    input[type="radio"][name="material"],
+    input[type="radio"][value^="wallpaper-"],
+    input[type="radio"][value^="fabric-"],
+    fieldset input[type="radio"],
+    variant-radios input[type="radio"]
+  `);
+  console.log('🔍 Found material radio options:', materialRadios.length);
+
+  const optionSelects = formRoot.querySelectorAll(
+    'select[name*="option"], select[name*="Option"], variant-selects select, .product-form__input select'
+  );
+  console.log('🔍 Found option <select> elements:', optionSelects.length);
+
+  const variantButtons = formRoot.querySelectorAll(`
+    fieldset.product-form__input button[type="button"],
+    variant-radios button,
+    variant-selects button,
+    button[data-variant-option],
+    button[data-value],
+    button[data-option-value]
+  `);
+  console.log('🔍 Found variant option buttons:', variantButtons.length);
+
+  const dispatchVariantEvents = (el) => {
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    document.dispatchEvent(new CustomEvent('variant:change'));
+  };
+
+  let found = false;
+
+  materialRadios.forEach((radio) => {
+    if (found) return;
+    const label = radio.labels && radio.labels[0] ? radio.labels[0].textContent.toLowerCase().trim() : '';
+    const value = radio.value ? radio.value.toLowerCase().trim() : '';
+    const matchesAny = searchTerms.some((term) => label.includes(term) || value.includes(term));
+    if (matchesAny) {
+      console.log('✅ Pre-selecting radio:', label || value);
+      radio.checked = true;
+      radio.click();
+      dispatchVariantEvents(radio);
+      found = true;
+    }
+  });
+
+  if (!found) {
+    optionSelects.forEach((sel) => {
+      if (found) return;
+      for (let i = 0; i < sel.options.length; i++) {
+        const opt = sel.options[i];
+        const blob = ((opt.textContent || '') + ' ' + (opt.value || '')).toLowerCase();
+        const matchesAny = searchTerms.some((term) => blob.includes(term));
+        if (matchesAny) {
+          console.log('✅ Pre-selecting <select> option:', opt.textContent || opt.value);
+          sel.selectedIndex = i;
+          sel.dispatchEvent(new Event('change', { bubbles: true }));
+          sel.dispatchEvent(new Event('input', { bubbles: true }));
+          dispatchVariantEvents(sel);
+          found = true;
+          break;
+        }
+      }
+    });
+  }
+
+  if (!found) {
+    variantButtons.forEach((button) => {
+      if (found) return;
+      if (button.closest && button.closest('.product-form__buttons')) return;
+      const btnText = (button.textContent || '').toLowerCase().trim();
+      const dataVal = (button.getAttribute('data-value') || button.getAttribute('data-option-value') || '').toLowerCase();
+      const hay = btnText + ' ' + dataVal;
+      const matchesAny = searchTerms.some((term) => hay.includes(term)) || dataVal === preferredMaterial;
+      if (matchesAny) {
+        console.log('✅ Pre-selecting button:', btnText || dataVal);
+        button.click();
+        dispatchVariantEvents(button);
+        found = true;
+      }
+    });
+  }
+
+  if (!found) {
+    console.warn('⚠️ No matching variant found for:', preferredMaterial, '(check variant titles in Admin vs. search terms)');
+  }
+  return found;
+}
+
+function schedulePreferredMaterialRetries() {
+  [0, 400, 1200, 2800].forEach((ms) => {
+    setTimeout(() => applyPreferredMaterialFromUrl(), ms);
+  });
+}
+
 // 🎯 MATERIAL SELECTION & VARIANT CHANGE DETECTION
 function setupVariantChangeDetection() {
   // Store initial ColorFlex properties if present
@@ -5749,111 +5929,44 @@ function setupVariantChangeDetection() {
   const variantPickers = document.querySelectorAll('variant-radios, variant-selects, input[name*="id"], select[name*="id"]');
   console.log('🔍 Found variant pickers:', variantPickers.length);
 
-  // Look for ALL variant option selectors (radio buttons, fieldset buttons, labels)
-  const materialRadios = document.querySelectorAll(`
+  const formRoot = document.querySelector('form[action*="/cart/add"]') || document;
+
+  // Match applyPreferredMaterialFromUrl — include radios, selects, and swatch buttons for change listeners
+  const materialRadios = formRoot.querySelectorAll(`
     input[type="radio"][name*="options"],
     input[type="radio"][name*="Wallpaper"],
     input[type="radio"][name*="Texture"],
     input[type="radio"][name*="Material"],
     input[type="radio"][name*="Fabric"],
-    fieldset input[type="radio"]
+    input[type="radio"][name="material"],
+    input[type="radio"][value^="wallpaper-"],
+    input[type="radio"][value^="fabric-"],
+    fieldset input[type="radio"],
+    variant-radios input[type="radio"]
   `);
   console.log('🔍 Found material radio options:', materialRadios.length);
 
-  const variantButtons = document.querySelectorAll(`
-    fieldset button[type="button"],
+  const optionSelectsForListeners = formRoot.querySelectorAll(
+    'select[name*="option"], select[name*="Option"], variant-selects select, .product-form__input select'
+  );
+  console.log('🔍 Found option <select> elements (listeners):', optionSelectsForListeners.length);
+
+  const variantButtons = formRoot.querySelectorAll(`
+    fieldset.product-form__input button[type="button"],
+    variant-radios button,
+    variant-selects button,
     button[data-variant-option],
-    button[data-value]
+    button[data-value],
+    button[data-option-value]
   `);
-  console.log('🔍 Found variant buttons:', variantButtons.length);
+  console.log('🔍 Found variant option buttons (listeners):', variantButtons.length);
 
-  // Pre-select variant based on preferred_material URL parameter
-  const urlParams = new URLSearchParams(window.location.search);
-  let preferredMaterial = urlParams.get('preferred_material');
-  if (preferredMaterial === 'wallpaper-unpasted') preferredMaterial = 'wallpaper-prepasted';
-  if (preferredMaterial) {
-    console.log('🎯 Preferred material from URL:', preferredMaterial);
-
-    // Map material IDs to variant titles (search terms)
-    const materialToVariantMap = {
-      'wallpaper-prepasted': ['prepasted', 'pre-pasted', 'pre pasted'],
-      'wallpaper-peel-stick': ['peel', 'stick', 'peel & stick', 'peel and stick', 'removable'],
-      'wallpaper-grasscloth': ['grasscloth', 'grass cloth', 'grass-cloth'],
-      'fabric-soft-velvet': ['soft velvet', 'soft-velvet', 'velvet'],
-      'fabric-decorator-linen': ['decorator linen', 'decorator-linen', 'linen', 'decorator'],
-      'fabric-drapery-sheer': ['drapery sheer', 'drapery-sheer', 'sheer'],
-      'fabric-lightweight-linen': ['lightweight linen', 'lightweight-linen', 'light linen', 'lightweight'],
-      'fabric-faux-suede': ['faux suede', 'faux-suede', 'suede'],
-      'fabric-drapery-light-block': ['light block', 'lightblock', 'light-block', 'blackout', 'drapery light']
-    };
-
-    const searchTerms = materialToVariantMap[preferredMaterial];
-    if (searchTerms) {
-      console.log('🔍 Searching for terms:', searchTerms);
-
-      // Try to find matching radio button
-      let found = false;
-      materialRadios.forEach(radio => {
-        if (found) return; // Already found a match
-
-        const label = radio.labels && radio.labels[0] ? radio.labels[0].textContent.toLowerCase().trim() : '';
-        const value = radio.value ? radio.value.toLowerCase().trim() : '';
-
-        console.log(`  Radio: label="${label}", value="${value}", checked=${radio.checked}`);
-
-        const matchesAny = searchTerms.some(term =>
-          label.includes(term) || value.includes(term)
-        );
-
-        if (matchesAny) {
-          console.log('✅ Pre-selecting radio:', label || value, '(already checked:', radio.checked + ')');
-          // ✅ FIX: Click even if already checked to trigger price update
-          radio.checked = true;
-          radio.click(); // Trigger Shopify's variant change handler
-
-          // Dispatch multiple events to ensure Shopify updates price
-          radio.dispatchEvent(new Event('change', { bubbles: true }));
-          document.dispatchEvent(new CustomEvent('variant:change'));
-
-          found = true;
-        }
-      });
-
-      // If no radio found, try buttons
-      if (!found) {
-        variantButtons.forEach(button => {
-          if (found) return; // Already found a match
-
-          const buttonText = button.textContent.toLowerCase().trim();
-          console.log(`  Button: text="${buttonText}", active=${button.classList.contains('active')}`);
-
-          const matchesAny = searchTerms.some(term => buttonText.includes(term));
-
-          if (matchesAny) {
-            console.log('✅ Pre-selecting button:', buttonText, '(already active:', button.classList.contains('active') + ')');
-            // ✅ FIX: Click even if already active to trigger price update
-            button.click();
-
-            // Dispatch multiple events to ensure Shopify updates price
-            button.dispatchEvent(new Event('change', { bubbles: true }));
-            document.dispatchEvent(new CustomEvent('variant:change'));
-
-            found = true;
-          }
-        });
-      }
-
-      if (!found) {
-        console.warn('⚠️ No matching variant found for:', preferredMaterial);
-      }
-    } else {
-      console.warn('⚠️ No search terms defined for material:', preferredMaterial);
-    }
-  }
+  applyPreferredMaterialFromUrl();
+  schedulePreferredMaterialRetries();
 
   // Monitor all variant-related changes with debouncing
   let variantChangeTimeout;
-  [...variantPickers, ...materialRadios].forEach(element => {
+  [...variantPickers, ...materialRadios, ...optionSelectsForListeners].forEach(element => {
     element.addEventListener('change', function() {
       console.log('🎯 Variant/Material change detected:', this.name, '=', this.value);
 
@@ -5926,6 +6039,8 @@ function setupVariantChangeDetection() {
     console.log('🔄 Shopify section reload detected - restoring ColorFlex properties');
     setTimeout(() => {
       restoreColorFlexProperties();
+      applyPreferredMaterialFromUrl();
+      schedulePreferredMaterialRetries();
     }, 100);
   });
 

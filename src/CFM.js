@@ -1116,12 +1116,16 @@ window.saveToMyList = function() {
                 console.log('✅ Saved to Shopify customer metafields');
             }).catch(function(error) {
                 console.log('🔄 Shopify save failed, using localStorage fallback');
-                saveToLocalStorageNoDuplicateCheck(currentState); // Use version without duplicate check
+                saveToLocalStorageNoDuplicateCheck(currentState).catch(function(e) {
+                    console.error('❌ localStorage save failed:', e);
+                });
             });
         } else {
             // Fall back to localStorage for development/testing
             console.log('📱 Customer not authenticated, saving to localStorage');
-            saveToLocalStorageNoDuplicateCheck(currentState); // Use version without duplicate check
+            saveToLocalStorageNoDuplicateCheck(currentState).catch(function(e) {
+                console.error('❌ localStorage save failed:', e);
+            });
         }
 
         // Show success message
@@ -1243,7 +1247,9 @@ function saveToShopifyMetafields(patternData) {
                 console.error('❌ Shopify save failed:', error);
                 // Fallback to localStorage
                 console.log('🔄 Falling back to localStorage...');
-                saveToLocalStorageNoDuplicateCheck(patternData);
+                saveToLocalStorageNoDuplicateCheck(patternData).catch(function(e) {
+                    console.error('❌ localStorage fallback failed:', e);
+                });
                 reject(error);
             });
 
@@ -1251,7 +1257,9 @@ function saveToShopifyMetafields(patternData) {
             console.error('❌ Shopify save failed:', error);
             // Fallback to localStorage
             console.log('🔄 Falling back to localStorage...');
-            saveToLocalStorageNoDuplicateCheck(patternData);
+            saveToLocalStorageNoDuplicateCheck(patternData).catch(function(e) {
+                console.error('❌ localStorage fallback failed:', e);
+            });
             reject(error);
         }
     });
@@ -1395,14 +1403,14 @@ function cleanupOldCartThumbnails() {
  * @see aggressiveLocalStorageCleanup - Emergency cleanup strategy
  * @see updateSavedPatternsMenuIcon - Updates UI after save
  */
-function saveToLocalStorageNoDuplicateCheck(patternData) {
+async function saveToLocalStorageNoDuplicateCheck(patternData) {
     try {
         // 🧹 Clean up old cart thumbnails FIRST to free up space
         cleanupOldCartThumbnails();
 
         // 🎯 FIX: Compress thumbnail before saving to prevent quota errors
         if (patternData.thumbnail) {
-            const compressedThumbnail = createCompressedThumbnail(patternData.thumbnail);
+            const compressedThumbnail = await createCompressedThumbnail(patternData.thumbnail);
             if (compressedThumbnail) {
                 console.log('🗜️ Using compressed thumbnail to save space');
                 patternData.thumbnail = compressedThumbnail;
@@ -4010,7 +4018,7 @@ function showMaterialSelectionModal(pattern) {
                     console.warn('⚠️ localStorage quota exceeded, trying with smaller thumbnail...');
 
                     // Create a smaller, more compressed thumbnail as fallback
-                    const smallerThumbnail = createCompressedThumbnail(pattern.thumbnail);
+                    const smallerThumbnail = await createCompressedThumbnail(pattern.thumbnail);
                     if (smallerThumbnail) {
                         try {
                             localStorage.setItem('colorflexCurrentThumbnail', smallerThumbnail);
@@ -4154,56 +4162,53 @@ function aggressiveLocalStorageCleanup() {
 /**
  * Create a smaller, more compressed thumbnail for localStorage
  * @param {string} originalThumbnail - Base64 data URL of original thumbnail
- * @returns {string|null} Compressed thumbnail or null if failed
+ * @returns {Promise<string|null>} Compressed thumbnail or null if failed
  */
-function createCompressedThumbnail(originalThumbnail) {
+async function createCompressedThumbnail(originalThumbnail) {
     try {
         if (!originalThumbnail || !originalThumbnail.startsWith('data:image/')) {
             console.log('🗜️ Invalid thumbnail format, skipping compression');
             return null;
         }
 
-        // Create image and canvas for compression
         const img = new Image();
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
 
-        // Set image source - for data URLs this loads synchronously
         img.src = originalThumbnail;
 
-        // Small delay to ensure image is fully loaded (even for data URLs)
-        // This is necessary for some browsers that don't load data URLs immediately
-        const maxWait = 250; // 250ms max wait (increased from 50ms to prevent compression failures)
-        const startTime = Date.now();
-
-        while (!img.complete && Date.now() - startTime < maxWait) {
-            // Wait for image to load
-        }
-
-        // Check if image loaded successfully
-        if (!img.complete && img.naturalWidth === 0) {
-            console.warn('🗜️ Image did not load in time, skipping compression');
+        try {
+            if (typeof img.decode === 'function') {
+                await img.decode();
+            } else if (!img.complete) {
+                await new Promise((resolve, reject) => {
+                    img.onload = () => resolve();
+                    img.onerror = () => reject(new Error('Image load failed'));
+                });
+            }
+        } catch (e) {
+            console.warn('🗜️ Image decode failed, skipping compression');
             return null;
         }
 
-        // Super aggressive compression - very small size and minimal quality
-        canvas.width = 100;  // Much smaller
-        canvas.height = 100; // Much smaller
+        if (!img.naturalWidth) {
+            return null;
+        }
+
+        canvas.width = 100;
+        canvas.height = 100;
 
         ctx.drawImage(img, 0, 0, 100, 100);
 
-        // Maximum compression (10% quality)
         const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.1);
         console.log('🗜️ Original size:', originalThumbnail.length, 'Compressed size:', compressedDataUrl.length);
 
-        // Return even if compression is modest - any reduction helps
         if (compressedDataUrl.length < originalThumbnail.length * 0.9) {
             return compressedDataUrl;
         }
 
         console.log('🗜️ Compression did not reduce size significantly, returning null');
-        return null; // Compression failed or not enough savings
-
+        return null;
     } catch (error) {
         console.error('❌ Failed to create compressed thumbnail:', error);
         return null;

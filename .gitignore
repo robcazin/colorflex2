@@ -17,6 +17,9 @@ backups/
 theme-pull/
 theme-pull-*/
 
+# Nested clone / separate app (has its own .git — do not add as subfolder)
+colorflex-previews/
+
 # Secrets and local config
 .env
 *.env

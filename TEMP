@@ -1,0 +1,136 @@
+TEMP🛒 Global Cart: Setting up thumbnail restoration...
+cart:3623 🔥 Running immediate cart restoration...
+unified-pattern-modal.js:19 🎨 Unified Pattern Modal System loaded
+unified-pattern-modal.js:115 🎨 UnifiedPatternModal exported to window: true
+cart:1956 🎨 Initializing ColorFlex cart color circles
+cart:2096 🔍 Found 1 color circle containers
+cart:2100 🔍 Container 0 colors data: COTTAGE LINEN, CLASSIC LIGHT BUFF, PEARL GRAY, BERRY CREAM, ALCHEMY, LEMON VERBENA, ALCHEMY, COTTAGE LINEN, COTTAGE COAL
+cart:2111 🎨 Processing 9 colors: (9) ['COTTAGE LINEN', 'CLASSIC LIGHT BUFF', 'PEARL GRAY', 'BERRY CREAM', 'ALCHEMY', 'LEMON VERBENA', 'ALCHEMY', 'COTTAGE LINEN', 'COTTAGE COAL']
+cart:2056 🧹 Cleaning color name: "COTTAGE LINEN"
+cart:2088 ✅ Normalized without SW: "COTTAGE LINEN" → "Cottage Linen"
+cart:2122 🎨 Color 0: "COTTAGE LINEN" → "Cottage Linen" → #f4f1e8
+cart:2152 ✅ Added color circle for "Cottage Linen" with hex #f4f1e8
+cart:2056 🧹 Cleaning color name: "CLASSIC LIGHT BUFF"
+cart:2088 ✅ Normalized without SW: "CLASSIC LIGHT BUFF" → "Classic Light Buff"
+cart:2122 🎨 Color 1: "CLASSIC LIGHT BUFF" → "Classic Light Buff" → #e2e8f0
+cart:2152 ✅ Added color circle for "Classic Light Buff" with hex #e2e8f0
+cart:2056 🧹 Cleaning color name: "PEARL GRAY"
+cart:2088 ✅ Normalized without SW: "PEARL GRAY" → "Pearl Gray"
+cart:2122 🎨 Color 2: "PEARL GRAY" → "Pearl Gray" → #e2e8f0
+cart:2152 ✅ Added color circle for "Pearl Gray" with hex #e2e8f0
+cart:2056 🧹 Cleaning color name: "BERRY CREAM"
+cart:2088 ✅ Normalized without SW: "BERRY CREAM" → "Berry Cream"
+cart:2122 🎨 Color 3: "BERRY CREAM" → "Berry Cream" → #DDA0DD
+cart:2152 ✅ Added color circle for "Berry Cream" with hex #DDA0DD
+cart:2056 🧹 Cleaning color name: "ALCHEMY"
+cart:2088 ✅ Normalized without SW: "ALCHEMY" → "Alchemy"
+cart:2122 🎨 Color 4: "ALCHEMY" → "Alchemy" → #e2e8f0
+cart:2152 ✅ Added color circle for "Alchemy" with hex #e2e8f0
+cart:2056 🧹 Cleaning color name: "LEMON VERBENA"
+cart:2088 ✅ Normalized without SW: "LEMON VERBENA" → "Lemon Verbena"
+cart:2122 🎨 Color 5: "LEMON VERBENA" → "Lemon Verbena" → #e2e8f0
+cart:2152 ✅ Added color circle for "Lemon Verbena" with hex #e2e8f0
+cart:2056 🧹 Cleaning color name: "ALCHEMY"
+cart:2088 ✅ Normalized without SW: "ALCHEMY" → "Alchemy"
+cart:2122 🎨 Color 6: "ALCHEMY" → "Alchemy" → #e2e8f0
+cart:2152 ✅ Added color circle for "Alchemy" with hex #e2e8f0
+cart:2056 🧹 Cleaning color name: "COTTAGE LINEN"
+cart:2088 ✅ Normalized without SW: "COTTAGE LINEN" → "Cottage Linen"
+cart:2122 🎨 Color 7: "COTTAGE LINEN" → "Cottage Linen" → #f4f1e8
+cart:2152 ✅ Added color circle for "Cottage Linen" with hex #f4f1e8
+cart:2056 🧹 Cleaning color name: "COTTAGE COAL"
+cart:2088 ✅ Normalized without SW: "COTTAGE COAL" → "Cottage Coal"
+cart:2122 🎨 Color 8: "COTTAGE COAL" → "Cottage Coal" → #2d3748
+cart:2152 ✅ Added color circle for "Cottage Coal" with hex #2d3748
+cart:2155 ✅ Finished processing 9 colors, added 9 circles
+cart:2158 ✅ ColorFlex cart color circles initialized
+cart:3205 🔧 Initializing cart thumbnail restoration system...
+cart:3213 🛒 Cart items detected, initializing restoration system...
+cart:2485 🔍 Scanning for cart items to restore thumbnails...
+cart:2554 🔍 Found 1 cart items using .cart-item selector
+cart:2557 🔍 Checking cart item 0: CartItem-0
+cart:2560 🏗️ Cart item 0 HTML structure: <tr class="cart-item colorflex-cart-item" id="CartItem-0">
+                    <td class="cart-item__media">
+                      
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        <a href="/pages/colorflex?collection=cottage-sketch-book&amp;pattern=Anneliese&amp;colors=COTTAGE+LINEN%2C+CLASSIC+LIGHT+BUFF%2C+PEARL+GRAY%2C+BERRY+CREAM%2C+ALCHEMY%2C+...
+cart:2571 📝 Details text preview: 
+                        
+                        
+                        
+                        
+                        
+                        
+                        
+                        ...
+cart:2575 🔍 Found 0 potential property elements in cart item 0
+cart:2653 ✅ ColorFlex pattern detected via: {hasColorFlexSource: true, hasPatternCollection: true, hasThumbnailKey: true, hasLineItemData: false, isColorFlexProduct: false}
+cart:2670 🔍 Pattern matching results for item 0:
+cart:2671   Product title: Custom Wallpaper
+cart:2672   Pattern match: (2) ['Custom Pattern:\n                                Anneliese', 'Anneliese', index: 2779, input: '\n                        \n                        …  \n\n                        \n                    ', groups: undefined]
+cart:2673   Collection match: (2) ['Pattern Collection:\n                                cottage-sketch-book', 'cottage-sketch-book', index: 2901, input: '\n                        \n                        …  \n\n                        \n                    ', groups: undefined]
+cart:2674   Thumbnail key match: null
+cart:2718 🎯 Found ColorFlex pattern: "Anneliese" from "cottage-sketch-book"
+cart:2738 🖼️ Restoring thumbnail for: Anneliese from cottage-sketch-book
+cart:2744 🔍 Cart restoration debug: {patternName: 'Anneliese', collectionName: 'cottage-sketch-book', cartKey: 'cart_thumbnail_anneliese-0001-0050-0052-9075-6395-7726-0002', searchingFor: "localStorage.getItem('cart_thumbnail_anneliese-0001-0050-0052-9075-6395-7726-0002')"}
+cart:2767 📦 Retrieved from localStorage: {key: 'cart_thumbnail_anneliese-0001-0050-0052-9075-6395-7726-0002', found: true, dataLength: 3361}
+cart:2778 💾 Found stored cart thumbnail: {hasThumbnail: true, thumbnailLength: 2915, colors: 9, timestamp: '2026-04-06T17:34:48.517Z'}
+cart:2857 ✅ Updated .colorflex-cart-thumb-target
+cart:2957 🛠️ Adding cart edit functionality for: Anneliese from cottage-sketch-book
+cart:2980 🔄 Using regular saved pattern for editing: true
+cart:3104 ✅ Added cart edit button for: Anneliese
+cart:3117 ✅ Made cart image clickable for editing: Anneliese
+cart:3198 🙈 Hidden technical property element: 
+                             
+cart:3198 🙈 Hidden technical property element: Thumbnail Key:
+cart:3198 🙈 Hidden technical property element: 
+                             
+cart:3198 🙈 Hidden technical property element: ColorFlex Source:
+cart:3328 ✅ Cart thumbnail restoration system active
+cart:3329 💡 Cart functions: window.testCartThumbnails() or window.restoreCart()
+cart:3330 💡 Debug functions: window.debugCartImages() or window.debugCheckoutImages()
+cart:3331 💡 Checkout function: window.forceCheckoutThumbnails()
+cart:3358 🚨 EMERGENCY FUNCTION: window.emergencyCartRestore()
+cart:3366 🛒 Attempting to extend thumbnail restoration to checkout...
+cart:3375 ℹ️ Not on checkout page, checkout extension not needed
+cart:3583 🔧 Enhancing cart data for checkout display...
+cart:3594 🎯 Enhancing cart item 0 data for checkout...
+cart:2492 🛒 Shopify cart data: {token: 'hWNAiM9ZhYihP9g8hiOU9ofq?key=d933e35086fdef742a914c5102eb8cb4', note: '', attributes: {…}, original_total_price: 24900, total_price: 24900, …}
+cart:2495 📦 Cart item 0: {title: 'Custom Wallpaper - Prepasted', properties: {…}, variant_title: 'Prepasted', id: 51395629580519, key: '51395629580519:aaf6eda94cdc910da897575a03f71430'}
+cart:2505 🔍 Properties for item 0:
+cart:2507   "Thumbnail Key": "cart_thumbnail_anneliese-0001-0050-0052-9075-6395-7726-0002"
+cart:2507   "Material Type": "Prepasted Wallpaper"
+cart:2507   "Save Date": "2026-04-06T17:34:48.517Z"
+cart:2507   "Custom Pattern": "Anneliese"
+cart:2507   "Pattern Collection": "cottage-sketch-book"
+cart:2507   "Custom Colors": "COTTAGE LINEN, CLASSIC LIGHT BUFF, PEARL GRAY, BERRY CREAM, ALCHEMY, LEMON VERBENA, ALCHEMY, COTTAGE LINEN, COTTAGE COAL"
+cart:2507   "ColorFlex Source": "ColorFlex Saved Pattern"
+cart:2507   "ColorFlex Design": "Yes"
+cart:2507   "Pattern ID": "anneliese-0001-0050-0052-9075-6395-7726-0002"
+cart:2507   "Pattern Scale": "Normal"
+cart:2516 ✅ Found ColorFlex item in cart data!
+cart:2299 🎨 Parsed 9 colors from cart data: (9) [{…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}, {…}]
+cart:2349 🔧 Built saved pattern from cart data: {patternName: 'Anneliese', collectionName: 'cottage-sketch-book', colorCount: 9, hasThunbnail: true, currentScale: 100}
+cart:2524 💾 Created saved pattern from cart data for loadSavedPatternToUI: Anneliese
+cart:2367 🎯 Restoring thumbnail for ColorFlex item 0: Custom Wallpaper - Prepasted
+cart:2373 📋 Pattern: "Anneliese", Collection: "cottage-sketch-book", Key: "cart_thumbnail_anneliese-0001-0050-0052-9075-6395-7726-0002"
+cart:2384 💾 Found stored cart thumbnail via key
+cart:2448 ✅ updateCartItemImageFromData: updated .colorflex-cart-thumb-target
+cart:3205 🔧 Initializing cart thumbnail restoration system...
+cart:3213 🛒 Cart items detected, initializing restoration system...
+cart:2480 🔒 Cart restoration already in progress, skipping duplicate call
+cart:3328 ✅ Cart thumbnail restoration system active
+cart:3329 💡 Cart functions: window.testCartThumbnails() or window.restoreCart()
+cart:3330 💡 Debug functions: window.debugCartImages() or window.debugCheckoutImages()
+cart:3331 💡 Checkout function: window.forceCheckoutThumbnails()
+cart:3358 🚨 EMERGENCY FUNCTION: window.emergencyCartRestore()
+cart:3366 🛒 Attempting to extend thumbnail restoration to checkout...
+cart:3375 ℹ️ Not on checkout page, checkout extension not needed
+cart:3583 🔧 Enhancing cart data for checkout display...
+cart:3594 🎯 Enhancing cart item 0 data for checkout...

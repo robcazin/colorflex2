@@ -12,6 +12,7 @@ const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
 const FormData = require('form-data');
+const nodeFetch = require('node-fetch');
 const os = require('os');
 const { spawn } = require('child_process');
 const { 
@@ -285,35 +286,72 @@ app.post('/api/upload-thumbnail', async (req, res) => {
         });
         const stagedJson = await stagedRes.json().catch(() => null);
         if (!stagedRes.ok) {
-            throw new Error(`stagedUploadsCreate HTTP ${stagedRes.status}: ${stagedJson ? JSON.stringify(stagedJson) : 'no body'}`);
+            console.error('❌ Shopify GraphQL request failed:', {
+                url: graphqlUrl,
+                status: stagedRes.status,
+                body: stagedJson
+            });
+            if (stagedRes.status === 404) {
+                throw Object.assign(
+                    new Error(
+                        'Shopify returned 404 for the Admin GraphQL URL. ' +
+                        'Set SHOPIFY_STORE to your store handle exactly as in the Shopify Admin URL: ' +
+                        'https://YOUR-HANDLE.myshopify.com (Settings → Domains → Shopify domain). ' +
+                        'It may differ from your public domain (e.g. saffroncottage.shop).'
+                    ),
+                    { step: 'stagedUploadsCreate' }
+                );
+            }
+            throw Object.assign(
+                new Error(`stagedUploadsCreate HTTP ${stagedRes.status}: ${stagedJson ? JSON.stringify(stagedJson) : 'no body'}`),
+                { step: 'stagedUploadsCreate' }
+            );
         }
         if (stagedJson?.errors?.length) {
             console.error('❌ stagedUploadsCreate GraphQL errors:', stagedJson.errors);
-            throw new Error(`stagedUploadsCreate: ${JSON.stringify(stagedJson.errors)}`);
+            throw Object.assign(
+                new Error(`stagedUploadsCreate: ${JSON.stringify(stagedJson.errors)}`),
+                { step: 'stagedUploadsCreate' }
+            );
         }
         const stagedData = stagedJson?.data?.stagedUploadsCreate;
         const stagedUserErrs = stagedData?.userErrors || [];
         if (stagedUserErrs.length) {
-            throw new Error(`stagedUploadsCreate userErrors: ${JSON.stringify(stagedUserErrs)}`);
+            throw Object.assign(
+                new Error(`stagedUploadsCreate userErrors: ${JSON.stringify(stagedUserErrs)}`),
+                { step: 'stagedUploadsCreate' }
+            );
         }
         const target = stagedData?.stagedTargets?.[0];
         if (!target?.url || !target?.resourceUrl) {
-            throw new Error('Staged upload did not return url/resourceUrl');
+            throw Object.assign(new Error('Staged upload did not return url/resourceUrl'), { step: 'stagedUploadsCreate' });
         }
 
-        // Use `form-data` (npm): undici FormData + Blob multipart often fails against S3 staged targets.
+        // Multipart POST to Shopify/S3 — use node-fetch + Content-Length (global fetch often breaks streams; S3 may reject without length).
         const form = new FormData();
         (target.parameters || []).forEach((p) => form.append(p.name, p.value));
         form.append('file', imageBuffer, { filename: finalFilename, contentType: mimeType });
 
-        const uploadRes = await fetch(target.url, {
+        const uploadHeaders = { ...form.getHeaders() };
+        try {
+            uploadHeaders['content-length'] = form.getLengthSync();
+        } catch (lenErr) {
+            if (target.url.includes('amazonaws.com')) {
+                uploadHeaders['content-length'] = String(imageBuffer.length + 5000);
+            }
+        }
+
+        const uploadRes = await nodeFetch(target.url, {
             method: 'POST',
-            headers: form.getHeaders(),
+            headers: uploadHeaders,
             body: form
         });
         if (!uploadRes.ok) {
             const errText = await uploadRes.text();
-            throw new Error(`Staged target upload failed ${uploadRes.status}: ${errText.slice(0, 500)}`);
+            throw Object.assign(
+                new Error(`Staged target upload failed ${uploadRes.status}: ${errText.slice(0, 800)}`),
+                { step: 'stagedTargetPost' }
+            );
         }
 
         const fileCreateMutation = `mutation fileCreate($files: [FileCreateInput!]!) {
@@ -355,16 +393,25 @@ app.post('/api/upload-thumbnail', async (req, res) => {
         });
         const fileCreateJson = await fileCreateRes.json().catch(() => null);
         if (!fileCreateRes.ok) {
-            throw new Error(`fileCreate HTTP ${fileCreateRes.status}: ${fileCreateJson ? JSON.stringify(fileCreateJson) : 'no body'}`);
+            throw Object.assign(
+                new Error(`fileCreate HTTP ${fileCreateRes.status}: ${fileCreateJson ? JSON.stringify(fileCreateJson) : 'no body'}`),
+                { step: 'fileCreate' }
+            );
         }
         if (fileCreateJson?.errors?.length) {
             console.error('❌ fileCreate GraphQL errors:', fileCreateJson.errors);
-            throw new Error(`fileCreate: ${JSON.stringify(fileCreateJson.errors)}`);
+            throw Object.assign(
+                new Error(`fileCreate: ${JSON.stringify(fileCreateJson.errors)}`),
+                { step: 'fileCreate' }
+            );
         }
         const fc = fileCreateJson?.data?.fileCreate;
         if (fc?.userErrors?.length > 0) {
             console.error('❌ fileCreate user errors:', fc.userErrors);
-            throw new Error(`fileCreate userErrors: ${JSON.stringify(fc.userErrors)}`);
+            throw Object.assign(
+                new Error(`fileCreate userErrors: ${JSON.stringify(fc.userErrors)}`),
+                { step: 'fileCreate' }
+            );
         }
 
         let fileObj = fc?.files?.[0];
@@ -420,7 +467,10 @@ app.post('/api/upload-thumbnail', async (req, res) => {
                 fileId: createdId,
                 fileStatus: fileObj?.fileStatus,
             });
-            throw new Error('Shopify did not return a file URL (still processing). Try again.');
+            throw Object.assign(
+                new Error('Shopify did not return a file URL (still processing). Try again.'),
+                { step: 'pollFileUrl' }
+            );
         }
 
         console.log('✅ Shopify Files upload successful (staged + fileCreate)');
@@ -436,7 +486,8 @@ app.post('/api/upload-thumbnail', async (req, res) => {
         console.error('Upload thumbnail error:', error);
         res.status(500).json({
             error: 'Failed to upload thumbnail',
-            message: error.message
+            message: error.message,
+            step: error.step || undefined
         });
     }
 });
@@ -593,6 +644,61 @@ app.post('/api/bassett/upload-result', async (req, res) => {
       message: error.message
     });
   }
+});
+
+/**
+ * Verify SHOPIFY_STORE + SHOPIFY_ACCESS_TOKEN can reach Admin GraphQL (read-only).
+ * GET https://your-railway-app/api/shopify-admin-check
+ * Use after changing Railway variables; if this fails, thumbnail upload will too.
+ */
+app.get('/api/shopify-admin-check', async (req, res) => {
+    try {
+        const SHOPIFY_STORE = process.env.SHOPIFY_STORE || process.env.SHOPIFY_STORE_URL;
+        const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
+        if (!SHOPIFY_STORE || !SHOPIFY_ACCESS_TOKEN) {
+            return res.status(503).json({
+                ok: false,
+                error: 'Missing SHOPIFY_STORE or SHOPIFY_ACCESS_TOKEN in environment'
+            });
+        }
+        const cleanStore = SHOPIFY_STORE.replace(/^https?:\/\//, '').replace(/\.myshopify\.com$/, '').trim();
+        const API_VERSION = '2025-01';
+        const graphqlUrl = `https://${cleanStore}.myshopify.com/admin/api/${API_VERSION}/graphql.json`;
+        const query = `{ shop { name myshopifyDomain } }`;
+        const r = await fetch(graphqlUrl, {
+            method: 'POST',
+            headers: {
+                'X-Shopify-Access-Token': SHOPIFY_ACCESS_TOKEN.trim(),
+                'Content-Type': 'application/json',
+                Accept: 'application/json'
+            },
+            body: JSON.stringify({ query })
+        });
+        const body = await r.json().catch(() => null);
+        if (!r.ok) {
+            return res.status(500).json({
+                ok: false,
+                httpStatus: r.status,
+                graphqlUrl,
+                shopify: body
+            });
+        }
+        if (body.errors && body.errors.length) {
+            return res.status(500).json({
+                ok: false,
+                graphqlUrl,
+                errors: body.errors
+            });
+        }
+        return res.json({
+            ok: true,
+            graphqlUrl,
+            shop: body.data?.shop || null
+        });
+    } catch (error) {
+        console.error('shopify-admin-check error:', error);
+        return res.status(500).json({ ok: false, message: error.message });
+    }
 });
 
 /**

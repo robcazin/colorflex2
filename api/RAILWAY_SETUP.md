@@ -27,15 +27,15 @@
 
 ```
 SHOPIFY_STORE=your-store-handle
-SHOPIFY_ADMIN_API_TOKEN=YOUR_SHOPIFY_ADMIN_API_ACCESS_TOKEN
+SHOPIFY_ACCESS_TOKEN=YOUR_SHOPIFY_ADMIN_API_ACCESS_TOKEN
 PORT=3001
 ALLOWED_ORIGINS=https://your-store.myshopify.com,https://your-custom-domain.com
 ```
 
 **Important:** 
 - Use a **Custom app** Admin API token with permission to create files; never commit real tokens to git
-- `SHOPIFY_STORE` should be just the store name (without .myshopify.com)
-- `ALLOWED_ORIGINS` should include your store URLs
+- **`SHOPIFY_STORE` must be the exact myshopify subdomain** (the `your-store` part of `https://your-store.myshopify.com/admin`). Find it under **Settings → Domains** (“Shopify domain”). It often **does not** match your custom domain (e.g. `saffroncottage.shop`). If it is wrong, GraphQL returns **404 Not Found**.
+- `ALLOWED_ORIGINS` should include your store URLs (custom domain + `.myshopify.com` if needed)
 
 ### 5. Deploy
 1. Railway will automatically deploy when you push to GitHub
