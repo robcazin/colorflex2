@@ -11,6 +11,7 @@ const cors = require('cors');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
 const fs = require('fs');
+const FormData = require('form-data');
 const os = require('os');
 const { spawn } = require('child_process');
 const { 
@@ -210,10 +211,12 @@ app.post('/api/upload-thumbnail', async (req, res) => {
             });
         }
 
-        // Extract base64 data from data URL if present
+        // Extract base64 + mime from data URL (Shopify fileCreate does NOT accept data: URLs — use staged upload)
+        const dataUrlMatch = thumbnail.match(/^data:(image\/[\w.+-]+);base64,/);
+        const mimeType = dataUrlMatch ? dataUrlMatch[1] : 'image/jpeg';
         let base64Data = thumbnail.replace(/^data:image\/\w+;base64,/, '');
-        // Trim any whitespace
         base64Data = base64Data.trim();
+        const imageBuffer = Buffer.from(base64Data, 'base64');
         
         // Get Shopify credentials from environment
         const SHOPIFY_STORE = process.env.SHOPIFY_STORE || process.env.SHOPIFY_STORE_URL;
@@ -247,55 +250,26 @@ app.post('/api/upload-thumbnail', async (req, res) => {
         };
         const finalFilename = sanitizeFilename(filename) || `colorflex-thumbnail-${Date.now()}.jpg`;
         
-        // Use GraphQL fileCreate. Do NOT fall back to REST /files.json:
-        // Shopify's REST Files endpoint may be unavailable in newer API versions
-        // and can return 404/406. GraphQL works consistently and returns a file id
-        // we can poll until a CDN URL is available.
+        // Flow matches src/scripts/cf-dl.js: stagedUploadsCreate → POST to staged URL → fileCreate(resourceUrl).
+        // Inline data: URLs are not valid originalSource for fileCreate.
         const graphqlUrl = `https://${cleanStore}.myshopify.com/admin/api/${API_VERSION}/graphql.json`;
         
-        console.log('📤 Uploading to Shopify Files via GraphQL:', {
+        console.log('📤 Uploading to Shopify Files (staged):', {
             store: cleanStore,
             apiVersion: API_VERSION,
             filename: finalFilename,
-            base64Length: base64Data.length,
+            mimeType,
+            bytes: imageBuffer.length,
             tokenPrefix: cleanToken.substring(0, 10) + '...'
         });
-        
-        // GraphQL mutation for fileCreate
-        const graphqlMutation = `
-            mutation fileCreate($files: [FileCreateInput!]!) {
-                fileCreate(files: $files) {
-                    files {
-                        id
-                        fileStatus
-                        ... on MediaImage {
-                            id
-                            image {
-                                url
-                                altText
-                            }
-                        }
-                        ... on GenericFile {
-                            id
-                            url
-                        }
-                    }
-                    userErrors {
-                        field
-                        message
-                    }
-                }
-            }
-        `;
-        
-        const graphqlVariables = {
-            files: [{
-                originalSource: `data:image/jpeg;base64,${base64Data}`,
-                alt: finalFilename
-            }]
-        };
 
-        const response = await fetch(graphqlUrl, {
+        const stagedMutation = `mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
+          stagedUploadsCreate(input: $input) {
+            stagedTargets { url resourceUrl parameters { name value } }
+            userErrors { field message }
+          }
+        }`;
+        const stagedRes = await fetch(graphqlUrl, {
             method: 'POST',
             headers: {
                 'X-Shopify-Access-Token': cleanToken,
@@ -303,60 +277,122 @@ app.post('/api/upload-thumbnail', async (req, res) => {
                 'Accept': 'application/json'
             },
             body: JSON.stringify({
-                query: graphqlMutation,
-                variables: graphqlVariables
+                query: stagedMutation,
+                variables: {
+                    input: [{ filename: finalFilename, mimeType, resource: 'FILE', httpMethod: 'POST' }]
+                }
             })
         });
+        const stagedJson = await stagedRes.json().catch(() => null);
+        if (!stagedRes.ok) {
+            throw new Error(`stagedUploadsCreate HTTP ${stagedRes.status}: ${stagedJson ? JSON.stringify(stagedJson) : 'no body'}`);
+        }
+        if (stagedJson?.errors?.length) {
+            console.error('❌ stagedUploadsCreate GraphQL errors:', stagedJson.errors);
+            throw new Error(`stagedUploadsCreate: ${JSON.stringify(stagedJson.errors)}`);
+        }
+        const stagedData = stagedJson?.data?.stagedUploadsCreate;
+        const stagedUserErrs = stagedData?.userErrors || [];
+        if (stagedUserErrs.length) {
+            throw new Error(`stagedUploadsCreate userErrors: ${JSON.stringify(stagedUserErrs)}`);
+        }
+        const target = stagedData?.stagedTargets?.[0];
+        if (!target?.url || !target?.resourceUrl) {
+            throw new Error('Staged upload did not return url/resourceUrl');
+        }
 
-        const graphqlData = await response.json().catch(() => null);
-        if (!response.ok) {
-            throw new Error(`GraphQL HTTP ${response.status}: ${graphqlData ? JSON.stringify(graphqlData) : 'No JSON body'}`);
-        }
-        if (!graphqlData) {
-            throw new Error('GraphQL response was not JSON');
-        }
-        if (graphqlData.errors) {
-            console.error('❌ GraphQL errors:', graphqlData.errors);
-            throw new Error(`GraphQL errors: ${JSON.stringify(graphqlData.errors)}`);
+        // Use `form-data` (npm): undici FormData + Blob multipart often fails against S3 staged targets.
+        const form = new FormData();
+        (target.parameters || []).forEach((p) => form.append(p.name, p.value));
+        form.append('file', imageBuffer, { filename: finalFilename, contentType: mimeType });
+
+        const uploadRes = await fetch(target.url, {
+            method: 'POST',
+            headers: form.getHeaders(),
+            body: form
+        });
+        if (!uploadRes.ok) {
+            const errText = await uploadRes.text();
+            throw new Error(`Staged target upload failed ${uploadRes.status}: ${errText.slice(0, 500)}`);
         }
 
-        const fileCreate = graphqlData.data?.fileCreate;
-        if (fileCreate?.userErrors?.length > 0) {
-            console.error('❌ GraphQL user errors:', fileCreate.userErrors);
-            throw new Error(`GraphQL user errors: ${JSON.stringify(fileCreate.userErrors)}`);
+        const fileCreateMutation = `mutation fileCreate($files: [FileCreateInput!]!) {
+          fileCreate(files: $files) {
+            files {
+              id
+              ... on MediaImage {
+                id
+                fileStatus
+                image { url altText }
+                originalSource { url }
+              }
+              ... on GenericFile {
+                id
+                fileStatus
+                url
+              }
+            }
+            userErrors { field message code }
+          }
+        }`;
+        const fileCreateRes = await fetch(graphqlUrl, {
+            method: 'POST',
+            headers: {
+                'X-Shopify-Access-Token': cleanToken,
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({
+                query: fileCreateMutation,
+                variables: {
+                    files: [{
+                        contentType: 'IMAGE',
+                        originalSource: target.resourceUrl,
+                        filename: finalFilename
+                    }]
+                }
+            })
+        });
+        const fileCreateJson = await fileCreateRes.json().catch(() => null);
+        if (!fileCreateRes.ok) {
+            throw new Error(`fileCreate HTTP ${fileCreateRes.status}: ${fileCreateJson ? JSON.stringify(fileCreateJson) : 'no body'}`);
+        }
+        if (fileCreateJson?.errors?.length) {
+            console.error('❌ fileCreate GraphQL errors:', fileCreateJson.errors);
+            throw new Error(`fileCreate: ${JSON.stringify(fileCreateJson.errors)}`);
+        }
+        const fc = fileCreateJson?.data?.fileCreate;
+        if (fc?.userErrors?.length > 0) {
+            console.error('❌ fileCreate user errors:', fc.userErrors);
+            throw new Error(`fileCreate userErrors: ${JSON.stringify(fc.userErrors)}`);
         }
 
-        const createdFile = fileCreate?.files?.[0];
-        const createdId = createdFile?.id;
+        let fileObj = fc?.files?.[0];
+        const createdId = fileObj?.id;
         let shopifyUrl =
-            createdFile?.image?.url ||
-            createdFile?.url ||
+            fileObj?.image?.url ||
+            fileObj?.originalSource?.url ||
+            fileObj?.url ||
             null;
 
-        // Sometimes Shopify returns fileStatus=PROCESSING with no URL yet.
-        // Poll by id for up to ~10s to get the final CDN URL.
+        const pollQuery = `query getFile($id: ID!) {
+          node(id: $id) {
+            ... on MediaImage {
+              id
+              fileStatus
+              image { url altText }
+              originalSource { url }
+            }
+            ... on GenericFile {
+              id
+              fileStatus
+              url
+            }
+          }
+        }`;
+        const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
         if (!shopifyUrl && createdId) {
-            const pollQuery = `
-              query fileNode($id: ID!) {
-                node(id: $id) {
-                  __typename
-                  ... on MediaImage {
-                    id
-                    fileStatus
-                    image { url altText }
-                  }
-                  ... on GenericFile {
-                    id
-                    fileStatus
-                    url
-                  }
-                }
-              }
-            `;
-            const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-
-            const maxAttempts = 10;
-            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            for (let attempt = 0; attempt < 10 && !shopifyUrl; attempt++) {
                 await sleep(1000);
                 const pollRes = await fetch(graphqlUrl, {
                     method: 'POST',
@@ -372,23 +408,22 @@ app.post('/api/upload-thumbnail', async (req, res) => {
                 });
                 const pollJson = await pollRes.json().catch(() => null);
                 const node = pollJson?.data?.node;
-                shopifyUrl =
-                    node?.image?.url ||
-                    node?.url ||
-                    null;
-                if (shopifyUrl) break;
+                if (node) {
+                    fileObj = node;
+                    shopifyUrl = node?.image?.url || node?.originalSource?.url || node?.url || null;
+                }
             }
         }
 
         if (!shopifyUrl) {
             console.error('❌ Upload succeeded but no URL returned:', {
                 fileId: createdId,
-                fileStatus: createdFile?.fileStatus,
+                fileStatus: fileObj?.fileStatus,
             });
             throw new Error('Shopify did not return a file URL (still processing). Try again.');
         }
 
-        console.log('✅ Shopify Files upload successful via GraphQL!');
+        console.log('✅ Shopify Files upload successful (staged + fileCreate)');
         console.log('✅ File URL:', shopifyUrl);
         console.log('✅ File ID:', createdId);
 
