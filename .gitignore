@@ -32,6 +32,8 @@ config/local.env
 
 # Logs and temp
 *.log
+# Blender can produce huge text logs; GitHub limit is 100MB per file
+src/blender/render-log.txt
 tmp/
 
 # Optional: uncomment if you don't want to track built/minified assets
