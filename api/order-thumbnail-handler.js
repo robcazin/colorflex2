@@ -21,6 +21,31 @@ if (!fs.existsSync(THUMBNAIL_OUTPUT_DIR)) {
     fs.mkdirSync(THUMBNAIL_OUTPUT_DIR, { recursive: true });
 }
 
+function valueOrNA(value) {
+    if (value === null || value === undefined || value === '') return 'n/a';
+    return String(value);
+}
+
+function formatAddress(label, address) {
+    if (!address || typeof address !== 'object') {
+        return [`${label}: n/a`];
+    }
+    const fullName = [address.first_name, address.last_name].filter(Boolean).join(' ').trim();
+    const lines = [
+        `${label}:`,
+        `  Name: ${valueOrNA(fullName)}`,
+        `  Company: ${valueOrNA(address.company)}`,
+        `  Address 1: ${valueOrNA(address.address1)}`,
+        `  Address 2: ${valueOrNA(address.address2)}`,
+        `  City: ${valueOrNA(address.city)}`,
+        `  Province/State: ${valueOrNA(address.province || address.province_code)}`,
+        `  ZIP/Postal: ${valueOrNA(address.zip)}`,
+        `  Country: ${valueOrNA(address.country || address.country_code)}`,
+        `  Phone: ${valueOrNA(address.phone)}`
+    ];
+    return lines;
+}
+
 async function sendCheckoutThumbnailEmail({ order, lineItem, filename, buffer, mimeType, shopifyFileUrl }) {
     const to = process.env.THUMBNAIL_FALLBACK_EMAIL_TO;
     const from = process.env.THUMBNAIL_FALLBACK_EMAIL_FROM || process.env.SMTP_FROM;
@@ -47,14 +72,45 @@ async function sendCheckoutThumbnailEmail({ order, lineItem, filename, buffer, m
     });
 
     const subject = `[ColorFlex Order ${order.order_number || order.id}] Thumbnail for ${lineItem.name || 'line item'}`;
+    const customerFullName = [
+        order.customer?.first_name,
+        order.customer?.last_name
+    ].filter(Boolean).join(' ').trim();
+    const checkoutProperties = Array.isArray(lineItem.properties)
+        ? lineItem.properties.filter((p) => p && p.name && p.value !== null && p.value !== undefined && p.name !== '_pattern_preview')
+        : [];
     const text = [
         'Checkout completed for a ColorFlex item. Attached thumbnail for factory printing.',
         '',
+        'Customer and checkout details:',
+        `Customer Name: ${valueOrNA(customerFullName)}`,
+        `Customer Email: ${valueOrNA(order.email || order.contact_email || order.customer?.email)}`,
+        `Customer Phone: ${valueOrNA(order.phone || order.customer?.phone)}`,
+        `Shipping Method: ${valueOrNA(order.shipping_lines?.[0]?.title)}`,
+        `Payment Gateway: ${valueOrNA(Array.isArray(order.payment_gateway_names) ? order.payment_gateway_names.join(', ') : null)}`,
+        '',
         `Order ID: ${order.id}`,
         `Order Number: ${order.order_number || order.order_name || 'n/a'}`,
+        `Order Name: ${valueOrNA(order.name)}`,
+        `Checkout Token: ${valueOrNA(order.checkout_token)}`,
+        `Checkout ID: ${valueOrNA(order.checkout_id)}`,
+        `Created At: ${valueOrNA(order.created_at)}`,
+        `Currency: ${valueOrNA(order.currency)}`,
+        `Order Note: ${valueOrNA(order.note)}`,
         `Line Item ID: ${lineItem.id}`,
         `Line Item Name: ${lineItem.name || 'n/a'}`,
+        `Line Item SKU: ${valueOrNA(lineItem.sku)}`,
+        `Line Item Quantity: ${valueOrNA(lineItem.quantity)}`,
         `Shopify File URL: ${shopifyFileUrl || 'not uploaded'}`,
+        '',
+        ...formatAddress('Shipping Address', order.shipping_address),
+        '',
+        ...formatAddress('Billing Address', order.billing_address),
+        '',
+        'Line Item Properties:',
+        ...(checkoutProperties.length
+            ? checkoutProperties.map((p) => `- ${p.name}: ${String(p.value).slice(0, 500)}`)
+            : ['- n/a']),
         `Timestamp: ${new Date().toISOString()}`
     ].join('\n');
 
