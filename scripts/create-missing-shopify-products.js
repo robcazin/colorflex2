@@ -158,7 +158,7 @@ async function main() {
     if (!SHOPIFY_STORE || !SHOPIFY_ACCESS_TOKEN) {
         log('❌ Missing Shopify credentials. Create .env file with:', 'red');
         log('   SHOPIFY_STORE=your-store.myshopify.com', 'yellow');
-        log('   SHOPIFY_ACCESS_TOKEN=SHOPIFY_TOKEN_...', 'yellow');
+        log('   SHOPIFY_ACCESS_TOKEN=YOUR_ADMIN_API_TOKEN', 'yellow');
         process.exit(1);
     }
     

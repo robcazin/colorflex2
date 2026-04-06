@@ -95,8 +95,8 @@ export BASSETT_USE_PHOTOSHOP=1
 
 # Optional: Shopify (for update-collection.sh, API scripts) – or keep in config/local.env only
 # export SHOPIFY_STORE="your-store.myshopify.com"
-# export SHOPIFY_ACCESS_TOKEN="SHOPIFY_TOKEN_..."
-# export SHOPIFY_THEME_PASSWORD="SHOPIFY_TOKEN_..."
+# export SHOPIFY_ACCESS_TOKEN="YOUR_ADMIN_API_TOKEN"
+# export SHOPIFY_THEME_PASSWORD="YOUR_THEME_PASSWORD"
 ```
 
 Then in **~/.zshrc** (or **~/.bashrc**):  
