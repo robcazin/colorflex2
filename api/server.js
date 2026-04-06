@@ -332,6 +332,36 @@ app.post('/api/upload-thumbnail', async (req, res) => {
         (target.parameters || []).forEach((p) => form.append(p.name, p.value));
         form.append('file', imageBuffer, { filename: finalFilename, contentType: mimeType });
 
+        // #region agent log — hypotheses A/C/D: capture parameters, lengths, headers
+        let syncLen = null;
+        try { syncLen = form.getLengthSync(); } catch (e) { syncLen = 'ERROR:' + e.message; }
+        const dbgPayload = {
+            sessionId: 'fb7100', runId: 'run1',
+            hypothesisId: 'A-C-D',
+            location: 'server.js:stagedTargetPost-pre',
+            message: 'pre-upload state',
+            data: {
+                targetUrl: target.url,
+                resourceUrl: target.resourceUrl,
+                parameterNames: (target.parameters || []).map(p => p.name),
+                parameterValues: (target.parameters || []).reduce((a, p) => { a[p.name] = p.value; return a; }, {}),
+                imageBufferBytes: imageBuffer.length,
+                getLengthSync: syncLen,
+                formContentTypeHeader: form.getHeaders()['content-type'],
+                mimeType,
+                finalFilename,
+            },
+            timestamp: Date.now()
+        };
+        fetch('http://127.0.0.1:7851/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'fb7100' },
+            body: JSON.stringify(dbgPayload)
+        }).catch(() => {});
+        const fs2 = require('fs'); const os2 = require('os');
+        try { fs2.appendFileSync('/Volumes/K3/jobs/colorflex2/.cursor/debug-fb7100.log', JSON.stringify(dbgPayload) + '\n'); } catch(_) {}
+        // #endregion
+
         const uploadHeaders = { ...form.getHeaders() };
         try {
             uploadHeaders['content-length'] = form.getLengthSync();
@@ -341,6 +371,23 @@ app.post('/api/upload-thumbnail', async (req, res) => {
             }
         }
 
+        // #region agent log — hypothesis B: confirm buffer-vs-stream choice
+        const dbgB = {
+            sessionId: 'fb7100', runId: 'run1',
+            hypothesisId: 'B',
+            location: 'server.js:stagedTargetPost-headers',
+            message: 'upload headers before nodeFetch',
+            data: { uploadHeaders, isNodeFetch: true },
+            timestamp: Date.now()
+        };
+        fetch('http://127.0.0.1:7851/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'fb7100' },
+            body: JSON.stringify(dbgB)
+        }).catch(() => {});
+        try { fs2.appendFileSync('/Volumes/K3/jobs/colorflex2/.cursor/debug-fb7100.log', JSON.stringify(dbgB) + '\n'); } catch(_) {}
+        // #endregion
+
         const uploadRes = await nodeFetch(target.url, {
             method: 'POST',
             headers: uploadHeaders,
@@ -348,6 +395,22 @@ app.post('/api/upload-thumbnail', async (req, res) => {
         });
         if (!uploadRes.ok) {
             const errText = await uploadRes.text();
+            // #region agent log — hypothesis A/B/C/D/E: capture full S3 error
+            const dbgErr = {
+                sessionId: 'fb7100', runId: 'run1',
+                hypothesisId: 'A-B-C-D-E',
+                location: 'server.js:stagedTargetPost-error',
+                message: 'staged upload failed',
+                data: { status: uploadRes.status, errorBody: errText.slice(0, 1200) },
+                timestamp: Date.now()
+            };
+            fetch('http://127.0.0.1:7851/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'fb7100' },
+                body: JSON.stringify(dbgErr)
+            }).catch(() => {});
+            try { fs2.appendFileSync('/Volumes/K3/jobs/colorflex2/.cursor/debug-fb7100.log', JSON.stringify(dbgErr) + '\n'); } catch(_) {}
+            // #endregion
             throw Object.assign(
                 new Error(`Staged target upload failed ${uploadRes.status}: ${errText.slice(0, 800)}`),
                 { step: 'stagedTargetPost' }
