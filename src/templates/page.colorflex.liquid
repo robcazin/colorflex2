@@ -693,32 +693,48 @@
 
 <script>
 // Unpasted wallpaper is not for sale right now; hide it everywhere in the UI and
-// prevent old saved links from selecting it.
-document.addEventListener('DOMContentLoaded', function () {
-  try {
-    var BLOCKED = ['wallpaper-unpasted'];
-    BLOCKED.forEach(function (id) {
-      // Hide radio option blocks (material picker)
-      var radio = document.querySelector('input[type="radio"][name="material"][value="' + id + '"]');
-      if (radio) {
-        // If it was selected by old saved links, switch to prepasted.
-        if (radio.checked) {
-          var fallback = document.querySelector('input[type="radio"][name="material"][value="wallpaper-prepasted"]');
-          if (fallback) fallback.checked = true;
-        }
-        var optionBlock = radio.closest('div');
-        if (optionBlock) optionBlock.style.display = 'none';
-      }
-      // Hide any selects/options that might exist
-      document.querySelectorAll('option[value="' + id + '"]').forEach(function (opt) {
-        opt.disabled = true;
-        opt.hidden = true;
+// prevent old saved links from selecting it. ColorFlex builds the material picker
+// dynamically, so we use a MutationObserver (not a one-time DOMContentLoaded check).
+(function () {
+  var BLOCKED = ['wallpaper-unpasted'];
+
+  function hideBlockedMaterials() {
+    try {
+      BLOCKED.forEach(function (id) {
+        // Hide radio option blocks (material picker)
+        document.querySelectorAll('input[type=\"radio\"][name=\"material\"][value=\"' + id + '\"]').forEach(function (radio) {
+          if (radio.checked) {
+            var fallback = document.querySelector('input[type=\"radio\"][name=\"material\"][value=\"wallpaper-prepasted\"]');
+            if (fallback) fallback.checked = true;
+          }
+          var optionBlock = radio.closest('div');
+          if (optionBlock) optionBlock.style.display = 'none';
+        });
+
+        // Hide any selects/options that might exist
+        document.querySelectorAll('option[value=\"' + id + '\"]').forEach(function (opt) {
+          opt.disabled = true;
+          opt.hidden = true;
+        });
       });
-    });
-  } catch (e) {
-    // no-op
+    } catch (e) {
+      // no-op
+    }
   }
-});
+
+  document.addEventListener('DOMContentLoaded', function () {
+    hideBlockedMaterials();
+
+    try {
+      var obs = new MutationObserver(function () {
+        hideBlockedMaterials();
+      });
+      obs.observe(document.documentElement, { childList: true, subtree: true });
+    } catch (e) {
+      // no-op
+    }
+  });
+})();
 
 // Shopify Customer Authentication Integration
 {% if customer %}
