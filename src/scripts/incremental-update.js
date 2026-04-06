@@ -10,6 +10,16 @@ const projectRoot = path.resolve(__dirname, '../..');
 process.chdir(projectRoot);
 console.log('🔄 Incremental Update - Working directory:', process.cwd());
 
+try {
+    require('dotenv').config();
+    if (!process.env.AIRTABLE_PAT) {
+        const localEnv = path.join(projectRoot, 'config', 'local.env');
+        if (fsSync.existsSync(localEnv)) require('dotenv').config({ path: localEnv });
+    }
+} catch (e) {
+    /* dotenv optional */
+}
+
 // Define functions directly since cf-dl.js doesn't export them
 function cleanPatternName(str) {
     try {
@@ -139,8 +149,13 @@ async function downloadImage(url, destPath, maxDimension = 2800, retries = 3, fo
 // Import generateShopifyCSV from cf-dl.js
 const { generateShopifyCSV } = require('./cf-dl.js');
 
-const airtable = new Airtable({ apiKey: 'REDACTED_USE_AIRTABLE_PAT_ENV' });
-const base = airtable.base('appsywaKYiyKQTnl3');
+const airtablePat = process.env.AIRTABLE_PAT;
+if (!airtablePat) {
+    console.error('Missing AIRTABLE_PAT. Add it to .env or config/local.env (never commit tokens).');
+    process.exit(1);
+}
+const airtable = new Airtable({ apiKey: airtablePat });
+const base = airtable.base(process.env.AIRTABLE_BASE_ID || 'appsywaKYiyKQTnl3');
 
 // Track new patterns found
 const newPatterns = {

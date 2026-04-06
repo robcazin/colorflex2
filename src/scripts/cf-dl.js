@@ -67,8 +67,13 @@ function extractDimensions(filename) {
     return [24, 24];
 }
 
-const airtable = new Airtable({ apiKey: 'REDACTED_USE_AIRTABLE_PAT_ENV' });
-const base = airtable.base('appsywaKYiyKQTnl3');
+const airtablePat = process.env.AIRTABLE_PAT;
+if (!airtablePat) {
+    console.error('Missing AIRTABLE_PAT. Add it to .env or config/local.env (never commit tokens).');
+    process.exit(1);
+}
+const airtable = new Airtable({ apiKey: airtablePat });
+const base = airtable.base(process.env.AIRTABLE_BASE_ID || 'appsywaKYiyKQTnl3');
 
 function cleanPatternName(str) {
     try {

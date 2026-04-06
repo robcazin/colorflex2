@@ -21,6 +21,8 @@ theme-pull-*/
 .env
 *.env
 !*.env.example
+# Script backups (often duplicate secrets; do not commit)
+src/scripts/cf-dl.js.backup*
 config/shopify.json
 config/local.env
 
