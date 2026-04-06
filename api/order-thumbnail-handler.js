@@ -9,6 +9,7 @@
 const fs = require('fs');
 const path = require('path');
 const fetch = require('node-fetch');
+const nodemailer = require('nodemailer');
 
 const SHOPIFY_STORE = process.env.SHOPIFY_STORE || process.env.SHOPIFY_STORE_URL;
 const SHOPIFY_ACCESS_TOKEN = process.env.SHOPIFY_ACCESS_TOKEN;
@@ -18,6 +19,60 @@ const THUMBNAIL_OUTPUT_DIR = path.join(__dirname, '../order-thumbnails');
 // Ensure output directory exists
 if (!fs.existsSync(THUMBNAIL_OUTPUT_DIR)) {
     fs.mkdirSync(THUMBNAIL_OUTPUT_DIR, { recursive: true });
+}
+
+async function sendCheckoutThumbnailEmail({ order, lineItem, filename, buffer, mimeType, shopifyFileUrl }) {
+    const to = process.env.THUMBNAIL_FALLBACK_EMAIL_TO;
+    const from = process.env.THUMBNAIL_FALLBACK_EMAIL_FROM || process.env.SMTP_FROM;
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = Number(process.env.SMTP_PORT || 587);
+    const smtpSecure = String(process.env.SMTP_SECURE || '').toLowerCase() === 'true' || smtpPort === 465;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (!to || !from || !smtpHost || !buffer || !Buffer.isBuffer(buffer) || buffer.length === 0) {
+        return { attempted: false, sent: false, skipped: 'missing_config_or_image' };
+    }
+
+    const recipients = to.split(',').map((v) => v.trim()).filter(Boolean);
+    if (!recipients.length) {
+        return { attempted: false, sent: false, skipped: 'empty_recipients' };
+    }
+
+    const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpSecure,
+        auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined
+    });
+
+    const subject = `[ColorFlex Order ${order.order_number || order.id}] Thumbnail for ${lineItem.name || 'line item'}`;
+    const text = [
+        'Checkout completed for a ColorFlex item. Attached thumbnail for factory printing.',
+        '',
+        `Order ID: ${order.id}`,
+        `Order Number: ${order.order_number || order.order_name || 'n/a'}`,
+        `Line Item ID: ${lineItem.id}`,
+        `Line Item Name: ${lineItem.name || 'n/a'}`,
+        `Shopify File URL: ${shopifyFileUrl || 'not uploaded'}`,
+        `Timestamp: ${new Date().toISOString()}`
+    ].join('\n');
+
+    await transporter.sendMail({
+        from,
+        to: recipients,
+        subject,
+        text,
+        attachments: [
+            {
+                filename,
+                content: buffer,
+                contentType: mimeType || 'image/jpeg'
+            }
+        ]
+    });
+
+    return { attempted: true, sent: true, to: recipients };
 }
 
 /**
@@ -88,24 +143,41 @@ async function extractThumbnailFromOrder(orderData) {
                              'unknown-collection';
             
             // Get thumbnail from properties (try both with and without underscore)
-            let thumbnailBase64 = properties['_pattern_preview'] || 
+            let thumbnailValue = properties['_pattern_preview'] || 
                                  properties['pattern_preview'] ||
                                  properties['Pattern Preview'];
             
-            if (!thumbnailBase64) {
+            if (!thumbnailValue) {
                 console.log(`[ORDER THUMBNAIL] ⚠️ No thumbnail found for ${patternName} in order ${order.id}`);
                 continue;
             }
 
-            // Clean base64 data (remove data:image prefix if present)
-            const base64Data = thumbnailBase64.replace(/^data:image\/\w+;base64,/, '');
-            
-            // Convert base64 to buffer
+            // Resolve thumbnail source (data URL, raw base64, or remote URL) into a buffer.
             let buffer;
+            let mimeType = 'image/jpeg';
             try {
-                buffer = Buffer.from(base64Data, 'base64');
+                if (typeof thumbnailValue === 'string' && /^https?:\/\//i.test(thumbnailValue)) {
+                    const remote = await fetch(thumbnailValue, { redirect: 'follow' });
+                    if (!remote.ok) {
+                        throw new Error(`thumbnail URL fetch failed ${remote.status}`);
+                    }
+                    const arr = await remote.arrayBuffer();
+                    buffer = Buffer.from(arr);
+                    const ct = remote.headers.get('content-type');
+                    if (ct && ct.startsWith('image/')) mimeType = ct;
+                } else {
+                    const dataUrlMatch = String(thumbnailValue).match(/^data:(image\/[\w.+-]+);base64,/);
+                    if (dataUrlMatch) {
+                        mimeType = dataUrlMatch[1];
+                    }
+                    const base64Data = String(thumbnailValue).replace(/^data:image\/\w+;base64,/, '').trim();
+                    buffer = Buffer.from(base64Data, 'base64');
+                }
+                if (!buffer || buffer.length === 0) {
+                    throw new Error('empty thumbnail buffer');
+                }
             } catch (error) {
-                console.error(`[ORDER THUMBNAIL] ❌ Invalid base64 data for ${patternName}:`, error.message);
+                console.error(`[ORDER THUMBNAIL] ❌ Invalid thumbnail data for ${patternName}:`, error.message);
                 continue;
             }
 
@@ -133,6 +205,23 @@ async function extractThumbnailFromOrder(orderData) {
                 } catch (uploadError) {
                     console.error(`[ORDER THUMBNAIL] ⚠️ Failed to upload to Shopify Files:`, uploadError.message);
                 }
+            }
+
+            // Send email only from checkout webhook path (never from add-to-cart upload flow).
+            try {
+                const emailResult = await sendCheckoutThumbnailEmail({
+                    order,
+                    lineItem,
+                    filename,
+                    buffer,
+                    mimeType,
+                    shopifyFileUrl
+                });
+                if (emailResult.sent) {
+                    console.log(`[ORDER THUMBNAIL] 📧 Checkout thumbnail email sent for order ${order.id}, line item ${lineItem.id}`);
+                }
+            } catch (emailError) {
+                console.error(`[ORDER THUMBNAIL] ⚠️ Failed to send checkout thumbnail email:`, emailError.message);
             }
 
             extractedThumbnails.push({

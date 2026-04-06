@@ -15,7 +15,6 @@ const FormData = require('form-data');
 const nodeFetch = require('node-fetch');
 const os = require('os');
 const { spawn } = require('child_process');
-const nodemailer = require('nodemailer');
 const { 
     savePatternToCustomer, 
     getCustomerSavedPatterns, 
@@ -52,64 +51,6 @@ const limiter = rateLimit({
     }
 });
 app.use('/api/', limiter);
-
-/**
- * Email thumbnail as operational fallback when Shopify Files upload fails.
- * Controlled by SMTP_* and THUMBNAIL_FALLBACK_EMAIL_* env vars.
- */
-async function sendThumbnailFallbackEmail({ imageBuffer, mimeType, filename, reason, step }) {
-    const to = process.env.THUMBNAIL_FALLBACK_EMAIL_TO;
-    const from = process.env.THUMBNAIL_FALLBACK_EMAIL_FROM || process.env.SMTP_FROM;
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpPort = Number(process.env.SMTP_PORT || 587);
-    const smtpSecure = String(process.env.SMTP_SECURE || '').toLowerCase() === 'true' || smtpPort === 465;
-    const smtpUser = process.env.SMTP_USER;
-    const smtpPass = process.env.SMTP_PASS;
-
-    if (!to || !from || !smtpHost || !imageBuffer || !Buffer.isBuffer(imageBuffer) || imageBuffer.length === 0) {
-        return { attempted: false, sent: false, skipped: 'missing_config_or_image' };
-    }
-
-    const transporter = nodemailer.createTransport({
-        host: smtpHost,
-        port: smtpPort,
-        secure: smtpSecure,
-        auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined
-    });
-
-    const recipients = to.split(',').map((v) => v.trim()).filter(Boolean);
-    if (!recipients.length) {
-        return { attempted: false, sent: false, skipped: 'empty_recipients' };
-    }
-
-    const safeFilename = filename || `colorflex-thumbnail-${Date.now()}.jpg`;
-    const subject = `[ColorFlex] Thumbnail fallback: ${safeFilename}`;
-    const text = [
-        'Shopify Files upload failed, so this thumbnail is attached as fallback for factory printing.',
-        '',
-        `Filename: ${safeFilename}`,
-        `MIME: ${mimeType || 'image/jpeg'}`,
-        `Step: ${step || 'unknown'}`,
-        `Reason: ${reason || 'unknown'}`,
-        `Timestamp: ${new Date().toISOString()}`
-    ].join('\n');
-
-    await transporter.sendMail({
-        from,
-        to: recipients,
-        subject,
-        text,
-        attachments: [
-            {
-                filename: safeFilename,
-                content: imageBuffer,
-                contentType: mimeType || 'image/jpeg'
-            }
-        ]
-    });
-
-    return { attempted: true, sent: true, to: recipients };
-}
 
 /**
  * Save pattern to customer metafields
@@ -262,9 +203,6 @@ app.post('/api/orders/thumbnail-extract', async (req, res) => {
  * Body: { thumbnail: "data:image/jpeg;base64,...", filename: "pattern-thumbnail.jpg" }
  */
 app.post('/api/upload-thumbnail', async (req, res) => {
-    let imageBuffer = null;
-    let mimeType = 'image/jpeg';
-    let finalFilename = null;
     try {
         const { thumbnail, filename } = req.body;
         
@@ -276,10 +214,10 @@ app.post('/api/upload-thumbnail', async (req, res) => {
 
         // Extract base64 + mime from data URL (Shopify fileCreate does NOT accept data: URLs — use staged upload)
         const dataUrlMatch = thumbnail.match(/^data:(image\/[\w.+-]+);base64,/);
-        mimeType = dataUrlMatch ? dataUrlMatch[1] : 'image/jpeg';
+        const mimeType = dataUrlMatch ? dataUrlMatch[1] : 'image/jpeg';
         let base64Data = thumbnail.replace(/^data:image\/\w+;base64,/, '');
         base64Data = base64Data.trim();
-        imageBuffer = Buffer.from(base64Data, 'base64');
+        const imageBuffer = Buffer.from(base64Data, 'base64');
         
         // Get Shopify credentials from environment
         const SHOPIFY_STORE = process.env.SHOPIFY_STORE || process.env.SHOPIFY_STORE_URL;
@@ -311,7 +249,7 @@ app.post('/api/upload-thumbnail', async (req, res) => {
                 .replace(/^-|-$/g, '')
                 .substring(0, 255) || `colorflex-thumbnail-${Date.now()}.jpg`;
         };
-        finalFilename = sanitizeFilename(filename) || `colorflex-thumbnail-${Date.now()}.jpg`;
+        const finalFilename = sanitizeFilename(filename) || `colorflex-thumbnail-${Date.now()}.jpg`;
         
         // Flow matches src/scripts/cf-dl.js: stagedUploadsCreate → POST to staged URL → fileCreate(resourceUrl).
         // Inline data: URLs are not valid originalSource for fileCreate.
@@ -543,29 +481,10 @@ app.post('/api/upload-thumbnail', async (req, res) => {
 
     } catch (error) {
         console.error('Upload thumbnail error:', error);
-        let fallbackEmail = { attempted: false, sent: false };
-        try {
-            fallbackEmail = await sendThumbnailFallbackEmail({
-                imageBuffer,
-                mimeType,
-                filename: finalFilename,
-                reason: error.message,
-                step: error.step
-            });
-            if (fallbackEmail.sent) {
-                console.log('📧 Thumbnail fallback email sent:', { to: fallbackEmail.to, filename: finalFilename });
-            } else if (fallbackEmail.attempted) {
-                console.warn('⚠️ Thumbnail fallback email attempted but not sent');
-            }
-        } catch (mailError) {
-            console.error('Thumbnail fallback email error:', mailError.message);
-            fallbackEmail = { attempted: true, sent: false, error: mailError.message };
-        }
         res.status(500).json({
             error: 'Failed to upload thumbnail',
             message: error.message,
-            step: error.step || undefined,
-            fallbackEmail
+            step: error.step || undefined
         });
     }
 });
