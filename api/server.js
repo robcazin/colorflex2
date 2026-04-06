@@ -15,6 +15,7 @@ const FormData = require('form-data');
 const nodeFetch = require('node-fetch');
 const os = require('os');
 const { spawn } = require('child_process');
+const nodemailer = require('nodemailer');
 const { 
     savePatternToCustomer, 
     getCustomerSavedPatterns, 
@@ -51,6 +52,64 @@ const limiter = rateLimit({
     }
 });
 app.use('/api/', limiter);
+
+/**
+ * Email thumbnail as operational fallback when Shopify Files upload fails.
+ * Controlled by SMTP_* and THUMBNAIL_FALLBACK_EMAIL_* env vars.
+ */
+async function sendThumbnailFallbackEmail({ imageBuffer, mimeType, filename, reason, step }) {
+    const to = process.env.THUMBNAIL_FALLBACK_EMAIL_TO;
+    const from = process.env.THUMBNAIL_FALLBACK_EMAIL_FROM || process.env.SMTP_FROM;
+    const smtpHost = process.env.SMTP_HOST;
+    const smtpPort = Number(process.env.SMTP_PORT || 587);
+    const smtpSecure = String(process.env.SMTP_SECURE || '').toLowerCase() === 'true' || smtpPort === 465;
+    const smtpUser = process.env.SMTP_USER;
+    const smtpPass = process.env.SMTP_PASS;
+
+    if (!to || !from || !smtpHost || !imageBuffer || !Buffer.isBuffer(imageBuffer) || imageBuffer.length === 0) {
+        return { attempted: false, sent: false, skipped: 'missing_config_or_image' };
+    }
+
+    const transporter = nodemailer.createTransport({
+        host: smtpHost,
+        port: smtpPort,
+        secure: smtpSecure,
+        auth: smtpUser && smtpPass ? { user: smtpUser, pass: smtpPass } : undefined
+    });
+
+    const recipients = to.split(',').map((v) => v.trim()).filter(Boolean);
+    if (!recipients.length) {
+        return { attempted: false, sent: false, skipped: 'empty_recipients' };
+    }
+
+    const safeFilename = filename || `colorflex-thumbnail-${Date.now()}.jpg`;
+    const subject = `[ColorFlex] Thumbnail fallback: ${safeFilename}`;
+    const text = [
+        'Shopify Files upload failed, so this thumbnail is attached as fallback for factory printing.',
+        '',
+        `Filename: ${safeFilename}`,
+        `MIME: ${mimeType || 'image/jpeg'}`,
+        `Step: ${step || 'unknown'}`,
+        `Reason: ${reason || 'unknown'}`,
+        `Timestamp: ${new Date().toISOString()}`
+    ].join('\n');
+
+    await transporter.sendMail({
+        from,
+        to: recipients,
+        subject,
+        text,
+        attachments: [
+            {
+                filename: safeFilename,
+                content: imageBuffer,
+                contentType: mimeType || 'image/jpeg'
+            }
+        ]
+    });
+
+    return { attempted: true, sent: true, to: recipients };
+}
 
 /**
  * Save pattern to customer metafields
@@ -203,6 +262,9 @@ app.post('/api/orders/thumbnail-extract', async (req, res) => {
  * Body: { thumbnail: "data:image/jpeg;base64,...", filename: "pattern-thumbnail.jpg" }
  */
 app.post('/api/upload-thumbnail', async (req, res) => {
+    let imageBuffer = null;
+    let mimeType = 'image/jpeg';
+    let finalFilename = null;
     try {
         const { thumbnail, filename } = req.body;
         
@@ -214,10 +276,10 @@ app.post('/api/upload-thumbnail', async (req, res) => {
 
         // Extract base64 + mime from data URL (Shopify fileCreate does NOT accept data: URLs — use staged upload)
         const dataUrlMatch = thumbnail.match(/^data:(image\/[\w.+-]+);base64,/);
-        const mimeType = dataUrlMatch ? dataUrlMatch[1] : 'image/jpeg';
+        mimeType = dataUrlMatch ? dataUrlMatch[1] : 'image/jpeg';
         let base64Data = thumbnail.replace(/^data:image\/\w+;base64,/, '');
         base64Data = base64Data.trim();
-        const imageBuffer = Buffer.from(base64Data, 'base64');
+        imageBuffer = Buffer.from(base64Data, 'base64');
         
         // Get Shopify credentials from environment
         const SHOPIFY_STORE = process.env.SHOPIFY_STORE || process.env.SHOPIFY_STORE_URL;
@@ -249,7 +311,7 @@ app.post('/api/upload-thumbnail', async (req, res) => {
                 .replace(/^-|-$/g, '')
                 .substring(0, 255) || `colorflex-thumbnail-${Date.now()}.jpg`;
         };
-        const finalFilename = sanitizeFilename(filename) || `colorflex-thumbnail-${Date.now()}.jpg`;
+        finalFilename = sanitizeFilename(filename) || `colorflex-thumbnail-${Date.now()}.jpg`;
         
         // Flow matches src/scripts/cf-dl.js: stagedUploadsCreate → POST to staged URL → fileCreate(resourceUrl).
         // Inline data: URLs are not valid originalSource for fileCreate.
@@ -332,61 +394,11 @@ app.post('/api/upload-thumbnail', async (req, res) => {
         (target.parameters || []).forEach((p) => form.append(p.name, p.value));
         form.append('file', imageBuffer, { filename: finalFilename, contentType: mimeType });
 
-        // #region agent log — hypotheses A/C/D: capture parameters, lengths, headers
-        let syncLen = null;
-        try { syncLen = form.getLengthSync(); } catch (e) { syncLen = 'ERROR:' + e.message; }
-        const dbgPayload = {
-            sessionId: 'fb7100', runId: 'run1',
-            hypothesisId: 'A-C-D',
-            location: 'server.js:stagedTargetPost-pre',
-            message: 'pre-upload state',
-            data: {
-                targetUrl: target.url,
-                resourceUrl: target.resourceUrl,
-                parameterNames: (target.parameters || []).map(p => p.name),
-                parameterValues: (target.parameters || []).reduce((a, p) => { a[p.name] = p.value; return a; }, {}),
-                imageBufferBytes: imageBuffer.length,
-                getLengthSync: syncLen,
-                formContentTypeHeader: form.getHeaders()['content-type'],
-                mimeType,
-                finalFilename,
-            },
-            timestamp: Date.now()
-        };
-        fetch('http://127.0.0.1:7851/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'fb7100' },
-            body: JSON.stringify(dbgPayload)
-        }).catch(() => {});
-        const fs2 = require('fs'); const os2 = require('os');
-        try { fs2.appendFileSync('/Volumes/K3/jobs/colorflex2/.cursor/debug-fb7100.log', JSON.stringify(dbgPayload) + '\n'); } catch(_) {}
-        // #endregion
-
-        const uploadHeaders = { ...form.getHeaders() };
-        try {
-            uploadHeaders['content-length'] = form.getLengthSync();
-        } catch (lenErr) {
-            if (target.url.includes('amazonaws.com')) {
-                uploadHeaders['content-length'] = String(imageBuffer.length + 5000);
-            }
+        // Match the proven cf-dl.js upload behavior for staged S3 targets.
+        const uploadHeaders = { ...form.getHeaders(), 'X-Shopify-Access-Token': cleanToken };
+        if (target.url.includes('amazonaws.com')) {
+            uploadHeaders['Content-Length'] = imageBuffer.length + 5000;
         }
-
-        // #region agent log — hypothesis B: confirm buffer-vs-stream choice
-        const dbgB = {
-            sessionId: 'fb7100', runId: 'run1',
-            hypothesisId: 'B',
-            location: 'server.js:stagedTargetPost-headers',
-            message: 'upload headers before nodeFetch',
-            data: { uploadHeaders, isNodeFetch: true },
-            timestamp: Date.now()
-        };
-        fetch('http://127.0.0.1:7851/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'fb7100' },
-            body: JSON.stringify(dbgB)
-        }).catch(() => {});
-        try { fs2.appendFileSync('/Volumes/K3/jobs/colorflex2/.cursor/debug-fb7100.log', JSON.stringify(dbgB) + '\n'); } catch(_) {}
-        // #endregion
 
         const uploadRes = await nodeFetch(target.url, {
             method: 'POST',
@@ -395,22 +407,6 @@ app.post('/api/upload-thumbnail', async (req, res) => {
         });
         if (!uploadRes.ok) {
             const errText = await uploadRes.text();
-            // #region agent log — hypothesis A/B/C/D/E: capture full S3 error
-            const dbgErr = {
-                sessionId: 'fb7100', runId: 'run1',
-                hypothesisId: 'A-B-C-D-E',
-                location: 'server.js:stagedTargetPost-error',
-                message: 'staged upload failed',
-                data: { status: uploadRes.status, errorBody: errText.slice(0, 1200) },
-                timestamp: Date.now()
-            };
-            fetch('http://127.0.0.1:7851/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'fb7100' },
-                body: JSON.stringify(dbgErr)
-            }).catch(() => {});
-            try { fs2.appendFileSync('/Volumes/K3/jobs/colorflex2/.cursor/debug-fb7100.log', JSON.stringify(dbgErr) + '\n'); } catch(_) {}
-            // #endregion
             throw Object.assign(
                 new Error(`Staged target upload failed ${uploadRes.status}: ${errText.slice(0, 800)}`),
                 { step: 'stagedTargetPost' }
@@ -547,10 +543,29 @@ app.post('/api/upload-thumbnail', async (req, res) => {
 
     } catch (error) {
         console.error('Upload thumbnail error:', error);
+        let fallbackEmail = { attempted: false, sent: false };
+        try {
+            fallbackEmail = await sendThumbnailFallbackEmail({
+                imageBuffer,
+                mimeType,
+                filename: finalFilename,
+                reason: error.message,
+                step: error.step
+            });
+            if (fallbackEmail.sent) {
+                console.log('📧 Thumbnail fallback email sent:', { to: fallbackEmail.to, filename: finalFilename });
+            } else if (fallbackEmail.attempted) {
+                console.warn('⚠️ Thumbnail fallback email attempted but not sent');
+            }
+        } catch (mailError) {
+            console.error('Thumbnail fallback email error:', mailError.message);
+            fallbackEmail = { attempted: true, sent: false, error: mailError.message };
+        }
         res.status(500).json({
             error: 'Failed to upload thumbnail',
             message: error.message,
-            step: error.step || undefined
+            step: error.step || undefined,
+            fallbackEmail
         });
     }
 });
