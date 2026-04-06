@@ -247,8 +247,10 @@ app.post('/api/upload-thumbnail', async (req, res) => {
         };
         const finalFilename = sanitizeFilename(filename) || `colorflex-thumbnail-${Date.now()}.jpg`;
         
-        // Try GraphQL fileCreate mutation first (Files API REST endpoint returns 406)
-        // Fallback to REST API if GraphQL fails
+        // Use GraphQL fileCreate. Do NOT fall back to REST /files.json:
+        // Shopify's REST Files endpoint may be unavailable in newer API versions
+        // and can return 404/406. GraphQL works consistently and returns a file id
+        // we can poll until a CDN URL is available.
         const graphqlUrl = `https://${cleanStore}.myshopify.com/admin/api/${API_VERSION}/graphql.json`;
         
         console.log('📤 Uploading to Shopify Files via GraphQL:', {
@@ -292,129 +294,105 @@ app.post('/api/upload-thumbnail', async (req, res) => {
                 alt: finalFilename
             }]
         };
-        
-        let response;
-        let shopifyUrl;
-        
-        try {
-            // Try GraphQL first
-            response = await fetch(graphqlUrl, {
-                method: 'POST',
-                headers: {
-                    'X-Shopify-Access-Token': cleanToken,
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify({
-                    query: graphqlMutation,
-                    variables: graphqlVariables
-                })
-            });
-            
-            if (response.ok) {
-                const graphqlData = await response.json();
-                
-                if (graphqlData.errors) {
-                    console.error('❌ GraphQL errors:', graphqlData.errors);
-                    throw new Error(`GraphQL errors: ${JSON.stringify(graphqlData.errors)}`);
-                }
-                
-                const fileCreate = graphqlData.data?.fileCreate;
-                if (fileCreate?.userErrors?.length > 0) {
-                    console.error('❌ GraphQL user errors:', fileCreate.userErrors);
-                    throw new Error(`GraphQL user errors: ${JSON.stringify(fileCreate.userErrors)}`);
-                }
-                
-                const file = fileCreate?.files?.[0];
-                if (file) {
-                    // Extract URL from GraphQL response
-                    if (file.image?.url) {
-                        shopifyUrl = file.image.url;
-                    } else if (file.url) {
-                        shopifyUrl = file.url;
-                    }
-                    
-                    if (shopifyUrl) {
-                        console.log('✅ Shopify Files upload successful via GraphQL!');
-                        console.log('✅ File URL:', shopifyUrl);
-                        console.log('✅ File ID:', file.id);
-                        
-                        return res.json({
-                            success: true,
-                            url: shopifyUrl
-                        });
-                    }
-                }
-            }
-            
-            // If GraphQL failed, fall back to REST API
-            console.log('⚠️ GraphQL upload failed, trying REST API fallback...');
-            console.log('GraphQL response status:', response.status);
-            
-        } catch (graphqlError) {
-            console.error('⚠️ GraphQL upload error, trying REST API fallback:', graphqlError.message);
-        }
-        
-        // Fallback to REST API (original method)
-        const restUrl = `https://${cleanStore}.myshopify.com/admin/api/${API_VERSION}/files.json`;
-        const requestBody = {
-            file: {
-                attachment: base64Data,
-                filename: finalFilename,
-                content_type: 'image/jpeg'
-            }
-        };
-        
-        console.log('📤 Trying REST API fallback:', {
-            url: restUrl,
-            filename: finalFilename
-        });
-        
-        response = await fetch(restUrl, {
+
+        const response = await fetch(graphqlUrl, {
             method: 'POST',
             headers: {
                 'X-Shopify-Access-Token': cleanToken,
                 'Content-Type': 'application/json',
                 'Accept': 'application/json'
             },
-            body: JSON.stringify(requestBody)
+            body: JSON.stringify({
+                query: graphqlMutation,
+                variables: graphqlVariables
+            })
         });
 
-        // Log response details
-        console.log('📥 Response details:', {
-            status: response.status,
-            statusText: response.statusText,
-            headers: Object.fromEntries(response.headers.entries())
-        });
-
+        const graphqlData = await response.json().catch(() => null);
         if (!response.ok) {
-            let errorText = '';
-            try {
-                errorText = await response.text();
-            } catch (e) {
-                errorText = 'Could not read error response';
-            }
-            
-            console.error('❌ Shopify REST API error:', {
-                status: response.status,
-                statusText: response.statusText,
-                error: errorText,
-                errorLength: errorText.length,
-                url: restUrl,
-                responseHeaders: Object.fromEntries(response.headers.entries())
-            });
-            throw new Error(`Shopify API error ${response.status}: ${errorText || 'No error message'}`);
+            throw new Error(`GraphQL HTTP ${response.status}: ${graphqlData ? JSON.stringify(graphqlData) : 'No JSON body'}`);
+        }
+        if (!graphqlData) {
+            throw new Error('GraphQL response was not JSON');
+        }
+        if (graphqlData.errors) {
+            console.error('❌ GraphQL errors:', graphqlData.errors);
+            throw new Error(`GraphQL errors: ${JSON.stringify(graphqlData.errors)}`);
         }
 
-        const data = await response.json();
-        shopifyUrl = data.file.url;
+        const fileCreate = graphqlData.data?.fileCreate;
+        if (fileCreate?.userErrors?.length > 0) {
+            console.error('❌ GraphQL user errors:', fileCreate.userErrors);
+            throw new Error(`GraphQL user errors: ${JSON.stringify(fileCreate.userErrors)}`);
+        }
 
-        console.log('✅ Shopify Files upload successful via REST API!');
+        const createdFile = fileCreate?.files?.[0];
+        const createdId = createdFile?.id;
+        let shopifyUrl =
+            createdFile?.image?.url ||
+            createdFile?.url ||
+            null;
+
+        // Sometimes Shopify returns fileStatus=PROCESSING with no URL yet.
+        // Poll by id for up to ~10s to get the final CDN URL.
+        if (!shopifyUrl && createdId) {
+            const pollQuery = `
+              query fileNode($id: ID!) {
+                node(id: $id) {
+                  __typename
+                  ... on MediaImage {
+                    id
+                    fileStatus
+                    image { url altText }
+                  }
+                  ... on GenericFile {
+                    id
+                    fileStatus
+                    url
+                  }
+                }
+              }
+            `;
+            const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+            const maxAttempts = 10;
+            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+                await sleep(1000);
+                const pollRes = await fetch(graphqlUrl, {
+                    method: 'POST',
+                    headers: {
+                        'X-Shopify-Access-Token': cleanToken,
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        query: pollQuery,
+                        variables: { id: createdId }
+                    })
+                });
+                const pollJson = await pollRes.json().catch(() => null);
+                const node = pollJson?.data?.node;
+                shopifyUrl =
+                    node?.image?.url ||
+                    node?.url ||
+                    null;
+                if (shopifyUrl) break;
+            }
+        }
+
+        if (!shopifyUrl) {
+            console.error('❌ Upload succeeded but no URL returned:', {
+                fileId: createdId,
+                fileStatus: createdFile?.fileStatus,
+            });
+            throw new Error('Shopify did not return a file URL (still processing). Try again.');
+        }
+
+        console.log('✅ Shopify Files upload successful via GraphQL!');
         console.log('✅ File URL:', shopifyUrl);
-        console.log('✅ File ID:', data.file.id);
-        console.log('✅ File size:', data.file.size);
+        console.log('✅ File ID:', createdId);
 
-        res.json({
+        return res.json({
             success: true,
             url: shopifyUrl
         });
