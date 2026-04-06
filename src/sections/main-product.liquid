@@ -416,15 +416,7 @@
           variant: 'Peel & Stick',
           sample: 12.00
         },
-        'WALLPAPER-UNPASTED': {
-          pricePerRoll: 180,
-          coverage: '~60 sq ft',
-          minimumRolls: 1,
-          description: 'Unpasted wallpaper 24" x 30\' per roll',
-          material: 'wallpaper',
-          variant: 'Unpasted',
-          sample: 12.00
-        }
+        // WALLPAPER-UNPASTED intentionally disabled (not for sale right now)
       };
 
       // Convert material ID to fabric specification
@@ -432,7 +424,8 @@
         const wallpaperMap = {
           'wallpaper-prepasted': 'WALLPAPER-PREPASTED',
           'wallpaper-peel-stick': 'WALLPAPER-PEEL-STICK',
-          'wallpaper-unpasted': 'WALLPAPER-UNPASTED',
+          // Unpasted not for sale; treat as prepasted for any legacy links.
+          'wallpaper-unpasted': 'WALLPAPER-PREPASTED',
           'wallpaper-grasscloth': 'WALLPAPER'
         };
         const wallpaperKey = wallpaperMap[materialId];
@@ -1065,12 +1058,17 @@
             const urlParams = new URLSearchParams(window.location.search);
             console.log('🔍 Full URL:', window.location.href);
             console.log('🔍 Search params:', window.location.search);
-            const preferredMaterial = urlParams.get('preferred_material');
+            let preferredMaterial = urlParams.get('preferred_material');
             console.log('🔍 preferredMaterial value:', preferredMaterial);
 
             if (!preferredMaterial) {
               console.log('❌ No preferredMaterial found, exiting script');
               return; // Not from ColorFlex
+            }
+
+            // Unpasted is not for sale right now; treat any old links as prepasted.
+            if (preferredMaterial === 'wallpaper-unpasted') {
+              preferredMaterial = 'wallpaper-prepasted';
             }
 
             console.log('✅ Found preferredMaterial:', preferredMaterial);
@@ -1098,18 +1096,6 @@
                   'Installation: Self-adhesive, easy application',
                   'Removal: Clean removal, repositionable',
                   'Best for: Renters, temporary installations, DIY projects'
-                ]
-              },
-              'wallpaper-unpasted': {
-                name: 'Unpasted Wallpaper',
-                price: '$180/roll',
-                specs: [
-                  'Dimensions: 24" wide × 30\' long per roll',
-                  'Coverage: ~60 square feet per roll',
-                  'Material: Highest quality paper, NO ADHESIVE',
-                  'Installation: Requires separate wallpaper paste',
-                  'Professional-grade: Preferred by professional installers',
-                  'Best for: High-end installations, professional results'
                 ]
               },
               'wallpaper-grasscloth': {
@@ -1378,6 +1364,11 @@
                     return; // Not from ColorFlex
                   }
 
+                  // Unpasted is not for sale right now; treat any old links as prepasted.
+                  if (preferredMaterial === 'wallpaper-unpasted') {
+                    preferredMaterial = 'wallpaper-prepasted';
+                  }
+
                   console.log('✅ Found preferredMaterial:', preferredMaterial);
 
                   const materialInfo = {
@@ -1403,18 +1394,6 @@
                         'Installation: Self-adhesive, easy application',
                         'Removal: Clean removal, repositionable',
                         'Best for: Renters, temporary installations, DIY projects'
-                      ]
-                    },
-                    'wallpaper-unpasted': {
-                      name: 'Unpasted Wallpaper',
-                      price: '$180/roll',
-                      specs: [
-                        'Dimensions: 24" wide × 30\' long per roll',
-                        'Coverage: ~60 square feet per roll',
-                        'Material: Highest quality paper, NO ADHESIVE',
-                        'Installation: Requires separate wallpaper paste',
-                        'Professional-grade: Preferred by professional installers',
-                        'Best for: High-end installations, professional results'
                       ]
                     },
                     'wallpaper-grasscloth': {
@@ -4927,10 +4906,10 @@ window.colorflexSanitizeCartThumbSuffix = colorflexSanitizeCartThumbSuffix;
 
 function formatPreferredMaterial(pm) {
   if (!pm) return '';
+  if (pm === 'wallpaper-unpasted') pm = 'wallpaper-prepasted';
   const map = {
     'wallpaper-peel-stick': 'Peel & Stick Wallpaper',
     'wallpaper-prepasted': 'Prepasted Wallpaper',
-    'wallpaper-unpasted': 'Unpasted Wallpaper',
     'wallpaper-grasscloth': 'Grasscloth Wallpaper',
     'wallpaper-traditional': 'Traditional Wallpaper',
     'wallpaper-textured': 'Textured Wallpaper'
@@ -5790,7 +5769,8 @@ function setupVariantChangeDetection() {
 
   // Pre-select variant based on preferred_material URL parameter
   const urlParams = new URLSearchParams(window.location.search);
-  const preferredMaterial = urlParams.get('preferred_material');
+  let preferredMaterial = urlParams.get('preferred_material');
+  if (preferredMaterial === 'wallpaper-unpasted') preferredMaterial = 'wallpaper-prepasted';
   if (preferredMaterial) {
     console.log('🎯 Preferred material from URL:', preferredMaterial);
 
@@ -5798,7 +5778,6 @@ function setupVariantChangeDetection() {
     const materialToVariantMap = {
       'wallpaper-prepasted': ['prepasted', 'pre-pasted', 'pre pasted'],
       'wallpaper-peel-stick': ['peel', 'stick', 'peel & stick', 'peel and stick', 'removable'],
-      'wallpaper-unpasted': ['unpasted', 'un-pasted', 'un pasted'],
       'wallpaper-grasscloth': ['grasscloth', 'grass cloth', 'grass-cloth'],
       'fabric-soft-velvet': ['soft velvet', 'soft-velvet', 'velvet'],
       'fabric-decorator-linen': ['decorator linen', 'decorator-linen', 'linen', 'decorator'],

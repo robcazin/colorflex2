@@ -286,7 +286,8 @@ class ColorFlexCartEditor {
 
         if (detailsText.includes('Peel & Stick')) return 'wallpaper-peel-stick';
         if (detailsText.includes('Traditional')) return 'wallpaper-traditional';
-        if (detailsText.includes('Unpasted')) return 'wallpaper-unpasted';
+        // Unpasted is not for sale right now; treat any legacy text as prepasted/traditional.
+        if (detailsText.includes('Unpasted')) return 'wallpaper-traditional';
         if (detailsText.includes('Grasscloth')) return 'wallpaper-grasscloth';
         if (detailsText.includes('Textured')) return 'wallpaper-textured';
         if (detailsText.includes('Cotton')) return 'fabric-cotton';
@@ -566,13 +567,6 @@ class ColorFlexCartEditor {
                 price: '$79.99',
                 description: 'Professional paste application',
                 icon: '🎨'
-            },
-            {
-                id: 'wallpaper-unpasted',
-                name: 'Unpasted Wallpaper',
-                price: '$74.99',
-                description: 'Requires paste, professional finish',
-                icon: '📜'
             },
             {
                 id: 'wallpaper-grasscloth',
@@ -859,7 +853,6 @@ class ColorFlexCartEditor {
         const productTypes = {
             'wallpaper-peel-stick': '$89.99',
             'wallpaper-traditional': '$79.99',
-            'wallpaper-unpasted': '$74.99',
             'wallpaper-grasscloth': '$129.99',
             'wallpaper-textured': '$99.99',
             'fabric-cotton': '$69.99',
@@ -1365,12 +1358,12 @@ class ColorFlexCartEditor {
         const types = {
             'wallpaper-peel-stick': 'Peel & Stick Wallpaper',
             'wallpaper-traditional': 'Traditional Wallpaper',
-            'wallpaper-unpasted': 'Unpasted Wallpaper',
             'wallpaper-grasscloth': 'Grasscloth Wallpaper',
             'wallpaper-textured': 'Textured Wallpaper',
             'fabric-cotton': 'Cotton Fabric',
             'fabric-linen': 'Linen Fabric'
         };
+        if (typeId === 'wallpaper-unpasted') typeId = 'wallpaper-traditional';
         return types[typeId] || typeId;
     }
 
