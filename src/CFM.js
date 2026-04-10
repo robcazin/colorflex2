@@ -153,8 +153,9 @@ const logThumb = (...args) => debugLog('THUMBNAILS', ...args);
 const logGeneral = (...args) => debugLog('GENERAL', ...args);
 
 // Always log critical startup messages
+const CFM_RUNTIME_MARKER = 'CFM-RUNTIME-2026-04-09T20:58Z-shadowdance-sync-v1';
 console.log('🚨 DEBUG: ColorFlex CFM.js loaded - Version with thumbnail capture!');
-console.log('*** CLAUDE HALF-DROP TEST BUILD 999 - CFM.JS LOADING ***');
+console.log('🚨 CFM Runtime Marker:', CFM_RUNTIME_MARKER);
 
 // ✅ BUILD TIMESTAMP - Injected at build time by webpack DefinePlugin
 // Webpack replaces process.env.* with actual string values during build
@@ -171,12 +172,23 @@ console.log('📦 Build Date:', BUILD_DATE);
 console.log('📦 Build Mode:', BUILD_MODE);
 console.log('📦 ========================================');
 
-// Store globally for easy access
-window.COLORFLEX_BUILD_INFO = {
+// Store globally for easy access (locked so later scripts can't overwrite it).
+const __COLORFLEX_BUILD_INFO = {
     timestamp: BUILD_TIMESTAMP,
     date: BUILD_DATE,
-    mode: BUILD_MODE
+    mode: BUILD_MODE,
+    runtimeMarker: CFM_RUNTIME_MARKER
 };
+try {
+    Object.defineProperty(window, 'COLORFLEX_BUILD_INFO', {
+        value: __COLORFLEX_BUILD_INFO,
+        writable: false,
+        configurable: false,
+        enumerable: true
+    });
+} catch (e) {
+    window.COLORFLEX_BUILD_INFO = __COLORFLEX_BUILD_INFO;
+}
 
 console.log('🎛️ Debug flags configured:', DEBUG_FLAGS);
 
@@ -500,6 +512,110 @@ window.appState = {
     roomMockupHasSeenAlt: false // UI copy state: first visit shows "More Views"; after selecting an alternate view, show default mockup name
 };
 
+// Global diagnostics scaffold (available on every ColorFlex page/path).
+if (typeof window !== 'undefined') {
+    if (!window.__colorflexGlobalDiagnostics) {
+        window.__colorflexGlobalDiagnostics = {
+            startedAt: new Date().toISOString(),
+            events: []
+        };
+    }
+    if (typeof window.colorflexDumpDiagnostics !== 'function') {
+        window.colorflexDumpDiagnostics = function () {
+            let persisted = null;
+            try {
+                const raw = sessionStorage.getItem('colorflexLastDiagnostics');
+                if (raw) persisted = JSON.parse(raw);
+            } catch (_) {}
+            return {
+                submit: window.__colorflexLastSubmitDiagnostic || (persisted && persisted.submit) || null,
+                proofRender: window.__colorflexLastProofRenderSnapshot || (persisted && persisted.proofRender) || null,
+                restore: window.__colorflexLastRestoreSnapshot || (persisted && persisted.restore) || null,
+                global: window.__colorflexGlobalDiagnostics || (persisted && persisted.global) || null
+            };
+        };
+    }
+    if (!window.__colorflexDiagFetchWrapped && typeof window.fetch === 'function') {
+        window.__colorflexDiagFetchWrapped = true;
+        const __cfOrigFetch = window.fetch.bind(window);
+        window.fetch = async function(url, options) {
+            try {
+                const urlString = typeof url === 'string' ? url : (url && url.url) ? url.url : '';
+                const isCartAdd = /\/cart\/add(\.js)?/i.test(urlString);
+                if (isCartAdd) {
+                    const body = options && options.body;
+                    const payload = {};
+                    if (body instanceof FormData) {
+                        try {
+                            for (const [k, v] of body.entries()) payload[k] = typeof v === 'string' ? v : '[binary]';
+                        } catch (e) {
+                            payload.__formDataReadError = String(e && e.message ? e.message : e);
+                        }
+                    } else if (typeof body === 'string') {
+                        payload.__raw = body.length > 4000 ? body.slice(0, 4000) + '...[truncated]' : body;
+                        try { payload.__json = JSON.parse(body); } catch (e) {}
+                    } else if (body && typeof body === 'object') {
+                        payload.__object = body;
+                    }
+
+                    const layerInputsSnapshot = Array.isArray(appState.layerInputs)
+                        ? appState.layerInputs.map((li, i) => ({
+                            i,
+                            label: li && li.label,
+                            value: li && li.input ? li.input.value : null
+                        }))
+                        : [];
+                    const currentLayersSnapshot = Array.isArray(appState.currentLayers)
+                        ? appState.currentLayers.map((l, i) => ({
+                            i,
+                            label: l && l.label,
+                            color: l && l.color,
+                            isShadow: !!(l && l.isShadow)
+                        }))
+                        : [];
+
+                    window.__colorflexLastSubmitDiagnostic = {
+                        at: new Date().toISOString(),
+                        source: 'global-fetch-monitor',
+                        requestUrl: urlString,
+                        payload,
+                        appState: {
+                            pattern: appState.currentPattern ? appState.currentPattern.name : null,
+                            collection: appState.selectedCollection ? appState.selectedCollection.name : null,
+                            layerInputs: layerInputsSnapshot,
+                            currentLayers: currentLayersSnapshot
+                        },
+                        proofRender: window.__colorflexLastProofRenderSnapshot || null,
+                        restore: window.__colorflexLastRestoreSnapshot || null
+                    };
+                    window.__colorflexGlobalDiagnostics.events.push({
+                        at: new Date().toISOString(),
+                        type: 'cart_add_observed',
+                        requestUrl: urlString
+                    });
+                    try {
+                        sessionStorage.setItem('colorflexLastDiagnostics', JSON.stringify({
+                            submit: window.__colorflexLastSubmitDiagnostic || null,
+                            proofRender: window.__colorflexLastProofRenderSnapshot || null,
+                            restore: window.__colorflexLastRestoreSnapshot || null,
+                            global: window.__colorflexGlobalDiagnostics || null
+                        }));
+                    } catch (_) {}
+                }
+            } catch (diagErr) {
+                try {
+                    window.__colorflexGlobalDiagnostics.events.push({
+                        at: new Date().toISOString(),
+                        type: 'diag_error',
+                        message: String(diagErr && diagErr.message ? diagErr.message : diagErr)
+                    });
+                } catch (_) {}
+            }
+            return __cfOrigFetch(url, options);
+        };
+    }
+}
+
 const BACKGROUND_INDEX = 0;
 const FURNITURE_BASE_INDEX = 1;
 const PATTERN_BASE_INDEX = 2;
@@ -659,136 +775,107 @@ if (typeof window !== 'undefined') {
  */
 function capturePatternThumbnail() {
     try {
-        // Try to find the pattern preview element - check common selectors
-        const selectors = [
-            '#preview', // Main ColorFlex preview container
+        // Prefer the largest visible preview canvas to avoid tiny swatch captures.
+        const isVisible = (el) => {
+            if (!el) return false;
+            const rect = el.getBoundingClientRect();
+            const style = window.getComputedStyle(el);
+            return rect.width > 80 && rect.height > 80 && style.display !== 'none' && style.visibility !== 'hidden';
+        };
+
+        const addUnique = (arr, el) => {
+            if (el && arr.indexOf(el) === -1) arr.push(el);
+        };
+
+        const candidates = [];
+        const previewRoots = [
+            '#preview',
             '#pattern-preview',
             '.pattern-preview',
             '#colorflex-preview',
             '.colorflex-preview',
             '#pattern-display',
             '.pattern-display',
-            '[id*="preview"]',
-            '[class*="preview"]'
+            '#roomMockup',
         ];
-        
-        let previewElement = null;
-        console.log('🔍 Searching for pattern preview elements...');
-        for (const selector of selectors) {
-            previewElement = document.querySelector(selector);
-            if (previewElement) {
-                console.log('📸 Found pattern preview element:', selector, previewElement);
-                break;
-            } else {
-                console.log('❌ Not found:', selector);
+
+        previewRoots.forEach((selector) => {
+            const root = document.querySelector(selector);
+            if (root) {
+                if (root.tagName === 'CANVAS') addUnique(candidates, root);
+                root.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
             }
-        }
-        
-        if (!previewElement) {
-            console.warn('⚠️ No pattern preview element found for thumbnail capture');
-            // List all available elements for debugging
-            console.log('🔍 Available elements with "pattern" in ID/class:');
-            document.querySelectorAll('[id*="pattern"], [class*="pattern"]').forEach(el => {
-                console.log('  -', el.tagName, el.id || el.className);
-            });
-            console.log('🔍 Available SVG elements:', document.querySelectorAll('svg').length);
-            console.log('🔍 Available Canvas elements:', document.querySelectorAll('canvas').length);
+        });
+
+        // Global fallback scan (still filtered by visibility/size).
+        document.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
+
+        const usableCanvases = candidates.filter(isVisible);
+        if (!usableCanvases.length) {
+            console.warn('⚠️ No usable preview canvas found for thumbnail capture');
             return null;
         }
-        
-        // If we found a container, look for the actual pattern inside it
-        let actualPatternElement = null;
-        if (previewElement.tagName === 'DIV') {
-            // Look for canvas or SVG inside the container
-            actualPatternElement = previewElement.querySelector('canvas') || 
-                                 previewElement.querySelector('svg') ||
-                                 previewElement.querySelector('[data-pattern]');
-            
-            if (actualPatternElement) {
-                console.log('📸 Found actual pattern element inside container:', actualPatternElement.tagName);
-                previewElement = actualPatternElement;
-            } else {
-                console.log('📸 No canvas/SVG found inside container, will use DIV with background');
-                console.log('📸 Background image:', getComputedStyle(previewElement).backgroundImage);
-                console.log('📸 Background size:', getComputedStyle(previewElement).backgroundSize);
-            }
-        }
-        
-        // Create a canvas to capture the element
+
+        const scoreCanvas = (canvas) => {
+            const rect = canvas.getBoundingClientRect();
+            const displayArea = rect.width * rect.height;
+            const intrinsicArea = (canvas.width || 0) * (canvas.height || 0);
+            return displayArea + intrinsicArea * 0.1;
+        };
+
+        const previewCanvas = usableCanvases.sort((a, b) => scoreCanvas(b) - scoreCanvas(a))[0];
+        const rect = previewCanvas.getBoundingClientRect();
+        console.log('📸 Using preview canvas for thumbnail:', {
+            width: previewCanvas.width,
+            height: previewCanvas.height,
+            displayWidth: Math.round(rect.width),
+            displayHeight: Math.round(rect.height),
+            className: previewCanvas.className || '(none)',
+            id: previewCanvas.id || '(none)',
+        });
+
+        // Create a high-resolution thumbnail canvas.
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        
-        // Set thumbnail size (optimized high resolution - 800x800 with JPEG compression)
         canvas.width = 800;
         canvas.height = 800;
-        
-        // If it's already a canvas, render it with tiling based on current scale
-        if (previewElement.tagName === 'CANVAS') {
-            // Check if we have scale information to show proper tiling
-            const scale = appState.scaleMultiplier || 1.0;
-            const currentScale = appState.currentScale || 100;
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
 
-            console.log(`📸 Thumbnail capture - scaleMultiplier: ${scale}, currentScale: ${currentScale}`);
+        const srcW = previewCanvas.width || 1;
+        const srcH = previewCanvas.height || 1;
+        const scale = appState.scaleMultiplier || 1.0;
 
-            if (scale !== 1.0 && appState.currentPattern) {
-                // Generate tiled thumbnail to show scale
-                console.log(`📸 Generating tiled thumbnail at ${scale}x scale`);
-
-                // Fill background color first
-                const bgColor = appState.currentLayers && appState.currentLayers[0]
-                    ? appState.currentLayers[0].color
-                    : '#ffffff';
-                console.log(`📸 Background color: ${bgColor}`);
-
-                ctx.fillStyle = bgColor;
-                ctx.fillRect(0, 0, 800, 800);
-
-                // Calculate tile size (scale affects how many tiles fit)
-                // scale = 2.0 means pattern appears smaller (tiles are half size)
-                const tileWidth = 800 / scale;
-                const tileHeight = 800 / scale;
-
-                console.log(`📸 Tile size: ${tileWidth}x${tileHeight}, creating ${Math.ceil(800/tileWidth)}x${Math.ceil(800/tileHeight)} grid`);
-
-                // Tile the pattern across the thumbnail
-                let tileCount = 0;
-                for (let x = 0; x < 800; x += tileWidth) {
-                    for (let y = 0; y < 800; y += tileHeight) {
-                        ctx.drawImage(previewElement, x, y, tileWidth, tileHeight);
-                        tileCount++;
-                    }
+        if (scale !== 1.0 && appState.currentPattern) {
+            // Tile for zoomed patterns so thumbnail reflects scale detail.
+            const tileWidth = 800 / scale;
+            const tileHeight = 800 / scale;
+            for (let x = 0; x < 800; x += tileWidth) {
+                for (let y = 0; y < 800; y += tileHeight) {
+                    ctx.drawImage(previewCanvas, 0, 0, srcW, srcH, x, y, tileWidth, tileHeight);
                 }
-                console.log(`📸 Drew ${tileCount} tiles on thumbnail`);
-            } else {
-                // No scaling, just copy the canvas directly
-                console.log(`📸 Scale is 1.0, copying canvas directly`);
-                ctx.drawImage(previewElement, 0, 0, 800, 800);
             }
+        } else {
+            // Cover-fit to avoid tiny centered preview and preserve detail.
+            const srcAspect = srcW / srcH;
+            const dstAspect = 1; // 800x800
+            let cropW = srcW;
+            let cropH = srcH;
+            let cropX = 0;
+            let cropY = 0;
+
+            if (srcAspect > dstAspect) {
+                cropW = srcH * dstAspect;
+                cropX = (srcW - cropW) / 2;
+            } else if (srcAspect < dstAspect) {
+                cropH = srcW / dstAspect;
+                cropY = (srcH - cropH) / 2;
+            }
+            ctx.drawImage(previewCanvas, cropX, cropY, cropW, cropH, 0, 0, 800, 800);
         }
-        // If it's an SVG, we'll need a different approach due to async nature
-        else if (previewElement.tagName === 'SVG') {
-            // For now, create a placeholder - SVG capture requires async handling
-            ctx.fillStyle = '#e8f4fd';
-            ctx.fillRect(0, 0, 800, 800);
-            ctx.fillStyle = '#2c5aa0';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('SVG Pattern', 100, 90);
-            ctx.fillText('Preview', 100, 110);
-        }
-        // For other elements, create a simple representation
-        else {
-            ctx.fillStyle = '#f0f0f0';
-            ctx.fillRect(0, 0, 800, 800);
-            ctx.fillStyle = '#333';
-            ctx.font = '12px Arial';
-            ctx.textAlign = 'center';
-            ctx.fillText('Custom Pattern', 100, 90);
-            ctx.fillText('Preview', 100, 110);
-        }
-        
-        // Convert to base64 data URL
-        const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
+
+        // Convert to base64 data URL at higher quality for better detail.
+        const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
         console.log('📸 Captured pattern thumbnail (length:', dataUrl.length, ')');
         return dataUrl;
         
@@ -1039,7 +1126,11 @@ function cartThumbnailStorageKeyFromPattern(pattern) {
     return '';
 }
 
-window.saveToMyList = function() {
+function createSavedPatternEntryId() {
+    return 'sp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
+}
+
+window.saveToMyList = async function() {
     console.log('🎯 saveToMyList() function called!');
     try {
         // Use global appState reference
@@ -1063,10 +1154,23 @@ window.saveToMyList = function() {
         
         console.log('🔄 Starting pattern save process...');
         
-        // Capture pattern thumbnail before saving
-        console.log('📸 About to capture thumbnail...');
-        const thumbnailDataUrl = capturePatternThumbnail();
-        console.log('📸 Thumbnail capture result:', thumbnailDataUrl ? 'Success' : 'Failed');
+        // Capture saved thumbnail from proof renderer first (same compositing path as proof/cart flows).
+        console.log('📸 About to capture saved-pattern thumbnail...');
+        let thumbnailDataUrl = null;
+        try {
+            if (typeof window.generatePrintPreviewDataUrl === 'function') {
+                thumbnailDataUrl = await window.generatePrintPreviewDataUrl();
+                if (thumbnailDataUrl && thumbnailDataUrl.startsWith('data:image')) {
+                    console.log('✅ Save-to-My-Designs thumbnail captured via generatePrintPreviewDataUrl');
+                }
+            }
+        } catch (proofThumbErr) {
+            console.warn('⚠️ Save-to-My-Designs proof thumbnail generation failed, falling back:', proofThumbErr);
+        }
+        if (!thumbnailDataUrl || !thumbnailDataUrl.startsWith('data:image')) {
+            thumbnailDataUrl = capturePatternThumbnail();
+            console.log('📸 Save-to-My-Designs fallback thumbnail capture:', thumbnailDataUrl ? 'Success' : 'Failed');
+        }
         
         // Only persist layers that actually carry a user color (skip shadow / null — avoids "Unknown Color" in cart + thumbnails)
         const colorLayersForSave = state.currentLayers.filter(
@@ -1097,7 +1201,9 @@ window.saveToMyList = function() {
             scaleMultiplier: state.scaleMultiplier || 1.0,
 
             // Also save pattern size if available (for standard patterns)
-            patternSize: state.currentPattern.size || null
+            patternSize: state.currentPattern.size || null,
+            // Unique per-save identifier so delete removes only one preset instance.
+            savedEntryId: createSavedPatternEntryId()
         };
 
         console.log('💾💾💾 SAVING PATTERN TO LIST 💾💾💾');
@@ -1130,10 +1236,12 @@ window.saveToMyList = function() {
 
         // Show success message
         showSaveNotification('✅ Pattern saved to your list!');
+        return currentState;
         
     } catch (error) {
         console.error('❌ Failed to save pattern:', error);
         showSaveNotification('❌ Failed to save pattern');
+        return null;
     }
 };
 
@@ -2357,7 +2465,7 @@ function createSavedPatternItem(pattern, index) {
     });
     deleteBtn.addEventListener('click', function() {
         if (confirm('🗑️ Delete "' + pattern.patternName + '"?\n\nThis action cannot be undone.')) {
-            deleteSavedPattern(pattern.id);
+            deleteSavedPattern(pattern);
             document.getElementById('savedPatternsModal').remove();
             showSavedPatternsModal(); // Refresh modal
         }
@@ -2598,11 +2706,45 @@ function downloadSavedPatternProof(pattern) {
  * @see showSavedPatternsModal - Displays patterns list
  * @see updateSavedPatternsMenuIcon - Updates menu icon badge
  */
-function deleteSavedPattern(patternId) {
+function deleteSavedPattern(patternRef) {
     try {
         // Delete from localStorage
         var patterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
-        var updatedPatterns = patterns.filter(function(p) { return p.id !== patternId; });
+        var updatedPatterns = patterns.slice();
+        var deleteIndex = -1;
+
+        if (patternRef && typeof patternRef === 'object') {
+            if (patternRef.savedEntryId) {
+                deleteIndex = updatedPatterns.findIndex(function(p) {
+                    return p && p.savedEntryId && p.savedEntryId === patternRef.savedEntryId;
+                });
+            }
+
+            // Legacy fallback for older entries with no savedEntryId.
+            if (deleteIndex < 0) {
+                deleteIndex = updatedPatterns.findIndex(function(p) {
+                    if (!p) return false;
+                    if (p.id !== patternRef.id) return false;
+                    if (patternRef.timestamp && p.timestamp === patternRef.timestamp) return true;
+                    if (patternRef.thumbnail && p.thumbnail === patternRef.thumbnail) return true;
+                    if (patternRef.colors && p.colors && JSON.stringify(p.colors) === JSON.stringify(patternRef.colors)) return true;
+                    return false;
+                });
+            }
+
+            // Last resort: remove only one matching id (not all).
+            if (deleteIndex < 0 && patternRef.id) {
+                deleteIndex = updatedPatterns.findIndex(function(p) { return p && p.id === patternRef.id; });
+            }
+        } else {
+            // Backward compatibility when called with a string ID.
+            var patternId = String(patternRef || '');
+            deleteIndex = updatedPatterns.findIndex(function(p) { return p && p.id === patternId; });
+        }
+
+        if (deleteIndex >= 0) {
+            updatedPatterns.splice(deleteIndex, 1);
+        }
         localStorage.setItem('colorflexSavedPatterns', JSON.stringify(updatedPatterns));
 
         console.log('✅ Pattern deleted from localStorage');
@@ -3921,6 +4063,87 @@ function showMaterialSelectionModal(pattern) {
         var selectedMaterial = selectedMaterialInput.value;
         console.log('✅ Selected material:', selectedMaterial);
 
+        // Rebuild pattern payload from live runtime state at click-time.
+        // This prevents stale saved-pattern data (colors/thumbnail) from overriding correct preview output.
+        try {
+            if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
+                const runtimeColors = appState.currentLayers
+                    .filter((l) => l && l.isShadow !== true && l.color != null && String(l.color).trim() !== '')
+                    .map((l, idx) => ({
+                        label: l.label || `Layer ${idx + 1}`,
+                        color: normalizeColorToSwFormat(l.color)
+                    }))
+                    .filter((c) => c.color && c.color !== 'Unknown Color');
+                if (runtimeColors.length) {
+                    pattern.colors = runtimeColors;
+                    console.log('✅ Proceed-to-cart runtime colors applied:', runtimeColors);
+                }
+            }
+            // Use the same proof-render pipeline users trust (not DOM screenshot capture).
+            if (typeof window.generatePrintPreviewDataUrl === 'function') {
+                const runtimeProofDataUrl = await window.generatePrintPreviewDataUrl();
+                if (runtimeProofDataUrl && typeof runtimeProofDataUrl === 'string' && runtimeProofDataUrl.startsWith('data:image')) {
+                    pattern.thumbnail = runtimeProofDataUrl;
+                    try { localStorage.setItem('colorflexCurrentThumbnail', runtimeProofDataUrl); } catch (_) {}
+                    try {
+                        const lockedColors = Array.isArray(pattern.colors)
+                            ? pattern.colors.map((c) => (c && c.color ? String(c.color) : '')).filter(Boolean)
+                            : [];
+                        const lockedProofMeta = {
+                            at: new Date().toISOString(),
+                            pattern: pattern.name || pattern.patternName || appState.currentPattern?.name || '',
+                            collection: pattern.collection || pattern.collectionName || appState.selectedCollection?.name || '',
+                            colors: lockedColors,
+                        };
+                        sessionStorage.setItem('colorflexProceedProofDataUrl', runtimeProofDataUrl);
+                        sessionStorage.setItem('colorflexProceedProofMeta', JSON.stringify(lockedProofMeta));
+                        localStorage.setItem('colorflexProceedProofDataUrl', runtimeProofDataUrl);
+                        localStorage.setItem('colorflexProceedProofMeta', JSON.stringify(lockedProofMeta));
+                        console.log('🔒 Proceed-to-cart proof locked for product-form upload');
+                    } catch (_) {}
+                    console.log('✅ Proceed-to-cart runtime proof captured via generatePrintPreviewDataUrl');
+                }
+            } else if (typeof window.capturePatternThumbnail === 'function') {
+                // Fallback only when proof helper is unavailable.
+                const runtimeThumb = window.capturePatternThumbnail();
+                if (runtimeThumb && typeof runtimeThumb === 'string' && runtimeThumb.startsWith('data:image')) {
+                    pattern.thumbnail = runtimeThumb;
+                    try { localStorage.setItem('colorflexCurrentThumbnail', runtimeThumb); } catch (_) {}
+                    try {
+                        const lockedColors = Array.isArray(pattern.colors)
+                            ? pattern.colors.map((c) => (c && c.color ? String(c.color) : '')).filter(Boolean)
+                            : [];
+                        const lockedProofMeta = {
+                            at: new Date().toISOString(),
+                            pattern: pattern.name || pattern.patternName || appState.currentPattern?.name || '',
+                            collection: pattern.collection || pattern.collectionName || appState.selectedCollection?.name || '',
+                            colors: lockedColors,
+                        };
+                        sessionStorage.setItem('colorflexProceedProofDataUrl', runtimeThumb);
+                        sessionStorage.setItem('colorflexProceedProofMeta', JSON.stringify(lockedProofMeta));
+                        localStorage.setItem('colorflexProceedProofDataUrl', runtimeThumb);
+                        localStorage.setItem('colorflexProceedProofMeta', JSON.stringify(lockedProofMeta));
+                        console.log('🔒 Proceed-to-cart fallback thumbnail locked for product-form upload');
+                    } catch (_) {}
+                    console.log('✅ Proceed-to-cart runtime thumbnail captured (fallback)');
+                }
+            }
+            if (typeof appState.currentScale === 'number' && appState.currentScale > 0) {
+                pattern.currentScale = appState.currentScale;
+            }
+            if (typeof appState.scaleMultiplier === 'number' && appState.scaleMultiplier > 0) {
+                pattern.scaleMultiplier = appState.scaleMultiplier;
+            }
+            if (!pattern.collection && appState.selectedCollection?.name) {
+                pattern.collection = appState.selectedCollection.name;
+            }
+            if (!pattern.name && appState.currentPattern?.name) {
+                pattern.name = appState.currentPattern.name;
+            }
+        } catch (runtimeSyncError) {
+            console.warn('⚠️ Proceed-to-cart runtime sync failed, continuing with existing pattern payload:', runtimeSyncError);
+        }
+
         if (isFromCartEdit) {
             // Handle cart item update
             console.log('🔄 Updating cart item with new pattern configuration...');
@@ -4195,15 +4418,34 @@ async function createCompressedThumbnail(originalThumbnail) {
             return null;
         }
 
-        canvas.width = 100;
-        canvas.height = 100;
+        // Preserve enough detail for My Designs and downstream cart/proof handoff.
+        // Old behavior (100x100 @ q=0.1) caused unusable pixelated thumbnails.
+        const MAX_DIMENSION = 900;
+        const MIN_DIMENSION = 600;
+        const sourceW = img.naturalWidth || img.width;
+        const sourceH = img.naturalHeight || img.height;
+        const largestSide = Math.max(sourceW, sourceH);
+        const scale = largestSide > MAX_DIMENSION ? MAX_DIMENSION / largestSide : 1;
 
-        ctx.drawImage(img, 0, 0, 100, 100);
+        let targetW = Math.max(1, Math.round(sourceW * scale));
+        let targetH = Math.max(1, Math.round(sourceH * scale));
 
-        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.1);
+        // Keep a floor so "compressed" thumbnails are never tiny.
+        if (targetW < MIN_DIMENSION || targetH < MIN_DIMENSION) {
+            const floorScale = Math.max(MIN_DIMENSION / targetW, MIN_DIMENSION / targetH);
+            targetW = Math.round(targetW * floorScale);
+            targetH = Math.round(targetH * floorScale);
+        }
+
+        canvas.width = targetW;
+        canvas.height = targetH;
+
+        ctx.drawImage(img, 0, 0, targetW, targetH);
+
+        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
         console.log('🗜️ Original size:', originalThumbnail.length, 'Compressed size:', compressedDataUrl.length);
 
-        if (compressedDataUrl.length < originalThumbnail.length * 0.9) {
+        if (compressedDataUrl.length < originalThumbnail.length * 0.98) {
             return compressedDataUrl;
         }
 
@@ -4332,6 +4574,34 @@ async function createCompressedThumbnail(originalThumbnail) {
 function redirectToProductConfiguration(pattern, material) {
     try {
         console.log('⚙️ Starting ProductConfigurationFlow for:', pattern.patternName, 'Material:', material);
+        const getRuntimeCartColors = () => {
+            try {
+                if (Array.isArray(appState.layerInputs) && appState.layerInputs.length) {
+                    const fromInputs = appState.layerInputs
+                        .map((li, i) => ({
+                            label: (li && li.label) || `Layer ${i + 1}`,
+                            color: normalizeColorToSwFormat(li && li.input ? li.input.value : '')
+                        }))
+                        .filter((c) => c.color && c.color !== 'Unknown Color');
+                    if (fromInputs.length) return fromInputs;
+                }
+                if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
+                    const fromLayers = appState.currentLayers
+                        .filter((l) => l && l.isShadow !== true)
+                        .map((l, i) => ({
+                            label: l.label || `Layer ${i + 1}`,
+                            color: normalizeColorToSwFormat(l.color || '')
+                        }))
+                        .filter((c) => c.color && c.color !== 'Unknown Color');
+                    if (fromLayers.length) return fromLayers;
+                }
+            } catch (e) {}
+            return Array.isArray(pattern.colors) ? pattern.colors : [];
+        };
+        const effectiveColors = getRuntimeCartColors();
+        if (effectiveColors.length) {
+            pattern.colors = effectiveColors;
+        }
 
         // Show loading notification
         showSaveNotification('🔄 Starting configuration flow...');
@@ -4371,7 +4641,7 @@ function redirectToProductConfiguration(pattern, material) {
                 patternName: pattern.name || pattern.patternName, // Fallback for compatibility
                 collection: pattern.collection || pattern.collectionName || '', // Saved patterns use 'collection'
                 id: pattern.id, // Already correct format with SW numbers
-                colors: pattern.colors || [], // Already correct array format
+                colors: effectiveColors || [], // Runtime-selected colors (shadow-safe)
                 thumbnail: pattern.thumbnail, // Already base64 image data
                 saveDate: pattern.timestamp || pattern.saveDate || new Date().toISOString(),
                 patternSize: pattern.patternSize || '',
@@ -4448,6 +4718,34 @@ function fallbackDirectRedirect(pattern, material) {
         currentScale: pattern.currentScale
     });
     console.log('🎨 Material:', material);
+    const getRuntimeCartColors = () => {
+        try {
+            if (Array.isArray(appState.layerInputs) && appState.layerInputs.length) {
+                const fromInputs = appState.layerInputs
+                    .map((li, i) => ({
+                        label: (li && li.label) || `Layer ${i + 1}`,
+                        color: normalizeColorToSwFormat(li && li.input ? li.input.value : '')
+                    }))
+                    .filter((c) => c.color && c.color !== 'Unknown Color');
+                if (fromInputs.length) return fromInputs;
+            }
+            if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
+                const fromLayers = appState.currentLayers
+                    .filter((l) => l && l.isShadow !== true)
+                    .map((l, i) => ({
+                        label: l.label || `Layer ${i + 1}`,
+                        color: normalizeColorToSwFormat(l.color || '')
+                    }))
+                    .filter((c) => c.color && c.color !== 'Unknown Color');
+                if (fromLayers.length) return fromLayers;
+            }
+        } catch (e) {}
+        return Array.isArray(pattern.colors) ? pattern.colors : [];
+    };
+    const effectiveColors = getRuntimeCartColors();
+    if (effectiveColors.length) {
+        pattern.colors = effectiveColors;
+    }
 
     // Store thumbnail in localStorage for product page display
     if (pattern.thumbnail) {
@@ -4478,8 +4776,8 @@ function fallbackDirectRedirect(pattern, material) {
     console.log('🏷️ Product handle:', productHandle);
 
     // Build URL parameters using saved pattern structure
-    const customColorsParam = pattern.colors
-        ? pattern.colors
+    const customColorsParam = effectiveColors
+        ? effectiveColors
               .filter((c) => c && c.color != null && String(c.color).trim() !== '')
               .map((c) => normalizeColorToSwFormat(c.color))
               .filter((s) => s && s !== 'Unknown Color')
@@ -8231,74 +8529,93 @@ function addSavedPatternsMenuIcon() {
     
     const patterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
     const existingIcon = document.getElementById('colorflexMenuIcon');
+    const isColorFlexPage = /\/pages\/colorflex(?:-|$)/i.test(window.location.pathname || '');
     
     if (patterns.length > 0 && !existingIcon) {
+        const menuIcon = document.createElement('div');
+        menuIcon.id = 'colorflexMenuIcon';
+        menuIcon.style.cssText = `
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin: 0 10px;
+            padding: 8px;
+            border-radius: 50%;
+            background: rgba(212, 175, 55, 0.1);
+            border: 2px solid rgba(212, 175, 55, 0.6);
+            transition: all 0.3s ease;
+            z-index: 1000;
+            width: 44px;
+            height: 44px;
+            box-sizing: border-box;
+            overflow: visible;
+        `;
+        
+        menuIcon.innerHTML = `
+            <img src="${normalizePath('img/camelion-sm-black.jpg')}" 
+                 style="width: 100%; height: 100%; border-radius: 50%;" 
+                 alt="My ColorFlex Patterns">
+            <span style="
+                position: absolute;
+                top: -6px;
+                right: -6px;
+                background: #d4af37;
+                color: white;
+                border-radius: 50%;
+                min-width: 18px;
+                height: 18px;
+                padding: 0 4px;
+                font-size: 10px;
+                font-weight: bold;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            ">${patterns.length}</span>
+        `;
+        
+        menuIcon.addEventListener('click', () => {
+            console.log('🎨 Opening saved patterns from menu icon');
+            showSavedPatternsModal();
+        });
+        
+        menuIcon.addEventListener('mouseenter', () => {
+            menuIcon.style.background = 'rgba(212, 175, 55, 0.2)';
+            menuIcon.style.transform = 'scale(1.1)';
+        });
+        
+        menuIcon.addEventListener('mouseleave', () => {
+            menuIcon.style.background = 'rgba(212, 175, 55, 0.1)';
+            menuIcon.style.transform = 'scale(1)';
+        });
+
+        if (isColorFlexPage) {
+            // Keep this icon out of nav flow on ColorFlex pages to prevent layout shifts.
+            menuIcon.style.position = 'fixed';
+            menuIcon.style.top = '16px';
+            menuIcon.style.right = '16px';
+            menuIcon.style.margin = '0';
+            menuIcon.style.zIndex = '12000';
+            document.body.appendChild(menuIcon);
+            console.log('✅ Added fixed ColorFlex menu icon with', patterns.length, 'saved patterns');
+            return;
+        }
+
         // Find the main navigation or header to add our icon to
         const nav = document.querySelector('nav, header, .header, .navigation, .main-header, .site-header');
-        if (nav) {
-            const menuIcon = document.createElement('div');
-            menuIcon.id = 'colorflexMenuIcon';
-            menuIcon.style.cssText = `
-                position: relative;
-                display: inline-flex;
-                align-items: center;
-                cursor: pointer;
-                margin: 0 10px;
-                padding: 8px;
-                border-radius: 50%;
-                background: rgba(212, 175, 55, 0.1);
-                border: 2px solid rgba(212, 175, 55, 0.6);
-                transition: all 0.3s ease;
-                z-index: 1000;
-            `;
-            
-            menuIcon.innerHTML = `
-                <img src="${normalizePath('img/camelion-sm-black.jpg')}"" 
-                     style="width: 24px; height: 24px; border-radius: 50%;" 
-                     alt="My ColorFlex Patterns">
-                <span style="
-                    position: absolute;
-                    top: -5px;
-                    right: -5px;
-                    background: #d4af37;
-                    color: white;
-                    border-radius: 50%;
-                    width: 18px;
-                    height: 18px;
-                    font-size: 10px;
-                    font-weight: bold;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                ">${patterns.length}</span>
-            `;
-            
-            menuIcon.addEventListener('click', () => {
-                console.log('🎨 Opening saved patterns from menu icon');
-                showSavedPatternsModal();
-            });
-            
-            menuIcon.addEventListener('mouseenter', () => {
-                menuIcon.style.background = 'rgba(212, 175, 55, 0.2)';
-                menuIcon.style.transform = 'scale(1.1)';
-            });
-            
-            menuIcon.addEventListener('mouseleave', () => {
-                menuIcon.style.background = 'rgba(212, 175, 55, 0.1)';
-                menuIcon.style.transform = 'scale(1)';
-            });
-            
-            // Try to place it near existing user/account icons
-            const userIcon = nav.querySelector('[href*="account"], [href*="login"], .user-icon, .account-icon');
-            if (userIcon && userIcon.parentNode) {
-                userIcon.parentNode.insertBefore(menuIcon, userIcon);
-            } else {
-                // Fallback: add to the end of navigation
-                nav.appendChild(menuIcon);
-            }
-            
-            console.log('✅ Added ColorFlex menu icon with', patterns.length, 'saved patterns');
+        if (!nav) return;
+        
+        // Try to place it near existing user/account icons
+        const userIcon = nav.querySelector('[href*="account"], [href*="login"], .user-icon, .account-icon');
+        if (userIcon && userIcon.parentNode) {
+            userIcon.parentNode.insertBefore(menuIcon, userIcon);
+        } else {
+            // Fallback: add to the end of navigation
+            nav.appendChild(menuIcon);
         }
+        
+        console.log('✅ Added ColorFlex menu icon with', patterns.length, 'saved patterns');
     } else if (patterns.length === 0 && existingIcon) {
         // Remove icon if no patterns saved
         existingIcon.remove();
@@ -8390,19 +8707,12 @@ document.addEventListener('DOMContentLoaded', function() {
                 // Wait for canvas to fully render
                 await new Promise(resolve => setTimeout(resolve, 800));
 
-                // First, save the pattern to My List (this captures the thumbnail)
+                // First, save the pattern to My List and use the exact runtime object returned.
                 console.log('💾 Step 2: Saving pattern with thumbnail...');
-                await window.saveToMyList();
-
-                // Small delay to ensure save completes
-                await new Promise(resolve => setTimeout(resolve, 300));
-
-                // Get the JUST SAVED pattern from localStorage (includes fresh thumbnail)
-                const allSavedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
-                const justSavedPattern = allSavedPatterns[allSavedPatterns.length - 1]; // Get the last saved pattern
+                const justSavedPattern = await window.saveToMyList();
 
                 if (!justSavedPattern) {
-                    console.error('❌ Failed to retrieve just-saved pattern');
+                    console.error('❌ Failed to retrieve just-saved runtime pattern');
                     showSaveNotification('❌ Failed to load saved pattern');
                     return;
                 }
@@ -11268,21 +11578,41 @@ console.log("  DOM ready:", document.readyState);
 // Apply URL parameters for colors and scale
 function applyURLParameters(urlParams) {
     console.log('🔗 Applying URL parameters...');
+    const sourceParam = urlParams.get("source");
+    const savedLayersParam = urlParams.get("saved_layers");
+    const savedPatternId = urlParams.get("saved_pattern_id");
 
     // Apply custom colors from URL
-    const urlColors = urlParams.get('colors');
-    if (urlColors) {
-        console.log('🎨 Applying colors from URL:', urlColors);
+    const urlColorsRaw = urlParams.get('colors') || urlParams.get('custom_colors');
+    const LEGACY_DIRECT_URL_COLOR_APPLY_ENABLED = false;
+    if (LEGACY_DIRECT_URL_COLOR_APPLY_ENABLED && urlColorsRaw && sourceParam !== 'cart_saved_pattern') {
+        console.log('🎨 Applying colors from URL:', urlColorsRaw);
         try {
-            const decodedColors = decodeURIComponent(urlColors);
-            const colorList = decodedColors.split(',').map(color => color.trim());
+            const decodedColors = decodeURIComponent(urlColorsRaw);
+            const colorList = decodedColors
+                .split(',')
+                .map(color => color.trim())
+                .filter(Boolean)
+                .map(color => normalizeColorToSwFormat(color));
 
-            // Apply colors to current layers
-            if (appState.currentLayers && colorList.length > 0) {
+            const applyColorsOnceReady = (attempt = 0) => {
+                const maxAttempts = 10;
+                const hasLayers = Array.isArray(appState.currentLayers) && appState.currentLayers.length > 0;
+                if (!hasLayers) {
+                    if (attempt < maxAttempts) {
+                        setTimeout(() => applyColorsOnceReady(attempt + 1), 250);
+                    } else {
+                        console.warn('⚠️ URL color restore timed out waiting for layers');
+                    }
+                    return;
+                }
+
+                // Map URL colors to non-shadow layers only (prevents shadow-index drift).
+                const nonShadowLayers = appState.currentLayers.filter(layer => layer && layer.isShadow !== true);
                 colorList.forEach((colorName, index) => {
-                    if (appState.currentLayers[index]) {
-                        appState.currentLayers[index].color = colorName;
-                        console.log(`🎨 Applied color ${index + 1}: ${colorName}`);
+                    if (nonShadowLayers[index]) {
+                        nonShadowLayers[index].color = colorName;
+                        console.log(`🎨 Applied color ${index + 1} to non-shadow layer: ${colorName}`);
                     }
                 });
 
@@ -11299,7 +11629,9 @@ function applyURLParameters(urlParams) {
                 } else {
                     updateRoomMockup();
                 }
-            }
+            };
+
+            applyColorsOnceReady();
         } catch (error) {
             console.error('❌ Error applying URL colors:', error);
         }
@@ -11362,19 +11694,27 @@ function applyURLParameters(urlParams) {
     }
 
     // 🛒 Cart color restoration - handle saved patterns from cart links
-    const sourceParam = urlParams.get("source");
-    const savedLayersParam = urlParams.get("saved_layers");
-    const savedPatternId = urlParams.get("saved_pattern_id");
-
-    if ((savedLayersParam || urlColors) && sourceParam === 'cart_saved_pattern') {
+    if ((savedLayersParam || urlColorsRaw) && sourceParam === 'cart_saved_pattern') {
         console.log('🎨 Restoring saved colors from cart URL parameters...');
         console.log('  Source:', sourceParam);
         console.log('  Saved pattern ID:', savedPatternId);
 
-        // Delay color restoration to ensure UI is ready
-        setTimeout(() => {
-            restoreCartColors(savedLayersParam, urlColors);
-        }, 1000);
+        // Delay color restoration to ensure UI is ready; repeat to survive late UI resets.
+        [1000, 2200, 3800].forEach((delay) => {
+            setTimeout(() => {
+                restoreCartColors(savedLayersParam, urlColorsRaw);
+            }, delay);
+        });
+    }
+
+    // Generic URL color fallback for non-cart sources:
+    // use the same input-event path as manual user edits to ensure UI/state sync.
+    if ((savedLayersParam || urlColorsRaw) && sourceParam !== 'cart_saved_pattern') {
+        [700, 1800, 3200].forEach((delay) => {
+            setTimeout(() => {
+                restoreCartColors(savedLayersParam, urlColorsRaw);
+            }, delay);
+        });
     }
 
     console.log('✅ URL parameters applied');
@@ -11414,42 +11754,70 @@ function restoreCartColors(savedLayersParam, urlColors) {
             return;
         }
 
-        console.log(`🎨 Applying ${colorsToApply.length} colors from cart:`, colorsToApply);
+        const normalizedColors = colorsToApply
+            .map((item) => ({
+                color: normalizeColorToSwFormat((item && item.color) ? String(item.color).trim() : ''),
+                label: item && item.label ? item.label : ''
+            }))
+            .filter((item) => item.color);
 
-        // Wait for layer inputs to be available
-        const checkForInputs = () => {
-            const layerInputs = document.querySelectorAll('.layer-input-container input[type="text"]');
-            console.log(`🔍 Found ${layerInputs.length} layer inputs`);
+        if (!normalizedColors.length) {
+            console.log('⚠️ No normalized colors to apply');
+            return;
+        }
 
-            if (layerInputs.length === 0) {
-                console.log('⏳ Layer inputs not ready, retrying...');
-                setTimeout(checkForInputs, 500);
+        console.log(`🎨 Applying ${normalizedColors.length} normalized colors from cart:`, normalizedColors);
+
+        // Latest-call-wins token to avoid overlapping async restores fighting each other.
+        window.__colorflexRestoreToken = (window.__colorflexRestoreToken || 0) + 1;
+        const token = window.__colorflexRestoreToken;
+
+        const maxAttempts = 24;
+        const applyWhenReady = (attempt) => {
+            if (token !== window.__colorflexRestoreToken) return;
+
+            const inputNodes = Array.from(document.querySelectorAll('.layer-input-container input[type="text"]'));
+            const hasModel = Array.isArray(appState.layerInputs) && appState.layerInputs.length > 0;
+            const readyCount = Math.min(inputNodes.length, hasModel ? appState.layerInputs.length : 0);
+
+            if (readyCount === 0) {
+                if (attempt < maxAttempts) {
+                    setTimeout(() => applyWhenReady(attempt + 1), 180);
+                } else {
+                    console.warn('⚠️ Cart color restore timed out waiting for inputs');
+                }
                 return;
             }
 
-            // Apply colors to layer inputs
-            layerInputs.forEach((input, index) => {
-                if (index < colorsToApply.length) {
-                    const colorToApply = colorsToApply[index];
-                    console.log(`🎨 Setting layer ${index + 1} to:`, colorToApply.color);
+            for (let i = 0; i < readyCount; i++) {
+                const colorToApply = normalizedColors[i];
+                if (!colorToApply || !colorToApply.color) continue;
+                const input = inputNodes[i];
+                input.value = colorToApply.color;
 
-                    input.value = colorToApply.color;
-
-                    // Trigger change event to update color processing
-                    const changeEvent = new Event('change', { bubbles: true });
-                    input.dispatchEvent(changeEvent);
-
-                    // Also trigger input event for real-time updates
-                    const inputEvent = new Event('input', { bubbles: true });
-                    input.dispatchEvent(inputEvent);
+                // Keep UI chip in sync immediately.
+                if (appState.layerInputs[i] && appState.layerInputs[i].circle) {
+                    appState.layerInputs[i].circle.style.backgroundColor = lookupColor(colorToApply.color);
                 }
-            });
+                if (appState.layerInputs[i]) {
+                    appState.layerInputs[i].color = colorToApply.color;
+                }
+            }
 
-            // Update previews after a short delay
+            // Force-sync appState.currentLayers from layerInputs by label (shadow-safe).
+            if (Array.isArray(appState.layerInputs) && Array.isArray(appState.currentLayers)) {
+                appState.layerInputs.forEach((li) => {
+                    if (!li || !li.label || !li.input) return;
+                    const clIdx = appState.currentLayers.findIndex((layer) => layer && layer.label === li.label);
+                    if (clIdx !== -1) appState.currentLayers[clIdx].color = li.input.value;
+                });
+            }
+
+            // Fire one update pass after state is synchronized.
             setTimeout(() => {
+                if (token !== window.__colorflexRestoreToken) return;
                 console.log('🎨 Updating previews after cart color restoration');
                 updatePreview();
-                // ✅ MODE CHECK: Use correct render function based on mode
                 const isFurnitureMode = window.COLORFLEX_MODE === 'FURNITURE' || appState.isInFurnitureMode;
                 const isClothingMode = window.COLORFLEX_MODE === 'CLOTHING' || (window.COLORFLEX_SIMPLE_MODE === true && window.location.pathname.includes('clothing'));
                 if (isFurnitureMode) {
@@ -11459,12 +11827,19 @@ function restoreCartColors(savedLayersParam, urlColors) {
                 } else {
                     updateRoomMockup();
                 }
-            }, 500);
+            }, 120);
 
+            // Debug snapshot for reproducibility if needed.
+            window.__colorflexLastRestoreSnapshot = {
+                at: new Date().toISOString(),
+                colorsApplied: normalizedColors.map((c) => c.color),
+                layerInputs: (appState.layerInputs || []).map((li) => ({ label: li.label, value: li.input && li.input.value })),
+                currentLayers: (appState.currentLayers || []).map((l) => ({ label: l.label, color: l.color, isShadow: l.isShadow === true }))
+            };
             console.log('✅ Cart color restoration completed');
         };
 
-        checkForInputs();
+        applyWhenReady(0);
 
     } catch (error) {
         console.error('❌ Error restoring cart colors:', error);
@@ -12310,9 +12685,41 @@ function handlePatternSelection(patternName, preserveColors = false, colorLockBu
     }
 
     console.log(`handlePatternSelection: pattern=${patternName}, lockedCollection=${appState.lockedCollection}, currentCollection=${appState.selectedCollection?.name}`);
-    const pattern = appState.selectedCollection.patterns.find(
-        p => p.name.toUpperCase() === patternName.toUpperCase()
-    ) || appState.selectedCollection.patterns[0];
+    const normalizedPatternRef = String(patternName || '').trim();
+    const normalizedPatternRefLower = normalizedPatternRef.toLowerCase();
+    const scorePatternCandidate = (p) => {
+        const layers = Array.isArray(p && p.layers) ? p.layers : [];
+        const hasId = !!(p && p.id);
+        const hasNumber = !!(p && p.number);
+        const hasTextureLayer = layers.some((l) => {
+            const path = String((l && (l.path || l.proofPath)) || '').toLowerCase();
+            return path.includes('_texture_') || path.includes('texture_layer');
+        });
+        const hasShadowLayer = layers.some((l) => {
+            const path = String((l && (l.path || l.proofPath)) || '').toLowerCase();
+            return path.includes('_shadow_') || path.includes('shadow_layer') || path.includes('isshadow');
+        });
+        return (
+            (hasId ? 1000 : 0) +
+            (hasNumber ? 100 : 0) +
+            (hasTextureLayer ? 25 : 0) +
+            (hasShadowLayer ? 10 : 0) +
+            layers.length
+        );
+    };
+    const matchingPatterns = appState.selectedCollection.patterns.filter((p) => {
+        const pSlug = String((p && p.slug) || '').trim().toLowerCase();
+        const pId = String((p && p.id) || '').trim().toLowerCase();
+        const pName = String((p && p.name) || '').trim().toLowerCase();
+        return (
+            (pSlug && pSlug === normalizedPatternRefLower) ||
+            (pId && pId === normalizedPatternRefLower) ||
+            (pName && pName === normalizedPatternRefLower)
+        );
+    });
+    const pattern = (matchingPatterns.length
+        ? matchingPatterns.slice().sort((a, b) => scorePatternCandidate(b) - scorePatternCandidate(a))[0]
+        : null) || appState.selectedCollection.patterns[0];
     if (!pattern) {
         console.error(`Pattern ${patternName} not found in selected collection`);
         return;
@@ -12677,13 +13084,38 @@ async function loadPatternData(collection, patternId) {
         appState.bassettResultLayerColorsSig = null;
     }
 
-    // Check slug, id, and name for backwards compatibility
-    let pattern = collection.patterns.find(p => p.slug === patternId || p.id === patternId || p.name === patternId);
+    // Check slug, id, and name for backwards compatibility.
+    // If duplicates exist (same name/slug), prefer canonical richer layer structure.
+    const scorePatternCandidate = (p) => {
+        const layers = Array.isArray(p && p.layers) ? p.layers : [];
+        const hasId = !!(p && p.id);
+        const hasNumber = !!(p && p.number);
+        const hasTextureLayer = layers.some((l) => {
+            const path = String((l && (l.path || l.proofPath)) || '').toLowerCase();
+            return path.includes('_texture_') || path.includes('texture_layer');
+        });
+        const hasShadowLayer = layers.some((l) => {
+            const path = String((l && (l.path || l.proofPath)) || '').toLowerCase();
+            return path.includes('_shadow_') || path.includes('shadow_layer') || path.includes('isshadow');
+        });
+        return (
+            (hasId ? 1000 : 0) +
+            (hasNumber ? 100 : 0) +
+            (hasTextureLayer ? 25 : 0) +
+            (hasShadowLayer ? 10 : 0) +
+            layers.length
+        );
+    };
+    const matches = collection.patterns.filter((p) => p.slug === patternId || p.id === patternId || p.name === patternId);
+    let pattern = (matches.length
+        ? matches.slice().sort((a, b) => scorePatternCandidate(b) - scorePatternCandidate(a))[0]
+        : null);
         
     if (pattern) {
         console.log(`✅ Found pattern "${pattern.name}" (ID: ${pattern.id}) in collection "${collection.name}"`);
-        // Build currentLayers with designer/curated colors so first thumbnail click applies preset colors (no need to click twice)
-        handlePatternSelection(pattern.name, appState.colorsLocked);
+        // Build currentLayers with the exact matched pattern identity.
+        // Use slug/id first so duplicate names (e.g., Shadow Dance variants) don't resolve to the wrong structure.
+        handlePatternSelection(pattern.slug || pattern.id || pattern.name, appState.colorsLocked);
         
         // ✅ NEW ARCHITECTURE: Look up mockupLayers from variant collection if available
         // We're always using base collections now, but need mode-specific mockupLayers
@@ -17619,7 +18051,8 @@ function handleThumbnailClick(patternId) {
 }
 
 // Generate print preview
-const generatePrintPreview = () => {
+const generatePrintPreview = (options = {}) => {
+    const silent = !!(options && options.silent);
     if (!appState.currentPattern) {
         console.error("No current pattern selected for print preview");
         return null;
@@ -17647,111 +18080,144 @@ const generatePrintPreview = () => {
     const collectionName = toInitialCaps(appState.selectedCollection?.name || "Unknown");
     const patternName = toInitialCaps(appState.currentPattern.name || "Pattern");
     let layerLabels = [];
+    let usedVisibleCapture = false;
 
     const processPrintPreview = async () => {
         const isTintWhite = appState.currentPattern?.tintWhite || false;
         console.log(`Print preview - tintWhite flag: ${isTintWhite}`);
 
+        // Source-of-truth path: use the exact visible preview capture when available.
+        // This keeps print/save output visually identical to the UI preview.
+        if (options.preferVisibleCapture !== false && typeof window.capturePatternThumbnail === 'function') {
+            try {
+                const visibleDataUrl = window.capturePatternThumbnail();
+                if (visibleDataUrl && typeof visibleDataUrl === 'string' && visibleDataUrl.startsWith('data:image')) {
+                    await new Promise((resolve) => {
+                        const img = new Image();
+                        img.onload = () => {
+                            const w = img.naturalWidth || img.width;
+                            const h = img.naturalHeight || img.height;
+                            if (w > 0 && h > 0) {
+                                printCanvas.width = w;
+                                printCanvas.height = h;
+                                printCtx.clearRect(0, 0, w, h);
+                                printCtx.drawImage(img, 0, 0, w, h);
+                                usedVisibleCapture = true;
+                                const runtimeLayers = Array.isArray(appState.currentLayers) ? appState.currentLayers : [];
+                                layerLabels = runtimeLayers
+                                    .filter((l) => l && l.color != null && String(l.color).trim() !== '')
+                                    .map((l, idx) => ({
+                                        label: l.label || (idx === 0 ? 'Background' : `Layer ${idx}`),
+                                        color: String(l.color).trim()
+                                    }));
+                                if (!layerLabels.length) {
+                                    layerLabels = [{ label: "Background", color: backgroundInput.value || "Snowbound" }];
+                                }
+                                console.log(`✅ Print preview sourced from visible capture: ${w}x${h}`);
+                            }
+                            resolve();
+                        };
+                        img.onerror = () => resolve();
+                        img.src = visibleDataUrl;
+                    });
+                }
+            } catch (visibleCaptureError) {
+                console.warn('⚠️ Visible capture path failed, falling back to renderer:', visibleCaptureError);
+            }
+        }
+
         // Determine canvas size from first layer image (maximum resolution)
         let canvasInitialized = false;
 
-        if (isTintWhite && appState.currentPattern?.baseComposite) {        } else if (appState.currentPattern?.layers?.length) {
-            // Build layerLabels in pattern order; only non-shadow layers get color from layerInputs
+        if (!usedVisibleCapture && isTintWhite && appState.currentPattern?.baseComposite) {        } else if (!usedVisibleCapture && appState.currentPattern?.layers?.length) {
+            // Draw ONLY real pattern layers (avoid synthetic background entries from runtime layer models).
+            const sourceLayers = Array.isArray(appState.currentPattern.layers) ? appState.currentPattern.layers : [];
+
+            // Build layer labels AFTER we resolve shadow/non-shadow deterministically.
             layerLabels = [{ label: "Background", color: backgroundInput.value || "Snowbound" }];
-            let nonShadowInputIdx = 1;
-            appState.currentPattern.layers.forEach((l, i) => {
-                const pathStr = (l && (l.path || l.proofPath)) ? (l.path || l.proofPath) : '';
-                const isShadow = l.isShadow === true || (pathStr && (String(pathStr).toUpperCase().includes('_SHADOW_') || String(pathStr).toUpperCase().includes('SHADOW_LAYER') || String(pathStr).toUpperCase().includes('ISSHADOW')));
-                const label = appState.currentPattern.layerLabels?.[i] || `Layer ${i + 1}`;
-                if (isShadow) {
-                    layerLabels.push({ label, color: null });
-                } else {
-                    layerLabels.push({ label, color: appState.layerInputs[nonShadowInputIdx]?.input?.value || "Snowbound" });
-                    nonShadowInputIdx++;
-                }
-            });
 
             // 🔍 COLOR MAPPING DEBUG - Log background color
             console.log(`🎨 PRINT PATTERN - Background:`);
             console.log(`  - Color name: "${backgroundInput.value}"`);
             console.log(`  - Color RGB:`, backgroundColor);
 
-            const shadowLayers = [];
-            const nonShadowLayers = [];
-            appState.currentPattern.layers.forEach((layer, index) => {
-                const pathStr = (layer && (layer.path || layer.proofPath)) ? (layer.path || layer.proofPath) : '';
-                const isShadow = layer.isShadow === true || (pathStr && (String(pathStr).toUpperCase().includes('_SHADOW_') || String(pathStr).toUpperCase().includes('SHADOW_LAYER') || String(pathStr).toUpperCase().includes('ISSHADOW')));
-                const label = layerLabels[index + 1].label;
-                (isShadow ? shadowLayers : nonShadowLayers).push({ layer, index, label });
+            const isShadowDancePattern = /shadow\s*dance/i.test(String(appState.currentPattern?.name || ''));
+            const normalizeLayerPath = (pathValue) =>
+                String(pathValue || '')
+                    .trim()
+                    .replace(/\\/g, '/')
+                    .replace(/^\.?\//, '')
+                    .toLowerCase();
+            const runtimeLayers = Array.isArray(appState.currentLayers) ? appState.currentLayers : [];
+            const runtimeDrawableLayers = runtimeLayers.filter((l) => !!normalizeLayerPath((l && (l.proofPath || l.path)) || ''));
+            const runtimeShadowByPath = new Map();
+            runtimeDrawableLayers.forEach((l) => {
+                const p = normalizeLayerPath((l && (l.proofPath || l.path)) || '');
+                if (!p) return;
+                runtimeShadowByPath.set(p, l && l.isShadow === true);
             });
+            const layersInOrder = sourceLayers.map((layer, index) => {
+                const sourceLayer = layer || null;
+                const pathStr = (sourceLayer && (sourceLayer.path || sourceLayer.proofPath)) ? (sourceLayer.path || sourceLayer.proofPath) : '';
+                const sourcePathStr = (sourceLayer && (sourceLayer.path || sourceLayer.proofPath)) ? (sourceLayer.path || sourceLayer.proofPath) : '';
+                const labelStr = (appState.currentPattern.layerLabels?.[index] || '').toString();
+                const merged = `${pathStr} ${sourcePathStr} ${labelStr}`.toUpperCase();
+                const normalizedPath = normalizeLayerPath(pathStr || sourcePathStr);
+                const runtimePathShadow = normalizedPath ? runtimeShadowByPath.get(normalizedPath) : undefined;
+                const runtimeIndexLayer = runtimeDrawableLayers[index];
+                const runtimeIndexPath = normalizeLayerPath((runtimeIndexLayer && (runtimeIndexLayer.proofPath || runtimeIndexLayer.path)) || '');
+                const runtimeIndexPathMatches = !!(normalizedPath && runtimeIndexPath && runtimeIndexPath === normalizedPath);
+                let isShadow = (sourceLayer && sourceLayer.isShadow === true) ||
+                    (runtimePathShadow === true) ||
+                    (runtimeIndexPathMatches && runtimeIndexLayer && runtimeIndexLayer.isShadow === true) ||
+                    (merged.includes('_SHADOW_') || merged.includes('SHADOW_LAYER') || merged.includes('ISSHADOW'));
+                const label = appState.currentPattern.layerLabels?.[index] || (sourceLayer && sourceLayer.label) || `Layer ${index + 1}`;
+                return { layer, index, label, isShadow };
+            });
+            let labelInputIndex = isWall ? 2 : 1;
+            layersInOrder.forEach(({ label, isShadow }) => {
+                const colorName = !isShadow ? (appState.layerInputs[labelInputIndex]?.input?.value || "Snowbound") : null;
+                if (!isShadow) labelInputIndex++;
+                layerLabels.push({ label, color: colorName });
+            });
+            const renderTrace = [];
 
-            // 🔍 COLOR MAPPING DEBUG - Summary of layer structure
             console.log(`🎨 PRINT PATTERN - Layer Structure:`);
-            console.log(`  - Total layers: ${appState.currentPattern.layers.length}`);
-            console.log(`  - Shadow layers: ${shadowLayers.length}`, shadowLayers.map(l => `${l.index}:${l.label}`));
-            console.log(`  - Non-shadow layers: ${nonShadowLayers.length}`, nonShadowLayers.map(l => `${l.index}:${l.label}`));
+            console.log(`  - Total layers: ${layersInOrder.length}`);
+            console.log(`  - Shadow layers: ${layersInOrder.filter(l => l.isShadow).length}`, layersInOrder.filter(l => l.isShadow).map(l => `${l.index}:${l.label}`));
+            console.log(`  - Non-shadow layers: ${layersInOrder.filter(l => !l.isShadow).length}`, layersInOrder.filter(l => !l.isShadow).map(l => `${l.index}:${l.label}`));
             console.log(`  - layerLabels length: ${layerLabels.length} (includes background at [0])`);
             console.log(`  - appState.layerInputs length: ${appState.layerInputs.length}`);
 
+            // Keep original layer order; shadow layers never consume non-shadow inputs.
             let nonShadowInputIndex = isWall ? 2 : 1;
-
-            for (const { layer, index, label } of shadowLayers) {
-                // ⚠️ CRITICAL: Use proofPath (high-res ~3600px) NOT path (preview ~1400px)
-                // proofPath: ./data/collections/{collection}/proof-layers/*.jpg (3600px)
-                // path: ./data/collections/{collection}/layers/*.jpg (1400px)
+            for (const { layer, index, label, isShadow } of layersInOrder) {
                 const layerPath = layer.proofPath || layer.path || "";
-                await new Promise((resolve) => {
-                    processImage(
-                        layerPath,
-                        (processedUrl) => {
-                            const img = new Image();
-                            console.log("🧪 processedUrl type:", typeof processedUrl, processedUrl);
-                            if (processedUrl instanceof HTMLCanvasElement) {
-                                img.src = processedUrl.toDataURL("image/png");
-                            } else {
-                                img.src = processedUrl;
-                            }
-                            img.onload = () => {
-                                // Initialize canvas from first image if not yet done
-                                if (!canvasInitialized) {
-                                    const canvasWidth = img.naturalWidth || img.width;
-                                    const canvasHeight = img.naturalHeight || img.height;
-                                    printCanvas.width = canvasWidth;
-                                    printCanvas.height = canvasHeight;
-                                    console.log(`🔧 Print canvas at FULL resolution: ${canvasWidth}x${canvasHeight}`);
-
-                                    // Fill background
-                                    printCtx.fillStyle = backgroundColor;
-                                    printCtx.fillRect(0, 0, canvasWidth, canvasHeight);
-                                    canvasInitialized = true;
-                                }
-
-                                printCtx.globalCompositeOperation = "multiply";
-                                printCtx.globalAlpha = 0.3;
-                                printCtx.drawImage(img, 0, 0, printCanvas.width, printCanvas.height);
-                                resolve();
-                            };
-                            img.onerror = () => resolve();
-                        },
-                        null,
-                        2.2,
-                        true,
-                        isWall
-                    );
+                if (!layerPath) {
+                    console.warn(`⚠️ Skipping layer ${index} (${label}) due to missing layer path`);
+                    continue;
+                }
+                const layerInput = !isShadow ? appState.layerInputs[nonShadowInputIndex] : null;
+                // Source color from current visible inputs.
+                const layerInputColorName = !isShadow ? (layerInput?.input?.value || "Snowbound") : null;
+                const layerColor = !isShadow ? lookupColor(layerInputColorName) : null;
+                renderTrace.push({
+                    index,
+                    label,
+                    isShadow,
+                    inputIndex: isShadow ? null : nonShadowInputIndex,
+                    inputColorName: layerInputColorName,
+                    resolvedHex: layerColor,
+                    path: layerPath
                 });
-            }
 
-            for (const { layer, index, label } of nonShadowLayers) {
-                // ⚠️ CRITICAL: Use proofPath (high-res ~3600px) NOT path (preview ~1400px)
-                const layerPath = layer.proofPath || layer.path || "";
-                const layerInput = appState.layerInputs[nonShadowInputIndex];
-                const layerColor = lookupColor(layerInput?.input?.value || "Snowbound");
-
-                console.log(`🎨 PRINT PATTERN - Non-shadow layer ${index}:`);
+                console.log(`🎨 PRINT PATTERN - ${isShadow ? 'Shadow' : 'Non-shadow'} layer ${index}:`);
                 console.log(`  - Label: "${label}"`);
-                console.log(`  - Input index: ${nonShadowInputIndex}`);
-                console.log(`  - layerInput exists:`, !!layerInput);
-                console.log(`  - Color name from input: "${layerInput?.input?.value}"`);
+                if (!isShadow) {
+                    console.log(`  - Input index: ${nonShadowInputIndex}`);
+                    console.log(`  - layerInput exists:`, !!layerInput);
+                    console.log(`  - Color name from input: "${layerInput?.input?.value}"`);
+                }
 
                 await new Promise((resolve) => {
                     processImage(
@@ -17765,31 +18231,28 @@ const generatePrintPreview = () => {
                                 img.src = processedUrl;
                             }
                             img.onload = () => {
-                                // Initialize canvas from first image if not yet done
                                 if (!canvasInitialized) {
                                     const canvasWidth = img.naturalWidth || img.width;
                                     const canvasHeight = img.naturalHeight || img.height;
                                     printCanvas.width = canvasWidth;
                                     printCanvas.height = canvasHeight;
                                     console.log(`🔧 Print canvas at FULL resolution: ${canvasWidth}x${canvasHeight}`);
-
-                                    // Fill background
                                     printCtx.fillStyle = backgroundColor;
                                     printCtx.fillRect(0, 0, canvasWidth, canvasHeight);
                                     canvasInitialized = true;
                                 }
 
-                                printCtx.globalCompositeOperation = "source-over";
-                                printCtx.globalAlpha = 1.0;
+                                printCtx.globalCompositeOperation = isShadow ? "multiply" : "source-over";
+                                printCtx.globalAlpha = isShadow ? 0.3 : 1.0;
                                 printCtx.drawImage(img, 0, 0, printCanvas.width, printCanvas.height);
-                                nonShadowInputIndex++;
+                                if (!isShadow) nonShadowInputIndex++;
                                 resolve();
                             };
                             img.onerror = () => resolve();
                         },
                         layerColor,
                         2.2,
-                        false,
+                        isShadow,
                         isWall
                     );
                 });
@@ -17797,7 +18260,7 @@ const generatePrintPreview = () => {
         }
 
         // Apply tiling based on scale setting (same logic as proof downloads)
-        if (appState.currentScale && appState.currentScale !== 100) {
+        if (!usedVisibleCapture && appState.currentScale && appState.currentScale !== 100) {
             console.log(`🔧 Print preview: Applying scale ${appState.currentScale}% (tiling pattern)`);
 
             // Save the single-tile pattern
@@ -17831,12 +18294,22 @@ const generatePrintPreview = () => {
             }
 
             console.log(`✅ Print preview: Pattern tiled at ${appState.currentScale}% scale`);
-        } else {
+        } else if (!usedVisibleCapture) {
             console.log(`🔧 Print preview: No scaling (100% - single tile)`);
+        } else {
+            console.log(`🔧 Print preview: Using visible capture (scale already represented in captured preview)`);
         }
 
         const dataUrl = printCanvas.toDataURL("image/png");
         console.log(`Print preview - Generated data URL, length: ${dataUrl.length}`);
+        window.__colorflexLastProofRenderSnapshot = {
+            at: new Date().toISOString(),
+            pattern: appState.currentPattern?.name || null,
+            collection: appState.selectedCollection?.name || null,
+            canvas: { width: printCanvas.width, height: printCanvas.height },
+            layerLabels,
+            renderTrace: typeof renderTrace !== 'undefined' ? renderTrace : []
+        };
 
         // Generate HTML content
         // Determine tiling method and scale display
@@ -17855,6 +18328,11 @@ const generatePrintPreview = () => {
             div.textContent = s;
             return div.innerHTML;
         };
+
+        const resultPayload = { canvas: printCanvas, dataUrl, layerLabels, collectionName, patternName };
+        if (silent) {
+            return resultPayload;
+        }
 
         // In-page modal (no new window/tab); print shows only modal content, one page, no browser chrome
         const modalId = 'print-preview-modal';
@@ -17956,7 +18434,7 @@ const generatePrintPreview = () => {
         document.body.appendChild(modal);
         console.log("Print preview - Modal opened");
 
-        return { canvas: printCanvas, dataUrl, layerLabels, collectionName, patternName };
+        return resultPayload;
     };
 
     return processPrintPreview().catch(error => {
@@ -17964,6 +18442,8 @@ const generatePrintPreview = () => {
         return null;
     });
 };
+
+window.generatePrintPreview = generatePrintPreview;
 
 // Start the app
 let appInitializing = false; // Guard to prevent multiple simultaneous initializations
@@ -18205,155 +18685,9 @@ function capturePatternThumbnailBuiltIn() {
 
 // Initialize thumbnail capture system by overriding the saveToMyList function
 function initializeThumbnailCapture() {
-    console.log('🎯 Initializing thumbnail capture by overriding saveToMyList function...');
-    
-    // Wait for the original saveToMyList function to be defined
-    const waitForSaveFunction = () => {
-        if (window.saveToMyList && typeof window.saveToMyList === 'function') {
-            console.log('✅ Found original saveToMyList function, overriding with thumbnail capture...');
-            
-            // Store reference to original function
-            const originalSaveToMyList = window.saveToMyList;
-            
-            // Override with our thumbnail-capturing version
-            window.saveToMyList = async function() {
-                console.log('🎯 THUMBNAIL CAPTURE: saveToMyList called!');
-
-                // 🔄 CHECK FOR EXACT DUPLICATE (same ID)
-                const currentPatternName = window.appState?.currentPattern?.name;
-                const currentScale = window.appState?.currentScale || 100;
-                let replaceExistingIndex = -1; // Index to replace if exact duplicate found
-
-                console.log('🔍🔍🔍 SAVE DUPLICATE CHECK START 🔍🔍🔍');
-                console.log('Current pattern name:', currentPatternName);
-                console.log('Current scale:', currentScale);
-                console.log('Current layers:', window.appState.currentLayers);
-
-                if (currentPatternName) {
-                    const existingPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
-                    console.log('📋 Existing patterns count:', existingPatterns.length);
-                    existingPatterns.forEach((p, idx) => {
-                        console.log(`  [${idx}] ${p.patternName} - ID: ${p.id} - Scale: ${p.currentScale}`);
-                    });
-
-                    // ✅ FIX: Generate current pattern ID WITH scale to get accurate comparison
-                    const currentPatternId = generatePatternId(currentPatternName, window.appState.currentLayers, currentScale);
-                    console.log('🆔 Current pattern FULL ID (with scale):', currentPatternId);
-
-                    // Find patterns with the same FULL ID (name + colors + scale)
-                    const exactMatchIndex = existingPatterns.findIndex(p => p.id === currentPatternId);
-
-                    // ✅ SIMPLIFIED LOGIC:
-                    // - If exact ID match exists (same name + colors + scale), silently replace to update
-                    // - If different colors/scale, IDs are different so save as new variant
-                    // - NO DIALOG - identical designs auto-update, variants auto-save
-
-                    console.log('🔍 Exact ID match index:', exactMatchIndex);
-
-                    if (exactMatchIndex !== -1) {
-                        // Exact match found - silently replace to update thumbnail
-                        replaceExistingIndex = exactMatchIndex;
-                        console.log('✅ Exact duplicate found - will silently replace to update');
-                        console.log('   Existing pattern:', existingPatterns[exactMatchIndex]);
-                    } else {
-                        // No exact match - this is a new pattern or variant
-                        console.log('✅ No exact ID match - saving as new pattern/variant');
-                    }
-                }
-
-                // If user wants to replace, delete the old version first
-                if (replaceExistingIndex !== -1) {
-                    const existingPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
-                    const deletedPattern = existingPatterns[replaceExistingIndex];
-                    console.log('🗑️ Deleting old version before saving new one:', deletedPattern.id);
-                    existingPatterns.splice(replaceExistingIndex, 1);
-                    localStorage.setItem('colorflexSavedPatterns', JSON.stringify(existingPatterns));
-                }
-
-                try {
-                    // Force preview update to ensure we capture current colors
-                    console.log('🔄 Forcing preview refresh before thumbnail capture...');
-                    console.log('Current pattern name at save time:', window.appState?.currentPattern?.name);
-                    console.log('Current layer values:', window.appState.layerInputs?.map(l => ({
-                        label: l.label,
-                        value: l.input?.value
-                    })));
-
-                    if (typeof updatePreview === 'function') {
-                        await updatePreview();
-                        console.log('✅ Preview refreshed with current colors');
-                    }
-
-                    // Longer delay to ensure pattern is fully loaded and rendered
-                    console.log('⏳ Waiting 800ms for pattern to fully render...');
-                    await new Promise(resolve => setTimeout(resolve, 800));
-
-                    // Capture thumbnail with current state
-                    console.log('📸 Starting thumbnail capture with CURRENT colors...');
-                    console.log('Pattern layers at capture time:', window.appState.currentLayers);
-                    const thumbnail = await capturePatternThumbnailBuiltIn();
-                    console.log('📸 Thumbnail size:', thumbnail?.length, 'bytes');
-
-                    if (thumbnail) {
-                        console.log('✅ Thumbnail captured successfully, adding to save...');
-
-                        // Override localStorage temporarily
-                        const originalSetItem = localStorage.setItem;
-                        let localStorageCallCount = 0;
-
-                        localStorage.setItem = function(key, value) {
-                            if (key === 'colorflexSavedPatterns') {
-                                localStorageCallCount++;
-                                console.log(`🎯 localStorage save call #${localStorageCallCount} - adding thumbnail...`);
-                                try {
-                                    const patterns = JSON.parse(value);
-
-                                    // Find the last pattern (the one being saved)
-                                    const lastPattern = patterns[patterns.length - 1];
-
-                                    if (lastPattern) {
-                                        // Add thumbnail to pattern
-                                        lastPattern.thumbnail = thumbnail;
-                                        console.log('✅ Thumbnail added to pattern:', lastPattern.patternName, 'ID:', lastPattern.id);
-                                    }
-
-                                    value = JSON.stringify(patterns);
-                                } catch (error) {
-                                    console.error('❌ Error adding thumbnail:', error);
-                                }
-                            }
-                            return originalSetItem.call(this, key, value);
-                        };
-
-                        // Call the original save function
-                        console.log('📝 Calling original saveToMyList function...');
-                        originalSaveToMyList.call(this);
-
-                        // Restore localStorage after delay
-                        setTimeout(() => {
-                            localStorage.setItem = originalSetItem;
-                            console.log('🔄 localStorage setItem restored');
-                        }, 2000);
-
-                    } else {
-                        console.warn('⚠️ Thumbnail capture failed, saving without thumbnail');
-                        originalSaveToMyList.call(this);
-                    }
-                } catch (error) {
-                    console.error('❌ Error in thumbnail capture:', error);
-                    originalSaveToMyList.call(this);
-                }
-            };
-            
-            console.log('✅ Thumbnail capture system fully initialized by overriding saveToMyList!');
-        } else {
-            console.log('⏳ saveToMyList function not found yet, retrying...');
-            setTimeout(waitForSaveFunction, 1000);
-        }
-    };
-    
-    // Start waiting for the save function
-    waitForSaveFunction();
+    // Legacy wrapper disabled: it overrides window.saveToMyList and races async save/proof flows.
+    // Canonical thumbnail generation now lives directly in saveToMyList via generatePrintPreviewDataUrl().
+    console.log('ℹ️ Legacy initializeThumbnailCapture wrapper disabled (using canonical saveToMyList pipeline)');
 }
 
 // Run immediately if DOM is already ready
@@ -19949,7 +20283,14 @@ async function generatePatternProof(patternName, collectionName, colorArray, use
                     // Render each layer using the exact same logic as updatePreview
                     for (let layerIndex = 0; layerIndex < targetPattern.layers.length; layerIndex++) {
                         const layer = targetPattern.layers[layerIndex];
-                        const isShadow = layerIsShadow(layer);
+                        let isShadow = layerIsShadow(layer);
+                        // Safety fallback for patterns where shadow metadata is missing:
+                        // if we've exhausted user-selected non-shadow colors, treat remaining
+                        // layers as shadow overlays instead of tinting them Snowbound (white).
+                        if (!isShadow && nonShadowColorIndex >= colorArray.length) {
+                            console.warn(`⚠️ Proof fallback: treating layer ${layerIndex} as shadow (no mapped non-shadow color left)`);
+                            isShadow = true;
+                        }
                         const layerColor = !isShadow ? lookupColor(colorArray[nonShadowColorIndex++] || "Snowbound") : null;
 
                         console.log(`🔧 Proof layer ${layerIndex} with color:`, layerColor, 'using', layer.proofPath ? 'PROOF PATH (high-res)' : 'preview path (fallback)');
@@ -20248,6 +20589,64 @@ async function generatePatternProofWithInfo(patternName, collectionName, colorAr
 
 // Export to window
 window.generatePatternProofWithInfo = generatePatternProofWithInfo;
+
+/**
+ * Generate proof-with-info as a JPEG data URL (for upload flows).
+ */
+async function generatePatternProofWithInfoDataUrl(patternName, collectionName, colorArray, customerName, dimensions, tiling, quality) {
+    const canvas = await generatePatternProofWithInfo(
+        patternName,
+        collectionName,
+        colorArray,
+        customerName,
+        dimensions,
+        tiling
+    );
+    const jpegQuality = typeof quality === 'number' ? quality : 0.9;
+    return canvas.toDataURL('image/jpeg', jpegQuality);
+}
+
+window.generatePatternProofWithInfoDataUrl = generatePatternProofWithInfoDataUrl;
+
+/**
+ * Generate standard proof as a JPEG data URL (no metadata strip).
+ * Guarantees a 3600x3600 output for upload flows.
+ */
+async function generatePatternProofDataUrl(patternName, collectionName, colorArray, quality, targetSize) {
+    const proofCanvas = await generatePatternProof(
+        patternName,
+        collectionName,
+        colorArray,
+        appState && appState.currentScale ? appState.currentScale : null
+    );
+    const outputSize = Number(targetSize) > 0 ? Number(targetSize) : 3600;
+    const out = document.createElement('canvas');
+    out.width = outputSize;
+    out.height = outputSize;
+    const ctx = out.getContext('2d');
+
+    // Cover-fit onto fixed 3600x3600 canvas so output is always full-size.
+    const srcW = proofCanvas.width || 1;
+    const srcH = proofCanvas.height || 1;
+    const scale = Math.max(outputSize / srcW, outputSize / srcH);
+    const drawW = srcW * scale;
+    const drawH = srcH * scale;
+    const dx = (outputSize - drawW) / 2;
+    const dy = (outputSize - drawH) / 2;
+    ctx.drawImage(proofCanvas, dx, dy, drawW, drawH);
+
+    const jpegQuality = typeof quality === 'number' ? quality : 0.95;
+    return out.toDataURL('image/jpeg', jpegQuality);
+}
+
+window.generatePatternProofDataUrl = generatePatternProofDataUrl;
+
+async function generatePrintPreviewDataUrl() {
+    const result = await generatePrintPreview({ silent: true });
+    return result && typeof result.dataUrl === 'string' ? result.dataUrl : null;
+}
+
+window.generatePrintPreviewDataUrl = generatePrintPreviewDataUrl;
 
 /**
  * Download current pattern proof (standard - no customer info)

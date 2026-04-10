@@ -90,3 +90,12 @@ That sets `window.COLORFLEX_API_URL` for `product-form.js`.
 - **Upload fails**: Check API server logs, verify Shopify credentials
 - **CORS errors**: Make sure your store URL is in `ALLOWED_ORIGINS`
 - **Thumbnail not in order**: Check browser console for upload errors
+
+## Integration note (April 2026)
+
+The API is responsible for creating hosted file URLs only (upload + returned HTTPS URL).
+Recent fixes for welcome modal behavior, My Designs icon positioning, and single-entry delete logic
+are frontend runtime/theme concerns and are documented in:
+
+- `docs/COLORFLEX_MANAGER_PREVIEW_STEPS.md`
+- `docs/DEPLOYMENT.md`

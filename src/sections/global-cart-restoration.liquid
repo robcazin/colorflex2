@@ -12,6 +12,7 @@ This enables cart thumbnail restoration on all pages
 
 (function() {
     'use strict';
+    const COLORFLEX_CHECKOUT_SUBMIT_HOOK_ENABLED = false;
 
     console.log('🛒 Global Cart: Setting up thumbnail restoration...');
 
@@ -1445,12 +1446,186 @@ This enables cart thumbnail restoration on all pages
             });
         }
     }
+
+    function buildCartColorFlexPreviewLink(props) {
+        try {
+            const patternName = (props['Custom Pattern'] || props['Pattern Name'] || '').toString().trim();
+            const collection = (props['Pattern Collection'] || props['Collection'] || '').toString().trim();
+            const patternId = (props['Pattern ID'] || '').toString().trim();
+            const customColors = (props['Custom Colors'] || '').toString().trim();
+            const saveDate = (props['Save Date'] || new Date().toISOString()).toString().trim();
+            const scaleValue = (props['Scale Value'] || '').toString().trim();
+            const patternScale = (props['Pattern Scale'] || '').toString().trim();
+            const materialType = (props['Material Type'] || '').toString().trim();
+            const scaleMap = { '0.5X': '50', 'Normal': '100', '2X': '200', '3X': '300', '4X': '400' };
+            const scale = scaleValue || scaleMap[patternScale] || '100';
+            const normalizedCollection = collection.toLowerCase().replace(/\s+/g, '-');
+            const preferredMaterial = materialType
+                .toLowerCase()
+                .replace(/&/g, 'and')
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-|-$/g, '');
+            const colorsList = customColors
+                .split(',')
+                .map((c) => c.trim())
+                .filter(Boolean);
+            const savedLayers = JSON.stringify(colorsList.map((color, index) => ({
+                index: index,
+                color: color,
+                label: `Layer ${index + 1}`,
+                isShadow: false
+            })));
+
+            // Reuse exact saved payload when available (same strategy as working cart edit flow).
+            let exactSavedPattern = null;
+            try {
+                const saved = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+                if (Array.isArray(saved)) {
+                    exactSavedPattern =
+                        saved.find((p) => patternId && p && (p.id === patternId || p.patternId === patternId)) ||
+                        saved.find((p) =>
+                            p &&
+                            typeof p.patternName === 'string' &&
+                            typeof p.collectionName === 'string' &&
+                            p.patternName.toLowerCase() === patternName.toLowerCase() &&
+                            p.collectionName.toLowerCase().replace(/\s+/g, '-') === normalizedCollection
+                        ) ||
+                        null;
+                }
+            } catch (e) {
+                /* ignore localStorage parse issues */
+            }
+
+            const params = new URLSearchParams();
+            if (patternName) params.set('pattern', patternName);
+            if (patternName) params.set('pattern_name', patternName);
+            if (normalizedCollection) params.set('collection', normalizedCollection);
+            if (patternId) params.set('pattern_id', patternId);
+            if (patternId) params.set('saved_pattern_id', patternId);
+            if (exactSavedPattern && Array.isArray(exactSavedPattern.colors) && exactSavedPattern.colors.length) {
+                const exactColorList = exactSavedPattern.colors
+                    .map((c) => (c && typeof c === 'object' ? c.color : c))
+                    .filter((c) => typeof c === 'string' && c.trim().length)
+                    .map((c) => c.trim());
+                const exactSavedLayers = JSON.stringify(exactSavedPattern.colors.map((c, index) => ({
+                    index: index,
+                    color: (c && typeof c === 'object' ? c.color : c) || '',
+                    label: (c && typeof c === 'object' && c.label) || `Layer ${index + 1}`,
+                    isShadow: false
+                })));
+                if (exactColorList.length) {
+                    params.set('colors', exactColorList.join(','));
+                    params.set('custom_colors', exactColorList.join(','));
+                }
+                params.set('saved_layers', exactSavedLayers);
+            } else {
+                if (customColors) params.set('colors', customColors);
+                if (customColors) params.set('custom_colors', customColors);
+                if (savedLayers) params.set('saved_layers', savedLayers);
+            }
+            if (scale) params.set('scale', scale);
+            params.set('source', 'cart_saved_pattern');
+            if (preferredMaterial) params.set('preferred_material', preferredMaterial);
+            if (saveDate) params.set('save_date', saveDate);
+
+            return `${window.location.origin}/pages/colorflex?${params.toString()}`;
+        } catch (e) {
+            return '';
+        }
+    }
+
+    // Ensure checkout-visible preview key exists before checkout submit.
+    async function ensureCheckoutVisiblePreviewKeys() {
+        try {
+            const cartRes = await fetch('/cart.js', { credentials: 'same-origin' });
+            if (!cartRes.ok) return 0;
+            const cartData = await cartRes.json();
+            const items = Array.isArray(cartData && cartData.items) ? cartData.items : [];
+            let updates = 0;
+
+            for (let i = 0; i < items.length; i++) {
+                const item = items[i] || {};
+                const props = item.properties && typeof item.properties === 'object' ? item.properties : {};
+                const privatePreview = props['_pattern_preview'];
+                const publicPreview = props['pattern_preview'];
+                const privateIsHttp = typeof privatePreview === 'string' && /^https?:\/\//i.test(privatePreview.trim());
+                const publicIsHttp = typeof publicPreview === 'string' && /^https?:\/\//i.test(publicPreview.trim());
+                if (!privateIsHttp) continue;
+                if (publicIsHttp) continue;
+
+                const newProps = Object.assign({}, props, {
+                    pattern_preview: privatePreview
+                });
+                const changeRes = await fetch('/cart/change.js', {
+                    method: 'POST',
+                    credentials: 'same-origin',
+                    headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+                    body: JSON.stringify({ line: i + 1, properties: newProps })
+                });
+                if (changeRes.ok) updates++;
+            }
+
+            if (updates > 0) {
+                console.log('✅ Mirrored _pattern_preview -> pattern_preview before checkout:', updates);
+            }
+            return updates;
+        } catch (error) {
+            console.warn('⚠️ Failed mirroring preview key before checkout:', error);
+            return 0;
+        }
+    }
+
+    function setupCheckoutPreviewMirror() {
+        if (!COLORFLEX_CHECKOUT_SUBMIT_HOOK_ENABLED) return;
+        if (window.__colorflexCheckoutMirrorBound) return;
+        const cartForm = document.getElementById('cart');
+        if (!cartForm) return;
+        window.__colorflexCheckoutMirrorBound = true;
+
+        let mirroring = false;
+        cartForm.addEventListener('submit', async function (event) {
+            const submitter = event.submitter || document.activeElement;
+            const isCheckoutSubmit = !!(submitter && (
+                submitter.id === 'checkout' ||
+                submitter.name === 'checkout' ||
+                (submitter.classList && submitter.classList.contains('cart__checkout-button'))
+            ));
+            if (!isCheckoutSubmit || mirroring) return;
+
+            event.preventDefault();
+            mirroring = true;
+            try {
+                // Fail-open: never block checkout if cart API is slow/unavailable.
+                await Promise.race([
+                    ensureCheckoutVisiblePreviewKeys(),
+                    new Promise((resolve) => setTimeout(resolve, 1500))
+                ]);
+            } catch (e) {
+                console.warn('⚠️ Checkout mirror preflight failed, continuing to checkout:', e);
+            } finally {
+                mirroring = false;
+                HTMLFormElement.prototype.submit.call(cartForm);
+            }
+        }, true);
+    }
+
+    // Run a non-blocking repair pass on cart page so pattern_preview stays extension-friendly.
+    function schedulePreviewKeyRepair() {
+        if (!(window.location.pathname.includes('/cart') || document.querySelector('.cart-item'))) return;
+        setTimeout(() => {
+            ensureCheckoutVisiblePreviewKeys().catch(() => {});
+        }, 600);
+    }
     
     // Initialize when DOM is ready - MULTIPLE ATTEMPTS FOR RELIABILITY
     if (document.readyState === 'loading') {
         document.addEventListener('DOMContentLoaded', initializeCartThumbnailRestoration);
+        document.addEventListener('DOMContentLoaded', setupCheckoutPreviewMirror);
+        document.addEventListener('DOMContentLoaded', schedulePreviewKeyRepair);
     } else {
         initializeCartThumbnailRestoration();
+        setupCheckoutPreviewMirror();
+        schedulePreviewKeyRepair();
     }
 
     // Single delayed initialization to ensure DOM is ready
@@ -1458,6 +1633,8 @@ This enables cart thumbnail restoration on all pages
         if (!window.cartSystemInitialized) {
             window.cartSystemInitialized = true;
             initializeCartThumbnailRestoration();
+            setupCheckoutPreviewMirror();
+            schedulePreviewKeyRepair();
         }
     }, 1000);
 

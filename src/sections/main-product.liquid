@@ -5148,6 +5148,10 @@ function populateColorFlexProperties(urlParams) {
       // Clone the field instead of moving it (to avoid DOM issues)
       const clonedField = field.cloneNode(true);
       clonedField.id = field.id + '_cart'; // Ensure unique ID
+
+      // Upsert by name so repeated initializations don't duplicate properties.
+      const existingByName = productForm.querySelectorAll(`input[name="${clonedField.name}"]`);
+      existingByName.forEach((n) => n.remove());
       
       // Move cloned field into the product form
       productForm.appendChild(clonedField);
@@ -5542,17 +5546,20 @@ function protectColorFlexProperties() {
                         cartData.items.forEach(item => {
                           if (!item.properties) item.properties = {};
                           item.properties['_pattern_preview'] = thumbnailUrl;
+                          item.properties['pattern_preview'] = thumbnailUrl;
                           console.log('✅ Added _pattern_preview to item:', item.id || item.variant_id);
                         });
                       } else if (cartData.id || cartData.variant_id) {
                         // Single item format - add properties object
                         if (!cartData.properties) cartData.properties = {};
                         cartData.properties['_pattern_preview'] = thumbnailUrl;
+                        cartData.properties['pattern_preview'] = thumbnailUrl;
                         console.log('✅ Added _pattern_preview to single item');
                       } else {
                         // Fallback: try to add at root level
                         if (!cartData.properties) cartData.properties = {};
                         cartData.properties['_pattern_preview'] = thumbnailUrl;
+                        cartData.properties['pattern_preview'] = thumbnailUrl;
                         console.log('✅ Added _pattern_preview to root properties');
                       }
                       
@@ -5565,10 +5572,12 @@ function protectColorFlexProperties() {
                       console.error('❌ Error parsing cart body:', e);
                       // Fallback: add to protected properties for FormData handling
                       protectedProperties['properties[_pattern_preview]'] = thumbnailUrl;
+                      protectedProperties['properties[pattern_preview]'] = thumbnailUrl;
                     }
                   } else {
                     // For regular form submission (FormData), add to protected properties
                     protectedProperties['properties[_pattern_preview]'] = thumbnailUrl;
+                    protectedProperties['properties[pattern_preview]'] = thumbnailUrl;
                     console.log('✅ Added _pattern_preview to protected properties for FormData');
                     console.log('✅ Protected properties now include:', Object.keys(protectedProperties));
                     console.log('✅ _pattern_preview URL:', thumbnailUrl);
@@ -5595,13 +5604,16 @@ function protectColorFlexProperties() {
                 let cartData = typeof options.body === 'string' ? JSON.parse(options.body) : options.body;
                 if (!cartData.properties) cartData.properties = {};
                 cartData.properties['_pattern_preview'] = thumbnailUrl;
+                cartData.properties['pattern_preview'] = thumbnailUrl;
                 options.body = JSON.stringify(cartData);
                 console.log('✅ Added existing URL to cart body');
               } catch (e) {
                 protectedProperties['properties[_pattern_preview]'] = thumbnailUrl;
+                protectedProperties['properties[pattern_preview]'] = thumbnailUrl;
               }
             } else {
               protectedProperties['properties[_pattern_preview]'] = thumbnailUrl;
+              protectedProperties['properties[pattern_preview]'] = thumbnailUrl;
             }
           }
           } // end THUMBNAIL_UPLOAD_API_ENABLED
@@ -6158,6 +6170,67 @@ if (patternName && collection) {
   };
 
   const formattedScale = formatScaleForCart(patternScale);
+  const previewLinkParams = new URLSearchParams();
+  const previewColorsList = (cleanedCustomColors || '')
+    .split(',')
+    .map((c) => c.trim())
+    .filter(Boolean);
+  const previewSavedLayers = JSON.stringify(previewColorsList.map((color, index) => ({
+    index,
+    color,
+    label: `Layer ${index + 1}`,
+    isShadow: false
+  })));
+  if (patternName) previewLinkParams.set('pattern', patternName);
+  if (patternName) previewLinkParams.set('pattern_name', patternName);
+  if (collection) previewLinkParams.set('collection', String(collection).toLowerCase().replace(/\s+/g, '-'));
+  if (resolvedPatternId) previewLinkParams.set('pattern_id', resolvedPatternId);
+  if (resolvedPatternId) previewLinkParams.set('saved_pattern_id', resolvedPatternId);
+  let exactSavedPattern = null;
+  try {
+    const saved = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
+    if (Array.isArray(saved)) {
+      const normalizedCollection = String(collection || '').toLowerCase().replace(/\s+/g, '-');
+      exactSavedPattern =
+        saved.find((p) => resolvedPatternId && p && (p.id === resolvedPatternId || p.patternId === resolvedPatternId)) ||
+        saved.find((p) =>
+          p &&
+          typeof p.patternName === 'string' &&
+          typeof p.collectionName === 'string' &&
+          p.patternName.toLowerCase() === String(patternName || '').toLowerCase() &&
+          p.collectionName.toLowerCase().replace(/\s+/g, '-') === normalizedCollection
+        ) ||
+        null;
+    }
+  } catch (e) {
+    /* ignore localStorage read issues */
+  }
+  if (exactSavedPattern && Array.isArray(exactSavedPattern.colors) && exactSavedPattern.colors.length) {
+    const exactColorList = exactSavedPattern.colors
+      .map((c) => (c && typeof c === 'object' ? c.color : c))
+      .filter((c) => typeof c === 'string' && c.trim().length)
+      .map((c) => c.trim());
+    const exactSavedLayers = JSON.stringify(exactSavedPattern.colors.map((c, index) => ({
+      index,
+      color: (c && typeof c === 'object' ? c.color : c) || '',
+      label: (c && typeof c === 'object' && c.label) || `Layer ${index + 1}`,
+      isShadow: false
+    })));
+    if (exactColorList.length) {
+      previewLinkParams.set('colors', exactColorList.join(','));
+      previewLinkParams.set('custom_colors', exactColorList.join(','));
+    }
+    previewLinkParams.set('saved_layers', exactSavedLayers);
+  } else {
+    if (cleanedCustomColors) previewLinkParams.set('colors', cleanedCustomColors);
+    if (cleanedCustomColors) previewLinkParams.set('custom_colors', cleanedCustomColors);
+    if (previewSavedLayers) previewLinkParams.set('saved_layers', previewSavedLayers);
+  }
+  if (patternScale) previewLinkParams.set('scale', String(patternScale));
+  previewLinkParams.set('source', 'cart_saved_pattern');
+  if (urlParams.get('preferred_material')) previewLinkParams.set('preferred_material', urlParams.get('preferred_material'));
+  previewLinkParams.set('save_date', new Date().toISOString());
+  const colorFlexPreviewLink = `${window.location.origin}/pages/colorflex?${previewLinkParams.toString()}`;
 
   // 🎄 CHECK FOR PROMO CODE
   const promoCode = urlParams.get('promo_code');
@@ -6172,6 +6245,51 @@ if (patternName && collection) {
   console.log('🔍 DEBUG: Product form found:', !!productForm);
   if (productForm) {
     console.log('🔍 DEBUG: Setting up form submit handler...');
+    function collectRuntimeCustomColors() {
+      try {
+        const state = window.appState || {};
+        const inputs = Array.isArray(state.layerInputs) ? state.layerInputs : [];
+        if (!inputs.length) return '';
+        const isWallPattern =
+          !!(state.currentPattern && state.currentPattern.isWall) ||
+          !!(state.selectedCollection && state.selectedCollection.name === 'wall-panels');
+        const backgroundIndex = isWallPattern ? 1 : 0;
+        const nonShadowStart = isWallPattern ? 2 : 1;
+        const colors = [];
+        if (inputs[backgroundIndex] && inputs[backgroundIndex].input && inputs[backgroundIndex].input.value) {
+          colors.push(String(inputs[backgroundIndex].input.value).trim());
+        }
+        for (let i = nonShadowStart; i < inputs.length; i++) {
+          const v = inputs[i] && inputs[i].input ? inputs[i].input.value : '';
+          if (v && String(v).trim()) colors.push(String(v).trim());
+        }
+        return colors.filter(Boolean).join(', ');
+      } catch (e) {
+        return '';
+      }
+    }
+
+    function upsertHiddenField(name, value) {
+      if (!value || !String(value).trim()) return;
+      let field = productForm.querySelector(`input[name="${name}"]`);
+      if (!field) {
+        field = document.createElement('input');
+        field.type = 'hidden';
+        field.name = name;
+        productForm.appendChild(field);
+      }
+      field.value = value;
+    }
+
+    // Last-mile runtime sync so cart submit never uses stale default colors.
+    productForm.addEventListener('submit', function () {
+      const runtimeColors = collectRuntimeCustomColors();
+      if (runtimeColors) {
+        upsertHiddenField('properties[Custom Colors]', runtimeColors);
+        console.log('✅ Runtime sync: properties[Custom Colors] =', runtimeColors);
+      }
+    }, true);
+
     // Create and add hidden fields
     const fields = {
       'properties[Custom Pattern]': patternName,
@@ -6195,6 +6313,10 @@ if (patternName && collection) {
 
     Object.entries(fields).forEach(([name, value]) => {
       if (value) {
+        // Upsert by name to prevent duplicate property fields.
+        const existing = productForm.querySelectorAll(`input[name="${name}"]`);
+        existing.forEach((n) => n.remove());
+
         const field = document.createElement('input');
         field.type = 'hidden';
         field.name = name;
@@ -6204,202 +6326,11 @@ if (patternName && collection) {
       }
     });
 
-    // 🔧 CRITICAL: Use MyDesigns approach - always capture thumbnail using capturePatternThumbnail()
-    // This is the same perfect thumbnail that MyDesigns uses
-    let thumbnail = null;
-    
-    // PRIORITY 1: Try to capture thumbnail using MyDesigns method (same as saveToMyList does)
-    if (typeof window.capturePatternThumbnail === 'function') {
-      console.log('📸 Using MyDesigns method: capturing thumbnail with capturePatternThumbnail()...');
-      try {
-        thumbnail = window.capturePatternThumbnail();
-        if (thumbnail) {
-          console.log('✅ Thumbnail captured using MyDesigns method (same as saveToMyList)');
-          // Store it in localStorage for consistency with MyDesigns
-          localStorage.setItem('colorflexCurrentThumbnail', thumbnail);
-        } else {
-          console.warn('⚠️ capturePatternThumbnail() returned null, falling back to localStorage');
-        }
-      } catch (error) {
-        console.error('❌ Error capturing thumbnail with MyDesigns method:', error);
-      }
+    const COLORFLEX_LEGACY_THUMBNAIL_PIPELINE_ENABLED = false;
+    if (COLORFLEX_LEGACY_THUMBNAIL_PIPELINE_ENABLED) {
+      // Legacy thumbnail pipeline intentionally disabled.
+      // Active pipeline: src/assets/product-form.js ensureColorFlexPatternPreviewOnFormData()
     }
-    
-    // PRIORITY 2: Fall back to localStorage if capture failed
-    if (!thumbnail) {
-      thumbnail = localStorage.getItem('colorflexCurrentThumbnail');
-      if (thumbnail) {
-        console.log('📸 Using thumbnail from localStorage (fallback)');
-      }
-    }
-    
-    // Process the thumbnail (upload to Shopify Files if needed)
-    if (thumbnail) {
-      // Check if it's a base64 data URL - upload to Shopify Files to get a URL
-      if (thumbnail.startsWith('data:image') && thumbnail.length > 255) {
-        // Upload to Shopify Files API to get a URL (like product images)
-        const filename = `colorflex-${patternName || 'pattern'}-${Date.now()}.jpg`;
-        const apiUrl = window.COLORFLEX_API_URL || '/api/upload-thumbnail';
-        
-        // Thumbnail Key already set on the form via fields[] — only persist to localStorage for cart page
-        localStorage.setItem(formCartThumbnailKey, JSON.stringify({ thumbnail: thumbnail }));
-        console.log('✅ Stored thumbnail for cart restoration key (upload will happen async):', formCartThumbnailKey);
-        
-        // Try to upload in background (non-blocking)
-        fetch(apiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify({
-            thumbnail: thumbnail,
-            filename: filename
-          })
-        }).then(response => {
-          if (response.ok) {
-            return response.json();
-          }
-          throw new Error(`Upload failed: ${response.status}`);
-        }).then(data => {
-          if (data.success && data.url) {
-            // Add the Shopify URL as _pattern_preview
-            const thumbnailInput = document.createElement('input');
-            thumbnailInput.type = 'hidden';
-            thumbnailInput.name = 'properties[_pattern_preview]';
-            thumbnailInput.value = data.url;
-            productForm.appendChild(thumbnailInput);
-            console.log('✅ Uploaded thumbnail to Shopify Files:', data.url);
-          }
-        }).catch(error => {
-          console.warn('⚠️ Thumbnail upload failed:', error.message);
-          console.warn('⚠️ API server may not be running. Thumbnail will not appear in checkout.');
-          console.warn('⚠️ To fix: Start the API server (see api/DEPLOYMENT.md) or deploy it to a hosting service.');
-          // Cart will still work with Thumbnail Key for cart page restoration
-          // But checkout won't have the thumbnail without the API server
-        });
-      } else if (thumbnail.startsWith('http')) {
-        // Already a URL, use it directly
-        const thumbnailInput = document.createElement('input');
-        thumbnailInput.type = 'hidden';
-        thumbnailInput.name = 'properties[_pattern_preview]';
-        thumbnailInput.value = thumbnail;
-        productForm.appendChild(thumbnailInput);
-        console.log('✅ Added _pattern_preview URL to product form');
-      } else {
-        // Small base64 (unlikely but handle it)
-        const thumbnailInput = document.createElement('input');
-        thumbnailInput.type = 'hidden';
-        thumbnailInput.name = 'properties[_pattern_preview]';
-        thumbnailInput.value = thumbnail;
-        productForm.appendChild(thumbnailInput);
-        console.log('✅ Added _pattern_preview to product form');
-      }
-    } else {
-      console.warn('⚠️ No thumbnail available - capturePatternThumbnail() not available and localStorage empty');
-    }
-
-    // Thumbnail upload on form submit – disabled until /api/upload-thumbnail is working (set true to re-enable)
-    const THUMBNAIL_UPLOAD_ON_SUBMIT_ENABLED = false;
-    // Also ensure thumbnail is uploaded and added on form submit
-    productForm.addEventListener('submit', async function(e) {
-      if (!THUMBNAIL_UPLOAD_ON_SUBMIT_ENABLED) return;
-      console.log('📦 Form submitting - ensuring _pattern_preview is included');
-      
-      // Check if _pattern_preview already exists
-      let existingPreview = productForm.querySelector('input[name="properties[_pattern_preview]"]');
-      console.log('🔍 Debug - existingPreview:', existingPreview ? 'Found' : 'Not found');
-      
-      // If no preview exists, capture thumbnail using MyDesigns method
-      if (!existingPreview) {
-        let thumbnail = null;
-        
-        // PRIORITY 1: Try to capture using MyDesigns method (same as saveToMyList)
-        if (typeof window.capturePatternThumbnail === 'function') {
-          console.log('📸 Form submit: Capturing thumbnail with MyDesigns method...');
-          try {
-            thumbnail = window.capturePatternThumbnail();
-            if (thumbnail) {
-              console.log('✅ Thumbnail captured on form submit using MyDesigns method');
-              localStorage.setItem('colorflexCurrentThumbnail', thumbnail);
-            }
-          } catch (error) {
-            console.error('❌ Error capturing thumbnail on form submit:', error);
-          }
-        }
-        
-        // PRIORITY 2: Fall back to localStorage
-        if (!thumbnail) {
-          thumbnail = localStorage.getItem('colorflexCurrentThumbnail');
-          console.log('🔍 Debug - thumbnail in localStorage:', thumbnail ? `Found (${thumbnail.length} chars, starts with: ${thumbnail.substring(0, 30)}...)` : 'Not found');
-        }
-        
-        if (thumbnail && thumbnail.startsWith('data:image') && thumbnail.length > 255) {
-          // Prevent form submission temporarily (product-form.js will still run and do AJAX cart add)
-          e.preventDefault();
-          
-          const apiUrl = window.COLORFLEX_API_URL || '/api/upload-thumbnail';
-          if (!window.COLORFLEX_API_URL) {
-            console.warn('⚠️ COLORFLEX_API_URL not set – thumbnail upload will use relative URL (only works if API is on same domain)');
-          }
-          console.log('📤 Uploading thumbnail via API server...');
-          const filename = `colorflex-${patternName || 'pattern'}-${Date.now()}.jpg`;
-          
-          console.log('📤 API URL:', apiUrl);
-          
-          const uploadTimeoutMs = 4000;
-          const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('Upload timeout')), uploadTimeoutMs));
-          try {
-            const response = await Promise.race([
-              fetch(apiUrl, {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                  thumbnail: thumbnail,
-                  filename: filename
-                })
-              }),
-              timeoutPromise
-            ]);
-            
-            if (response.ok) {
-              const data = await response.json();
-              if (data.success && data.url) {
-                // Add the Shopify URL as _pattern_preview (cart add is done by product-form.js via fetch, do not submit again)
-                const thumbnailInput = document.createElement('input');
-                thumbnailInput.type = 'hidden';
-                thumbnailInput.name = 'properties[_pattern_preview]';
-                thumbnailInput.value = data.url;
-                productForm.appendChild(thumbnailInput);
-                console.log('✅ Uploaded thumbnail to Shopify Files:', data.url);
-              } else {
-                console.warn('⚠️ Upload succeeded but no URL returned:', data);
-              }
-            } else {
-              const errorText = await response.text();
-              console.error('❌ Thumbnail upload failed:', response.status, errorText);
-            }
-          } catch (error) {
-            console.error('❌ Error uploading thumbnail:', error.message || error);
-            if (error.message === 'Upload timeout') {
-              console.warn('⚠️ Thumbnail upload timed out – proceeding without preview');
-            }
-          }
-          // Cart add is handled by product-form.js (AJAX) – do not call productForm.submit() or we double-add
-        } else if (thumbnail) {
-          // Small thumbnail or already a URL - add directly
-          const thumbnailInput = document.createElement('input');
-          thumbnailInput.type = 'hidden';
-          thumbnailInput.name = 'properties[_pattern_preview]';
-          thumbnailInput.value = thumbnail;
-          productForm.appendChild(thumbnailInput);
-          console.log('✅ Added _pattern_preview on form submit');
-        } else {
-          console.log('📤 Skipping thumbnail upload: no thumbnail (capture or localStorage). API not called.');
-        }
-      }
-    });
 
     console.log('✅ ColorFlex properties added to product form');
 

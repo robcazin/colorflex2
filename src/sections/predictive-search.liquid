@@ -5,22 +5,62 @@
 {% endcomment %}
 {% comment %}theme-check-disable ImgLazyLoading{% endcomment %}
 {%- if predictive_search.performed -%}
-  {% assign first_column_results_size = predictive_search.resources.queries.size
-    | plus: predictive_search.resources.collections.size
-    | plus: predictive_search.resources.pages.size
-    | plus: predictive_search.resources.articles.size
+  {%- assign visible_products_count = 0 -%}
+  {%- assign visible_queries_count = 0 -%}
+  {%- assign visible_collections_count = 0 -%}
+  {%- assign visible_pages_count = 0 -%}
+  {%- assign visible_articles_count = 0 -%}
+
+  {%- for query in predictive_search.resources.queries -%}
+    {%- assign text_down = query.text | downcase -%}
+    {%- unless text_down contains 'furniture' or text_down contains 'clothing' or text_down contains '.fur' or text_down contains 'fur-' or text_down contains ' fur' -%}
+      {%- assign visible_queries_count = visible_queries_count | plus: 1 -%}
+    {%- endunless -%}
+  {%- endfor -%}
+
+  {%- for collection in predictive_search.resources.collections -%}
+    {%- assign title_down = collection.title | downcase -%}
+    {%- unless title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+      {%- assign visible_collections_count = visible_collections_count | plus: 1 -%}
+    {%- endunless -%}
+  {%- endfor -%}
+
+  {%- for page in predictive_search.resources.pages -%}
+    {%- assign title_down = page.title | downcase -%}
+    {%- unless title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+      {%- assign visible_pages_count = visible_pages_count | plus: 1 -%}
+    {%- endunless -%}
+  {%- endfor -%}
+
+  {%- for article in predictive_search.resources.articles -%}
+    {%- assign title_down = article.title | downcase -%}
+    {%- unless title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+      {%- assign visible_articles_count = visible_articles_count | plus: 1 -%}
+    {%- endunless -%}
+  {%- endfor -%}
+
+  {%- for product in predictive_search.resources.products -%}
+    {%- assign product_type_down = product.type | downcase -%}
+    {%- unless product.tags contains 'hidden-search' or product_type_down contains 'clothing' or product_type_down contains 'furniture' -%}
+      {%- assign visible_products_count = visible_products_count | plus: 1 -%}
+    {%- endunless -%}
+  {%- endfor -%}
+  {% assign first_column_results_size = visible_queries_count
+    | plus: visible_collections_count
+    | plus: visible_pages_count
+    | plus: visible_articles_count
   %}
   <div id="predictive-search-results" role="listbox">
-    {%- if first_column_results_size > 0 or predictive_search.resources.products.size > 0 -%}
+    {%- if first_column_results_size > 0 or visible_products_count > 0 -%}
       <div
         id="predictive-search-results-groups-wrapper"
-        class="predictive-search__results-groups-wrapper{% unless predictive_search.resources.products.size > 0 %} predictive-search__results-groups-wrapper--no-products{% endunless %}{% unless predictive_search.resources.queries.size > 0 or predictive_search.resources.collections.size > 0 %} predictive-search__results-groups-wrapper--no-suggestions{% endunless %}"
+        class="predictive-search__results-groups-wrapper{% unless visible_products_count > 0 %} predictive-search__results-groups-wrapper--no-products{% endunless %}{% unless predictive_search.resources.queries.size > 0 or predictive_search.resources.collections.size > 0 %} predictive-search__results-groups-wrapper--no-suggestions{% endunless %}"
       >
     {%- endif -%}
     {%- if first_column_results_size > 0 -%}
       <div class="predictive-search__result-group">
     {%- endif -%}
-    {%- if predictive_search.resources.queries.size > 0 or predictive_search.resources.collections.size > 0 -%}
+    {%- if visible_queries_count > 0 or visible_collections_count > 0 -%}
       <div>
         <h2 id="predictive-search-queries" class="predictive-search__heading text-body caption-with-letter-spacing">
           {{- 'templates.search.suggestions' | t -}}
@@ -32,6 +72,10 @@
           aria-labelledby="predictive-search-queries"
         >
           {%- for query in predictive_search.resources.queries -%}
+            {%- assign text_down = query.text | downcase -%}
+            {%- if text_down contains 'furniture' or text_down contains 'clothing' or text_down contains '.fur' or text_down contains 'fur-' or text_down contains ' fur' -%}
+              {% continue %}
+            {%- endif -%}
             <li
               id="predictive-search-option-query-{{ forloop.index }}"
               class="predictive-search__list-item"
@@ -51,6 +95,10 @@
             </li>
           {%- endfor -%}
           {%- for collection in predictive_search.resources.collections -%}
+            {%- assign title_down = collection.title | downcase -%}
+            {%- if title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+              {% continue %}
+            {%- endif -%}
             <li
               id="predictive-search-option-collection-{{ forloop.index }}"
               class="predictive-search__list-item"
@@ -67,7 +115,7 @@
         </ul>
       </div>
     {%- endif -%}
-    {%- if predictive_search.resources.articles.size > 0 or predictive_search.resources.pages.size > 0 -%}
+    {%- if visible_articles_count > 0 or visible_pages_count > 0 -%}
       <div class="predictive-search__pages-wrapper">
         <h2
           id="predictive-search-pages-desktop"
@@ -82,6 +130,10 @@
           aria-labelledby="predictive-search-pages-desktop"
         >
           {%- for page in predictive_search.resources.pages -%}
+            {%- assign title_down = page.title | downcase -%}
+            {%- if title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+              {% continue %}
+            {%- endif -%}
             <li
               id="predictive-search-option-page-desktop-{{ forloop.index }}"
               class="predictive-search__list-item"
@@ -96,6 +148,10 @@
             </li>
           {%- endfor -%}
           {%- for article in predictive_search.resources.articles -%}
+            {%- assign title_down = article.title | downcase -%}
+            {%- if title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+              {% continue %}
+            {%- endif -%}
             <li
               id="predictive-search-option-article-desktop-{{ forloop.index }}"
               class="predictive-search__list-item"
@@ -115,12 +171,12 @@
     {%- if first_column_results_size > 0 -%}
       </div>
     {%- endif -%}
-    {%- if predictive_search.resources.products.size > 0
-      or predictive_search.resources.articles.size > 0
-      or predictive_search.resources.pages.size > 0
+    {%- if visible_products_count > 0
+      or visible_articles_count > 0
+      or visible_pages_count > 0
     -%}
       <div class="predictive-search__result-group">
-        {%- if predictive_search.resources.products.size > 0 -%}
+        {%- if visible_products_count > 0 -%}
           <div>
             <h2
               id="predictive-search-products"
@@ -135,6 +191,10 @@
               aria-labelledby="predictive-search-products"
             >
               {%- for product in predictive_search.resources.products -%}
+                {%- assign product_type_down = product.type | downcase -%}
+                {%- if product.tags contains 'hidden-search' or product_type_down contains 'clothing' or product_type_down contains 'furniture' -%}
+                  {% continue %}
+                {%- endif -%}
                 <li
                   id="predictive-search-option-product-{{ forloop.index }}"
                   class="predictive-search__list-item"
@@ -173,7 +233,7 @@
             </ul>
           </div>
         {%- endif -%}
-        {%- if predictive_search.resources.articles.size > 0 or predictive_search.resources.pages.size > 0 -%}
+        {%- if visible_articles_count > 0 or visible_pages_count > 0 -%}
           <div class="predictive-search__pages-wrapper">
             <h2
               id="predictive-search-pages-mobile"
@@ -188,6 +248,10 @@
               aria-labelledby="predictive-search-pages-mobile"
             >
               {%- for page in predictive_search.resources.pages -%}
+                {%- assign title_down = page.title | downcase -%}
+                {%- if title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+                  {% continue %}
+                {%- endif -%}
                 <li
                   id="predictive-search-option-page-mobile-{{ forloop.index }}"
                   class="predictive-search__list-item"
@@ -202,6 +266,10 @@
                 </li>
               {%- endfor -%}
               {%- for article in predictive_search.resources.articles -%}
+                {%- assign title_down = article.title | downcase -%}
+                {%- if title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+                  {% continue %}
+                {%- endif -%}
                 <li
                   id="predictive-search-option-article-mobile-{{ forloop.index }}"
                   class="predictive-search__list-item"
@@ -220,7 +288,7 @@
         {%- endif -%}
       </div>
     {%- endif -%}
-    {%- if first_column_results_size > 0 or predictive_search.resources.products.size > 0 -%}
+    {%- if first_column_results_size > 0 or visible_products_count > 0 -%}
       </div>
     {%- endif -%}
 
@@ -245,21 +313,21 @@
 
   <span class="hidden" data-predictive-search-live-region-count-value>
     {% liquid
-      assign total_results = predictive_search.resources.products.size | plus: first_column_results_size
+      assign total_results = visible_products_count | plus: first_column_results_size
       if total_results == 0
         echo 'templates.search.no_results' | t: terms: predictive_search.terms
       else
         echo 'templates.search.results_with_count' | t: count: total_results | append: ': '
-        if predictive_search.resources.queries.size > 0
-          assign count = predictive_search.resources.queries.size | plus: predictive_search.resources.collections.size
+        if visible_queries_count > 0
+          assign count = visible_queries_count | plus: visible_collections_count
           echo 'templates.search.results_suggestions_with_count' | t: count: count | append: ', '
         endif
-        if predictive_search.resources.pages.size > 0
-          assign count = predictive_search.resources.pages.size | plus: predictive_search.resources.articles.size
+        if visible_pages_count > 0
+          assign count = visible_pages_count | plus: visible_articles_count
           echo 'templates.search.results_pages_with_count' | t: count: count | append: ', '
         endif
-        if predictive_search.resources.products.size > 0
-          echo 'templates.search.results_products_with_count' | t: count: predictive_search.resources.products.size
+        if visible_products_count > 0
+          echo 'templates.search.results_products_with_count' | t: count: visible_products_count
         endif
       endif
     %}

@@ -8,7 +8,7 @@
       "curatedColors": [],
       "coordinates": null,
       "colorFlex": false,
-      "mockupId": "dresser-green",
+      "mockupId": "green-dresser",
       "patterns": [
         {
           "id": "recFNURnfuHN3vdR8",
@@ -4918,10 +4918,7 @@
         }
       ],
       "colorFlex": true,
-      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
-      "mockupShadow": null,
-      "mockupWidthInches": 60,
-      "mockupHeightInches": 40,
+      "mockupId": "vintage-cupboard",
       "description": "Botanicals and floral designs dominate many decorating themes.  Timeless in style and flexible in colorways, botanical images can stand alone or be layered without limit in homes of any style or age.  Invite nature into your decorating theme, color them and scale them to your pleasure.",
       "patterns": [
         {
@@ -6895,10 +6892,7 @@
       ],
       "coordinates": null,
       "colorFlex": true,
-      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
-      "mockupShadow": null,
-      "mockupWidthInches": 60,
-      "mockupHeightInches": 40,
+      "mockupId": "farm-table",
       "description": "This collection of  Coordinates can make your design scheme hit a new level.  After you've chosen your \"Feature\" wallpaper print, consider adding a coordinating print for your ceiling, or book case backs, or of course, above or below your chair rail trim.  Color coordinate your prints and don't forget to adjust the scale of the print to match your target size.  Also available in fabrics, so there's no limit as to how many you can create.  Have fun!!",
       "patterns": [
         {
@@ -6918,7 +6912,7 @@
             }
           ],
           "layerLabels": [
-            "Unnamed Layer"
+            "Threads"
           ],
           "tilingType": "straight",
           "designer_colors": [
@@ -12092,10 +12086,7 @@
         }
       ],
       "colorFlex": true,
-      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
-      "mockupShadow": null,
-      "mockupWidthInches": 60,
-      "mockupHeightInches": 40,
+      "mockupId": "scallop-console",
       "description": "Our American Coverlet collection is inspired by antique woven coverlets (often fragments).  \nCoverlets were popular during the 1800's in the eastern and mid-western states.  Often woven specifically for a person or family by an itinerate weaver using wool from the family's farm!!  Patterns were bold and colorful to cheer and warm the home.\nWe've chosen very traditional color combinations that were original to coverlets.  Each coverlet is named for the city or county where it originated.  \nWe hope you will enjoy the notion of using these patterns as wallpaper and fabrics for bedrooms, keeping rooms, etc.",
       "patterns": [
         {
@@ -15033,10 +15024,7 @@
       ],
       "coordinates": null,
       "colorFlex": false,
-      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
-      "mockupShadow": null,
-      "mockupWidthInches": 60,
-      "mockupHeightInches": 40,
+      "mockupId": "fireplace-mantle",
       "patterns": [
         {
           "id": "reclaMAPj6Fn5d8JZ",
@@ -15280,7 +15268,7 @@
         }
       ],
       "colorFlex": true,
-      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
+      "mockupId": "english-countryside-bedroom",
       "mockupShadow": null,
       "mockupWidthInches": 60,
       "mockupHeightInches": 40,
@@ -29746,7 +29734,7 @@
       ],
       "coordinates": null,
       "colorFlex": true,
-      "mockupId": "Dresser-W100H80",
+      "mockupId": "vintage-dresser",
       "patterns": [
         {
           "id": "recqFqkAnxwHDK2uF",
@@ -31165,7 +31153,7 @@
         }
       ],
       "colorFlex": true,
-      "mockupId": "cupboard",
+      "mockupId": "vintage-cupboard",
       "description": "Our New Orleans collection combines the romantic history of French Cajun culture and the American South.  Fantastic designs that can be recolored and resized to your desire.",
       "patterns": [
         {
@@ -33964,7 +33952,7 @@
         }
       ],
       "colorFlex": true,
-      "mockupId": "dresser",
+      "mockupId": "vintage-dresser",
       "description": "Travel back in time with the SILK ROAD COLLECTION of Traditional DAMASK patterns.  For thousands of years, these beautiful patterns adorned fabrics from Asia to Europe and were coveted for their beautiful and designs.  Now, for the first time, they can be colored and scaled to suite your style.  Have fun!!",
       "patterns": [
         {
@@ -36752,10 +36740,7 @@
         }
       ],
       "colorFlex": true,
-      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
-      "mockupShadow": null,
-      "mockupWidthInches": 60,
-      "mockupHeightInches": 40,
+      "mockupId": "scallop-console",
       "description": "Traditional designs, appropriate in any home decor plan.  Based on history, culture and eclectic styles, layered with coordinates add richness and depth to any home.  Experiment with color combinations and resize your design to suit the surface or project.",
       "patterns": [
         {
@@ -72460,7 +72445,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T17:24:38.463Z"
+          "updatedAt": "2026-04-08T21:19:26.681Z"
         },
         {
           "id": "recJ3HqUHaCM8GWzb",
@@ -72514,11 +72499,11 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T17:24:38.463Z"
+          "updatedAt": "2026-04-08T21:19:26.680Z"
         },
         {
-          "id": "rec3eVi8VGJn0xLnV",
-          "number": "27-104 ",
+          "id": "reczvStXKbuI2atOn",
+          "number": "27-104",
           "name": "Doo See Doo",
           "thumbnail": "./data/collections/hip-to-be-square/thumbnails/doo-see-doo.jpg",
           "size": [
@@ -72532,24 +72517,24 @@
               "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_ruffle_layer-1.jpg"
             },
             {
-              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_outside-border_layer-2.jpg",
-              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_outside-border_layer-2.jpg"
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_ruffle_layer-2.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_ruffle_layer-2.jpg"
             },
             {
-              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_design-background_layer-3.jpg",
-              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_design-background_layer-3.jpg"
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_ruffle_layer-3.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_ruffle_layer-3.jpg"
             },
             {
-              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_leaves_layer-4.jpg",
-              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_leaves_layer-4.jpg"
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_ruffle_layer-4.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_ruffle_layer-4.jpg"
             },
             {
-              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_inner-zone_layer-5.jpg",
-              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_inner-zone_layer-5.jpg"
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_ruffle_layer-5.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_ruffle_layer-5.jpg"
             },
             {
-              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_star_layer-6.jpg",
-              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_star_layer-6.jpg"
+              "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_ruffle_layer-6.jpg",
+              "proofPath": "./data/collections/hip-to-be-square/proof-layers/doo-see-doo_ruffle_layer-6.jpg"
             },
             {
               "path": "./data/collections/hip-to-be-square/layers/doo-see-doo_flowers_layer-7.jpg",
@@ -72570,11 +72555,11 @@
           ],
           "layerLabels": [
             "Ruffle",
-            "Outside Border",
-            "Design Background",
-            "Leaves",
-            "Inner Zone",
-            "Star",
+            "Ruffle",
+            "Ruffle",
+            "Ruffle",
+            "Ruffle",
+            "Ruffle",
             "Flowers",
             "Tiny Flowers",
             "Centers",
@@ -72582,23 +72567,29 @@
           ],
           "tilingType": "straight",
           "designer_colors": [
-            "SW6159 HIGH TEA",
-            "SW6371 VANILLIN",
-            "SW6215 ROCKY RIVER",
-            "SW6394 SEQUIN",
-            "SW9133 JASPER STONE",
-            "sw6215 ROCKY RIVER",
-            "SW9133 JASPER STONE",
-            "SW6371 VANILLIN",
-            "SW0006 TOILE RED",
-            "SW6395 ALCHEMY",
-            "SW7069 IRON ORE"
+            "SC0002 COTTAGE COAL",
+            "SW7069 IRON ORE",
+            "SW7067 CITYSCAPE",
+            "SW3174 LENNOX HILL TAN",
+            "SC0001 COTTAGE LINEN",
+            "SW7729 EDAMAME",
+            "SW7726 LEMON VERBENA",
+            "SW6212 QUIETUDE",
+            "SW7699 RUSTIC CITY",
+            "SW6332 CORAL ISLAND",
+            "SW6306 CORDIAL",
+            "SW6135 ECRU",
+            "SW6242 BRACING BLUE",
+            "SW6243 DISTANCE",
+            "SW6186 DRIED THYME",
+            "SW9130 EVERGREEN FOG",
+            "SW6204 SEA SALT"
           ],
           "colorFlex": true,
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T17:24:38.462Z"
+          "updatedAt": "2026-04-08T21:19:26.682Z"
         },
         {
           "id": "recgdLlAaXdyWMKoo",
@@ -72664,7 +72655,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T17:24:38.464Z"
+          "updatedAt": "2026-04-08T21:19:26.681Z"
         },
         {
           "id": "recrcOrW6kSuC150M",
@@ -72717,7 +72708,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T17:24:38.464Z"
+          "updatedAt": "2026-04-08T21:19:26.682Z"
         },
         {
           "id": "rec9y0o32XosTUhT7",
@@ -72747,7 +72738,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T17:24:38.463Z"
+          "updatedAt": "2026-04-08T21:19:26.680Z"
         },
         {
           "id": "recfOnXrjaHLQGuEE",
@@ -72789,7 +72780,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T17:24:38.463Z"
+          "updatedAt": "2026-04-08T21:19:26.681Z"
         },
         {
           "id": "rec2AkbVqW0ZwIKeZ",
@@ -72837,7 +72828,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T17:24:38.455Z"
+          "updatedAt": "2026-04-08T21:19:26.674Z"
         },
         {
           "id": "rec4uQdgEfyWZNeQ6",
@@ -72885,7 +72876,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T17:24:38.462Z"
+          "updatedAt": "2026-04-08T21:19:26.680Z"
         },
         {
           "id": "recgoXhArUbZTBKnC",
@@ -72915,7 +72906,7 @@
           "coordinates": null,
           "baseComposite": null,
           "tintWhite": false,
-          "updatedAt": "2026-03-11T17:24:38.464Z"
+          "updatedAt": "2026-04-08T21:19:26.681Z"
         }
       ]
     },
@@ -72924,7 +72915,25 @@
       "tableName": "16 - CABIN FEVER",
       "collectionNumber": 16,
       "collection_thumbnail": "./data/collections/cabin-fever/cabin-fever-thumb.jpg",
-      "curatedColors": [],
+      "curatedColors": [
+        "SC0002 COTTAGE COAL",
+        "SW7069 IRON ORE",
+        "SW7067 CITYSCAPE",
+        "SW3174 LENNOX HILL TAN",
+        "SC0001 COTTAGE LINEN",
+        "SW7729 EDAMAME",
+        "SW7726 LEMON VERBENA",
+        "SW6212 QUIETUDE",
+        "SW7699 RUSTIC CITY",
+        "SW6332 CORAL ISLAND",
+        "SW6306 CORDIAL",
+        "SW6135 ECRU",
+        "SW6242 BRACING BLUE",
+        "SW6243 DISTANCE",
+        "SW6186 DRIED THYME",
+        "SW9130 EVERGREEN FOG",
+        "SW6204 SEA SALT"
+      ],
       "coordinates": null,
       "colorFlex": true,
       "mockupId": "rustic-console",
@@ -73140,13 +73149,28 @@
       "tableName": "30 - STRIPES",
       "collectionNumber": 30,
       "collection_thumbnail": "./data/collections/stripes/stripes-thumb.jpg",
-      "curatedColors": [],
+      "curatedColors": [
+        "SC0002 COTTAGE COAL",
+        "SW7069 IRON ORE",
+        "SW7067 CITYSCAPE",
+        "SW3174 LENNOX HILL TAN",
+        "SC0001 COTTAGE LINEN",
+        "SW7729 EDAMAME",
+        "SW7726 LEMON VERBENA",
+        "SW6212 QUIETUDE",
+        "SW7699 RUSTIC CITY",
+        "SW6332 CORAL ISLAND",
+        "SW6306 CORDIAL",
+        "SW6135 ECRU",
+        "SW6242 BRACING BLUE",
+        "SW6243 DISTANCE",
+        "SW6186 DRIED THYME",
+        "SW9130 EVERGREEN FOG",
+        "SW6204 SEA SALT"
+      ],
       "coordinates": null,
       "colorFlex": true,
-      "mockup": "./data/mockups/English-Countryside-Bedroom-1-W60H40.png",
-      "mockupShadow": null,
-      "mockupWidthInches": 60,
-      "mockupHeightInches": 45,
+      "mockupId": "english-countryside-bedroom",
       "patterns": [
         {
           "id": "recS2xntrsgXpIcQi",
@@ -73305,7 +73329,7 @@
       ],
       "coordinates": null,
       "colorFlex": false,
-      "mockupId": "english-countryside-bedroom",
+      "mockupId": "firesplace-mantle",
       "patterns": [
         {
           "id": "rec2oOMSqDYOM3I6p",

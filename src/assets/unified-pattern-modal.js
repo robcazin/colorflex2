@@ -1060,7 +1060,7 @@
         
         deleteBtn.addEventListener('click', function() {
             if (confirm('🗑️ Delete "' + pattern.patternName + '"?\n\nThis action cannot be undone.')) {
-                deleteSavedPattern(pattern.id);
+                deleteSavedPattern(pattern);
                 document.getElementById('unifiedSavedPatternsModal').remove();
                 showSavedPatternsModal(); // Refresh modal
             }
@@ -1161,11 +1161,44 @@
     /**
      * Delete a saved pattern by ID
      */
-    function deleteSavedPattern(patternId) {
+    function deleteSavedPattern(patternRef) {
         try {
             var savedPatterns = JSON.parse(localStorage.getItem('colorflexSavedPatterns') || '[]');
-            var filteredPatterns = savedPatterns.filter(function(p) { return p.id !== patternId; });
-            localStorage.setItem('colorflexSavedPatterns', JSON.stringify(filteredPatterns));
+            var updatedPatterns = savedPatterns.slice();
+            var deleteIndex = -1;
+
+            if (patternRef && typeof patternRef === 'object') {
+                if (patternRef.savedEntryId) {
+                    deleteIndex = updatedPatterns.findIndex(function(p) {
+                        return p && p.savedEntryId && p.savedEntryId === patternRef.savedEntryId;
+                    });
+                }
+
+                // Legacy fallback for pre-savedEntryId entries
+                if (deleteIndex < 0) {
+                    deleteIndex = updatedPatterns.findIndex(function(p) {
+                        if (!p) return false;
+                        if (p.id !== patternRef.id) return false;
+                        if (patternRef.timestamp && p.timestamp === patternRef.timestamp) return true;
+                        if (patternRef.thumbnail && p.thumbnail === patternRef.thumbnail) return true;
+                        if (patternRef.colors && p.colors && JSON.stringify(p.colors) === JSON.stringify(patternRef.colors)) return true;
+                        return false;
+                    });
+                }
+
+                if (deleteIndex < 0 && patternRef.id) {
+                    deleteIndex = updatedPatterns.findIndex(function(p) { return p && p.id === patternRef.id; });
+                }
+            } else {
+                var patternId = String(patternRef || '');
+                deleteIndex = updatedPatterns.findIndex(function(p) { return p && p.id === patternId; });
+            }
+
+            if (deleteIndex >= 0) {
+                updatedPatterns.splice(deleteIndex, 1);
+            }
+
+            localStorage.setItem('colorflexSavedPatterns', JSON.stringify(updatedPatterns));
             
             // Update menu icon if it exists
             if (window.updateMenuIcon) {

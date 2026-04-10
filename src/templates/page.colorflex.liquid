@@ -171,9 +171,18 @@
 
   // Check if user has seen the welcome before
   const hasSeenWelcome = localStorage.getItem('colorflexWelcomeSeen');
+  const params = new URLSearchParams(window.location.search);
+  const source = (params.get('source') || '').toLowerCase();
+  const openedFromCartEdit =
+    source === 'cart' ||
+    source === 'cart_saved_pattern' ||
+    source === 'cart_edit' ||
+    source === 'colorflex_saved_patterns' ||
+    !!params.get('saved_pattern_id') ||
+    !!params.get('pattern_id');
 
   // Show modal only if first visit
-  if (!hasSeenWelcome) {
+  if (!hasSeenWelcome && !openedFromCartEdit) {
     modal.style.display = 'flex';
   }
 

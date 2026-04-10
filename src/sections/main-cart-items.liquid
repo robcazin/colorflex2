@@ -99,11 +99,48 @@
 
   .colorflex-cart-item .cart-item__media {
     position: relative;
+    width: 260px !important;
+    min-width: 260px !important;
   }
 
   .colorflex-cart-item .cart-item__image {
     border: 2px solid #d4af37;
     border-radius: 8px;
+  }
+
+  .colorflex-cart-item .cart-item__image-container {
+    width: 220px !important;
+    min-width: 220px !important;
+    max-width: 220px !important;
+  }
+
+  .colorflex-cart-thumb {
+    width: 220px !important;
+    min-width: 220px !important;
+    max-width: 220px !important;
+    height: 220px !important;
+    object-fit: cover;
+    border: 2px solid #d4af37;
+    border-radius: 8px;
+    display: block;
+  }
+
+  @media screen and (max-width: 749px) {
+    .colorflex-cart-item .cart-item__media {
+      width: 190px !important;
+      min-width: 190px !important;
+    }
+    .colorflex-cart-item .cart-item__image-container {
+      width: 170px !important;
+      min-width: 170px !important;
+      max-width: 170px !important;
+    }
+    .colorflex-cart-thumb {
+      width: 170px !important;
+      min-width: 170px !important;
+      max-width: 170px !important;
+      height: 170px !important;
+    }
   }
 
   /* Enhanced Cart Item Details Styling */
@@ -297,21 +334,21 @@
                           {% assign pattern_preview = item.properties['_pattern_preview'] %}
                           {% if pattern_preview and pattern_preview != blank %}
                             {% comment %} Show generated pattern preview {% endcomment %}
-                            <img src="{{ pattern_preview }}" 
-                                 width="150"
-                                 height="150"
-                                 style="width: 150px; height: 150px; object-fit: cover; border: 2px solid #d4af37; border-radius: 8px;"
+                            <img src="{{ pattern_preview }}"
+                                 class="cart-item__image colorflex-cart-thumb"
+                                 width="220"
+                                 height="220"
                                  alt="Custom {{ item.properties['Pattern Name'] | default: 'ColorFlex' }} Pattern"
                                  loading="lazy">
                           {% else %}
                             {% comment %} Real img required: global-cart-restoration.js sets src from localStorage (Thumbnail Key). Div-only placeholder had no img to update. {% endcomment %}
                             <img
-                              class="cart-item__image colorflex-cart-thumb-target"
                               src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
                               data-thumbnail-key="{{ item.properties['Thumbnail Key'] | escape }}"
-                              width="150"
-                              height="150"
-                              style="width: 150px; height: 150px; object-fit: cover; border: 2px solid #d4af37; border-radius: 8px; background: #374151;"
+                              width="220"
+                              height="220"
+                              style="background: #374151;"
+                              class="cart-item__image colorflex-cart-thumb-target colorflex-cart-thumb"
                               alt="Custom {% if pattern_name != blank %}{{ pattern_name | escape }}{% else %}ColorFlex{% endif %} pattern"
                               loading="lazy">
                           {% endif %}
@@ -501,9 +538,22 @@
                               <div class="product-option">
                                 <dt>{{ property.first }}:</dt>
                                 <dd>
-                                  {%- if property.last contains '/uploads/' -%}
+                                  {%- assign property_value = property.last | strip -%}
+                                  {%- if property.first == 'pattern_proof_url' and property_value != blank -%}
+                                    <a href="{{ property_value }}" class="link" target="_blank" rel="noopener">
+                                      Open full pattern proof
+                                    </a>
+                                  {%- elsif property.first == 'proof_with_info_url' and property_value != blank -%}
+                                    <a href="{{ property_value }}" class="link" target="_blank" rel="noopener">
+                                      Open full pattern proof
+                                    </a>
+                                  {%- elsif property_value contains '/uploads/' -%}
                                     <a href="{{ property.last }}" class="link" target="_blank">
                                       {{ property.last | split: '/' | last }}
+                                    </a>
+                                  {%- elsif property_value contains 'http://' or property_value contains 'https://' -%}
+                                    <a href="{{ property_value }}" class="link" target="_blank" rel="noopener">
+                                      {{ property_value }}
                                     </a>
                                   {%- else -%}
                                     {{ property.last }}

@@ -55,3 +55,22 @@ Answer **y** when prompted. That single run is enough for the deployment.
 - **Theme target:** The script is set to theme **#150150381799** (“Updated copy of Sense”) on **f63bae-86.myshopify.com**. To change store or theme, edit the script or use Shopify config.
 - **Never run** `shopify theme push` without `--nodelete` from the repo root unless you intend to delete remote-only files.
 - **Help:** Run `./deploy-shopify-cli.sh help` (or no argument) to see all options.
+
+---
+
+## Recent ColorFlex patch deploy set (April 2026)
+
+For recent ColorFlex runtime/UI fixes, this is the safe targeted deploy sequence after `npm run build`:
+
+```bash
+./deploy-shopify-cli.sh only assets/color-flex-core.min.js
+./deploy-shopify-cli.sh only assets/color-flex-furniture.min.js
+./deploy-shopify-cli.sh only assets/color-flex-clothing.min.js
+./deploy-shopify-cli.sh only assets/unified-pattern-modal.js
+```
+
+Use this targeted set for updates like:
+
+- My Designs save/delete behavior fixes
+- chameleon icon placement/stability fixes
+- welcome modal logic or return-flow behavior that depends on runtime assets

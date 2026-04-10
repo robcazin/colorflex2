@@ -168,6 +168,27 @@ You should see images for each line that has `_pattern_preview`.
 
 ---
 
+## April 2026 stability notes (ColorFlex UI + My Designs)
+
+These changes are live and documented here so expected behavior is clear for managers and QA:
+
+- `pattern_preview` is now intended as a manager-facing click-through link back into ColorFlex editor context (not a duplicate image URL).
+- `_pattern_preview` remains the image URL used for visual preview rendering in admin/cart contexts.
+- `pattern_proof_url` is the full proof URL line-item property for high-resolution proof viewing.
+- Welcome modal is auto-suppressed when returning from cart/edit contexts so users can continue editing immediately.
+- The chameleon "My Designs" icon is pinned in a fixed top-right position on ColorFlex pages to avoid nav-flow layout glitches.
+- My Designs deletion now targets one saved entry instance at a time (instead of bulk-removing all entries that share a pattern ID).
+
+### QA checklist for My Designs duplicate saves
+
+1. Save the same pattern twice with different colors.
+2. Open **My Designs**.
+3. Delete only one of the two entries.
+4. Confirm the other entry remains.
+5. Re-open page and verify persistence after refresh.
+
+---
+
 ## Related files in this repo
 
 | Path | Role |
