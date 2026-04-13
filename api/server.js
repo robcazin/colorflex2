@@ -32,19 +32,6 @@ app.set('trust proxy', 1);
 // Middleware
 app.use(express.json({ limit: '10mb' }));
 
-// #region agent log — H-C1/C2/C3: log incoming Origin vs allowed list on every API request
-app.use('/api/', function(req, res, next) {
-    const origin = req.headers['origin'];
-    if (origin) {
-        const rawEnv = process.env.ALLOWED_ORIGINS || '';
-        const allowed = rawEnv.split(',').map(function(s) { return s.trim(); }).filter(Boolean);
-        const match = allowed.includes(origin);
-        console.log('[CORS-DEBUG] origin="' + origin + '" allowed=' + JSON.stringify(allowed) + ' match=' + match);
-    }
-    next();
-});
-// #endregion
-
 app.use(cors({
     origin: process.env.ALLOWED_ORIGINS?.split(',').map(s => s.trim()).filter(Boolean) || ['https://your-shopify-store.myshopify.com'],
     credentials: true
