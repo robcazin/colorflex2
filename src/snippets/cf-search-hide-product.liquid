@@ -1,0 +1,25 @@
+{% comment %}Outputs "1" to hide product from wallpaper search. Pass: product.{% endcomment %}
+{%- assign pt = product.type | default: '' | downcase -%}
+{%- assign tt = product.title | default: '' | downcase -%}
+{%- assign vn = product.vendor | default: '' | downcase -%}
+{%- if product.tags contains 'hidden-search'
+  or pt contains 'clothing'
+  or pt contains 'furniture'
+  or pt contains 'fabric'
+  or pt contains 'bassett'
+  or vn contains 'bassett'
+  or tt contains 'furniture'
+  or tt contains 'clothing'
+  or tt contains 'bassett'
+  or tt contains 'fabric'
+  or tt contains '.fur'
+  or tt contains 'fur-'
+  or tt contains ' fur'
+  or tt contains '.clo'
+  or tt contains 'clo-'
+  or tt contains ' clo'
+  or tt contains '.bassett'
+  or tt contains 'bassett-'
+  or tt contains ' bassett'
+  or tt contains ' fabric'
+-%}1{%- endif -%}

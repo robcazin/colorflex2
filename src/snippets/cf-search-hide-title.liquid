@@ -1,0 +1,17 @@
+{% comment %}Outputs "1" to hide from wallpaper search. Pass: text (string).{% endcomment %}
+{%- assign t = text | default: '' | downcase -%}
+{%- if t contains 'furniture'
+  or t contains 'clothing'
+  or t contains 'bassett'
+  or t contains 'fabric'
+  or t contains '.fur'
+  or t contains 'fur-'
+  or t contains ' fur'
+  or t contains '.clo'
+  or t contains 'clo-'
+  or t contains ' clo'
+  or t contains '.bassett'
+  or t contains 'bassett-'
+  or t contains ' bassett'
+  or t contains ' fabric'
+-%}1{%- endif -%}

@@ -45,6 +45,7 @@
       "previous": "Previous page"
     },
     "search": {
+      "title": "Search results",
       "search": "Search",
       "reset": "Clear search term"
     },

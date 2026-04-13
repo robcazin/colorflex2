@@ -12,36 +12,41 @@
   {%- assign visible_articles_count = 0 -%}
 
   {%- for query in predictive_search.resources.queries -%}
-    {%- assign text_down = query.text | downcase -%}
-    {%- unless text_down contains 'furniture' or text_down contains 'clothing' or text_down contains '.fur' or text_down contains 'fur-' or text_down contains ' fur' -%}
+    {%- capture cf_hide -%}{%- render 'cf-search-hide-title', text: query.text -%}{%- endcapture -%}
+    {%- assign cf_hide = cf_hide | strip -%}
+    {%- unless cf_hide == '1' -%}
       {%- assign visible_queries_count = visible_queries_count | plus: 1 -%}
     {%- endunless -%}
   {%- endfor -%}
 
   {%- for collection in predictive_search.resources.collections -%}
-    {%- assign title_down = collection.title | downcase -%}
-    {%- unless title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+    {%- capture cf_hide -%}{%- render 'cf-search-hide-title', text: collection.title -%}{%- endcapture -%}
+    {%- assign cf_hide = cf_hide | strip -%}
+    {%- unless cf_hide == '1' -%}
       {%- assign visible_collections_count = visible_collections_count | plus: 1 -%}
     {%- endunless -%}
   {%- endfor -%}
 
   {%- for page in predictive_search.resources.pages -%}
-    {%- assign title_down = page.title | downcase -%}
-    {%- unless title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+    {%- capture cf_hide -%}{%- render 'cf-search-hide-title', text: page.title -%}{%- endcapture -%}
+    {%- assign cf_hide = cf_hide | strip -%}
+    {%- unless cf_hide == '1' -%}
       {%- assign visible_pages_count = visible_pages_count | plus: 1 -%}
     {%- endunless -%}
   {%- endfor -%}
 
   {%- for article in predictive_search.resources.articles -%}
-    {%- assign title_down = article.title | downcase -%}
-    {%- unless title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+    {%- capture cf_hide -%}{%- render 'cf-search-hide-title', text: article.title -%}{%- endcapture -%}
+    {%- assign cf_hide = cf_hide | strip -%}
+    {%- unless cf_hide == '1' -%}
       {%- assign visible_articles_count = visible_articles_count | plus: 1 -%}
     {%- endunless -%}
   {%- endfor -%}
 
   {%- for product in predictive_search.resources.products -%}
-    {%- assign product_type_down = product.type | downcase -%}
-    {%- unless product.tags contains 'hidden-search' or product_type_down contains 'clothing' or product_type_down contains 'furniture' -%}
+    {%- capture cf_hide -%}{%- render 'cf-search-hide-product', product: product -%}{%- endcapture -%}
+    {%- assign cf_hide = cf_hide | strip -%}
+    {%- unless cf_hide == '1' -%}
       {%- assign visible_products_count = visible_products_count | plus: 1 -%}
     {%- endunless -%}
   {%- endfor -%}
@@ -72,8 +77,9 @@
           aria-labelledby="predictive-search-queries"
         >
           {%- for query in predictive_search.resources.queries -%}
-            {%- assign text_down = query.text | downcase -%}
-            {%- if text_down contains 'furniture' or text_down contains 'clothing' or text_down contains '.fur' or text_down contains 'fur-' or text_down contains ' fur' -%}
+            {%- capture cf_hide -%}{%- render 'cf-search-hide-title', text: query.text -%}{%- endcapture -%}
+            {%- assign cf_hide = cf_hide | strip -%}
+            {%- if cf_hide == '1' -%}
               {% continue %}
             {%- endif -%}
             <li
@@ -95,8 +101,9 @@
             </li>
           {%- endfor -%}
           {%- for collection in predictive_search.resources.collections -%}
-            {%- assign title_down = collection.title | downcase -%}
-            {%- if title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+            {%- capture cf_hide -%}{%- render 'cf-search-hide-title', text: collection.title -%}{%- endcapture -%}
+            {%- assign cf_hide = cf_hide | strip -%}
+            {%- if cf_hide == '1' -%}
               {% continue %}
             {%- endif -%}
             <li
@@ -130,8 +137,9 @@
           aria-labelledby="predictive-search-pages-desktop"
         >
           {%- for page in predictive_search.resources.pages -%}
-            {%- assign title_down = page.title | downcase -%}
-            {%- if title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+            {%- capture cf_hide -%}{%- render 'cf-search-hide-title', text: page.title -%}{%- endcapture -%}
+            {%- assign cf_hide = cf_hide | strip -%}
+            {%- if cf_hide == '1' -%}
               {% continue %}
             {%- endif -%}
             <li
@@ -148,8 +156,9 @@
             </li>
           {%- endfor -%}
           {%- for article in predictive_search.resources.articles -%}
-            {%- assign title_down = article.title | downcase -%}
-            {%- if title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+            {%- capture cf_hide -%}{%- render 'cf-search-hide-title', text: article.title -%}{%- endcapture -%}
+            {%- assign cf_hide = cf_hide | strip -%}
+            {%- if cf_hide == '1' -%}
               {% continue %}
             {%- endif -%}
             <li
@@ -191,8 +200,9 @@
               aria-labelledby="predictive-search-products"
             >
               {%- for product in predictive_search.resources.products -%}
-                {%- assign product_type_down = product.type | downcase -%}
-                {%- if product.tags contains 'hidden-search' or product_type_down contains 'clothing' or product_type_down contains 'furniture' -%}
+                {%- capture cf_hide -%}{%- render 'cf-search-hide-product', product: product -%}{%- endcapture -%}
+                {%- assign cf_hide = cf_hide | strip -%}
+                {%- if cf_hide == '1' -%}
                   {% continue %}
                 {%- endif -%}
                 <li
@@ -248,8 +258,9 @@
               aria-labelledby="predictive-search-pages-mobile"
             >
               {%- for page in predictive_search.resources.pages -%}
-                {%- assign title_down = page.title | downcase -%}
-                {%- if title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+                {%- capture cf_hide -%}{%- render 'cf-search-hide-title', text: page.title -%}{%- endcapture -%}
+                {%- assign cf_hide = cf_hide | strip -%}
+                {%- if cf_hide == '1' -%}
                   {% continue %}
                 {%- endif -%}
                 <li
@@ -266,8 +277,9 @@
                 </li>
               {%- endfor -%}
               {%- for article in predictive_search.resources.articles -%}
-                {%- assign title_down = article.title | downcase -%}
-                {%- if title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' -%}
+                {%- capture cf_hide -%}{%- render 'cf-search-hide-title', text: article.title -%}{%- endcapture -%}
+                {%- assign cf_hide = cf_hide | strip -%}
+                {%- if cf_hide == '1' -%}
                   {% continue %}
                 {%- endif -%}
                 <li

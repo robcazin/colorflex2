@@ -4,13 +4,15 @@
     {% for item in search.results %}
       {% assign hide_item = false %}
       {% if item.object_type == 'product' %}
-        {% assign product_type_down = item.product_type | downcase %}
-        {% if item.tags contains 'hidden-search' or product_type_down contains 'clothing' or product_type_down contains 'furniture' %}
+        {% capture cf_hide %}{% render 'cf-search-hide-product', product: item %}{% endcapture %}
+        {% assign cf_hide = cf_hide | strip %}
+        {% if cf_hide == '1' %}
           {% assign hide_item = true %}
         {% endif %}
       {% else %}
-        {% assign title_down = item.title | downcase %}
-        {% if title_down contains 'furniture' or title_down contains 'clothing' or title_down contains '.fur' or title_down contains 'fur-' or title_down contains ' fur' %}
+        {% capture cf_hide %}{% render 'cf-search-hide-title', text: item.title %}{% endcapture %}
+        {% assign cf_hide = cf_hide | strip %}
+        {% if cf_hide == '1' %}
           {% assign hide_item = true %}
         {% endif %}
       {% endif %}
