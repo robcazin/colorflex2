@@ -2,6 +2,7 @@
 {%- assign pt = product.type | default: '' | downcase -%}
 {%- assign tt = product.title | default: '' | downcase -%}
 {%- assign vn = product.vendor | default: '' | downcase -%}
+{%- assign tags_down = product.tags | join: ' ' | downcase -%}
 {%- if product.tags contains 'hidden-search'
   or pt contains 'clothing'
   or pt contains 'furniture'
@@ -18,8 +19,15 @@
   or tt contains '.clo'
   or tt contains 'clo-'
   or tt contains ' clo'
+  or tt contains '-clo'
   or tt contains '.bassett'
   or tt contains 'bassett-'
   or tt contains ' bassett'
   or tt contains ' fabric'
+  or tags_down contains 'fur 1'
+  or tags_down contains 'fur-1'
+  or tags_down contains 'fur_1'
+  or tags_down contains '.fur'
+  or tags_down contains '-clo'
+  or tags_down contains '.clo'
 -%}1{%- endif -%}
