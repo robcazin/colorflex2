@@ -74,3 +74,38 @@ Use this targeted set for updates like:
 - My Designs save/delete behavior fixes
 - chameleon icon placement/stability fixes
 - welcome modal logic or return-flow behavior that depends on runtime assets
+
+---
+
+## Content page updates (Trade + Contact)
+
+For static content/style page updates, deploy only the touched template/section files:
+
+```bash
+./deploy-shopify-cli.sh only templates/page.trade-program.liquid
+./deploy-shopify-cli.sh only sections/main-page.liquid
+./deploy-shopify-cli.sh only sections/contact-form.liquid
+```
+
+Notes:
+
+- Current VIP Trade page primary CTA routes to `/pages/contact` (not a direct support mailbox).
+- This is intentional until a dedicated support inbox is confirmed.
+
+---
+
+## Cursor agent: build then deploy
+
+The repo includes **`.cursor/rules/deploy-after-build.mdc`** (always-on for Cursor). Unless the project owner opts out, agents should **deploy right after a production webpack build** (for example `npm run build` or `npm run build:all`):
+
+```bash
+npm run theme:push:changed:assets
+```
+
+That pushes git-changed files under `src/assets/` (including the minified ColorFlex bundles). If you also edited Liquid, JSON templates, or sections outside assets, run **`npm run theme:push:changed`** or a targeted `./deploy-shopify-cli.sh only …` as appropriate.
+
+---
+
+## Coordinates: “Back to Pattern” control (April 2026)
+
+When the shopper picks a **coordinate** row, **`#backToPatternLink`** is appended inside **`#coordinatesContainer`**. Runtime code in **`src/CFM.js`** measures the first **`.coordinate-item`** and places the link **about 30px to its left**, **vertically centered** on that thumbnail (`position: absolute` inside the already `position: relative` container, with a **`ResizeObserver`** to keep alignment when the block reflows). Shared styles are in **`src/styles/CFM-merged.css`** (merged into **`src/assets/color-flex-core.min.css`**). After changing `CFM.js` or coordinate-related CSS, run **`npm run build:all`** (or the relevant mode build) and deploy the updated **`color-flex-*.min.js`** / core CSS using the commands above.

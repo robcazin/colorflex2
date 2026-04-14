@@ -1,5 +1,8 @@
 # Multi-Step Product Configuration Flow
 
+> Status note (April 2026): This document is architecture/reference material.
+> Production line-item previews currently use hosted URLs (Shopify Files), not inline base64 preview strings.
+
 ## Architecture Overview
 
 ### Flow Design
@@ -22,7 +25,7 @@ const savedPattern = {
   name: 'Geometric Waves',
   collection: 'geometry',
   colors: ['SW-7006', 'SW-6258', 'SW-0072'],
-  patternPreview: 'base64-image-data'
+  patternPreview: 'https://cdn.shopify.com/.../colorflex-preview.jpg'
 };
 ```
 
@@ -88,7 +91,7 @@ const cartItem = {
     '_pattern_name': 'Geometric Waves',
     '_pattern_collection': 'geometry',
     '_custom_colors': 'SW-7006,SW-6258,SW-0072',
-    '_pattern_preview': 'base64-thumbnail-data',
+    '_pattern_preview': 'https://cdn.shopify.com/.../colorflex-preview.jpg',
     
     // Material selection
     '_material_category': 'wallpaper',

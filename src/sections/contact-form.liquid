@@ -1,12 +1,121 @@
-<div class="page-width">
-  {% form 'contact' %}
-    {% if form.posted_successfully? %}<p>{{ 'templates.contact.form.post_success' | t }}</p>{% endif %}
-    <input type="text" name="contact[name]" placeholder="Name">
-    <input type="email" name="contact[email]" placeholder="Email">
-    <textarea name="contact[body]" placeholder="Message"></textarea>
-    <button type="submit">{{ 'templates.contact.form.send' | t }}</button>
-  {% endform %}
+<style>
+  .sc-contact-form-wrap {
+    max-width: 1120px;
+    margin: 0 auto 2.5rem;
+    padding: 0 1.25rem;
+  }
+
+  .sc-contact-form-card {
+    background: rgba(0, 0, 0, 0.24);
+    border: 1px solid rgba(140, 120, 60, 0.35);
+    border-radius: 14px;
+    padding: 1.4rem 1.2rem;
+  }
+
+  .sc-contact-form-title {
+    margin: 0 0 1rem;
+    color: #ead8a5;
+    font-family: 'IM Fell English', serif;
+    font-size: 1.55rem;
+  }
+
+  .sc-contact-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.9rem;
+  }
+
+  .sc-contact-form-field {
+    width: 100%;
+    border: 1px solid rgba(212, 175, 55, 0.38);
+    border-radius: 9px;
+    background: rgba(13, 16, 22, 0.86);
+    color: #f3ead4;
+    font-family: 'Special Elite', monospace;
+    font-size: 1rem;
+    padding: 0.75rem 0.85rem;
+    box-sizing: border-box;
+  }
+
+  .sc-contact-form-field::placeholder {
+    color: #a9adba;
+  }
+
+  .sc-contact-form-message {
+    margin-top: 0.9rem;
+    min-height: 170px;
+    resize: vertical;
+  }
+
+  .sc-contact-form-actions {
+    margin-top: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+
+  .sc-contact-form-btn {
+    border: 0;
+    border-radius: 999px;
+    padding: 0.78rem 1.25rem;
+    background: linear-gradient(135deg, #d4af37 0%, #b7922a 100%);
+    color: #101319;
+    font-family: 'Special Elite', monospace;
+    font-weight: bold;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 8px 18px rgba(212, 175, 55, 0.24);
+  }
+
+  .sc-contact-form-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .sc-contact-status {
+    margin: 0;
+    color: #cde7c8;
+    font-size: 0.95rem;
+  }
+
+  @media screen and (max-width: 749px) {
+    .sc-contact-form-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="sc-contact-form-wrap">
+  <div class="sc-contact-form-card">
+    <h2 class="sc-contact-form-title">Send us a message</h2>
+    {% form 'contact' %}
+      {% if form.posted_successfully? %}
+        <p class="sc-contact-status">{{ 'templates.contact.form.post_success' | t }}</p>
+      {% endif %}
+      <div class="sc-contact-form-grid">
+        <input class="sc-contact-form-field" type="text" name="contact[name]" placeholder="Name">
+        <input class="sc-contact-form-field" type="email" name="contact[email]" placeholder="Email" required>
+      </div>
+      <textarea class="sc-contact-form-field sc-contact-form-message" name="contact[body]" placeholder="Message" required></textarea>
+      <div class="sc-contact-form-actions">
+        <button class="sc-contact-form-btn" type="submit">{{ 'templates.contact.form.send' | t }}</button>
+      </div>
+    {% endform %}
+  </div>
 </div>
+<script>
+  (function() {
+    var params = new URLSearchParams(window.location.search);
+    var subject = params.get('subject');
+    if (subject) {
+      var textarea = document.querySelector('.sc-contact-form-message');
+      if (textarea) {
+        textarea.value = subject + '\n\n';
+        textarea.focus();
+        textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+      }
+    }
+  })();
+</script>
 {% schema %}
 { "name": "Contact form", "tag": "section", "settings": [] }
 {% endschema %}

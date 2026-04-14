@@ -1,5 +1,14 @@
 # CLAUDE.md - Quick Start Guide for New Claude Sessions
 
+> Legacy context warning (April 2026): this file contains historical notes from earlier ColorFlex phases.
+> Some sections reference older behaviors (including base64 `_pattern_preview` examples and `*-bu.js` assumptions)
+> that are no longer the canonical runtime path.
+>
+> Use these docs first for current behavior:
+> - `docs/COLORFLEX_MANAGER_PREVIEW_STEPS.md`
+> - `docs/DEPLOYMENT.md`
+> - `api/DEPLOYMENT.md`
+
 ## 🚨 **CRITICAL: Read Before Making Changes**
 
 This is a **stable, working** ColorFlex system with recent critical bug fixes. DO NOT make changes without understanding the current state.

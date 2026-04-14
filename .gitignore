@@ -29,6 +29,9 @@ src/scripts/cf-dl.js.backup*
 config/shopify.json
 config/local.env
 
+# Local IDE / agent (Continue, etc.)
+.continue/
+
 # OS and editors
 .DS_Store
 *.swp

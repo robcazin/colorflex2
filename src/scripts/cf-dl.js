@@ -75,6 +75,18 @@ if (!airtablePat) {
 const airtable = new Airtable({ apiKey: airtablePat });
 const base = airtable.base(process.env.AIRTABLE_BASE_ID || 'appsywaKYiyKQTnl3');
 
+// #region agent log
+/** NDJSON debug ingest (session fb7100); no secrets */
+function agentDebugLog(payload) {
+    const body = Object.assign({ sessionId: 'fb7100', timestamp: Date.now() }, payload);
+    fetch('http://127.0.0.1:7851/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'fb7100' },
+        body: JSON.stringify(body),
+    }).catch(() => {});
+}
+// #endregion
+
 function cleanPatternName(str) {
     try {
         // Input validation and sanitization
@@ -891,16 +903,18 @@ async function downloadImage(url, destPath, maxDimension = 2800, retries = 3, fo
     }
 }
 
-function parseFileName(filename, layerIndex, patternNameOverride = null) {
+function parseFileName(filename, layerIndex, patternNameOverride = null, quiet = false) {
     const withoutExtension = filename.replace(/\.jpg$/i, '');
     const parts = withoutExtension.split(" - ").filter(Boolean);
 
-    console.log(`Parsing filename: ${filename}, patternNameOverride: ${patternNameOverride}`);
-    console.log(`Parts: ${parts}`);
+    if (!quiet) {
+        console.log(`Parsing filename: ${filename}, patternNameOverride: ${patternNameOverride}`);
+        console.log(`Parts: ${parts}`);
+    }
 
     // Use patternNameOverride if provided, otherwise fall back to the second part
     const patternName = patternNameOverride || (parts.length > 1 ? cleanPatternName(parts[1]) : `Pattern${layerIndex + 1}`);
-    console.log(`Pattern name: ${patternName}`);
+    if (!quiet) console.log(`Pattern name: ${patternName}`);
 
     // Layer label is the third part (index 2)
     const layerLabelRaw = parts.length > 2 ? parts[2] : `Unnamed Layer`;
@@ -913,7 +927,7 @@ function parseFileName(filename, layerIndex, patternNameOverride = null) {
     // Special case for shadows
     if (layerLabelRaw.toUpperCase().includes("ISSHADOW") || layerLabelRaw.toUpperCase().includes("SHADOW")) {
         layerLabel = "Shadows";
-        console.log(`Applied shadow special case: ${layerLabel}`);
+        if (!quiet) console.log(`Applied shadow special case: ${layerLabel}`);
     }
 
     // Construct filename with pattern name and raw layer label
@@ -923,7 +937,7 @@ function parseFileName(filename, layerIndex, patternNameOverride = null) {
         `layer-${layerIndex + 1}`
     ].filter(Boolean).join('_').replace(/_+/g, '_');
 
-    console.log(`Result: Pattern: ${patternName}, Label: ${layerLabel}, File: ${normalizedFileName}`);
+    if (!quiet) console.log(`Result: Pattern: ${patternName}, Label: ${layerLabel}, File: ${normalizedFileName}`);
     return { patternName, layerFileName: normalizedFileName, layerLabel };
 }
 
@@ -1254,8 +1268,24 @@ const collections = await getCollectionsFromAirtable();
         console.error("Error fetching coordinate records:", error);
     }
 
-    const coordinateData = coordinateRecords.map(record => {
+    const agentCoordNameSamples = [];
+
+    /** One row from 21 - COORDINATES → JSON paths (same shape as entries in coordinateData). */
+    function coordPayloadFrom21Record(record) {
+        if (!record) return null;
         const rawName = record.get('NAME') || '';
+        // #region agent log
+        if (agentCoordNameSamples.length < 24) {
+            const keys = record.fields && typeof record.fields === 'object' ? Object.keys(record.fields) : [];
+            const nameLikeKeys = keys.filter((k) => /name/i.test(k));
+            agentCoordNameSamples.push({
+                idTail: record.id ? String(record.id).slice(-8) : '',
+                hasNAME: record.get('NAME') != null && String(record.get('NAME')).trim() !== '',
+                nameLikeKeys,
+                rawNameSlice: String(rawName).slice(0, 60),
+            });
+        }
+        // #endregion
         const filename = rawName
             .toLowerCase()
             .replace(/[^a-z0-9\s-.]/g, '')
@@ -1265,23 +1295,415 @@ const collections = await getCollectionsFromAirtable();
             || '';
         const thumbnailUrl = record.get('THUMBNAIL')?.[0]?.url || '';
         const layerAttachments = record.get('LAYER SEPARATIONS') || [];
-    
-        // Process all layers in LAYER SEPARATIONS (store JSON paths for collections.json)
         const layerPaths = layerAttachments.map((attachment, index) => {
-            const layerFilename = cleanLayerFilename(attachment.filename || `${filename}_layer-${index + 1}.jpg`, filename, index);
+            const layerFilename = cleanLayerFilename(
+                attachment.filename || `${filename}_layer-${index + 1}.jpg`,
+                filename,
+                index
+            );
             return JSON_PATH_PREFIX + 'coordinates/layers/' + layerFilename;
         });
-    
+        const thumbnailPath = thumbnailUrl ? (JSON_PATH_PREFIX + 'coordinates/thumbnails/' + filename + '.jpg') : null;
+        if (!filename || !thumbnailPath || !layerPaths.length) return null;
         console.log(`Coordinate record: rawName="${rawName}", cleaned="${filename}", layers=`, layerPaths);
-    
-        return {
-            filename,
-            thumbnailPath: thumbnailUrl ? (JSON_PATH_PREFIX + 'coordinates/thumbnails/' + filename + '.jpg') : null,
-            layerPaths: layerPaths.length > 0 ? layerPaths : null
-        };
-    }).filter(coord => coord.thumbnailPath && coord.layerPaths && coord.layerPaths.length > 0);
+        return { filename, thumbnailPath, layerPaths };
+    }
+
+    const coordinateData = coordinateRecords
+        .map((record) => coordPayloadFrom21Record(record))
+        .filter((coord) => coord && coord.thumbnailPath && coord.layerPaths && coord.layerPaths.length > 0);
+
+    // #region agent log
+    agentDebugLog({
+        location: 'cf-dl.js:fetchCollectionData:coords',
+        message: '21-COORDINATES NAME field sampling',
+        hypothesisId: 'H5',
+        data: { coordinateRecordCount: coordinateRecords.length, payloadCount: coordinateData.length, samples: agentCoordNameSamples },
+    });
+    // #endregion
     
     console.log("Processed coordinate data:", coordinateData);
+
+    function cleanCoordAttachmentSlug(rawFilename) {
+        return String(rawFilename || '')
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-.]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .replace(/\.(jpg|jpeg|png|webp)$/i, '')
+            .replace(/^-+|-+$/g, '');
+    }
+
+    function buildCoordSlugCandidates(rawFilename) {
+        const base = cleanCoordAttachmentSlug(rawFilename);
+        const out = [];
+        const push = (s) => {
+            if (s && !out.includes(s)) out.push(s);
+        };
+        push(base);
+        let s = base;
+        for (let i = 0; i < 4; i++) {
+            const next = s.replace(/-\d+x\d+$/i, '').replace(/-+$/g, '');
+            if (next === s) break;
+            s = next;
+            push(s);
+        }
+        const stripLeadingPasses = (str) => {
+            let t = str;
+            for (let j = 0; j < 5; j++) {
+                let nx = null;
+                const mNumHyphen = t.match(/^\d{2}-\d{3}-(.+)$/);
+                if (mNumHyphen) nx = mNumHyphen[1];
+                if (!nx) {
+                    // Variant SKUs: "128ABD - FARMHOUSE PLAID - …" (letters after digits can exceed 5)
+                    const mAlnum = t.match(/^\d+[a-z]{0,10}-(.+)$/i);
+                    if (mAlnum && mAlnum[1].length >= 6) nx = mAlnum[1];
+                }
+                if (!nx || nx === t) break;
+                t = nx;
+                push(t);
+            }
+        };
+        stripLeadingPasses(s);
+        stripLeadingPasses(base);
+        const rawNoExt = String(rawFilename || '').replace(/\.(jpg|jpeg|png|webp)$/i, '');
+        const parts = rawNoExt.split(/\s*-\s*/).map((p) => p.trim()).filter(Boolean);
+        if (parts.length >= 3) {
+            push(cleanCoordAttachmentSlug(parts.slice(1).join(' - ')));
+        }
+        if (parts.length >= 4) {
+            push(cleanCoordAttachmentSlug(parts.slice(2).join(' - ')));
+        }
+        // Leading token is digits (+ short letters) only, e.g. "130 - UTICA TICKING - …" (not "05-105 - …")
+        if (parts.length >= 2) {
+            const head = parts[0].replace(/\s/g, '');
+            if (/^\d+[a-z]*$/i.test(head) && head.length <= 12) {
+                push(cleanCoordAttachmentSlug(parts.slice(1).join(' - ')));
+            }
+        }
+        // "124AB - FARMHOUSE TICKING SM - IRON ORE ON LINEN.jpg" → 21 - COORDINATES NAME is often just the product segment
+        if (parts.length >= 3) {
+            const head = parts[0].replace(/\s/g, '');
+            if (/^\d+[a-z]*$/i.test(head) && head.length <= 12) {
+                push(cleanCoordAttachmentSlug(parts[1]));
+            }
+        }
+        return out;
+    }
+
+    /** Filename / slug → { filename, thumbnailPath, layerPaths, sourceCollection } for COORDINATES attachments that match real pattern assets anywhere. */
+    const crossAttachmentIndex = new Map();
+    /** Pattern file slug (e.g. a-little-birdie-told-me) → same payload, for prefix matches on long swatch names. */
+    const crossPatternSlugIndex = new Map();
+
+    function deriveParsedPatternNameForCrossIndex(record, baseName) {
+        const rawName = record.get('NAME') || `${baseName}-product`;
+        let parsedPatternName;
+        try {
+            const numberNameMatch = rawName.match(/^\s*(\d+[-a-z\d]*)\s*-\s*(.+)$/i);
+            const nameToClean = numberNameMatch ? numberNameMatch[2].trim() : rawName;
+            parsedPatternName = cleanPatternName(nameToClean);
+            if (!parsedPatternName || parsedPatternName === 'Unnamed Pattern') {
+                parsedPatternName = `Pattern ${record.id.substring(0, 8)}`;
+            }
+        } catch {
+            parsedPatternName = `Pattern ${record.id.substring(0, 8)}`;
+        }
+        const layerAttachments = record.get('LAYER SEPARATIONS') || [];
+        if (
+            String(parsedPatternName).toLowerCase() === String(baseName).toLowerCase() &&
+            layerAttachments.length > 0
+        ) {
+            try {
+                const firstLayer = layerAttachments[0];
+                if (firstLayer && firstLayer.filename) {
+                    const firstLayerParts = firstLayer.filename.split(' - ');
+                    if (firstLayerParts.length > 1 && firstLayerParts[0].match(/^\d+[-A-Za-z]*$/)) {
+                        const fallbackName = cleanPatternName(firstLayerParts[1]);
+                        if (fallbackName && fallbackName !== 'Unnamed Pattern') {
+                            parsedPatternName = fallbackName;
+                        }
+                    }
+                }
+            } catch {
+                /* keep parsedPatternName */
+            }
+        }
+        return { parsedPatternName, layerAttachments };
+    }
+
+    async function fillCrossCollectionAttachmentIndex() {
+        const skipTables = new Set(['21 - COORDINATES']);
+        const addKeysForFile = (attachmentFilename, payload) => {
+            if (!attachmentFilename || typeof attachmentFilename !== 'string') return;
+            for (const k of buildCoordSlugCandidates(attachmentFilename)) {
+                if (k.length < 4) continue;
+                if (!crossAttachmentIndex.has(k)) crossAttachmentIndex.set(k, payload);
+            }
+        };
+
+        for (const coll of collections) {
+            const tableName = coll.tableName || coll.name;
+            if (!tableName || skipTables.has(tableName)) continue;
+            const baseName =
+                tableName.split(' - ')[1]?.toLowerCase().replace(/\s+/g, '-') ||
+                tableName.toLowerCase().replace(/\s+/g, '-');
+            try {
+                const allRecords = await base(tableName).select({ filterByFormula: '{ACTIVE} = 1' }).all();
+                const coordinateIds = new Set();
+                for (const r of allRecords) {
+                    const cf = r.get('COORDINATES');
+                    if (cf && Array.isArray(cf)) {
+                        cf.forEach((c) => {
+                            if (c && c.id) coordinateIds.add(c.id);
+                        });
+                    }
+                }
+                for (const record of allRecords) {
+                    const number = record.get('NUMBER') || '';
+                    if (String(number).toLowerCase().endsWith('-000')) continue;
+                    if (coordinateIds.has(record.id)) continue;
+                    const { parsedPatternName, layerAttachments } = deriveParsedPatternNameForCrossIndex(
+                        record,
+                        baseName
+                    );
+                    const fileSafeName = parsedPatternName.toLowerCase().replace(/\s+/g, '-');
+                    const thumb = (record.get('THUMBNAIL') || [])[0];
+                    if (!thumb && (!layerAttachments || layerAttachments.length === 0)) continue;
+
+                    const layerPaths = [];
+                    for (let i = 0; i < layerAttachments.length; i++) {
+                        const layerFilename =
+                            layerAttachments[i].filename || `${fileSafeName}-layer-${i + 1}.jpg`;
+                        const parsedLayer = parseFileName(layerFilename, i, parsedPatternName, true);
+                        layerPaths.push(JSON_PATH_PREFIX + baseName + '/layers/' + parsedLayer.layerFileName + '.jpg');
+                    }
+                    if (layerPaths.length === 0) continue;
+                    const thumbnailPath =
+                        JSON_PATH_PREFIX + baseName + '/thumbnails/' + fileSafeName + '.jpg';
+                    const payload = {
+                        filename: fileSafeName,
+                        thumbnailPath,
+                        layerPaths,
+                        sourceCollection: baseName,
+                    };
+                    if (fileSafeName.length >= 4 && !crossPatternSlugIndex.has(fileSafeName)) {
+                        crossPatternSlugIndex.set(fileSafeName, payload);
+                    }
+                    if (thumb && thumb.filename) {
+                        addKeysForFile(thumb.filename, payload);
+                    }
+                    for (const att of layerAttachments) {
+                        if (att && att.filename) addKeysForFile(att.filename, payload);
+                    }
+                }
+            } catch (err) {
+                console.warn(`[COORDINATES] Cross-index skip table ${tableName}:`, err.message);
+            }
+        }
+        console.log(
+            `[COORDINATES] Cross-collection index: ${crossAttachmentIndex.size} attachment keys, ${crossPatternSlugIndex.size} pattern slugs`
+        );
+    }
+
+    function resolveCoordinateRecord(rawFilename, logContext) {
+        const slug0 = cleanCoordAttachmentSlug(rawFilename);
+        if (!slug0 || slug0.length < 3) {
+            return null;
+        }
+        if (slug0.length <= 3 && !/[a-z]{2,}/i.test(slug0)) {
+            return null;
+        }
+
+        const candidates = buildCoordSlugCandidates(rawFilename);
+        for (const cand of candidates) {
+            const exact = coordinateData.find((c) => c.filename === cand);
+            if (exact) {
+                return exact;
+            }
+        }
+
+        // Prefer longest coordinate slug that is a full prefix of the attachment slug (disambiguates
+        // farmhouse-ticking vs farmhouse-ticking-sm when cand is farmhouse-ticking-sm-iron-ore-on-linen).
+        for (const cand of candidates) {
+            if (cand.length < 6) continue;
+            const prefixHits = coordinateData.filter((c) => {
+                if (!c.filename || c.filename.length < 4) return false;
+                return cand === c.filename || cand.startsWith(`${c.filename}-`);
+            });
+            if (prefixHits.length === 0) continue;
+            prefixHits.sort((a, b) => b.filename.length - a.filename.length);
+            const best = prefixHits[0];
+            const sameTier = prefixHits.filter((h) => h.filename.length === best.filename.length);
+            if (sameTier.length === 1) {
+                return best;
+            }
+        }
+
+        for (const cand of candidates) {
+            if (cand.length < 8) continue;
+            const hits = coordinateData.filter((c) => {
+                if (!c.filename || c.filename.length < 5) return false;
+                return cand.includes(c.filename) || c.filename.includes(cand);
+            });
+            if (hits.length === 1) {
+                return hits[0];
+            }
+            if (hits.length > 1) {
+                hits.sort((a, b) => b.filename.length - a.filename.length);
+                const best = hits[0];
+                const second = hits[1];
+                if (best.filename.length > second.filename.length + 3) {
+                    return best;
+                }
+            }
+        }
+
+        // Longest coordinate slug that matches as a suffix (e.g. …-farmhouse-ticking-rustic-city-on-linen → farmhouse-ticking-…)
+        for (const cand of candidates) {
+            if (cand.length < 10) continue;
+            const ends = coordinateData.filter(
+                (c) => c.filename && c.filename.length >= 8 && cand.endsWith(c.filename)
+            );
+            if (ends.length === 1) {
+                return ends[0];
+            }
+            if (ends.length > 1) {
+                ends.sort((a, b) => b.filename.length - a.filename.length);
+                if (ends[0].filename.length > ends[1].filename.length + 2) {
+                    return ends[0];
+                }
+            }
+        }
+
+        // Token overlap: attachment slug is long and descriptive; 21 - NAME is short hyphenated slug
+        let bestC = null;
+        let bestS = 0;
+        let secondS = 0;
+        for (const cand of candidates) {
+            if (cand.length < 10) continue;
+            for (const c of coordinateData) {
+                if (!c.filename || c.filename.length < 4) continue;
+                const toks = c.filename.split('-').filter((t) => t.length >= 3);
+                let sc = 0;
+                for (const t of toks) {
+                    if (cand.includes(t)) sc += t.length;
+                }
+                if (sc > bestS) {
+                    secondS = bestS;
+                    bestS = sc;
+                    bestC = c;
+                } else if (sc > secondS) {
+                    secondS = sc;
+                }
+            }
+        }
+        const minTokScore = 18;
+        if (bestC && bestS >= minTokScore && bestS - secondS >= 4) {
+            console.warn(`[COORDINATES] Token-overlap match "${rawFilename}" → "${bestC.filename}" (${logContext})`);
+            return bestC;
+        }
+
+        // Resolve against any pattern's THUMBNAIL / LAYER SEPARATIONS across all collections (build-time only).
+        for (const cand of candidates) {
+            const cross = crossAttachmentIndex.get(cand);
+            if (cross) {
+                console.log(
+                    `[COORDINATES] Cross-collection (file) "${rawFilename}" → ${cross.sourceCollection}/${cross.filename}.jpg (${logContext})`
+                );
+                return cross;
+            }
+        }
+        for (const cand of candidates) {
+            if (cand.length < 12) continue;
+            let bestSlug = '';
+            let bestPay = null;
+            for (const [slug, pay] of crossPatternSlugIndex) {
+                if (slug.length < 6) continue;
+                if (cand === slug || cand.startsWith(`${slug}-`)) {
+                    if (slug.length > bestSlug.length) {
+                        bestSlug = slug;
+                        bestPay = pay;
+                    }
+                }
+            }
+            if (bestPay && bestSlug.length >= 6) {
+                let sameTier = 0;
+                for (const [slug] of crossPatternSlugIndex) {
+                    if (slug.length !== bestSlug.length) continue;
+                    if (cand === slug || cand.startsWith(`${slug}-`)) sameTier++;
+                }
+                if (sameTier > 1) continue;
+                console.log(
+                    `[COORDINATES] Cross-collection (slug) "${rawFilename}" → ${bestPay.sourceCollection}/${bestPay.filename}.jpg via "${bestSlug}" (${logContext})`
+                );
+                return bestPay;
+            }
+        }
+
+        return null;
+    }
+
+    function mapCoordAttachmentFieldToRecords(coordField, logContext) {
+        if (!coordField || !Array.isArray(coordField)) return [];
+        const out = [];
+        for (const coord of coordField) {
+            const rawFilename = coord.filename;
+            if (rawFilename && typeof rawFilename === 'string') {
+                const coordRecord = resolveCoordinateRecord(rawFilename.trim(), logContext);
+                if (coordRecord) {
+                    const collName = coordRecord.sourceCollection || 'coordinates';
+                    out.push({
+                        collection: collName,
+                        filename: `${coordRecord.filename}.jpg`,
+                        path: coordRecord.thumbnailPath,
+                        layerPaths: coordRecord.layerPaths,
+                    });
+                } else {
+                    console.warn(`[COORDINATES] No match for attachment "${rawFilename}" (${logContext})`);
+                }
+                continue;
+            }
+            // Linked 21 - COORDINATES rows (Airtable returns { id } without .filename)
+            if (coord && typeof coord.id === 'string') {
+                const rec21 = coordinateRecords.find((r) => r.id === coord.id);
+                if (!rec21) {
+                    console.warn(`[COORDINATES] Linked id ${coord.id} not in 21 - COORDINATES (${logContext})`);
+                    continue;
+                }
+                const payload = coordPayloadFrom21Record(rec21);
+                if (payload) {
+                    out.push({
+                        collection: 'coordinates',
+                        filename: `${payload.filename}.jpg`,
+                        path: payload.thumbnailPath,
+                        layerPaths: payload.layerPaths,
+                    });
+                } else {
+                    console.warn(`[COORDINATES] Linked row ${coord.id} has no thumbnail/layers (${logContext})`);
+                }
+            }
+        }
+        return out;
+    }
+
+    await fillCrossCollectionAttachmentIndex();
+
+    // Fix 21 - COORDINATES layerPaths when Airtable attachments are "SKU - Name.jpg" (cleanLayerFilename wrongly used Name as layer role).
+    for (const c of coordinateData) {
+        if (!c || !c.filename) continue;
+        const cross = crossPatternSlugIndex.get(c.filename);
+        if (!cross || !Array.isArray(cross.layerPaths) || cross.layerPaths.length === 0) continue;
+        const allUnderCoords = cross.layerPaths.every((p) => {
+            const s = String(p).replace(/\\/g, '/').toLowerCase();
+            return s.includes('/coordinates/layers/') || s.includes('coordinates/layers/');
+        });
+        if (!allUnderCoords) continue;
+        if (c.layerPaths.join('|') !== cross.layerPaths.join('|')) {
+            console.log(`[COORDINATES] Enriched "${c.filename}" layerPaths from cross-index (${cross.layerPaths.length} layers)`);
+            c.layerPaths = cross.layerPaths.slice();
+        }
+    }
 
     for (const collection of targetCollections) {
         console.log(`\n[COLLECTION CHECK] Processing ${collection.name}`);
@@ -1346,28 +1768,6 @@ const collections = await getCollectionsFromAirtable();
 
                 const thumbAttachments = placeholderRecord.get('THUMBNAIL') || [];
                 collectionCuratedColors = getCuratedColorsFromRecord(placeholderRecord);
-                const coordField = placeholderRecord.get('COORDINATES') || [];
-                console.log(`[COORDINATES] Field for ${baseName}:`, coordField);
-                collectionCoordinates = coordField.map(coord => {
-                    const rawFilename = coord.filename || '';
-                    let cleanFilename = rawFilename
-                        .toLowerCase()
-                        .replace(/[^a-z0-9\s-.]/g, '')
-                        .replace(/\s+/g, '-')
-                        .replace(/-+/g, '-')
-                        .replace(/\.jpg$/i, '');
-                    const coordRecord = coordinateData.find(c => c.filename === cleanFilename);
-                    if (coordRecord) {
-                        return {
-                            collection: 'coordinates',
-                            filename: coordRecord.filename + '.jpg',
-                            path: coordRecord.thumbnailPath,
-                            layerPaths: coordRecord.layerPaths
-                        };
-                    }
-                    console.warn(`No matching coordinate record for ${rawFilename} (cleaned: ${cleanFilename})`);
-                    return null;
-                }).filter(Boolean);
                 const mockupField = placeholderRecord.get('MOCKUP');
                 if (mockupField) {
                     let mockupValues;
@@ -1424,29 +1824,10 @@ const collections = await getCollectionsFromAirtable();
             if (placeholderRecord) {
                 collectionCuratedColors = getCuratedColorsFromRecord(placeholderRecord);
 
-            // Map COORDINATES field to 21 - COORDINATES
+            // Map COORDINATES attachments on master (-000) to 21 - COORDINATES (slug + fallbacks)
             const coordField = placeholderRecord.get('COORDINATES') || [];
             console.log(`[COORDINATES] Field for ${baseName}:`, coordField);
-            collectionCoordinates = coordField.map(coord => {
-                const rawFilename = coord.filename || '';
-                let cleanFilename = rawFilename
-                    .toLowerCase()
-                    .replace(/[^a-z0-9\s-.]/g, '')
-                    .replace(/\s+/g, '-')
-                    .replace(/-+/g, '-')
-                    .replace(/\.jpg$/i, '');
-                const coordRecord = coordinateData.find(c => c.filename === cleanFilename);
-                if (coordRecord) {
-                    return {
-                        collection: 'coordinates',
-                        filename: coordRecord.filename + '.jpg',
-                        path: coordRecord.thumbnailPath,
-                        layerPaths: coordRecord.layerPaths
-                    };
-                }
-                console.warn(`No matching coordinate record for ${rawFilename} (cleaned: ${cleanFilename})`);
-                return null;
-            }).filter(Boolean);
+            collectionCoordinates = mapCoordAttachmentFieldToRecords(coordField, `collection:${baseName}`);
 
             console.log(`[COLLECTION DATA] Placeholder: ${placeholderRecord.get('NUMBER')} | Curated colors for ${baseName}: ${collectionCuratedColors.length} colors`, collectionCuratedColors);
             console.log(`[COLLECTION DATA] Coordinates for ${baseName}:`, collectionCoordinates);
@@ -1487,7 +1868,8 @@ const collections = await getCollectionsFromAirtable();
 
             const patternMap = new Map();
             const skippedPatterns = [];
-            
+            const agentPatternNameSamples = [];
+
             for (const record of records) {
                 try {
                     const number = record.get('NUMBER') || '';
@@ -1526,7 +1908,8 @@ const collections = await getCollectionsFromAirtable();
                     }
 
                     const layerAttachments = record.get('LAYER SEPARATIONS') || [];
-                    
+                    let usedLayerFilenameFallback = false;
+
                     // Enhanced layer filename parsing with error handling
                     if (parsedPatternName === baseName && layerAttachments.length > 0) {
                         try {
@@ -1537,6 +1920,7 @@ const collections = await getCollectionsFromAirtable();
                                     const fallbackName = cleanPatternName(firstLayerParts[1]);
                                     if (fallbackName && fallbackName !== 'Unnamed Pattern') {
                                         parsedPatternName = fallbackName;
+                                        usedLayerFilenameFallback = true;
                                     }
                                 }
                             }
@@ -1545,6 +1929,25 @@ const collections = await getCollectionsFromAirtable();
                             // Continue with existing parsedPatternName
                         }
                     }
+
+                    // #region agent log
+                    if (agentPatternNameSamples.length < 35) {
+                        const nameEqBaseCi = String(parsedPatternName).toLowerCase() === String(baseName).toLowerCase();
+                        agentPatternNameSamples.push({
+                            baseName,
+                            number: String(number).slice(0, 24),
+                            hasNAME: record.get('NAME') != null && String(record.get('NAME')).trim() !== '',
+                            rawNameSlice: String(rawName).slice(0, 80),
+                            parsedPatternName,
+                            strictNameEqBase: parsedPatternName === baseName,
+                            nameEqBaseCi,
+                            usedLayerFilenameFallback,
+                            firstLayerSlice: (layerAttachments[0] && layerAttachments[0].filename)
+                                ? String(layerAttachments[0].filename).slice(0, 60)
+                                : '',
+                        });
+                    }
+                    // #endregion
 
                     const existing = patternMap.get(parsedPatternName);
                     if (!existing || layerAttachments.length > existing.layerCount) {
@@ -1573,6 +1976,15 @@ const collections = await getCollectionsFromAirtable();
             }
 
             console.log(`[PATTERNS] Found ${patternMap.size} patterns for ${tableName}`);
+
+            // #region agent log
+            agentDebugLog({
+                location: 'cf-dl.js:fetchCollectionData:patternNames',
+                message: 'Pattern NAME → JSON name sampling',
+                hypothesisId: 'H1',
+                data: { tableName, baseName, patternCount: patternMap.size, samples: agentPatternNameSamples },
+            });
+            // #endregion
 
             if (patternMap.size === 0) {
                 console.warn(`[SKIP] No valid patterns found for ${tableName}`);
@@ -1644,7 +2056,15 @@ const collections = await getCollectionsFromAirtable();
                 const isColorFlex = record.get('Color-Flex') === true || record.get('ColorFlex') === true || layerData.length > 0;
 
                 const patternDescription = readAirtableDescriptionField(record);
-                
+
+                const patternCoordField = record.get('COORDINATES') || [];
+                const fromPatternAttachments = mapCoordAttachmentFieldToRecords(
+                    patternCoordField,
+                    `pattern:${baseName}:${parsedPatternName}`
+                );
+                // Do not fall back to master (-000) row coordinates; leave pattern blank when it has none.
+                const mergedPatternCoordinates = fromPatternAttachments;
+
                 jsonRecords.push({
                     id: recordId,
                     number: number,
@@ -1657,7 +2077,7 @@ const collections = await getCollectionsFromAirtable();
                     tilingType: tilingStyle,
                     designer_colors: designerColors,
                     colorFlex: isColorFlex, // Add ColorFlex flag
-                    coordinates: collectionCoordinates.length > 0 ? collectionCoordinates : null,
+                    coordinates: mergedPatternCoordinates.length > 0 ? mergedPatternCoordinates : null,
                     baseComposite: baseCompositePath,
                     tintWhite: tintWhite,
                     ...(patternDescription ? { description: patternDescription } : {}),
@@ -1734,8 +2154,35 @@ const collections = await getCollectionsFromAirtable();
     return existingData;
 }
 
-async function downloadImagesForCollections(data, collectionName = null, forceDownload = false) {
-    console.log(`\n[DOWNLOAD START] Starting downloadImagesForCollections with collectionName=${collectionName}, forceDownload=${forceDownload}`);
+function normalizePatternFilterToken(s) {
+    return String(s || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[\s_-]+/g, '');
+}
+
+function patternMatchesFilter(pattern, filterNorm) {
+    if (!filterNorm) return true;
+    const n = (x) => normalizePatternFilterToken(x);
+    const pn = n(pattern && pattern.name);
+    const slug = n(pattern && pattern.slug);
+    const num = n(pattern && pattern.number);
+    return (
+        pn.includes(filterNorm) ||
+        filterNorm.includes(pn) ||
+        (slug && (slug.includes(filterNorm) || filterNorm.includes(slug))) ||
+        (num && (num.includes(filterNorm) || filterNorm.includes(num)))
+    );
+}
+
+async function downloadImagesForCollections(
+    data,
+    collectionName = null,
+    forceDownload = false,
+    patternFilter = null
+) {
+    const patternFilterNorm = patternFilter ? normalizePatternFilterToken(patternFilter) : '';
+    console.log(`\n[DOWNLOAD START] Starting downloadImagesForCollections with collectionName=${collectionName}, forceDownload=${forceDownload}, patternFilter=${patternFilterNorm || '(none)'}`);
     console.log(`[DOWNLOAD START] Collections available:`, data.collections.map(c => c.name));
     
     let targetCollections = data.collections;
@@ -1792,8 +2239,19 @@ async function downloadImagesForCollections(data, collectionName = null, forceDo
         }
 
         // Download pattern images
-        console.log(`[DOWNLOAD PATTERNS] Processing ${collection.patterns.length} patterns for ${baseName}`);
-        for (const pattern of collection.patterns) {
+        const patternsForDownload = (collection.patterns || []).filter((p) =>
+            patternMatchesFilter(p, patternFilterNorm)
+        );
+        if (patternFilterNorm && patternsForDownload.length === 0) {
+            console.warn(
+                `[DOWNLOAD] Pattern filter "${patternFilter}" matched no patterns in ${baseName}; skipping pattern image downloads for this collection`
+            );
+        }
+        console.log(
+            `[DOWNLOAD PATTERNS] Processing ${patternsForDownload.length} pattern(s) for ${baseName}` +
+                (patternFilterNorm ? ` (filter: ${patternFilter})` : '')
+        );
+        for (const pattern of patternsForDownload) {
             console.log(`\n[DOWNLOAD PATTERN] Processing pattern: ${pattern.name}`);
             
             try {
@@ -1878,12 +2336,29 @@ async function downloadImagesForCollections(data, collectionName = null, forceDo
             }
         }
 
-        // Download coordinate images
-        if (collection.coordinates) {
-            console.log(`[DOWNLOAD COORDINATES] Processing ${collection.coordinates.length} coordinates for ${baseName}`);
+        // Download coordinate images (collection-level + every pattern's coordinates — fetch-only JSON runs skip this)
+        const coordsToDownload = (() => {
+            const byPath = new Map();
+            const add = (arr) => {
+                for (const c of arr || []) {
+                    if (c && c.path) byPath.set(c.path, c);
+                }
+            };
+            if (!patternFilterNorm) {
+                add(collection.coordinates);
+            }
+            for (const p of collection.patterns || []) {
+                if (patternFilterNorm && !patternMatchesFilter(p, patternFilterNorm)) continue;
+                add(p.coordinates);
+            }
+            return [...byPath.values()];
+        })();
+
+        if (coordsToDownload.length) {
+            console.log(`[DOWNLOAD COORDINATES] Processing ${coordsToDownload.length} unique coordinate ref(s) for ${baseName}`);
             const coordRecords = await base('21 - COORDINATES').select({}).all();
             
-            for (const coord of collection.coordinates) {
+            for (const coord of coordsToDownload) {
                 console.log(`[DOWNLOAD COORD] Processing coordinate: ${coord.filename}`);
                 const cleanFilename = coord.filename
                     .toLowerCase()
@@ -1984,10 +2459,56 @@ async function deployToServer(collectionName = null) {
     }
 }
 
-async function main(downloadImages = true, collectionName = null, generateShopify = false, forceDownload = true, incrementalMode = false) {
+function filterDataForPatternQuery(data, collectionName, patternFilter) {
+    if (!patternFilter || !collectionName || collectionName === 'null' || !data || !data.collections) {
+        return data;
+    }
+    const fn = normalizePatternFilterToken(patternFilter);
+    const cn = normalizePatternFilterToken(collectionName);
+    return {
+        collections: data.collections.map((col) => {
+            const coln = normalizePatternFilterToken(col.name);
+            if (coln !== cn && !coln.includes(cn)) return col;
+            const patterns = (col.patterns || []).filter((p) => patternMatchesFilter(p, fn));
+            if (!patterns.length) {
+                console.warn(
+                    `[MAIN] Pattern filter "${patternFilter}" matched no patterns in ${col.name} (CSV / subset use only)`
+                );
+            }
+            return { ...col, patterns };
+        }),
+    };
+}
+
+async function main(
+    downloadImages = true,
+    collectionName = null,
+    generateShopify = false,
+    forceDownload = true,
+    incrementalMode = false,
+    patternFilter = null
+) {
     console.log(`\n=== STARTING MAIN ===`);
-    console.log(`[MAIN] Running with downloadImages=${downloadImages}, collectionName=${collectionName}, generateShopify=${generateShopify}, forceDownload=${forceDownload}, incrementalMode=${incrementalMode}`);
-    
+    console.log(
+        `[MAIN] Running with downloadImages=${downloadImages}, collectionName=${collectionName}, generateShopify=${generateShopify}, forceDownload=${forceDownload}, incrementalMode=${incrementalMode}, patternFilter=${patternFilter || '(none)'}`
+    );
+
+    // #region agent log
+    agentDebugLog({
+        location: 'cf-dl.js:main:entry',
+        message: 'Data paths and run mode',
+        hypothesisId: 'H2',
+        data: {
+            DATA_PATH,
+            DATA_ROOT,
+            downloadImages,
+            collectionName,
+            incrementalMode,
+            projectDataRoot: path.join(projectRoot, 'data'),
+        },
+    });
+    // #endregion
+
     const data = await fetchCollectionData(collectionName);
     console.log(`[MAIN] Fetched collection data:`, data.collections.map(c => c.name));
 
@@ -2115,6 +2636,22 @@ async function main(downloadImages = true, collectionName = null, generateShopif
     let writeRoot = DATA_ROOT;
     try {
         fsSync.mkdirSync(DATA_ROOT, { recursive: true });
+        // #region agent log
+        agentDebugLog({
+            location: 'cf-dl.js:main:beforeWrite',
+            message: 'collections.json write target',
+            hypothesisId: 'H2',
+            data: {
+                collectionsPath,
+                writeRoot,
+                collectionCount: finalData.collections.length,
+                patternTotal: finalData.collections.reduce((n, c) => n + (c.patterns ? c.patterns.length : 0), 0),
+                firstCollectionPatternNames: (finalData.collections[0] && finalData.collections[0].patterns)
+                    ? finalData.collections[0].patterns.slice(0, 8).map((p) => p.name)
+                    : [],
+            },
+        });
+        // #endregion
         fsSync.writeFileSync(collectionsPath, JSON.stringify(finalData, null, 2));
     } catch (error) {
         if ((error.code === 'EACCES' || error.code === 'ENOENT') && DATA_ROOT !== projectDataRoot) {
@@ -2166,6 +2703,11 @@ async function main(downloadImages = true, collectionName = null, generateShopif
                     )
                 };
                 console.log(`[CSV] Filtered from ${finalData.collections.length} to ${csvData.collections.length} collections`);
+                if (patternFilter) {
+                    csvData = filterDataForPatternQuery(csvData, collectionName, patternFilter);
+                    const n = csvData.collections.reduce((t, c) => t + (c.patterns ? c.patterns.length : 0), 0);
+                    console.log(`[CSV] After pattern filter "${patternFilter}": ${n} pattern row(s)`);
+                }
             } else {
                 console.log(`[CSV] Generating CSV for all collections (no filter specified)`);
                 csvData = finalData;
@@ -2222,10 +2764,10 @@ async function main(downloadImages = true, collectionName = null, generateShopif
             console.log(`[MAIN] 🔄 INCREMENTAL MODE: Downloading images for NEW patterns only`);
             dataForDownload = newPatternsData;
             // Force download for new patterns (they don't exist yet)
-            await downloadImagesForCollections(dataForDownload, collectionName, true);
+            await downloadImagesForCollections(dataForDownload, collectionName, true, patternFilter);
         } else {
             // Normal mode or no new patterns - use finalData
-            await downloadImagesForCollections(finalData, collectionName, forceDownload);
+            await downloadImagesForCollections(finalData, collectionName, forceDownload, patternFilter);
         }
         console.log(`[MAIN] Image downloads completed`);
         
@@ -2302,8 +2844,29 @@ function printFileProcessingSummary() {
     console.log('='.repeat(60));
 }
 
+/** Strip --pattern / --pattern= from argv; merge with CF_PATTERN_FILTER env (env wins if flag absent). */
+function parseCfDlArgv(argv) {
+    const positional = [];
+    let patternFromFlag = (process.env.CF_PATTERN_FILTER || '').trim();
+    for (let i = 0; i < argv.length; i++) {
+        const a = argv[i];
+        if (a === '--pattern' && argv[i + 1]) {
+            patternFromFlag = String(argv[i + 1]).trim();
+            i++;
+            continue;
+        }
+        if (a.startsWith('--pattern=')) {
+            patternFromFlag = a.slice('--pattern='.length).trim();
+            continue;
+        }
+        positional.push(a);
+    }
+    const patternFilter = patternFromFlag || null;
+    return { positional, patternFilter };
+}
+
 // Update the command line arguments parsing
-const args = process.argv.slice(2);
+const { positional: args, patternFilter: cliPatternFilter } = parseCfDlArgv(process.argv.slice(2));
 const downloadImages = args[0] === 'true';
 const collectionName = args[1] || null;
 const generateShopify = args[2] === 'shopify';
@@ -2311,7 +2874,9 @@ const forceDownload = args[3] === 'force' || args[2] === 'force';
 const incrementalMode = args[3] === 'incremental' || args[4] === 'incremental';
 
 console.log(`\n=== SCRIPT START ===`);
-console.log(`Arguments: downloadImages=${downloadImages}, collectionName=${collectionName}, generateShopify=${generateShopify}, forceDownload=${forceDownload}, incrementalMode=${incrementalMode}`);
+console.log(
+    `Arguments: downloadImages=${downloadImages}, collectionName=${collectionName}, generateShopify=${generateShopify}, forceDownload=${forceDownload}, incrementalMode=${incrementalMode}, patternFilter=${cliPatternFilter || '(none)'}`
+);
 
 // Export functions for use in other modules
 module.exports = {
@@ -2324,5 +2889,7 @@ module.exports = {
 
 // Only run main if this file is executed directly
 if (require.main === module) {
-    main(downloadImages, collectionName, generateShopify, forceDownload, incrementalMode).catch(err => console.error("Main error:", err));
+    main(downloadImages, collectionName, generateShopify, forceDownload, incrementalMode, cliPatternFilter).catch((err) =>
+        console.error('Main error:', err)
+    );
 }

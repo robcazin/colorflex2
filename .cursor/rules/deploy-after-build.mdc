@@ -1,0 +1,18 @@
+---
+description: After production webpack builds, deploy theme assets unless the user opts out
+alwaysApply: true
+---
+
+# Deploy after build (ColorFlex)
+
+Until the user explicitly says to stop, **after any production webpack build** for this project (for example `npm run build`, `npm run build:all`, or a mode-specific `npm run build:wallpaper` / `build:furniture` / etc.), **run deployment next** without waiting to be asked.
+
+Default deploy step (Shopify CLI via project script — pushes changed files under `src/assets/`):
+
+```bash
+npm run theme:push:changed:assets
+```
+
+If the session also changed theme files outside `src/assets/` (for example `src/sections/*.liquid`, `src/layout/*`, `src/templates/*`) and those need to go up too, use `npm run theme:push:changed` instead or in addition, per what was edited.
+
+Deployment needs network access and local Shopify auth/config as already used in this repo. If deploy fails (auth, network), report the error and do not claim success.

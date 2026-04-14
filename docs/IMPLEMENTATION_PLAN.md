@@ -1,5 +1,8 @@
 # Multi-Step Configuration Implementation Plan
 
+> Status note (April 2026): This document is planning history for the early multi-step flow.
+> Keep as reference, but rely on `docs/COLORFLEX_MANAGER_PREVIEW_STEPS.md` for current live behavior.
+
 ## Immediate Answers to Your Questions
 
 ### 1. **Variants vs Separate Products?**
@@ -112,7 +115,7 @@ class ProductConfigurationFlow {
         '_pattern_id': this.state.pattern.id,
         '_pattern_name': this.state.pattern.name,
         '_custom_colors': this.state.pattern.colors.join(','),
-        '_pattern_preview': this.state.pattern.preview,
+        '_pattern_preview': this.state.pattern.previewUrl, // Hosted HTTPS preview URL
         '_material_category': this.state.category,
         '_colorflex_config': 'v2.0'
       }

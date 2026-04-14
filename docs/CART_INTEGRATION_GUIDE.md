@@ -1,5 +1,9 @@
 # Cart Integration: Intercepting "Buy It!" Button
 
+> Status note (April 2026): This file is historical planning context for the multi-step cart flow.
+> Current production behavior uses hosted Shopify file URLs for `_pattern_preview` (not base64 cart payloads).
+> Canonical operational docs: `docs/COLORFLEX_MANAGER_PREVIEW_STEPS.md` and `docs/DEPLOYMENT.md`.
+
 ## Current Flow (What Happens Now)
 ```
 Saved Pattern Modal → "Buy It!" Button → addPatternToCart() → Direct Cart
@@ -69,7 +73,7 @@ async function addPatternToCartEnhanced(cartConfig) {
                 '_pattern_id': cartConfig.pattern.id,
                 '_pattern_name': cartConfig.pattern.name,
                 '_pattern_collection': cartConfig.pattern.collection,
-                '_pattern_preview': cartConfig.pattern.preview, // Base64 thumbnail
+                '_pattern_preview': cartConfig.pattern.previewUrl, // Hosted HTTPS preview URL
                 
                 // === COLOR CUSTOMIZATION ===
                 '_custom_colors': cartConfig.pattern.colors.join(','),
@@ -200,7 +204,7 @@ The enhanced system passes this complete data to Shopify:
 - `_custom_colors`, `_color_count`  
 - `_material_category`, `_texture_type`
 - `_colorflex_version`, `_order_type`
-- `_pattern_preview` (base64 thumbnail)
+- `_pattern_preview` (hosted preview URL)
 
 ### Display Properties (visible in cart/checkout):
 - `Pattern`: "Geometric Waves"

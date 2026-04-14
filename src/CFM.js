@@ -500,6 +500,8 @@ window.appState = {
     originalCoordinates: null,
     originalLayerInputs: null,
     originalCurrentLayers: null,
+    /** When set, updatePreview maps coordinate pattern layer N to host layer colors starting at this index (first non-bg pattern slot replaced on click). Cleared on restore. */
+    coordinatePreviewColorStartIndex: null,
     lastSelectedColor: null,
     selectedFurniture: null,
     isInFabricMode: false,
@@ -1126,6 +1128,8 @@ function cartThumbnailStorageKeyFromPattern(pattern) {
     return '';
 }
 
+// CFM-SEARCH: SAVED_PRESET_ENTRY_ID
+// Use a per-save entry ID so duplicate pattern IDs can still be deleted individually.
 function createSavedPatternEntryId() {
     return 'sp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 10);
 }
@@ -2666,7 +2670,7 @@ function downloadSavedPatternProof(pattern) {
 
 // Delete a saved pattern
 /**
- * Deletes a saved pattern from localStorage by pattern ID
+ * Deletes one saved pattern entry from localStorage
  *
  * Removes a pattern from the user's saved patterns list and updates
  * the UI to reflect the change. Automatically updates menu icons to
@@ -2674,23 +2678,23 @@ function downloadSavedPatternProof(pattern) {
  *
  * Delete Process:
  * 1. Load all saved patterns from localStorage
- * 2. Filter out the pattern matching patternId
+ * 2. Locate a single matching saved entry (prefer savedEntryId)
  * 3. Save updated array back to localStorage
  * 4. Update UI menu icons
  * 5. Show success notification
  *
- * @param {string} patternId - Unique pattern identifier to delete
+ * @param {Object|string} patternRef - Saved pattern object (preferred) or legacy string ID
  *
  * @example
- * // Delete a specific pattern
- * deleteSavedPattern('tudor-rose-7006-6258-2x');
- * // Pattern removed from localStorage
+ * // Delete one specific saved pattern entry
+ * deleteSavedPattern(pattern);
+ * // Only that entry is removed from localStorage
  * // UI updated to show new pattern count
  *
  * @example
  * // Typical flow from modal
  * // 1. User clicks delete button on pattern card
- * // 2. deleteSavedPattern(pattern.id) called
+ * // 2. deleteSavedPattern(pattern) called
  * // 3. Pattern removed from list
  * // 4. Modal refreshed to show remaining patterns
  *
@@ -2714,6 +2718,7 @@ function deleteSavedPattern(patternRef) {
         var deleteIndex = -1;
 
         if (patternRef && typeof patternRef === 'object') {
+            // CFM-SEARCH: DELETE_BY_SAVED_ENTRY_ID
             if (patternRef.savedEntryId) {
                 deleteIndex = updatedPatterns.findIndex(function(p) {
                     return p && p.savedEntryId && p.savedEntryId === patternRef.savedEntryId;
@@ -3175,6 +3180,7 @@ window.switchCollection = function(collectionName) {
 
     // Set the collection
     appState.selectedCollection = targetCollection;
+    clearCoordinateRestoreSnapshot();
 
     // Reset scale to 1X (normal) when switching collections
     appState.scaleMultiplier = 1;
@@ -5614,6 +5620,7 @@ function previewSavedPattern(pattern) {
         // Set the collection and pattern
         appState.selectedCollection = targetCollection;
         appState.currentPattern = targetPattern;
+        clearCoordinateRestoreSnapshot();
 
         // Set data attribute for collection-specific styling
         document.body.setAttribute('data-current-collection', targetCollection.name);
@@ -5814,6 +5821,7 @@ function loadSavedPatternToUI(pattern) {
         // Set the collection and pattern
         appState.selectedCollection = targetCollection;
         appState.currentPattern = targetPattern;
+        clearCoordinateRestoreSnapshot();
 
         // Set data attribute for collection-specific styling
         document.body.setAttribute('data-current-collection', targetCollection.name);
@@ -6014,6 +6022,16 @@ function urlForCorsFetch(url) {
     if (!url || typeof url !== 'string') return url;
     var sep = url.indexOf('?') >= 0 ? '&' : '?';
     return url + sep + '_cf=cors';
+}
+
+/**
+ * B2 S3-compatible GETs often return Access-Control-Allow-Credentials: true together with a reflected
+ * Access-Control-Allow-Origin. Per Fetch CORS, a credentialed response is not allowed when the request
+ * uses credentials mode "omit" (HTML crossOrigin="anonymous"), so the image fails before drawImage.
+ * Omit crossOrigin for these URLs so the bitmap loads; canvas may be tainted (on-screen display is fine).
+ */
+function colorFlexB2OmitImgCrossOrigin(url) {
+    return !!(url && typeof url === 'string' && url.toLowerCase().includes('backblazeb2.com'));
 }
 
 /** Same paths as mockups.json `white-dresser`; used when mockups.json cannot be loaded. */
@@ -8521,6 +8539,8 @@ if (USE_GUARD && DEBUG_TRACE) {
     lookupColor = guard(lookupColor, "lookupColor"); // Wrapped for debugging
 }
 
+// CFM-SEARCH: CHAMELEON_ICON_STABLE_POSITION
+// Keep menu icon fixed on ColorFlex pages to avoid nav layout shifts.
 // Add saved patterns indicator to main navigation
 function addSavedPatternsMenuIcon() {
     // 🆕 SHOW EVERYWHERE: Remove restriction that excluded ColorFlex page
@@ -9827,7 +9847,6 @@ const createColorInput = (label, id, initialColor, isBackground = false) => {
             updatePreview();
             updateRoomMockup();
         }
-        populateCoordinates();
         if (typeof updateDisplays === 'function') updateDisplays();
     });
 
@@ -9974,7 +9993,6 @@ const createColorInput = (label, id, initialColor, isBackground = false) => {
             updatePreview();
             if (window.COLORFLEX_MODE !== 'BASSETT') updateRoomMockup();
         }
-        populateCoordinates();
     };
 
     // Restore original event listeners
@@ -11293,6 +11311,7 @@ async function initializeApp() {
         }
         
         appState.selectedCollection = finalCollection;
+        clearCoordinateRestoreSnapshot();
         appState.lockedCollection = true;
         // ✅ Skip curated colors entirely in simple mode. Use finalCollection so curated colors match the collection we just set.
         const isSimpleMode = window.COLORFLEX_SIMPLE_MODE === true;
@@ -12113,6 +12132,122 @@ function populatePatternThumbnails(patterns) {
     }
 }
 
+/** Per-pattern `coordinates` only; no fallback to collection master (-000) row (blank when none). */
+function getCoordinateListForCurrentUI() {
+    const p = appState.currentPattern;
+    if (!p || !Array.isArray(p.coordinates)) return [];
+    return p.coordinates.length > 0 ? p.coordinates : [];
+}
+
+/**
+ * Match a coordinate thumbnail slug to the Coordinates catalog pattern (module scope — used by thumbnails + click).
+ */
+function findCoordinatesPatternByFilename(filenameNoExt) {
+    if (!appState.collections || !filenameNoExt) return null;
+    const lower = String(filenameNoExt).toLowerCase();
+    const matchInCollection = (collection) => {
+        if (!collection || !Array.isArray(collection.patterns)) return null;
+        return (
+            collection.patterns.find((p) => {
+                const thumb = (p.thumbnail || '').toLowerCase();
+                return (
+                    thumb &&
+                    (thumb.includes(`/${lower}.`) ||
+                        thumb.endsWith(`/${lower}`) ||
+                        thumb.includes(`/${lower}.jpg`))
+                );
+            }) || null
+        );
+    };
+    const coordsColl = appState.collections.find(
+        (c) => c && typeof c.name === 'string' && c.name.toLowerCase() === 'coordinates'
+    );
+    const fromCoords = matchInCollection(coordsColl);
+    if (fromCoords) return fromCoords;
+    for (const c of appState.collections) {
+        if (!c || typeof c.name !== 'string') continue;
+        if (c.name.toLowerCase() === 'coordinates') continue;
+        const hit = matchInCollection(c);
+        if (hit) return hit;
+    }
+    return null;
+}
+
+/** Canonical layer paths for a coordinate row (fixes bad 21-COORDINATES filenames when catalog has truth). */
+function coordinateLayerPathsFromCollectionPattern(coordinate) {
+    const fromRecord = coordinate.layerPaths || (coordinate.layerPath ? [coordinate.layerPath] : []);
+    const slug = String(coordinate.filename || '').replace(/\.jpg$/i, '').trim();
+    if (!slug) return fromRecord;
+    const coordsPattern = findCoordinatesPatternByFilename(slug);
+    if (!coordsPattern || !Array.isArray(coordsPattern.layers) || coordsPattern.layers.length === 0) {
+        return fromRecord;
+    }
+    const fromPattern = coordsPattern.layers
+        .map((ly) => (typeof ly === 'string' ? ly : ly && ly.path))
+        .filter(Boolean);
+    if (fromPattern.length === 0) return fromRecord;
+    const underCoordsLayers = (p) => {
+        const s = String(p).replace(/\\/g, '/').toLowerCase();
+        return s.includes('coordinates') && s.includes('/layers/');
+    };
+    if (!fromPattern.every(underCoordsLayers)) return fromRecord;
+    if (fromRecord.join('|') !== fromPattern.join('|')) {
+        console.log('[ColorFlex] Coordinate layerPaths: using Coordinates collection pattern (canonical)', {
+            slug,
+            fromRecord,
+            fromPattern
+        });
+    }
+    return fromPattern.slice();
+}
+
+/** Clears "Back to pattern" restore state — must run when user picks a new pattern/collection so restore targets the current base pattern. */
+function clearCoordinateRestoreSnapshot() {
+    appState.originalPattern = null;
+    appState.originalCoordinates = null;
+    appState.originalLayerInputs = null;
+    appState.originalCurrentLayers = null;
+    appState.coordinatePreviewColorStartIndex = null;
+}
+
+let backToPatternLinkResizeObserver = null;
+
+function disconnectBackToPatternLinkResizeObserver() {
+    if (backToPatternLinkResizeObserver) {
+        backToPatternLinkResizeObserver.disconnect();
+        backToPatternLinkResizeObserver = null;
+    }
+}
+
+/** Place #backToPatternLink ~30px left of the first .coordinate-item, vertically centered to that item. */
+function positionBackToPatternLink(container, linkEl) {
+    if (!container || !linkEl) return;
+    const first = container.querySelector(".coordinate-item");
+    if (!first) return;
+    const cr = container.getBoundingClientRect();
+    const fr = first.getBoundingClientRect();
+    const lw = linkEl.getBoundingClientRect().width || linkEl.offsetWidth || 1;
+    const gap = 30;
+    const left = fr.left - cr.left - gap - lw;
+    const centerY = fr.top - cr.top + fr.height / 2;
+    linkEl.style.setProperty("position", "absolute", "important");
+    linkEl.style.setProperty("left", `${Math.round(left)}px`, "important");
+    linkEl.style.setProperty("top", `${Math.round(centerY)}px`, "important");
+    linkEl.style.setProperty("transform", "translateY(-50%)", "important");
+    linkEl.style.setProperty("margin", "0", "important");
+    linkEl.style.setProperty("text-align", "left", "important");
+    linkEl.style.setProperty("white-space", "nowrap", "important");
+    linkEl.style.setProperty("z-index", "1001", "important");
+}
+
+function scheduleBackToPatternLinkPosition(container, linkEl) {
+    const run = () => positionBackToPatternLink(container, linkEl);
+    requestAnimationFrame(() => {
+        run();
+        requestAnimationFrame(run);
+    });
+}
+
 // Populate coordinates thumbnails in #coordinatesContainer
 const populateCoordinates = () => {
     // ✅ Skip coordinates for fabric, clothing, furniture, and Bassett modes
@@ -12134,13 +12269,17 @@ const populateCoordinates = () => {
         return;
     }
 
+    disconnectBackToPatternLinkResizeObserver();
     dom.coordinatesContainer.innerHTML = "";
 
-    const coordinates = appState.selectedCollection?.coordinates || [];
-    console.log("Collection coordinates data:", coordinates);
+    const coordinates = getCoordinateListForCurrentUI();
+    console.log("Effective coordinates data:", coordinates);
 
     if (!coordinates.length) {
-        console.log("No matching coordinates available for collection:", appState.selectedCollection?.name);
+        console.log(
+            "No matching coordinates for pattern/collection:",
+            appState.currentPattern?.name || appState.selectedCollection?.name
+        );
         return;
     }
 
@@ -12176,7 +12315,7 @@ const populateCoordinates = () => {
         img.alt = coord.pattern || `Coordinate ${index + 1}`;
         img.className = "coordinate-image";
         img.dataset.filename = coord.path || "fallback";
-        
+
         img.onerror = () => {
             console.warn(`Failed to load coordinate image: ${img.src}`);
             const placeholder = document.createElement("div");
@@ -12675,6 +12814,7 @@ function handlePatternSelection(patternName, preserveColors = false, colorLockBu
         console.warn('handlePatternSelection: no collection or patterns');
         return;
     }
+    clearCoordinateRestoreSnapshot();
     // Check if colors are locked - if so, force preserveColors to true
     if (appState.colorsLocked) {
         preserveColors = true;
@@ -12976,36 +13116,27 @@ let processImage = (
   isWall = false
 ) => {
   const normalizedUrl = normalizePath(url);
-  const img = new Image();
-  img.crossOrigin = "anonymous";
-  img.decoding = "async";
-  // ⚠️ CRITICAL FIX: Removed ?t=${Date.now()} timestamp to allow browser caching
-  // The timestamp was causing duplicate downloads of the same image (4x downloads!)
-  // Browser cache + imageCache system will handle cache management properly
-  img.src = normalizedUrl;
+  const fetchUrl = urlForCorsFetch(normalizedUrl);
+  const needsB2FetchDecode = colorFlexB2OmitImgCrossOrigin(fetchUrl);
 
-  img.onload = () => {
-    const w = img.naturalWidth || img.width;
-    const h = img.naturalHeight || img.height;
-
+  /** Draw decoded pixels and run mask / shadow / recolor (requires getImageData — canvas must not be tainted). */
+  function runDecodePipeline(drawSource, w, h) {
     const canvas = document.createElement("canvas");
-    canvas.width = w;            // tile-sized; no DPR scaling here
+    canvas.width = w;
     canvas.height = h;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
 
-    // Solid wall fast-path unchanged (keeps your behavior)
     if (isWall && (!url || url === "")) {
       ctx.clearRect(0, 0, w, h);
       callback(canvas);
       return;
     }
 
-    ctx.drawImage(img, 0, 0, w, h);
+    ctx.drawImage(drawSource, 0, 0, w, h);
 
     if (isShadow) {
-      // Shadow from luminance (gamma-correct-ish)
       let id;
       try { id = ctx.getImageData(0, 0, w, h); }
       catch (e) { callback(canvas); return; }
@@ -13025,16 +13156,13 @@ let processImage = (
 
     if (!layerColor) { callback(canvas); return; }
 
-    // --- White->transparent soft mask, then recolor ---
-    // (This preserves anti-aliased edges and makes the tile repeat cleanly.)
     let id;
     try { id = ctx.getImageData(0, 0, w, h); }
     catch (e) { callback(canvas); return; }
     const d = id.data;
 
-    // thresholds in linear space: t0 ~ start fading whites; t1 ~ full ink
-    const t0 = 0.80; // near-white
-    const t1 = 0.30; // darker = fully opaque
+    const t0 = 0.80;
+    const t1 = 0.30;
     const smoothstep = (x) => (x<=0?0 : x>=1?1 : x*x*(3-2*x));
 
     for (let i = 0; i < d.length; i += 4) {
@@ -13044,23 +13172,64 @@ let processImage = (
       const lb = sb<=0.04045 ? sb/12.92 : Math.pow((sb+0.055)/1.055,2.4);
       const L = 0.2126*lr + 0.7152*lg + 0.0722*lb;
 
-      // mask: 0 at white (>=t0), 1 at ink (<=t1), smooth in-between
       const x = (t0 - L) / (t0 - t1);
       const m = smoothstep(Math.max(0, Math.min(1, x)));
-      d[i+3] = Math.round(255 * m);   // keep RGB; alpha becomes the mask
+      d[i+3] = Math.round(255 * m);
     }
     ctx.putImageData(id, 0, 0);
 
-    // Recolor using compositing over the new soft mask
     ctx.globalCompositeOperation = "source-in";
     ctx.fillStyle = layerColor;
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = "source-over";
 
     callback(canvas);
-  };
+  }
 
-  img.onerror = () => console.error(`Canvas image load failed: ${url}`);
+  function startWithImage(useCrossOriginAnonymous) {
+    const img = new Image();
+    if (useCrossOriginAnonymous) img.crossOrigin = "anonymous";
+    img.decoding = "async";
+    img.onload = () => {
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      runDecodePipeline(img, w, h);
+    };
+    img.onerror = () => {
+      if (needsB2FetchDecode && useCrossOriginAnonymous) {
+        startWithImage(false);
+        return;
+      }
+      console.error(`Canvas image load failed: ${url} (resolved: ${fetchUrl})`);
+    };
+    img.src = fetchUrl;
+  }
+
+  // Omitting crossOrigin on B2 loads the bitmap but taints the canvas → getImageData fails → raw B&W separations.
+  // Decode B2 via fetch + ImageBitmap so pixel readback stays allowed; fall back to <img crossOrigin="anonymous">.
+  if (needsB2FetchDecode && typeof fetch === "function" && typeof createImageBitmap === "function") {
+    fetch(fetchUrl, { mode: "cors", credentials: "omit", cache: "default" })
+      .then((res) => {
+        if (!res.ok) throw new Error(String(res.status));
+        return res.blob();
+      })
+      .then((blob) => createImageBitmap(blob))
+      .then((bmp) => {
+        try {
+          runDecodePipeline(bmp, bmp.width, bmp.height);
+        } finally {
+          try { bmp.close(); } catch (e2) { /* ignore */ }
+        }
+      })
+      .catch((err) => {
+        if (window.COLORFLEX_DEBUG_URLS) {
+          console.warn("[ColorFlex] processImage B2 fetch decode failed, trying <img>:", err && err.message);
+        }
+        startWithImage(true);
+      });
+  } else {
+    startWithImage(true);
+  }
 };
    // GUARD / TRACE WRAPPER
     if (USE_GUARD && DEBUG_TRACE) {
@@ -13073,6 +13242,7 @@ let processImage = (
     // Load pattern data from JSON
 async function loadPatternData(collection, patternId) {
     console.log(`loadPatternData: patternId=${patternId}`);
+    clearCoordinateRestoreSnapshot();
 
     // BASSETT: clear room mockup cache so we never show the previous pattern/collection; mockup will re-composite with current state.
     if (window.COLORFLEX_MODE === 'BASSETT') {
@@ -14265,10 +14435,10 @@ let updatePreview = async () => {
                 previewCanvas.width = canvasSize;
                 previewCanvas.height = canvasSize;
                 
-                // Load thumbnail as pattern image (crossOrigin required for canvas draw)
+                // Load thumbnail as pattern image (crossOrigin enables non-tainted canvas when CORS allows omit+credentials)
                 const thumbUrl = urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));
                 const patternImg = new Image();
-                patternImg.crossOrigin = "Anonymous";
+                if (!colorFlexB2OmitImgCrossOrigin(thumbUrl)) patternImg.crossOrigin = "Anonymous";
                 patternImg.src = thumbUrl;
                 let usedFallback = false;
                 
@@ -14613,6 +14783,24 @@ let updatePreview = async () => {
                     tempImg.onerror = () => resolve(null);
                 }).then(async (patternBounds) => {
                     if (!patternBounds) return;
+
+                    /** Map pattern layer ordinal to currentLayers index; coordinate mode anchors at the slot the user replaced. */
+                    const resolvePreviewInputIndex = (layerIx) => {
+                        const len = appState.currentLayers?.length || 0;
+                        const defaultIdx = layerMapping.patternStartIndex + layerIx;
+                        const anchor = appState.coordinatePreviewColorStartIndex;
+                        if (anchor == null || typeof anchor !== "number") {
+                            return defaultIdx;
+                        }
+                        let idx = anchor;
+                        let n = layerIx;
+                        while (n > 0 && idx < len - 1) {
+                            idx++;
+                            while (idx < len - 1 && appState.currentLayers[idx]?.isShadow) idx++;
+                            n--;
+                        }
+                        return Math.min(idx, Math.max(0, len - 1));
+                    };
                     
                     // Render each layer with correct color mapping (including shadow layers at fixed opacity)
                     for (let layerIndex = 0; layerIndex < patternToRender.layers.length; layerIndex++) {
@@ -14623,21 +14811,15 @@ let updatePreview = async () => {
                             (layerPath && (String(layerPath).toUpperCase().includes('_SHADOW_') || String(layerPath).toUpperCase().includes('SHADOW_LAYER') || String(layerPath).toUpperCase().includes('ISSHADOW')));
                         let layerColor = null;
                         if (!isShadow) {
-                            // ✅ FIX: For furniture collections, pattern layers start at patternStartIndex (2)
-                            if (isFurnitureCollection) {
-                                const furnitureInputIndex = layerMapping.patternStartIndex + layerIndex;
-                                if (furnitureInputIndex >= (appState.currentLayers?.length || 0)) {
-                                    console.error(`  ❌ Pattern preview: furnitureInputIndex ${furnitureInputIndex} out of bounds for layer ${layerIndex}`);
-                                    layerColor = lookupColor("Snowbound");
-                                } else {
-                                    layerColor = lookupColor(appState.currentLayers[furnitureInputIndex]?.color || "Snowbound");
-                                    const inputLayer = appState.currentLayers[furnitureInputIndex];
-                                    console.log(`🪑 Furniture pattern preview layer ${layerIndex} → input ${furnitureInputIndex} (${inputLayer?.label}) → ${layerColor}`);
-                                }
+                            const inputIndex = resolvePreviewInputIndex(layerIndex);
+                            if (inputIndex >= (appState.currentLayers?.length || 0)) {
+                                console.error(`  ❌ Pattern preview: inputIndex ${inputIndex} out of bounds for layer ${layerIndex}`);
+                                layerColor = lookupColor("Snowbound");
                             } else {
-                                const inputIndex = layerMapping.patternStartIndex + layerIndex;
                                 layerColor = lookupColor(appState.currentLayers[inputIndex]?.color || "Snowbound");
-                                console.log(`🏠 Standard layer ${layerIndex} → input ${inputIndex} → ${layerColor}`);
+                                const inputLayer = appState.currentLayers[inputIndex];
+                                const tag = isFurnitureCollection ? "🪑 Furniture" : "🏠 Standard";
+                                console.log(`${tag} layer ${layerIndex} → input ${inputIndex} (${inputLayer?.label}) → ${layerColor}`);
                             }
                         }
 
@@ -15797,8 +15979,9 @@ let updateRoomMockup = async () => {
       }
 
       const roomImg = new Image();
-      roomImg.crossOrigin = "Anonymous";
-      roomImg.src = normalizePath(effectiveMockup.mockup);
+      const roomMockupSrc = normalizePath(effectiveMockup.mockup);
+      if (!colorFlexB2OmitImgCrossOrigin(roomMockupSrc)) roomImg.crossOrigin = "Anonymous";
+      roomImg.src = roomMockupSrc;
 
       roomImg.onerror = () => {
         if (!roomImg.dataset.fallbackUsed) {
@@ -15822,16 +16005,18 @@ let updateRoomMockup = async () => {
         ctx.fillRect(0, 0, cssW, cssH);
 
         const patternImg = new Image();
-        patternImg.crossOrigin = "Anonymous";
-        patternImg.src = urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));
+        const stdThumbSrc = urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));
+        if (!colorFlexB2OmitImgCrossOrigin(stdThumbSrc)) patternImg.crossOrigin = "Anonymous";
+        patternImg.src = stdThumbSrc;
 
         function drawStandardRoomWithOptionalShadow() {
           const fit = scaleToFit(roomImg, cssW, cssH);
           ctx.drawImage(roomImg, fit.x, fit.y, fit.width, fit.height);
           if (effectiveMockup.mockupShadow) {
             const shadowOverlay = new Image();
-            shadowOverlay.crossOrigin = "Anonymous";
-            shadowOverlay.src = normalizePath(effectiveMockup.mockupShadow);
+            const shadowSrcEarly = normalizePath(effectiveMockup.mockupShadow);
+            if (!colorFlexB2OmitImgCrossOrigin(shadowSrcEarly)) shadowOverlay.crossOrigin = "Anonymous";
+            shadowOverlay.src = shadowSrcEarly;
             shadowOverlay.onload = () => {
               ctx.globalCompositeOperation = "multiply";
               const shadowFit = scaleToFit(shadowOverlay, cssW, cssH);
@@ -15900,8 +16085,9 @@ let updateRoomMockup = async () => {
           if (effectiveMockup.mockupShadow) {
             console.log("✅ STANDARD PATTERN: Found mockupShadow, loading shadow overlay...");
             const shadowOverlay = new Image();
-            shadowOverlay.crossOrigin = "Anonymous";
-            shadowOverlay.src = normalizePath(effectiveMockup.mockupShadow);
+            const shadowSrcLate = normalizePath(effectiveMockup.mockupShadow);
+            if (!colorFlexB2OmitImgCrossOrigin(shadowSrcLate)) shadowOverlay.crossOrigin = "Anonymous";
+            shadowOverlay.src = shadowSrcLate;
             shadowOverlay.onload = () => {
               console.log("✅ STANDARD PATTERN: Shadow overlay loaded successfully!");
               console.log("  Shadow image size:", shadowOverlay.width, "x", shadowOverlay.height);
@@ -17590,24 +17776,6 @@ const updateFurniturePreview = async () => {
         }
     }
 
-    /**
-     * Find the coordinates collection pattern that matches a coordinate record.
-     * Coordinate filenames use kebab-case (e.g. trenton-ticking.jpg) while pattern
-     * names use spaces (e.g. "Trenton Ticking"). Match by thumbnail path.
-     */
-    function findCoordinatesPatternByFilename(filenameNoExt) {
-        if (!appState.collections || !filenameNoExt) return null;
-        const collection = appState.collections.find(
-            c => c && typeof c.name === 'string' && c.name.toLowerCase() === "coordinates"
-        );
-        if (!collection || !collection.patterns) return null;
-        const lower = String(filenameNoExt).toLowerCase();
-        return collection.patterns.find(p => {
-            const thumb = (p.thumbnail || '').toLowerCase();
-            return thumb && (thumb.includes(`/${lower}.`) || thumb.endsWith(`/${lower}`) || thumb.includes(`/${lower}.jpg`));
-        }) || null;
-    }
-
     // ✅ FIX: Define handleCoordinateClick outside setupCoordinateImageHandlers
     // This ensures stable function reference for removeEventListener to work correctly
     async function handleCoordinateClick() {
@@ -17617,7 +17785,7 @@ const updateFurniturePreview = async () => {
             // Only store original state if not already stored
             if (!appState.originalPattern) {
                 appState.originalPattern = { ...appState.currentPattern };
-                appState.originalCoordinates = appState.selectedCollection?.coordinates ? [...appState.selectedCollection.coordinates] : [];
+                appState.originalCoordinates = [...getCoordinateListForCurrentUI()];
                 appState.originalLayerInputs = appState.layerInputs.map((layer, index) => ({
                     id: `layer-${index}`,
                     label: layer.label,
@@ -17641,8 +17809,8 @@ const updateFurniturePreview = async () => {
             const filename = image.dataset.filename;
             console.log(`Coordinate image clicked: ${filename}`);
         
-            // Find the coordinate
-            const coordinate = appState.selectedCollection?.coordinates?.find(coord => coord.path === filename);
+            // Find the coordinate (same list order as populateCoordinates)
+            const coordinate = getCoordinateListForCurrentUI().find(coord => coord.path === filename);
             if (!coordinate) {
                 console.error(`Coordinate not found for filename: ${filename}`);
                 if (dom.coordinatesContainer) {
@@ -17662,9 +17830,10 @@ const updateFurniturePreview = async () => {
                 return;
             }
             console.log(`Primary layer index: ${primaryLayerIndex}`);
+            appState.coordinatePreviewColorStartIndex = primaryLayerIndex;
         
-            // Determine layers to use (handle both layerPath and layerPaths)
-            const layerPaths = coordinate.layerPaths || (coordinate.layerPath ? [coordinate.layerPath] : []);
+            // Determine layers to use (handle both layerPath and layerPaths); prefer canonical paths from Coordinates collection pattern
+            const layerPaths = coordinateLayerPathsFromCollectionPattern(coordinate);
             if (layerPaths.length === 0) {
                 console.error(`No layers found for coordinate: ${filename}`);
                 return;
@@ -17673,8 +17842,10 @@ const updateFurniturePreview = async () => {
             // Load the first coordinate image to get its dimensions
             const coordImage = new Image();
             const normalizedCoordPath = normalizePath(layerPaths[0]);
+            const coordLayerSrc = urlForCorsFetch(normalizedCoordPath);
             console.log(`🔍 Coordinate click path: "${layerPaths[0]}" → normalized: "${normalizedCoordPath}"`);
-            coordImage.src = normalizedCoordPath;
+            if (!colorFlexB2OmitImgCrossOrigin(coordLayerSrc)) coordImage.crossOrigin = "Anonymous";
+            coordImage.src = coordLayerSrc;
             coordImage.onload = async () => {
                 // Limit coordinate image dimensions to prevent oversized canvases
                 const maxDimension = 400;
@@ -17723,9 +17894,12 @@ const updateFurniturePreview = async () => {
                     return layer;
                 });
         
-                // Preserve the original layer structure and colors
-                const currentColors = appState.layerInputs.map(layer => layer.input.value);
-                console.log("Preserving colors:", currentColors);
+                // Preserve UI colors by label (indices can diverge when shadows sit between pattern slots)
+                const colorsByLabel = {};
+                appState.layerInputs.forEach((li) => {
+                    if (li && li.label) colorsByLabel[li.label] = li.input.value;
+                });
+                console.log("Preserving colors by label:", colorsByLabel);
         
                 // Restore layer inputs with preserved colors (only non-shadow layers get inputs)
                 appState.layerInputs = [];
@@ -17735,12 +17909,24 @@ const updateFurniturePreview = async () => {
                 const clIdx = appState.currentLayers.findIndex(l => l.label === layer.label);
                 const id = layer.inputId || `layer-${clIdx}`;
                 const isBackground = layer.label === "Background";
-                const initialColor = (clIdx >= 0 && currentColors[clIdx] != null) ? currentColors[clIdx] : (isBackground ? "#FFFFFF" : "Snowbound");
+                const initialColor =
+                    colorsByLabel[layer.label] != null && colorsByLabel[layer.label] !== ""
+                        ? colorsByLabel[layer.label]
+                        : isBackground
+                          ? "#FFFFFF"
+                          : "Snowbound";
                 const layerData = createColorInput(layer.label, id, initialColor, isBackground);
                 layerData.input.value = getCleanColorName(initialColor);
                 layerData.circle.style.backgroundColor = lookupColor(initialColor) || "#FFFFFF";
                 dom.layerInputsContainer.appendChild(layerData.container);
-                appState.layerInputs.push({ ...layerData, color: layer.color, hex: lookupColor(layer.color) || "#FFFFFF" });
+                if (clIdx >= 0) {
+                    appState.currentLayers[clIdx].color = layerData.input.value;
+                }
+                appState.layerInputs.push({
+                    ...layerData,
+                    color: layerData.input.value,
+                    hex: lookupColor(layerData.input.value) || "#FFFFFF"
+                });
                 console.log(`Set ${layer.label} input to ${layerData.input.value}, id=${id}`);
             });
 
@@ -17786,16 +17972,13 @@ const updateFurniturePreview = async () => {
                         color: #f0e6d2 !important;
                         font-family: 'Island Moments', cursive !important;
                         font-size: 1.8rem !important;
-                        text-align: center !important;
+                        text-align: left !important;
                         cursor: pointer !important;
-                        margin-top: 0.5rem !important;
                         padding: 0.5rem !important;
                         transition: color 0.2s !important;
                         display: block !important;
                         visibility: visible !important;
                         opacity: 1 !important;
-                        z-index: 1000 !important;
-                        position: relative !important;
                     `;
                     backLink.textContent = "  ← Back to Pattern ";
                     backLink.addEventListener("mouseover", () => {
@@ -17806,6 +17989,12 @@ const updateFurniturePreview = async () => {
                     });
                     coordinatesContainer.appendChild(backLink);
                     backLink.addEventListener("click", restoreOriginalPattern);
+                    disconnectBackToPatternLinkResizeObserver();
+                    scheduleBackToPatternLinkPosition(coordinatesContainer, backLink);
+                    backToPatternLinkResizeObserver = new ResizeObserver(() =>
+                        positionBackToPatternLink(coordinatesContainer, backLink)
+                    );
+                    backToPatternLinkResizeObserver.observe(coordinatesContainer);
                     console.log("✅ Back to Pattern button added successfully");
                 } else {
                     console.error("❌ coordinatesContainer not found - cannot add back link");
@@ -17848,6 +18037,28 @@ const updateFurniturePreview = async () => {
         // Restore appState to the original pattern
         appState.currentPattern = { ...appState.originalPattern };
         appState.currentLayers = appState.originalCurrentLayers.map(layer => ({ ...layer }));
+        // Merge live catalog row so per-pattern coordinates / paths stay current after restore
+        const coll = appState.selectedCollection;
+        if (coll?.patterns) {
+            const fresh = coll.patterns.find(
+                x =>
+                    x &&
+                    (x.id === appState.currentPattern.id ||
+                        x.name === appState.currentPattern.name ||
+                        (x.slug &&
+                            (x.slug === appState.currentPattern.slug ||
+                                x.slug === appState.currentPattern.name)))
+            );
+            if (fresh) {
+                appState.currentPattern = {
+                    ...appState.currentPattern,
+                    coordinates:
+                        fresh.coordinates !== undefined && fresh.coordinates !== null
+                            ? fresh.coordinates
+                            : appState.currentPattern.coordinates,
+                };
+            }
+        }
         console.log("Restored appState: collection=", appState.selectedCollection.name, 
                     "pattern=", appState.currentPattern.name);
 
@@ -17892,12 +18103,15 @@ const updateFurniturePreview = async () => {
         const coordinatesSection = document.getElementById("coordinatesSection");
         const backLink = document.getElementById("backToPatternLink");
         if (backLink) {
+            disconnectBackToPatternLinkResizeObserver();
             backLink.remove();
             console.log("Removed Back to Pattern link");
         }
         const errorMessages = coordinatesSection.querySelectorAll("p[style*='color: red']");
         errorMessages.forEach(msg => msg.remove());
         console.log("Cleared error messages:", errorMessages.length);
+
+        clearCoordinateRestoreSnapshot();
 
         console.log('>>> restoreOriginalPattern END <<<');
     } catch (e) {

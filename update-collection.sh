@@ -88,6 +88,7 @@ Flags:
   --update-products     With metadata: pass --update to shopify-create-products.js (refresh copy + metafields on existing)
   --skip-products       Skip Shopify API (you will CSV import manually)
   --skip-images         With sync: node script gets --skip-images (text/metafields only)
+  --pattern <slug>      Optional: with a single collection (not "all"), pass to cf-dl so image downloads and CSV rows are limited to pattern name/slug/number matches (collections.json still contains the full collection from Airtable)
 
 Collection Names:
   abundance, cabin-fever, english-cottage, ancient-tiles, botanicals, bombay,
@@ -99,6 +100,7 @@ Examples:
   $0 sync bombay --skip-images        # Recommended: refresh Bombay on Shopify (body + collection_description) without touching images
   $0 sync folksie                     # Full API update for Folksie (includes image fields on product PUT)
   $0 fetch bombay                    # JSON only — will NOT create a CSV (use metadata or sync if you need CSV)
+  $0 fetch traditions --pattern florencia   # JSON for full Traditions from Airtable; images/CSV (if enabled) only for matching pattern(s)
   $0 metadata bombay --update-products   # Same data/CSV path as sync, but opt-in to --update via flag
   $0 complete abundance              # Complete abundance collection update + create Shopify products
   $0 metadata english-cottage --skip-products   # CSV only, no Admin API
@@ -163,8 +165,16 @@ update_collection_data() {
     local force_download="$2"
     local generate_csv="$3"
     local incremental="$4"
+    local pattern_filter="${5:-}"
 
     print_header "Updating Collection Data"
+
+    if [[ -n "$pattern_filter" ]]; then
+        export CF_PATTERN_FILTER="$pattern_filter"
+        print_status "Pattern filter: $pattern_filter (images/CSV subset; full collection still written to collections.json)"
+    else
+        unset CF_PATTERN_FILTER 2>/dev/null || true
+    fi
 
     # Build command arguments
     local cmd_args=()
@@ -208,14 +218,20 @@ update_collection_data() {
         fi
     fi
 
+    if [[ -n "$pattern_filter" ]]; then
+        cmd_args+=("--pattern" "$pattern_filter")
+    fi
+
     # Execute the update
     print_status "Running: node src/scripts/cf-dl.js ${cmd_args[*]}"
 
     if node src/scripts/cf-dl.js "${cmd_args[@]}"; then
         print_status "Collection data update completed successfully"
+        unset CF_PATTERN_FILTER 2>/dev/null || true
         return 0
     else
         print_error "Collection data update failed"
+        unset CF_PATTERN_FILTER 2>/dev/null || true
         return 1
     fi
 }
@@ -495,6 +511,7 @@ COLLECTION_NAME=${2:-""}
 SKIP_PRODUCTS=false
 UPDATE_PRODUCTS=false
 SKIP_IMAGES_SHOPIFY=false
+PATTERN_FILTER=""
 
 # Shift past command to parse remaining options
 shift
@@ -512,6 +529,15 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-images)
             SKIP_IMAGES_SHOPIFY=true
+            shift
+            ;;
+        --pattern)
+            shift
+            PATTERN_FILTER="${1:-}"
+            if [[ -z "$PATTERN_FILTER" ]]; then
+                print_error "--pattern requires a value (e.g. florencia)"
+                exit 1
+            fi
             shift
             ;;
         --help|help)
@@ -606,6 +632,17 @@ if [[ $COLLECTION_NAME != "all" ]] && [[ ! $COLLECTION_NAME =~ ^[a-z-]+$ ]]; the
     exit 1
 fi
 
+if [[ -n "$PATTERN_FILTER" ]]; then
+    if [[ $COLLECTION_NAME == "all" ]]; then
+        print_error "--pattern cannot be used with collection \"all\""
+        exit 1
+    fi
+    if [[ ! $PATTERN_FILTER =~ ^[a-zA-Z0-9._-]+$ ]]; then
+        print_error "Invalid --pattern value '$PATTERN_FILTER' (use letters, numbers, hyphen, underscore, dot)"
+        exit 1
+    fi
+fi
+
 # Set derived variables
 UPDATE_ALL=false
 CREATE_BACKUP=false
@@ -623,6 +660,9 @@ main() {
     print_status "Configuration:"
     echo "  Command: $COMMAND"
     echo "  Collection: $COLLECTION_NAME"
+    if [[ -n "$PATTERN_FILTER" ]]; then
+        echo "  Pattern filter: $PATTERN_FILTER"
+    fi
     echo "  Force Download: $FORCE_DOWNLOAD"
     echo "  Generate CSV: $GENERATE_CSV"
     echo "  Deploy: $DEPLOY"
@@ -641,7 +681,7 @@ main() {
     create_backup
 
     # Update collection data
-    if ! update_collection_data "$COLLECTION_NAME" "$FORCE_DOWNLOAD" "$GENERATE_CSV" "$INCREMENTAL_MODE"; then
+    if ! update_collection_data "$COLLECTION_NAME" "$FORCE_DOWNLOAD" "$GENERATE_CSV" "$INCREMENTAL_MODE" "$PATTERN_FILTER"; then
         print_error "Collection update failed"
         exit 1
     fi
