@@ -21,6 +21,7 @@
     "cf:metadata": "./update-collection.sh metadata",
     "build:dev": "webpack --mode=development",
     "build:wallpaper": "NODE_ENV=production webpack --mode=production --env mode=wallpaper",
+    "build:trade-demo": "NODE_ENV=production webpack --mode=production --env mode=trade-demo",
     "build:furniture": "NODE_ENV=production webpack --mode=production --env mode=furniture",
     "build:clothing": "NODE_ENV=production webpack --mode=production --env mode=clothing",
     "build:furniture-simple": "NODE_ENV=production webpack --mode=production --env mode=furniture-simple",

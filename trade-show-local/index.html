@@ -5,23 +5,64 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ColorFlex Trade Show (offline shell)</title>
   <style>
-    body { font-family: system-ui, sans-serif; max-width: 40rem; margin: 2rem auto; padding: 0 1rem; line-height: 1.5; color: #1a1a1a; }
-    h1 { font-size: 1.35rem; }
-    .note { background: #f4f4f0; border-left: 4px solid #666; padding: 0.75rem 1rem; margin: 1.25rem 0; }
-    code { font-size: 0.9em; }
+    body { font-family: system-ui, sans-serif; margin: 0; padding: 0.75rem 1rem; line-height: 1.45; color: #1a1a1a; background: #f8f8f4; }
+    .banner { background: #1a202c; color: #e2e8f0; padding: 0.5rem 1rem; margin: -0.75rem -1rem 1rem; font-size: 0.9rem; }
+    .banner strong { color: #d4af37; }
+    .shell-note { font-size: 0.85rem; color: #444; max-width: 48rem; margin-bottom: 1rem; }
+    #preview { min-height: 120px; background: #fff; border: 1px solid #ccc; }
+    #roomMockup { min-height: 80px; background: #eee; border: 1px dashed #999; margin-top: 0.5rem; }
+    code { font-size: 0.88em; }
   </style>
+  <script>
+    (function () {
+      window.COLORFLEX_DEMO_OFFLINE = true;
+      window.COLORFLEX_TRADE_SHOW = true;
+      window.COLORFLEX_MODE = 'WALLPAPER';
+      window.ShopifyCustomer = null;
+
+      /* Same-origin “cf-data” attempts 404 here first; embedded ColorFlexData avoids relying on those responses. */
+      window.COLORFLEX_DATA_BASE_URL = window.location.origin + '/demo-snapshot';
+
+      window.ColorFlexAssets = {
+        colorsUrl: window.location.origin + '/assets/colors.json',
+        collectionsUrl: window.location.origin + '/assets/collections.json',
+        furnitureConfigUrl: window.location.origin + '/assets/furniture-config.json',
+        mockupsUrl: window.location.origin + '/assets/mockups.json'
+      };
+
+      /* Minimal placeholders only — full snapshot comes in a later phase. */
+      window.ColorFlexData = {
+        colors: [
+          { color_name: 'Demo White', hex: 'FFFFFF', red: 255, green: 255, blue: 255, sw_number: 'SW0001' },
+          { color_name: 'Demo Ink', hex: '1a1a1a', red: 26, green: 26, blue: 26, sw_number: 'SW0002' }
+        ],
+        collections: [
+          { name: 'trade-show-placeholder', elements: [], patterns: [] }
+        ]
+      };
+    })();
+  </script>
 </head>
 <body>
-  <h1>ColorFlex Trade Show (offline shell)</h1>
-  <p>
-    This is the <strong>wallpaper-only</strong> offline demo scaffold served over <code>http://localhost</code>
-    (not <code>file://</code>). Wi‑Fi can stay off once the app and data are on disk.
-  </p>
-  <div class="note">
-    <strong>Phase 1 only:</strong> static placeholder. The ColorFlex webpack bundle, demo bootstrap globals,
-    and frozen wallpaper snapshot are <strong>not</strong> wired yet — that comes in later phases.
-    No Shopify, Liquid, or CFM integration here.
+  <div class="banner">
+    <strong>Wallpaper-only</strong> offline trade-show demo shell — <code>COLORFLEX_MODE=WALLPAPER</code>, no Shopify runtime.
   </div>
-  <p>When you run <code>npm run serve:trade-demo</code>, you should see this page at the server root.</p>
+  <p class="shell-note">
+    Phase 2: boot globals mirror the Liquid shape; CFM loads via <code>/assets/color-flex-trade-demo.min.js</code> after <code>npm run build:trade-demo</code>.
+    Cart, checkout, and customer features are not wired in this entry.
+  </p>
+
+  <!-- IDs required by CFM dom.* (minimal stubs; full layout arrives with snapshot/UI work) -->
+  <div id="patternName"></div>
+  <div id="collectionHeader"></div>
+  <div id="collectionThumbnails"></div>
+  <div id="layerInputsContainer"></div>
+  <div id="curatedColorsContainer"></div>
+  <div id="coordinatesContainer"></div>
+  <div id="preview"></div>
+  <div id="roomMockup"></div>
+  <button type="button" id="printButton" hidden aria-hidden="true"></button>
+
+  <script src="/assets/color-flex-trade-demo.min.js"></script>
 </body>
 </html>

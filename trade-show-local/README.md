@@ -1,6 +1,16 @@
-# Trade-show local server (Phase 1)
+# Trade-show local server (wallpaper-only offline demo)
 
-Minimal **localhost** static server for the wallpaper-only offline demo. **Phase 1** is only the shell: placeholder HTML, optional static mounts. No CFM bundle yet.
+Minimal **localhost** static server. **Phase 1:** shell only. **Phase 2:** `index.html` bootstraps globals and loads `color-flex-trade-demo.min.js` from `/assets` (build first).
+
+## Build the demo bundle
+
+From the repo root:
+
+```bash
+npm run build:trade-demo
+```
+
+Output: `src/assets/color-flex-trade-demo.min.js`
 
 ## Run
 

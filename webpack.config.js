@@ -19,6 +19,10 @@ module.exports = (env = {}) => {
     entries['color-flex-core'] = './src/index.core.js';
   }
 
+  if (buildMode === 'trade-demo') {
+    entries['color-flex-trade-demo'] = './src/index.trade-demo.js';
+  }
+
   if (buildMode === 'all' || buildMode === 'bassett') {
     entries['color-flex-bassett'] = './src/index.bassett.js';
   }
