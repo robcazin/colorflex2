@@ -120,6 +120,12 @@ if (typeof window !== 'undefined') {
   window.colorFlexMode = colorFlexMode;
 }
 
+/** Trade-show / localhost demo: skip Shopify cart, cloud save, and aggressive remote data fallbacks. */
+function isColorFlexDemoOffline() {
+    return typeof window !== 'undefined' &&
+        (window.COLORFLEX_DEMO_OFFLINE === true || window.COLORFLEX_TRADE_SHOW === true);
+}
+
 // 🎛️ DEBUG CONTROL FLAGS - Set to false to disable console logs by category
 const DEBUG_FLAGS = {
     ENABLED: false,           // Master switch - set to false to disable ALL debug logs
@@ -1221,7 +1227,7 @@ window.saveToMyList = async function() {
         const customerId = getCustomerId();
         const customerAccessToken = getCustomerAccessToken();
 
-        if (customerId && customerAccessToken) {
+        if (!isColorFlexDemoOffline() && customerId && customerAccessToken) {
             saveToShopifyMetafields(currentState).then(function() {
                 console.log('✅ Saved to Shopify customer metafields');
             }).catch(function(error) {
@@ -1231,8 +1237,10 @@ window.saveToMyList = async function() {
                 });
             });
         } else {
-            // Fall back to localStorage for development/testing
-            console.log('📱 Customer not authenticated, saving to localStorage');
+            // Fall back to localStorage for development/testing (and offline trade-show demo)
+            console.log(isColorFlexDemoOffline()
+                ? '📱 Offline demo: saving to localStorage only'
+                : '📱 Customer not authenticated, saving to localStorage');
             saveToLocalStorageNoDuplicateCheck(currentState).catch(function(e) {
                 console.error('❌ localStorage save failed:', e);
             });
@@ -1318,6 +1326,10 @@ window.saveToMyList = async function() {
 function saveToShopifyMetafields(patternData) {
     return new Promise(function(resolve, reject) {
         try {
+            if (isColorFlexDemoOffline()) {
+                reject(new Error('Shopify metafield save disabled in offline demo'));
+                return;
+            }
             var customerId = getCustomerId();
             var customerAccessToken = getCustomerAccessToken();
             
@@ -1380,6 +1392,9 @@ function saveToShopifyMetafields(patternData) {
 // Clean up old cart thumbnails to prevent localStorage bloat
 function cleanupOldCartThumbnails() {
     try {
+        if (isColorFlexDemoOffline()) {
+            return;
+        }
         console.log('🧹 Starting cart thumbnail cleanup...');
 
         const cartThumbnails = [];
@@ -4155,6 +4170,10 @@ function showMaterialSelectionModal(pattern) {
             console.log('🔄 Updating cart item with new pattern configuration...');
 
             try {
+                if (isColorFlexDemoOffline()) {
+                    showErrorNotification('Cart updates are disabled in the offline trade-show demo.');
+                    return;
+                }
                 // Show loading state
                 configureBtn.disabled = true;
                 configureBtn.textContent = '🔄 Updating...';
@@ -4579,6 +4598,11 @@ async function createCompressedThumbnail(originalThumbnail) {
  */
 function redirectToProductConfiguration(pattern, material) {
     try {
+        if (isColorFlexDemoOffline()) {
+            console.log('[ColorFlex demo] Product configuration / checkout flow disabled');
+            showSaveNotification('Checkout is disabled in the offline trade-show demo.');
+            return;
+        }
         console.log('⚙️ Starting ProductConfigurationFlow for:', pattern.patternName, 'Material:', material);
         const getRuntimeCartColors = () => {
             try {
@@ -4713,6 +4737,11 @@ function redirectToProductConfiguration(pattern, material) {
  * Fallback function for direct redirect when ProductConfigurationFlow fails
  */
 function fallbackDirectRedirect(pattern, material) {
+    if (isColorFlexDemoOffline()) {
+        console.log('[ColorFlex demo] Product redirect disabled');
+        showSaveNotification('Product pages are disabled in the offline trade-show demo.');
+        return;
+    }
     console.log('🔄 Using fallback direct redirect to Custom Wallpaper/Custom Fabric');
     console.log('📦 Pattern data received:', {
         name: pattern.name,
@@ -4830,6 +4859,11 @@ function fallbackDirectRedirect(pattern, material) {
  * @param {number} index - Current handle index
  */
 function tryProductHandles(handles, urlParams, pattern, material, index) {
+    if (isColorFlexDemoOffline()) {
+        console.log('[ColorFlex demo] tryProductHandles skipped');
+        showSaveNotification('Product lookup is disabled in the offline trade-show demo.');
+        return;
+    }
     if (index >= handles.length) {
         console.warn('❌ No valid product page found for any handle');
         showSaveNotification('❌ Product page not found');
@@ -5100,6 +5134,11 @@ function showProductInstructionsModal(instructions, productHandle, pattern) {
  */
 function addPatternToCart(pattern, material) {
     try {
+        if (isColorFlexDemoOffline()) {
+            console.log('[ColorFlex demo] addPatternToCart skipped');
+            showSaveNotification('Cart is disabled in the offline trade-show demo.');
+            return;
+        }
         console.log('🛒 Adding pattern to cart:', pattern.patternName, 'Material:', material);
 
         // Generate Shopify product handle from pattern data
@@ -5228,6 +5267,14 @@ function generateProductHandle(pattern, material) {
  */
 function addToShopifyCart(cartItem, material) {
     return new Promise(function(resolve, reject) {
+        if (isColorFlexDemoOffline()) {
+            resolve({
+                success: false,
+                demoOffline: true,
+                message: 'Cart disabled in offline demo'
+            });
+            return;
+        }
         // First, try to find the product by handle
         var productHandle = cartItem.id;
         
@@ -5266,6 +5313,10 @@ function addToShopifyCart(cartItem, material) {
  */
 function tryRealShopifyCartAdd(cartItem, resolve, reject) {
     try {
+        if (isColorFlexDemoOffline()) {
+            reject(new Error('Cart add disabled in offline demo'));
+            return;
+        }
         console.log('🔍 Looking up product for cart addition:', cartItem.id);
         
         // First, look up the product by handle to get the variant ID
@@ -5382,6 +5433,10 @@ function findBestVariantForMaterial(variants, materialType) {
  */
 function lookupProductByHandle(productHandle) {
     return new Promise(function(resolve, reject) {
+        if (isColorFlexDemoOffline()) {
+            reject(new Error('Product lookup disabled in offline demo'));
+            return;
+        }
         console.log('🔍 Looking up product by handle:', productHandle);
         
         // Try to fetch product data from Shopify's product JSON endpoint
@@ -5484,6 +5539,9 @@ function showManualCartInstructions(pattern, material) {
  * Update cart badge/counter if it exists
  */
 function updateCartBadge() {
+    if (isColorFlexDemoOffline()) {
+        return;
+    }
     // Fetch current cart data to get accurate count
     fetch('/cart.js')
         .then(function(response) {
@@ -8359,7 +8417,7 @@ async function loadColors() {
 
         const candidates = [];
         if (cfDataColorsUrl) candidates.push({ label: 'cf-data', url: cfDataColorsUrl });
-        if (!cfDataColorsUrl || cfDataColorsUrl !== canonicalB2ColorsUrl) {
+        if (!isColorFlexDemoOffline() && (!cfDataColorsUrl || cfDataColorsUrl !== canonicalB2ColorsUrl)) {
             candidates.push({ label: 'backblaze', url: canonicalB2ColorsUrl });
         }
         candidates.push({ label: 'theme-asset', url: themeColorsUrl });
@@ -10539,6 +10597,12 @@ async function initializeApp() {
     console.log("🚀 Starting app...", initTimestamp);
     console.log("🔍 SessionStorage at app start:", sessionStorage.getItem('pendingDirectPatternLoad') ? 'EXISTS' : 'NULL');
 
+    if (isColorFlexDemoOffline()) {
+        try {
+            sessionStorage.removeItem('pendingDirectPatternLoad');
+        } catch (_) {}
+    }
+
     // 🧹 Clean up old cart thumbnails on app startup to prevent localStorage bloat
     cleanupOldCartThumbnails();
 
@@ -10555,7 +10619,8 @@ async function initializeApp() {
         // Fallback order: embedded metafield -> Shopify asset.
         let data;
         const dataBase = getColorFlexDataBaseUrl();
-        if (dataBase) {
+        const skipCfDataCollectionsFetch = isColorFlexDemoOffline() && window.ColorFlexData && window.ColorFlexData.collections;
+        if (dataBase && !skipCfDataCollectionsFetch) {
             const remoteUrl = dataBase.replace(/\/$/, '') + '/data/collections.json';
             const remoteRes = await fetch(remoteUrl, { method: 'GET', cache: 'no-store' }).catch(function() { return null; });
             if (remoteRes && remoteRes.ok) {
@@ -10619,7 +10684,7 @@ async function initializeApp() {
             const candidates = [];
             if (cfDataMockupsUrl) candidates.push({ label: 'cf-data', url: cfDataMockupsUrl });
             // If theme base points at a proxy/worker without CORS, canonical B2 still works in-browser.
-            if (!cfDataMockupsUrl || cfDataMockupsUrl !== canonicalB2MockupsUrl) {
+            if (!isColorFlexDemoOffline() && (!cfDataMockupsUrl || cfDataMockupsUrl !== canonicalB2MockupsUrl)) {
                 candidates.push({ label: 'backblaze', url: canonicalB2MockupsUrl });
             }
             candidates.push({ label: 'theme-asset', url: themeMockupsUrl });
@@ -10999,7 +11064,8 @@ async function initializeApp() {
         // Check for auto-load pattern data using localStorage (more reliable than sessionStorage)
         let autoLoadCollectionName = null;
         let autoLoadPatternData = null;
-        
+
+        if (!isColorFlexDemoOffline()) {
         // Always check for auto-load pattern data in localStorage (more reliable)
         const autoLoadJson = localStorage.getItem('colorflexAutoLoad');
         console.log("🔍 DEBUG: Checking localStorage for colorflexAutoLoad");
@@ -11067,6 +11133,9 @@ async function initializeApp() {
                 console.error("❌ Error parsing pending purchase data:", error);
                 localStorage.removeItem('pendingPurchasePattern');
             }
+        }
+        } else {
+            console.log("[ColorFlex demo] Skipping colorflexAutoLoad / pendingPurchasePattern restore");
         }
 
         console.log("🔍 COLLECTION SELECTION DEBUG:");
@@ -11598,6 +11667,10 @@ console.log("  DOM ready:", document.readyState);
 function applyURLParameters(urlParams) {
     console.log('🔗 Applying URL parameters...');
     const sourceParam = urlParams.get("source");
+    if (isColorFlexDemoOffline() && sourceParam && (sourceParam === 'cart_saved_pattern' || sourceParam === 'cart_edit' || sourceParam === 'cart_restore')) {
+        console.log('[ColorFlex demo] Skipping cart-related URL parameter handling');
+        return;
+    }
     const savedLayersParam = urlParams.get("saved_layers");
     const savedPatternId = urlParams.get("saved_pattern_id");
 
@@ -11743,6 +11816,9 @@ function applyURLParameters(urlParams) {
  * Restore colors from cart link navigation
  */
 function restoreCartColors(savedLayersParam, urlColors) {
+    if (isColorFlexDemoOffline()) {
+        return;
+    }
     console.log('🎨 restoreCartColors called with:');
     console.log('  savedLayersParam:', savedLayersParam);
     console.log('  urlColors:', urlColors);
@@ -20300,7 +20376,9 @@ async function parseColorEnhanced(colorStr) {
 
                 const candidates = [];
                 if (cfDataColorsUrl) candidates.push(cfDataColorsUrl);
-                if (!cfDataColorsUrl || cfDataColorsUrl !== canonicalB2ColorsUrl) candidates.push(canonicalB2ColorsUrl);
+                if (!isColorFlexDemoOffline() && (!cfDataColorsUrl || cfDataColorsUrl !== canonicalB2ColorsUrl)) {
+                    candidates.push(canonicalB2ColorsUrl);
+                }
                 candidates.push(themeColorsUrl);
 
                 let lastErr = null;
@@ -21120,6 +21198,10 @@ function getMaterialPrice(materialId) {
 // Update cart item via Shopify API
 async function updateCartItemViaAPI(itemData) {
     try {
+        if (isColorFlexDemoOffline()) {
+            console.log('[ColorFlex demo] Cart update API skipped');
+            return { success: false, error: 'Cart updates disabled in offline demo' };
+        }
         console.log('🛒 Attempting cart update via API:', itemData);
 
         // Get current cart to find the item to update
