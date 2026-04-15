@@ -28,6 +28,7 @@
     "build:simple": "NODE_ENV=production webpack --mode=production --env mode=simple",
     "build:all": "NODE_ENV=production webpack --mode=production --env mode=all",
     "build:protected": "./protect-css.sh",
+    "serve:trade-demo": "node trade-show-local/server.js",
     "bassett-local:build": "node scripts/build-bassett-local-html.js",
     "bassett-local": "node scripts/build-bassett-local-html.js && node bassett-local/server.js",
     "bassett": "npm run build && npm run bassett-local",
