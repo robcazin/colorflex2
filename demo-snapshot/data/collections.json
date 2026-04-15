@@ -1,0 +1,80 @@
+{
+  "collections": [
+    {
+      "name": "bombay",
+      "tableName": "8 - BOMBAY (demo)",
+      "collectionNumber": 8,
+      "collection_thumbnail": "./data/collections/bombay/bombay-thumb.jpg",
+      "curatedColors": [
+        "SC0001 COTTAGE LINEN",
+        "SW6395 ALCHEMY",
+        "SW6811 HONORABLE BLUE",
+        "SW6810 LUPINE"
+      ],
+      "coordinates": [],
+      "colorFlex": true,
+      "mockupId": "white-dresser",
+      "description": "Trade-show snapshot: Bombay wallpaper patterns with local assets only (two ColorFlex patterns).",
+      "patterns": [
+        {
+          "id": "rec0YgzbbxikypVMj",
+          "number": "01-08-101",
+          "name": "Andheri Star Flower",
+          "thumbnail": "./data/collections/bombay/thumbnails/andheri-star-flower.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/bombay/layers/andheri-star-flower_star-flower_layer-1.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/andheri-star-flower_star-flower_layer-1.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Star Flower"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6395 ALCHEMY",
+            "SC0001 COTTAGE LINEN"
+          ],
+          "colorFlex": true,
+          "coordinates": [],
+          "baseComposite": null,
+          "tintWhite": false
+        },
+        {
+          "id": "rectlBxCvxvMFVazh",
+          "number": "01-08-103",
+          "name": "Chakapara",
+          "thumbnail": "./data/collections/bombay/thumbnails/chakapara.jpg",
+          "size": [
+            24,
+            24
+          ],
+          "repeat": "yes",
+          "layers": [
+            {
+              "path": "./data/collections/bombay/layers/chakapara_layer-1_layer-1.jpg",
+              "proofPath": "./data/collections/bombay/proof-layers/chakapara_layer-1_layer-1.jpg"
+            }
+          ],
+          "layerLabels": [
+            "Layer 1"
+          ],
+          "tilingType": "straight",
+          "designer_colors": [
+            "SW6811 HONORABLE BLUE",
+            "SC0001 COTTAGE LINEN"
+          ],
+          "colorFlex": true,
+          "coordinates": [],
+          "baseComposite": null,
+          "tintWhite": false
+        }
+      ]
+    }
+  ]
+}

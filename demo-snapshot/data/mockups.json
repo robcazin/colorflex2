@@ -1,0 +1,13 @@
+{
+  "mockups": {
+    "white-dresser": {
+      "id": "white-dresser",
+      "name": "White Dresser",
+      "image": "./data/mockups/white-dresser-W72H72.png",
+      "shadow": "./data/mockups/white-dresser-shadow-W72H72.jpg",
+      "widthInches": 90,
+      "heightInches": 60,
+      "description": "Trade-show placeholder mockup"
+    }
+  }
+}

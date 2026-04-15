@@ -2,6 +2,16 @@
 
 Minimal **localhost** static server. **Phase 1:** shell only. **Phase 2:** `index.html` bootstraps globals and loads `color-flex-trade-demo.min.js` from `/assets` (build first).
 
+## Offline snapshot (wallpaper data + images)
+
+From the repo root:
+
+```bash
+npm run build:trade-show-snapshot
+```
+
+Writes `demo-snapshot/` (collections, colors copy, mockups, generated JPEG/PNG assets).
+
 ## Build the demo bundle
 
 From the repo root:
