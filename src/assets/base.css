@@ -2940,6 +2940,24 @@ details-disclosure > details {
   background-attachment: fixed;
 }
 
+/* Preview toggle: apply the trade-page radial gradient anywhere via `?cf_trade_bg=1` */
+html.colorflex-trade-bg,
+body.colorflex-trade-bg {
+  --gradient-background: radial-gradient(circle at top, #252b35 0%, #12161d 48%, #0b0d12 100%);
+}
+
+/* In many templates, sections set a solid `--gradient-background` via their color-scheme classes.
+   When preview toggle is on, force all `.gradient` surfaces to use the trade radial instead. */
+html.colorflex-trade-bg .gradient {
+  --gradient-background: radial-gradient(circle at top, #252b35 0%, #12161d 48%, #0b0d12 100%);
+}
+
+/* Keep header background unchanged during preview */
+html.colorflex-trade-bg .section-header .gradient,
+html.colorflex-trade-bg .header-wrapper.gradient {
+  --gradient-background: rgb(var(--color-background));
+}
+
 @media screen and (forced-colors: active) {
   .icon {
     color: CanvasText;

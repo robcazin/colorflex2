@@ -1,5 +1,5 @@
 <!doctype html>
-<html class="js" lang="{{ request.locale.iso_code }}">
+<html class="js{% if template.name == 'page' and template.suffix == 'contact' %} colorflex-trade-bg{% endif %}" lang="{{ request.locale.iso_code }}">
   
   <head>
     <meta charset="utf-8">
@@ -376,6 +376,17 @@
     </style>
   {% endif %}
 
+    <script>
+      // Preview toggle: apply trade-page radial background with `?cf_trade_bg=1`
+      (function () {
+        try {
+          var qs = new URLSearchParams(window.location.search);
+          if (qs.get('cf_trade_bg') === '1') {
+            document.documentElement.classList.add('colorflex-trade-bg');
+          }
+        } catch (e) {}
+      })();
+    </script>
   </head>
 
   <body class="gradient{% if settings.animations_hover_elements != 'none' %} animate--hover-{{ settings.animations_hover_elements }}{% endif %}">

@@ -3473,6 +3473,20 @@ const FABRIC_SPECIFICATIONS = {
         minimumRolls: 1,
         description: 'Unpasted wallpaper 24" x 30\' per roll',
         material: 'wallpaper'
+    },
+    'CUSTOM-SAMPLE-WALLPAPER': {
+        pricePerRoll: 12,
+        coverage: 'Sample',
+        minimumRolls: 1,
+        description: 'Sample of your specified paper type with your custom ColorFlex design',
+        material: 'wallpaper'
+    },
+    'CUSTOM-SAMPLE-FABRIC': {
+        pricePerYard: 12,
+        width: 'Sample',
+        minimumYards: 1,
+        description: 'Sample of your specified fabric type with your custom ColorFlex design',
+        material: 'fabric'
     }
 };
 
@@ -3775,6 +3789,12 @@ function showMaterialSelectionModal(pattern) {
     // Group materials by category
     var wallpaperOptions = [
         {
+            value: 'wallpaper-custom-sample',
+            label: 'Custom Sample',
+            price: '$12/sample',
+            description: 'Sample of your specified paper type with your custom ColorFlex design'
+        },
+        {
             value: 'wallpaper-prepasted',
             label: 'Prepasted Wallpaper',
             price: '$249/roll',
@@ -3801,6 +3821,12 @@ function showMaterialSelectionModal(pattern) {
     ];
 
     var fabricOptions = [
+        {
+            value: 'fabric-custom-sample',
+            label: 'Custom Sample',
+            price: '$12/sample',
+            description: 'Sample of your specified fabric type with your custom ColorFlex design'
+        },
         {
             value: 'fabric-soft-velvet',
             label: 'Soft Velvet',
@@ -3902,8 +3928,8 @@ function showMaterialSelectionModal(pattern) {
             radio.id = 'material_' + option.value;
             radio.style.cssText = 'margin-right: 10px;';
 
-            // Default to first wallpaper option
-            if (title === 'Wallpaper' && index === 0) {
+            // Default: Prepasted Wallpaper (not first row when Custom Sample is listed first)
+            if (title === 'Wallpaper' && option.value === 'wallpaper-prepasted') {
                 radio.checked = true;
             }
 
@@ -4777,8 +4803,13 @@ function fallbackDirectRedirect(pattern, material) {
         console.log('🎉 PROMO: Applying 25% discount to cart redirect');
     }
 
-    // Determine product handle based on material (check if material starts with 'wallpaper-' or 'fabric-')
-    const productHandle = material.startsWith('wallpaper-') ? 'custom-wallpaper' : 'custom-fabric';
+    // Determine product handle based on material
+    let productHandle = 'custom-fabric';
+    if (material === 'wallpaper-custom-sample' || material === 'fabric-custom-sample') {
+        productHandle = 'custom-sample';
+    } else if (material.startsWith('wallpaper-')) {
+        productHandle = 'custom-wallpaper';
+    }
     console.log('🏷️ Product handle:', productHandle);
 
     // Build URL parameters using saved pattern structure
@@ -21017,6 +21048,7 @@ function getFabricSpecByMaterialId(materialId) {
     }
 
     const wallpaperMap = {
+        'wallpaper-custom-sample': 'CUSTOM-SAMPLE-WALLPAPER',
         'wallpaper-prepasted': 'WALLPAPER-PREPASTED',
         'wallpaper-peel-stick': 'WALLPAPER-PEEL-STICK',
         'wallpaper-unpasted': 'WALLPAPER-UNPASTED',
@@ -21028,6 +21060,7 @@ function getFabricSpecByMaterialId(materialId) {
     }
 
     const fabricMap = {
+        'fabric-custom-sample': 'CUSTOM-SAMPLE-FABRIC',
         'fabric-soft-velvet': 'SOFT VELVET',
         'fabric-decorator-linen': 'DECORATOR LINEN',
         'fabric-drapery-sheer': 'DRAPERY SHEER',
@@ -21078,6 +21111,9 @@ function calculateMaterialPrice(materialId, quantity) {
 
 // Get display name for material types
 function getMaterialDisplayName(materialId) {
+    if (materialId === 'wallpaper-custom-sample' || materialId === 'fabric-custom-sample') {
+        return 'Custom Sample';
+    }
     const spec = getFabricSpecByMaterialId(materialId);
     if (spec) {
         return materialId.includes('fabric-') ?
@@ -21098,6 +21134,9 @@ function getMaterialDisplayName(materialId) {
 
 // Get pricing for material types
 function getMaterialPrice(materialId) {
+    if (materialId === 'wallpaper-custom-sample' || materialId === 'fabric-custom-sample') {
+        return '$12.00/sample';
+    }
     const spec = getFabricSpecByMaterialId(materialId);
     if (spec) {
         return spec.material === 'fabric' ?

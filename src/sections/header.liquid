@@ -442,15 +442,300 @@
   - Modal can float outside viewport
 {%- endcomment -%}
 <script>
+  (function () {
+    function colorflexCalculatorSlug(s) {
+      return String(s || '')
+        .toLowerCase()
+        .trim()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-|-$/g, '');
+    }
+
+    function colorflexCalculatorDataBase() {
+      var b = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '');
+      if (b && !/^https?:\/\//i.test(b)) {
+        b = 'https://' + b;
+      }
+      return b;
+    }
+
+    function colorflexRollFeetForMaterial(materialId) {
+      var m = String(materialId || '').toLowerCase().trim();
+      if (m === 'wallpaper-peel-stick') {
+        return 27;
+      }
+      return 30;
+    }
+
+    window.colorflexResolveWallpaperCalculatorContext = function (opts) {
+      opts = opts || {};
+      var preferPageContext = !!opts.preferPageContext;
+
+      function normalizeLineProperties(raw) {
+        if (!raw) {
+          return {};
+        }
+        if (Array.isArray(raw)) {
+          var o = {};
+          for (var i = 0; i < raw.length; i++) {
+            var entry = raw[i];
+            if (entry && entry.name != null) {
+              o[String(entry.name)] = entry.value != null ? String(entry.value) : '';
+            }
+          }
+          return o;
+        }
+        if (typeof raw === 'object') {
+          return raw;
+        }
+        return {};
+      }
+
+      function fromProps(p) {
+        if (!p || typeof p !== 'object') {
+          return { patternName: '', collectionKey: '', materialId: '', scalePct: 100 };
+        }
+        var patternName = (p['Custom Pattern'] || p['Pattern Name'] || '').trim();
+        var collectionKey = (p['Pattern Collection'] || p['Collection'] || '').trim();
+        var materialId = (p['Material Type'] || '').trim();
+        var scaleRaw = p['Pattern Scale'];
+        var scalePct = parseFloat(scaleRaw);
+        if (!Number.isFinite(scalePct) || scalePct <= 0) {
+          scalePct = 100;
+        }
+        return { patternName: patternName, collectionKey: collectionKey, materialId: materialId, scalePct: scalePct };
+      }
+
+      function tryPageContextSync() {
+        var pn = document.getElementById('colorflex-pattern-name');
+        var ck = document.getElementById('colorflex-collection');
+        var mt = document.getElementById('colorflex-material-type');
+        var sc = document.getElementById('colorflex-pattern-scale');
+        if (pn && pn.value && ck && ck.value) {
+          var scVal = sc && sc.value ? parseFloat(sc.value) : 100;
+          if (!Number.isFinite(scVal) || scVal <= 0) {
+            scVal = 100;
+          }
+          return {
+            patternName: String(pn.value).trim(),
+            collectionKey: String(ck.value).trim(),
+            materialId: mt && mt.value ? String(mt.value).trim() : '',
+            scalePct: scVal,
+            sourceLabel: 'from this product page',
+          };
+        }
+
+        var params = new URLSearchParams(window.location.search);
+        var urlPat = params.get('pattern_name') || params.get('custom_pattern') || params.get('pattern');
+        var urlCol = params.get('collection') || params.get('pattern_collection');
+        var urlMat = params.get('material') || params.get('application') || params.get('preferred_material');
+        var urlScale = parseFloat(params.get('scale'));
+        if (!Number.isFinite(urlScale) || urlScale <= 0) {
+          urlScale = 100;
+        }
+        if (urlPat && urlCol) {
+          return {
+            patternName: String(urlPat).trim(),
+            collectionKey: String(urlCol).trim(),
+            materialId: (urlMat || '').trim(),
+            scalePct: urlScale,
+            sourceLabel: 'from the page URL',
+          };
+        }
+        return null;
+      }
+
+      function lastCartWallpaperMatch(cart) {
+        var items = (cart && cart.items) || [];
+        var lastCartMatch = null;
+        for (var i = 0; i < items.length; i++) {
+          var it = items[i];
+          if (!it) {
+            continue;
+          }
+          var h = String(it.handle || '').toLowerCase();
+          var props = normalizeLineProperties(it.properties);
+          var isWallpaper =
+            h === 'custom-wallpaper' ||
+            (it.product_type && String(it.product_type).toLowerCase().indexOf('wallpaper') !== -1) ||
+            !!props['Custom Pattern'];
+          if (!isWallpaper) {
+            continue;
+          }
+          var x = fromProps(props);
+          if (x.patternName && x.collectionKey) {
+            lastCartMatch = {
+              patternName: x.patternName,
+              collectionKey: x.collectionKey,
+              materialId: x.materialId,
+              scalePct: x.scalePct,
+              sourceLabel: 'from your cart',
+            };
+          }
+        }
+        return lastCartMatch;
+      }
+
+      return new Promise(function (resolve) {
+        if (preferPageContext) {
+          var pageFirst = tryPageContextSync();
+          if (pageFirst) {
+            resolve(pageFirst);
+            return;
+          }
+        }
+
+        fetch('/cart.js')
+          .then(function (r) {
+            return r.ok ? r.json() : null;
+          })
+          .then(function (cart) {
+            var fromCart = lastCartWallpaperMatch(cart);
+            if (fromCart) {
+              resolve(fromCart);
+              return;
+            }
+            if (!preferPageContext) {
+              var pageFallback = tryPageContextSync();
+              if (pageFallback) {
+                resolve(pageFallback);
+                return;
+              }
+            }
+            resolve(null);
+          })
+          .catch(function () {
+            resolve(null);
+          });
+      });
+    };
+
+    window.colorflexFetchPatternSpecsForCalculator = function (patternName, collectionKey) {
+      var base = colorflexCalculatorDataBase();
+      var url = base + '/data/collections.json';
+      return fetch(url)
+        .then(function (r) {
+          return r.ok ? r.json() : null;
+        })
+        .then(function (data) {
+          if (!data) {
+            return null;
+          }
+          var collections = data.collections || data;
+          if (!Array.isArray(collections)) {
+            return null;
+          }
+          var wantCol = colorflexCalculatorSlug(collectionKey);
+          var col = collections.find(function (c) {
+            return colorflexCalculatorSlug(c.name) === wantCol || String(c.name).toLowerCase() === String(collectionKey).toLowerCase();
+          });
+          if (!col || !col.patterns) {
+            return null;
+          }
+          var wantPat = colorflexCalculatorSlug(patternName);
+          var pat = col.patterns.find(function (p) {
+            return colorflexCalculatorSlug(p.name) === wantPat || String(p.name).toLowerCase() === String(patternName).toLowerCase();
+          });
+          if (!pat) {
+            return null;
+          }
+          var vRep = 24;
+          if (pat.size && Array.isArray(pat.size) && pat.size.length >= 2) {
+            vRep = parseFloat(pat.size[1]);
+          } else if (pat.height != null) {
+            vRep = parseFloat(pat.height);
+          } else if (pat.width != null) {
+            vRep = parseFloat(pat.width);
+          }
+          if (!Number.isFinite(vRep) || vRep <= 0) {
+            vRep = 24;
+          }
+          var tiling = String(pat.tilingType || pat.tiling || '').toLowerCase();
+          var patternType =
+            tiling.indexOf('half') !== -1 || tiling === 'half-drop' || tiling === 'halfdrop' || tiling === 'hd' ? 'half-drop' : 'straight';
+          return {
+            patternType: patternType,
+            verticalRepeatInches: vRep,
+            displayName: pat.name,
+          };
+        })
+        .catch(function () {
+          return null;
+        });
+    };
+
+    window.colorflexApplyWallpaperCalculatorPatternFromPdp = function () {
+      var root = document.getElementById('calculatorDraggableModal');
+      if (!root) {
+        return Promise.resolve();
+      }
+      var hint = root.querySelector('#wallpaperCalculatorPatternHint');
+      return window
+        .colorflexResolveWallpaperCalculatorContext({ preferPageContext: true })
+        .then(function (meta) {
+          if (!meta || !meta.patternName || !meta.collectionKey) {
+            if (hint) {
+              hint.style.display = 'none';
+              hint.textContent = '';
+            }
+            return;
+          }
+          return window.colorflexFetchPatternSpecsForCalculator(meta.patternName, meta.collectionKey).then(function (specs) {
+            if (!specs) {
+              if (hint) {
+                hint.style.display = 'block';
+                hint.textContent =
+                  'Could not load pattern specs for “' + meta.patternName + '”. Using calculator defaults for match and repeat.';
+              }
+              return;
+            }
+            var scaled = specs.verticalRepeatInches;
+            if (meta.scalePct && Number.isFinite(meta.scalePct) && meta.scalePct > 0 && Number.isFinite(scaled)) {
+              scaled = Math.round(scaled * (meta.scalePct / 100) * 100) / 100;
+            }
+            var pt = root.querySelector('#patternType');
+            var rh = root.querySelector('#repeatHeight');
+            var rl = root.querySelector('#rollLengthFeet');
+            if (pt) {
+              pt.value = specs.patternType === 'half-drop' ? 'half-drop' : 'straight';
+            }
+            if (rh) {
+              rh.value = String(scaled);
+            }
+            if (rl && meta.materialId) {
+              rl.value = String(colorflexRollFeetForMaterial(meta.materialId));
+            }
+            if (hint) {
+              hint.style.display = 'block';
+              hint.textContent =
+                'Using pattern data for “' +
+                specs.displayName +
+                '” (' +
+                meta.collectionKey +
+                ')' +
+                (meta.sourceLabel ? ' — ' + meta.sourceLabel : '') +
+                '.';
+            }
+          });
+        });
+    };
+  })();
+
   // Define and make available globally immediately - styled like MyDesigns modal
-  window.loadCalculatorModal = function() {
-    console.log('🔢 loadCalculatorModal called');
+  window.loadCalculatorModal = function (options) {
+    options = options || {};
+    console.log('🔢 loadCalculatorModal called', options);
     
     // Check if calculator modal already exists
     const existingModal = document.getElementById('calculatorModalOverlay');
     if (existingModal) {
       console.log('✅ Modal already exists, showing it');
       existingModal.style.display = 'flex';
+      if (options.fromProductPage && typeof window.colorflexApplyWallpaperCalculatorPatternFromPdp === 'function') {
+        Promise.resolve(window.colorflexApplyWallpaperCalculatorPatternFromPdp()).catch(function (e) {
+          console.warn('Wallpaper calculator PDP apply failed:', e);
+        });
+      }
       return;
     }
 
@@ -495,8 +780,8 @@
         const modalContent = document.createElement('div');
         modalContent.id = 'calculatorDraggableModal';
         modalContent.style.cssText = `
-          background: #1a202c;
-          color: white;
+          background: #0b0d12;
+          color: rgba(239, 238, 234, 0.92);
           padding: 0;
           border-radius: 10px;
           width: 800px;
@@ -504,10 +789,10 @@
           max-height: 90vh;
           font-family: 'Special Elite', monospace;
           position: absolute;
-          box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+          box-shadow: 0 20px 60px rgba(0,0,0,0.55);
           display: flex;
           flex-direction: column;
-          border: 2px solid #4a5568;
+          border: 2px solid #d4af37;
           z-index: 10001;
           transform: none !important;
           scale: 1 !important;
@@ -591,7 +876,7 @@
         closeBtn.textContent = '×';
         closeBtn.style.cssText = `
           background: #f56565;
-          border: 1px solid #4a5568;
+          border: 1px solid rgba(212, 175, 55, 0.55);
           color: white;
           font-size: 24px;
           cursor: pointer;
@@ -844,6 +1129,12 @@
           }
         });
         
+        if (options.fromProductPage && typeof window.colorflexApplyWallpaperCalculatorPatternFromPdp === 'function') {
+          Promise.resolve(window.colorflexApplyWallpaperCalculatorPatternFromPdp()).catch(function (e) {
+            console.warn('Wallpaper calculator PDP apply failed:', e);
+          });
+        }
+
         document.body.style.overflow = 'hidden';
         console.log('✅ Calculator modal created with MyDesigns styling and draggable functionality');
       })

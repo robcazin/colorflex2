@@ -418,6 +418,91 @@ a.product__text {
   max-width: 44rem;
 }
 
+/* ColorFlex PDP background: match trade page radial gradient */
+.colorflex-trade-bg {
+  --gradient-background: radial-gradient(circle at top, #252b35 0%, #12161d 48%, #0b0d12 100%);
+}
+
+/* ColorFlex PDP: gold frame + soft lift (flat panel fill — no texture image) */
+#colorflexCustomColors,
+#colorflexMaterialInfo {
+  box-sizing: border-box;
+  margin: 12px 0;
+  padding: 14px 16px;
+  background-color: #000;
+  border: 2px solid #d4af37;
+  border-radius: 8px;
+  color: rgba(239, 238, 234, 0.92);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+#colorflexMaterialInfo .colorflex-material-info__title {
+  color: #d4af37;
+  font-family: 'Island Moments', cursive;
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0 0 10px 0;
+  line-height: 1.2;
+}
+
+#colorflexMaterialInfo .colorflex-material-info__name {
+  color: #efd197;
+  font-size: 16px;
+  margin: 0 0 6px 0;
+  font-weight: 600;
+}
+
+#colorflexMaterialInfo .colorflex-material-info__price {
+  color: #d4af37;
+  font-weight: bold;
+  margin: 0 0 10px 0;
+  font-size: 15px;
+}
+
+#colorflexMaterialInfo .colorflex-material-info__specs {
+  color: rgba(239, 238, 234, 0.92);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0;
+  padding-left: 18px;
+}
+
+#colorflexMaterialInfo .colorflex-material-info__specs li {
+  margin-bottom: 4px;
+}
+
+#colorflexCustomColors strong {
+  color: #efd197;
+}
+
+#colorflexCustomColors .colorflex-custom-colors-heading {
+  color: rgba(239, 238, 234, 0.88);
+  font-size: 12px;
+  margin-bottom: 6px;
+  letter-spacing: 0.06rem;
+  text-transform: uppercase;
+}
+
+#colorflexCustomColors .colorflex-swatch-label {
+  font-size: 10px;
+  text-align: center;
+  max-width: 60px;
+  word-wrap: break-word;
+  line-height: 1.15;
+  color: rgba(239, 238, 234, 0.88) !important;
+}
+
+@media screen and (min-width: 750px) {
+  #colorflexCustomColors,
+  #colorflexMaterialInfo {
+    width: 100%;
+    max-width: 44rem;
+  }
+}
+
 .product--no-media .product__info-container > modal-opener {
   display: block;
   text-align: center;

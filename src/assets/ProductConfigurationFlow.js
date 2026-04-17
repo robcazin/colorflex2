@@ -23,6 +23,14 @@ class ProductConfigurationFlow {
         this.materials = [
             // Wallpaper options
             {
+                id: 'wallpaper-custom-sample',
+                name: 'Custom Sample',
+                productHandle: 'custom-sample',
+                icon: '/assets/wallpaper-icon.jpg',
+                description: 'Sample of your specified paper type with your custom ColorFlex design',
+                priceFrom: '$12/sample'
+            },
+            {
                 id: 'wallpaper-prepasted',
                 name: 'Prepasted Wallpaper',
                 productHandle: 'custom-wallpaper',
@@ -55,6 +63,14 @@ class ProductConfigurationFlow {
                 priceFrom: 'Contact for pricing'
             },
             // Fabric options
+            {
+                id: 'fabric-custom-sample',
+                name: 'Custom Sample',
+                productHandle: 'custom-sample',
+                icon: '/assets/fabric-icon.jpg',
+                description: 'Sample of your specified fabric type with your custom ColorFlex design',
+                priceFrom: '$12/sample'
+            },
             {
                 id: 'fabric-soft-velvet',
                 name: 'Soft Velvet',
@@ -229,6 +245,23 @@ class ProductConfigurationFlow {
      * @param {Object} patternData - Pattern configuration from saved patterns modal
      */
     interceptAddToCart(patternData) {
+        // CFM proceed-to-cart passes { pattern: {...}, category, materialInfo, ... }; flatten for this flow
+        if (patternData && patternData.pattern && typeof patternData.pattern === 'object') {
+            const inner = patternData.pattern;
+            patternData = {
+                ...patternData,
+                patternName: patternData.patternName || inner.patternName || inner.name,
+                name: patternData.name || inner.name || inner.patternName,
+                collection: patternData.collection || inner.collection,
+                id: patternData.id != null ? patternData.id : inner.id,
+                colors: patternData.colors || inner.colors,
+                patternPreview: patternData.patternPreview || inner.thumbnail,
+                thumbnailUrl: patternData.thumbnailUrl || inner.thumbnailUrl,
+                currentScale: patternData.currentScale != null ? patternData.currentScale : inner.currentScale,
+                scaleMultiplier: patternData.scaleMultiplier != null ? patternData.scaleMultiplier : inner.scaleMultiplier
+            };
+        }
+
         console.log('🎯 Starting configuration flow for pattern:', patternData.patternName);
         console.log('🎨 RECEIVED PATTERN DATA:', JSON.stringify(patternData, null, 2));
         
@@ -248,21 +281,29 @@ class ProductConfigurationFlow {
 
         console.log('🔍 Pattern ID check - incoming ID:', patternData.id, 'final ID:', patternId);
         
+        const thumb = patternData.patternPreview || patternData.thumbnail || null;
         this.state.pattern = {
             id: patternId,
             name: patternData.patternName || patternData.name || 'Custom Pattern',
             patternName: patternData.patternName || patternData.name || 'Custom Pattern', // Both formats for compatibility
             collection: patternData.collection || 'unknown',
             colors: patternData.colors || [],
-            preview: patternData.patternPreview || null,
-            thumbnailUrl: patternData.thumbnailUrl || null
+            preview: thumb,
+            thumbnailUrl: patternData.thumbnailUrl || null,
+            currentScale: patternData.currentScale,
+            scaleMultiplier: patternData.scaleMultiplier
         };
         
         console.log('✅ Pattern data initialized with ID:', patternId);
         
         this.state.step = 'category';
         this.saveState();
-        this.showMaterialModal();
+        const preselect = patternData.category || patternData.preferredMaterial;
+        if (preselect && this.materials.some((m) => m.id === preselect)) {
+            this.selectMaterial(preselect);
+        } else {
+            this.showMaterialModal();
+        }
     }
     
     /**
@@ -471,6 +512,7 @@ class ProductConfigurationFlow {
         const currentPath = window.location.pathname;
         return currentPath.includes('/products/custom-wallpaper') || 
                currentPath.includes('/products/custom-fabric') ||
+               currentPath.includes('/products/custom-sample') ||
                document.querySelector('.product-form, form[action*="cart/add"]');
     }
     
@@ -1281,8 +1323,12 @@ class ProductConfigurationFlow {
             
             // Material and texture selection (for variant pre-selection)
             params.set('selected_category', this.state.category);
-            params.set('selected_texture', this.state.variant.name);
-            params.set('preselect_variant', this.state.variant.id || this.state.variant.name);
+            if (this.state.variant && this.state.variant.name) {
+                params.set('selected_texture', this.state.variant.name);
+            }
+            if (this.state.variant && (this.state.variant.id != null || this.state.variant.name)) {
+                params.set('preselect_variant', this.state.variant.id || this.state.variant.name);
+            }
             
             // Pattern metadata
             if (this.state.pattern.id) {
@@ -1297,7 +1343,9 @@ class ProductConfigurationFlow {
             }
 
             // Store complete properties for product page to access
-            this.storePropertiesForProductPage(cartItem.properties);
+            if (cartItem && cartItem.properties) {
+                this.storePropertiesForProductPage(cartItem.properties);
+            }
             
             // Construct final URL to ACTUAL product
             const productUrl = `/products/${productHandle}?${params.toString()}`;
