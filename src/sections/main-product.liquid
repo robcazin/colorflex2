@@ -1464,7 +1464,21 @@
               }
             };
 
-            const material = materialInfo[preferredMaterial];
+            let material = materialInfo[preferredMaterial];
+            const sampleForRaw = urlParams.get('sample_for');
+            if (sampleForRaw && (preferredMaterial === 'wallpaper-custom-sample' || preferredMaterial === 'fabric-custom-sample')) {
+              let sfr = sampleForRaw;
+              if (sfr === 'wallpaper-unpasted') sfr = 'wallpaper-prepasted';
+              const sub = materialInfo[sfr];
+              const sampleDef = materialInfo[preferredMaterial];
+              if (sub && sampleDef) {
+                material = {
+                  name: sampleDef.name + ' — ' + sub.name,
+                  price: sampleDef.price,
+                  specs: ['Substrate: ' + sub.name + ' (' + sub.price + ')'].concat(sampleDef.specs)
+                };
+              }
+            }
             console.log('🔍 Material lookup result:', material);
 
             if (material) {
@@ -1651,7 +1665,7 @@
                   const urlParams = new URLSearchParams(window.location.search);
                   console.log('🔍 Full URL:', window.location.href);
                   console.log('🔍 Search params:', window.location.search);
-                  const preferredMaterial = urlParams.get('preferred_material');
+                  let preferredMaterial = urlParams.get('preferred_material');
                   console.log('🔍 preferredMaterial value:', preferredMaterial);
 
                   if (!preferredMaterial) {
@@ -1785,7 +1799,21 @@
                     }
                   };
 
-                  const material = materialInfo[preferredMaterial];
+                  let material = materialInfo[preferredMaterial];
+                  const sampleForRaw = urlParams.get('sample_for');
+                  if (sampleForRaw && (preferredMaterial === 'wallpaper-custom-sample' || preferredMaterial === 'fabric-custom-sample')) {
+                    let sfr = sampleForRaw;
+                    if (sfr === 'wallpaper-unpasted') sfr = 'wallpaper-prepasted';
+                    const sub = materialInfo[sfr];
+                    const sampleDef = materialInfo[preferredMaterial];
+                    if (sub && sampleDef) {
+                      material = {
+                        name: sampleDef.name + ' — ' + sub.name,
+                        price: sampleDef.price,
+                        specs: ['Substrate: ' + sub.name + ' (' + sub.price + ')'].concat(sampleDef.specs)
+                      };
+                    }
+                  }
                   console.log('🔍 Material lookup result:', material);
 
                   if (material) {
@@ -4293,11 +4321,51 @@ window.replaceMainProductImage = function(urlParams) {
   const collection = urlParams.get('collection');
   const material = urlParams.get('material');
   const customColors = urlParams.get('custom_colors');
+  const urlPatternId = urlParams.get('pattern_id') || urlParams.get('saved_pattern_id');
   let thumbnail = urlParams.get('thumbnail');
-  
-  // If no thumbnail in URL, check localStorage
+
+  function colorflexReadCartThumbnailByPatternId(pid) {
+    if (!pid || !String(pid).trim()) return '';
+    try {
+      const suffix = typeof window.colorflexSanitizeCartThumbSuffix === 'function'
+        ? window.colorflexSanitizeCartThumbSuffix(pid)
+        : String(pid).replace(/[^a-zA-Z0-9-]/g, '_');
+      const cartKey = 'cart_thumbnail_' + suffix;
+      const raw = localStorage.getItem(cartKey);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data && data.thumbnail) {
+          console.log('🖼️ Retrieved thumbnail from cart storage key:', cartKey);
+          return data.thumbnail;
+        }
+      }
+    } catch (_e) { /* ignore */ }
+    return '';
+  }
+
+  // Prefer per-colorway cart bucket when URL pins pattern_id (avoids stale global colorflexCurrentThumbnail).
+  if (!thumbnail || thumbnail.trim() === '') {
+    if (urlPatternId) {
+      thumbnail = colorflexReadCartThumbnailByPatternId(urlPatternId);
+      if (thumbnail) {
+        try {
+          localStorage.setItem('colorflexCurrentThumbnail', thumbnail);
+          localStorage.setItem('colorflexCurrentThumbnailPatternId', String(urlPatternId).trim());
+        } catch (_sync) {}
+      }
+    }
+  }
+
+  // If no thumbnail in URL / cart bucket, check localStorage (skip when pattern_id disagrees with stored meta)
   if (!thumbnail || thumbnail.trim() === '') {
     thumbnail = localStorage.getItem('colorflexCurrentThumbnail');
+    if (thumbnail && urlPatternId) {
+      const thumbPid = localStorage.getItem('colorflexCurrentThumbnailPatternId');
+      if (thumbPid && String(thumbPid) !== String(urlPatternId).trim()) {
+        thumbnail = '';
+        console.warn('🖼️ Ignoring stale colorflexCurrentThumbnail (pattern_id mismatch)');
+      }
+    }
     if (thumbnail) {
       console.log('🖼️ Retrieved thumbnail from localStorage');
     } else {
@@ -4313,7 +4381,12 @@ window.replaceMainProductImage = function(urlParams) {
             thumbnail = matchingPattern.thumbnail;
             console.log('🖼️ Retrieved thumbnail from saved patterns');
             // Store it in localStorage for future use
-            localStorage.setItem('colorflexCurrentThumbnail', thumbnail);
+            try {
+              localStorage.setItem('colorflexCurrentThumbnail', thumbnail);
+              if (urlPatternId) {
+                localStorage.setItem('colorflexCurrentThumbnailPatternId', String(urlPatternId).trim());
+              }
+            } catch (_sp) {}
           } else {
             console.warn('⚠️ No thumbnail found in localStorage or saved patterns');
           }
@@ -4321,27 +4394,6 @@ window.replaceMainProductImage = function(urlParams) {
           console.error('❌ Error checking saved patterns:', error);
         }
       }
-    }
-  }
-
-  // Cart stores the same thumbnail under cart_thumbnail_<patternId> (used by cart restoration)
-  if (!thumbnail || thumbnail.trim() === '') {
-    const pid = urlParams.get('pattern_id') || urlParams.get('saved_pattern_id');
-    if (pid) {
-      try {
-        const suffix = typeof window.colorflexSanitizeCartThumbSuffix === 'function'
-          ? window.colorflexSanitizeCartThumbSuffix(pid)
-          : String(pid).replace(/[^a-zA-Z0-9-]/g, '_');
-        const cartKey = 'cart_thumbnail_' + suffix;
-        const raw = localStorage.getItem(cartKey);
-        if (raw) {
-          const data = JSON.parse(raw);
-          if (data && data.thumbnail) {
-            thumbnail = data.thumbnail;
-            console.log('🖼️ Retrieved thumbnail from cart storage key:', cartKey);
-          }
-        }
-      } catch (_e) { /* ignore */ }
     }
   }
   
@@ -5451,6 +5503,19 @@ function formatPreferredMaterial(pm) {
   return map[pm] || pm.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
+/** Cart line Material Type when arriving from material modal sample links (preferred_material + sample_for). */
+function colorflexMaterialTypeLabelForCart(urlParams) {
+  const sampleFor = urlParams.get('sample_for');
+  const pm = urlParams.get('preferred_material');
+  if (sampleFor && (pm === 'wallpaper-custom-sample' || pm === 'fabric-custom-sample')) {
+    let sf = sampleFor;
+    if (sf === 'wallpaper-unpasted') sf = 'wallpaper-prepasted';
+    const sampleName = pm === 'fabric-custom-sample' ? 'Fabric Custom Sample' : 'Wallpaper Custom Sample';
+    return sampleName + ' — ' + formatPreferredMaterial(sf);
+  }
+  return urlParams.get('application') || urlParams.get('material') || formatPreferredMaterial(urlParams.get('preferred_material')) || '';
+}
+
 /**
  * Shrink huge data-URL previews (~2MB+) so localStorage cart_thumbnail_* JSON fits quota and <img src> is reliable.
  * Persists the smaller URL back to colorflexCurrentThumbnail when compression runs.
@@ -5722,7 +5787,7 @@ async function populateColorFlexProperties(urlParams) {
     'colorflex-custom-colors': customColors,
     'colorflex-source': sourceLabel,
     'colorflex-thumbnail-key': cartThumbnailKey,
-    'colorflex-material-type': urlParams.get('application') || urlParams.get('material') || formatPreferredMaterial(urlParams.get('preferred_material')),
+    'colorflex-material-type': colorflexMaterialTypeLabelForCart(urlParams),
     'colorflex-design': 'Yes',
     'colorflex-pattern-id': patternId, // Use generated ID instead of URL parameter
     'colorflex-save-date': new Date().toISOString(),
@@ -6971,7 +7036,7 @@ if (patternName && collection) {
       'properties[Custom Colors]': cleanedCustomColors,
       'properties[ColorFlex Source]': 'ColorFlex Saved Pattern',
       'properties[Thumbnail Key]': formCartThumbnailKey,
-      'properties[Material Type]': urlParams.get('application') || urlParams.get('material') || formatPreferredMaterial(urlParams.get('preferred_material')),
+      'properties[Material Type]': colorflexMaterialTypeLabelForCart(urlParams),
       'properties[ColorFlex Design]': 'Yes',
       'properties[Pattern ID]': resolvedPatternId,
       'properties[Save Date]': new Date().toISOString(),

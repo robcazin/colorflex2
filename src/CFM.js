@@ -1165,6 +1165,23 @@ function cartThumbnailStorageKeyFromPattern(pattern) {
     return '';
 }
 
+/**
+ * Persist global PDP thumbnail together with pattern id so product pages can ignore stale cross-pattern data.
+ */
+function colorflexStoreCurrentThumbnailForPattern(pattern, dataUrl) {
+    if (!dataUrl || typeof dataUrl !== 'string') return;
+    try {
+        localStorage.setItem('colorflexCurrentThumbnail', dataUrl);
+        const rawId = pattern && (pattern.id || pattern.patternId);
+        const pid = rawId != null && String(rawId).trim() !== '' ? String(rawId).trim() : '';
+        if (pid) {
+            localStorage.setItem('colorflexCurrentThumbnailPatternId', pid);
+        } else {
+            localStorage.removeItem('colorflexCurrentThumbnailPatternId');
+        }
+    } catch (_) {}
+}
+
 // CFM-SEARCH: SAVED_PRESET_ENTRY_ID
 // Use a per-save entry ID so duplicate pattern IDs can still be deleted individually.
 function createSavedPatternEntryId() {
@@ -3617,6 +3634,83 @@ const FABRIC_SPECIFICATIONS = {
  * @see updateCartItemViaAPI - Updates existing cart items
  * @see getMaterialDisplayName - Gets user-friendly material names
  */
+
+/** Colors for sample PDP URL (same priority as proceed-to-cart / fallback redirect). */
+function colorflexEffectiveColorsForProductUrl(pattern) {
+    try {
+        const coordMapped = colorflexCoordinateMappedRuntimeColors();
+        if (coordMapped && coordMapped.length) return coordMapped;
+
+        if (Array.isArray(appState.layerInputs) && appState.layerInputs.length) {
+            const fromInputs = appState.layerInputs
+                .map((li, i) => ({
+                    label: (li && li.label) || `Layer ${i + 1}`,
+                    color: normalizeColorToSwFormat(li && li.input ? li.input.value : '')
+                }))
+                .filter((c) => c.color && c.color !== 'Unknown Color');
+            if (fromInputs.length) return fromInputs;
+        }
+        if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
+            const fromLayers = appState.currentLayers
+                .filter((l) => l && l.isShadow !== true)
+                .map((l, i) => ({
+                    label: l.label || `Layer ${i + 1}`,
+                    color: normalizeColorToSwFormat(l.color || '')
+                }))
+                .filter((c) => c.color && c.color !== 'Unknown Color');
+            if (fromLayers.length) return fromLayers;
+        }
+    } catch (e) { /* ignore */ }
+    return Array.isArray(pattern.colors) ? pattern.colors : [];
+}
+
+/**
+ * Fabric-only: physical sample PDP (custom-sample) with fabric-custom-sample + sample_for
+ * so cart / PDP show "Fabric Custom Sample — {substrate}" and the same ColorFlex URL params as proceed-to-cart.
+ */
+function buildColorflexFabricSampleProductUrl(pattern, fabricSubstrateId) {
+    let substrate = String(fabricSubstrateId || '').trim();
+    if (!substrate.startsWith('fabric-')) {
+        substrate = 'fabric-soft-velvet';
+    }
+    const effectiveColors = colorflexEffectiveColorsForProductUrl(pattern);
+    const customColorsParam = effectiveColors
+        .filter((c) => c && c.color != null && String(c.color).trim() !== '')
+        .map((c) => normalizeColorToSwFormat(c.color))
+        .filter((s) => s && s !== 'Unknown Color')
+        .join(',');
+
+    const collection =
+        (pattern && (pattern.collection || pattern.collectionName)) ||
+        (typeof appState !== 'undefined' && appState.selectedCollection && appState.selectedCollection.name) ||
+        '';
+
+    const params = new URLSearchParams({
+        pattern_name: pattern.name || pattern.patternName || '',
+        collection: collection,
+        pattern_id: pattern.id || '',
+        custom_colors: customColorsParam,
+        scale: pattern.currentScale || 100,
+        source: 'colorflex_saved_patterns',
+        preferred_material: 'fabric-custom-sample',
+        sample_for: substrate,
+        save_date: pattern.timestamp || pattern.saveDate || new Date().toISOString()
+    });
+    const sm = pattern.scaleMultiplier != null ? Number(pattern.scaleMultiplier) : NaN;
+    if (!isNaN(sm) && sm > 0 && sm !== 1) {
+        params.set('scale_multiplier', String(sm));
+    }
+
+    const productUrl = '/products/custom-sample?' + params.toString();
+
+    const promoCode = sessionStorage.getItem('cfm_promo_code');
+    const promoUsed = sessionStorage.getItem('cfm_promo_used') === 'true';
+    if (promoCode && promoUsed && String(promoCode).toUpperCase() === 'FIRSTROLL25') {
+        return '/discount/' + promoCode + '?redirect=' + encodeURIComponent(productUrl);
+    }
+    return productUrl;
+}
+
 function showMaterialSelectionModal(pattern) {
     console.log('🎄 showMaterialSelectionModal called - promo section will be added');
 
@@ -3828,14 +3922,8 @@ function showMaterialSelectionModal(pattern) {
         }
     }, 100);
 
-    // Group materials by category
+    // Wallpaper: rolls + wallpaper sample radio. Fabric: each variant has roll radio + separate sample radio (small text, not a link).
     var wallpaperOptions = [
-        {
-            value: 'wallpaper-custom-sample',
-            label: 'Custom Sample',
-            price: '$12/sample',
-            description: 'Sample of your specified paper type with your custom ColorFlex design'
-        },
         {
             value: 'wallpaper-prepasted',
             label: 'Prepasted Wallpaper',
@@ -3859,16 +3947,16 @@ function showMaterialSelectionModal(pattern) {
             label: 'Grasscloth Wallpaper',
             price: 'Contact for pricing',
             description: 'Natural Grass Cloth • 24" wide x 27\' long • Quietly elevates any space'
+        },
+        {
+            value: 'wallpaper-custom-sample',
+            label: 'Wallpaper Custom Sample',
+            price: '$12/sample',
+            description: 'Physical sample of your pattern • Confirm color and scale before ordering rolls'
         }
     ];
 
     var fabricOptions = [
-        {
-            value: 'fabric-custom-sample',
-            label: 'Custom Sample',
-            price: '$12/sample',
-            description: 'Sample of your specified fabric type with your custom ColorFlex design'
-        },
         {
             value: 'fabric-soft-velvet',
             label: 'Soft Velvet',
@@ -3911,8 +3999,7 @@ function showMaterialSelectionModal(pattern) {
     var accordionContainer = document.createElement('div');
     accordionContainer.style.cssText = 'display: flex; flex-direction: column; gap: 10px;';
 
-    // Helper function to create accordion section (scrollContainer: modal content to autoscroll after choice)
-    function createAccordionSection(title, icon, options, isOpen, scrollContainer) {
+    function createAccordionSection(title, icon, options, isOpen, scrollContainer, patternForSamples) {
         var section = document.createElement('div');
         section.style.cssText = 'border: 2px solid #4a5568; border-radius: 8px; overflow: hidden;';
 
@@ -3953,6 +4040,7 @@ function showMaterialSelectionModal(pattern) {
 
         // Add options
         options.forEach(function(option, index) {
+            var radioSample = null;
             var optionDiv = document.createElement('div');
             optionDiv.style.cssText = `
                 border: 1px solid #4a5568;
@@ -3968,9 +4056,9 @@ function showMaterialSelectionModal(pattern) {
             radio.name = 'material';
             radio.value = option.value;
             radio.id = 'material_' + option.value;
-            radio.style.cssText = 'margin-right: 10px;';
+            radio.style.cssText = 'margin-top: 4px; flex-shrink: 0;';
 
-            // Default: Prepasted Wallpaper (not first row when Custom Sample is listed first)
+            // Default: Prepasted Wallpaper
             if (title === 'Wallpaper' && option.value === 'wallpaper-prepasted') {
                 radio.checked = true;
             }
@@ -3983,8 +4071,37 @@ function showMaterialSelectionModal(pattern) {
                 <span style="color: #d4af37; font-size: 14px;">${option.price}</span>
             `;
 
-            optionDiv.appendChild(radio);
-            optionDiv.appendChild(label);
+            var row = document.createElement('div');
+            row.style.cssText = 'display: flex; align-items: flex-start; gap: 10px; width: 100%;';
+            var col = document.createElement('div');
+            col.style.cssText = 'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;';
+            col.appendChild(label);
+
+            if (title === 'Fabric') {
+                var sampleSubRow = document.createElement('div');
+                sampleSubRow.className = 'colorflex-modal-fabric-sample-subrow';
+                sampleSubRow.style.cssText =
+                    'margin-top: 8px; padding-left: 28px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; cursor: pointer;';
+
+                radioSample = document.createElement('input');
+                radioSample.type = 'radio';
+                radioSample.name = 'material';
+                radioSample.value = 'fabric-sample:' + option.value;
+                radioSample.id = 'material_fabric_sample_' + String(option.value).replace(/[^a-zA-Z0-9-]/g, '_');
+                radioSample.style.cssText = 'flex-shrink: 0; margin-top: 0;';
+
+                var sampleHint = document.createElement('span');
+                sampleHint.textContent = 'Order a physical sample (this material)';
+                sampleHint.style.cssText = 'font-size: 11px; color: #a0aec0; line-height: 1.35; user-select: none;';
+
+                sampleSubRow.appendChild(sampleHint);
+                sampleSubRow.appendChild(radioSample);
+                col.appendChild(sampleSubRow);
+            }
+
+            row.appendChild(radio);
+            row.appendChild(col);
+            optionDiv.appendChild(row);
 
             // Hover effects
             optionDiv.addEventListener('mouseenter', function() {
@@ -3993,14 +4110,41 @@ function showMaterialSelectionModal(pattern) {
             });
 
             optionDiv.addEventListener('mouseleave', function() {
-                if (!radio.checked) {
+                var any = radio.checked;
+                if (radioSample) {
+                    any = any || radioSample.checked;
+                }
+                if (!any) {
                     optionDiv.style.borderColor = '#4a5568';
                     optionDiv.style.background = '#2d3748';
                 }
             });
 
-            // Click to select
+            // Click: fabric sample sub-row selects sample radio only; rest of card selects roll/wallpaper radio
             optionDiv.addEventListener('click', function(e) {
+                if (radioSample && e.target && e.target.closest && e.target.closest('.colorflex-modal-fabric-sample-subrow')) {
+                    if (e.target !== radioSample) {
+                        radioSample.checked = true;
+                    }
+                    accordionContainer.querySelectorAll('input[type="radio"]').forEach(function(r) {
+                        var container = r.closest('div[style*="border: 1px"]');
+                        if (container) {
+                            if (r.checked) {
+                                container.style.borderColor = '#d4af37';
+                                container.style.background = '#374151';
+                            } else {
+                                container.style.borderColor = '#4a5568';
+                                container.style.background = '#2d3748';
+                            }
+                        }
+                    });
+                    if (scrollContainer) {
+                        setTimeout(function() {
+                            scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
+                        }, 200);
+                    }
+                    return;
+                }
                 if (e.target !== radio) {
                     radio.checked = true;
                 }
@@ -4055,9 +4199,9 @@ function showMaterialSelectionModal(pattern) {
         return section;
     }
 
-    // Create wallpaper and fabric sections (both collapsed by default); pass modalContent for autoscroll after choice
-    var wallpaperSection = createAccordionSection('Wallpaper', '🗂️', wallpaperOptions, false, modalContent);
-    var fabricSection = createAccordionSection('Fabric', '🧵', fabricOptions, false, modalContent);
+    // Wallpaper open by default so prepasted is visible.
+    var wallpaperSection = createAccordionSection('Wallpaper', '🗂️', wallpaperOptions, true, modalContent, pattern);
+    var fabricSection = createAccordionSection('Fabric', '🧵', fabricOptions, false, modalContent, pattern);
 
     accordionContainer.appendChild(wallpaperSection);
     accordionContainer.appendChild(fabricSection);
@@ -4169,16 +4313,41 @@ function showMaterialSelectionModal(pattern) {
         // Rebuild pattern payload from live runtime state at click-time.
         // This prevents stale saved-pattern data (colors/thumbnail) from overriding correct preview output.
         try {
+            try {
+                localStorage.removeItem('colorflexCurrentThumbnail');
+                localStorage.removeItem('colorflexCurrentThumbnailPatternId');
+                sessionStorage.removeItem('colorflexProceedProofDataUrl');
+                sessionStorage.removeItem('colorflexProceedProofMeta');
+                localStorage.removeItem('colorflexProceedProofDataUrl');
+                localStorage.removeItem('colorflexProceedProofMeta');
+            } catch (_clearStale) {}
             if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
-                const runtimeColors = appState.currentLayers
-                    .filter((l) => l && l.isShadow !== true && l.color != null && String(l.color).trim() !== '')
-                    .map((l, idx) => ({
-                        label: l.label || `Layer ${idx + 1}`,
-                        color: normalizeColorToSwFormat(l.color)
-                    }))
-                    .filter((c) => c.color && c.color !== 'Unknown Color');
+                const mappedCoord = colorflexCoordinateMappedRuntimeColors();
+                const runtimeColors =
+                    mappedCoord && mappedCoord.length
+                        ? mappedCoord
+                        : appState.currentLayers
+                              .filter((l) => l && l.isShadow !== true && l.color != null && String(l.color).trim() !== '')
+                              .map((l, idx) => ({
+                                  label: l.label || `Layer ${idx + 1}`,
+                                  color: normalizeColorToSwFormat(l.color)
+                              }))
+                              .filter((c) => c.color && c.color !== 'Unknown Color');
                 if (runtimeColors.length) {
                     pattern.colors = runtimeColors;
+                    if (mappedCoord && mappedCoord.length) {
+                        const pName =
+                            pattern.name || pattern.patternName || appState.currentPattern?.name || '';
+                        if (pName) {
+                            const scale =
+                                typeof appState.currentScale === 'number' && appState.currentScale > 0
+                                    ? appState.currentScale
+                                    : pattern.currentScale || 100;
+                            const newId = generatePatternId(pName, runtimeColors, scale);
+                            pattern.id = newId;
+                            pattern.patternId = newId;
+                        }
+                    }
                     console.log('✅ Proceed-to-cart runtime colors applied:', runtimeColors);
                 }
             }
@@ -4187,7 +4356,7 @@ function showMaterialSelectionModal(pattern) {
                 const runtimeProofDataUrl = await window.generatePrintPreviewDataUrl();
                 if (runtimeProofDataUrl && typeof runtimeProofDataUrl === 'string' && runtimeProofDataUrl.startsWith('data:image')) {
                     pattern.thumbnail = runtimeProofDataUrl;
-                    try { localStorage.setItem('colorflexCurrentThumbnail', runtimeProofDataUrl); } catch (_) {}
+                    colorflexStoreCurrentThumbnailForPattern(pattern, runtimeProofDataUrl);
                     try {
                         const lockedColors = Array.isArray(pattern.colors)
                             ? pattern.colors.map((c) => (c && c.color ? String(c.color) : '')).filter(Boolean)
@@ -4211,7 +4380,7 @@ function showMaterialSelectionModal(pattern) {
                 const runtimeThumb = capturePatternThumbnail();
                 if (runtimeThumb && typeof runtimeThumb === 'string' && runtimeThumb.startsWith('data:image')) {
                     pattern.thumbnail = runtimeThumb;
-                    try { localStorage.setItem('colorflexCurrentThumbnail', runtimeThumb); } catch (_) {}
+                    colorflexStoreCurrentThumbnailForPattern(pattern, runtimeThumb);
                     try {
                         const lockedColors = Array.isArray(pattern.colors)
                             ? pattern.colors.map((c) => (c && c.color ? String(c.color) : '')).filter(Boolean)
@@ -4270,6 +4439,22 @@ function showMaterialSelectionModal(pattern) {
             }).catch(function () {});
         } catch (_e2) {}
         // #endregion
+
+        var fabricSampleSub = null;
+        var fabricSampleRe = /^fabric-sample:(.+)$/;
+        var fabricSampleM = fabricSampleRe.exec(selectedMaterial);
+        if (fabricSampleM) {
+            fabricSampleSub = fabricSampleM[1];
+        }
+        if (fabricSampleSub) {
+            if (isFromCartEdit) {
+                alert('Sample options cannot be updated from this dialog. Remove the line item and add a new sample from ColorFlex if needed.');
+                return;
+            }
+            modal.remove();
+            window.location.href = buildColorflexFabricSampleProductUrl(pattern, fabricSampleSub);
+            return;
+        }
 
         if (isFromCartEdit) {
             // Handle cart item update
@@ -4362,7 +4547,7 @@ function showMaterialSelectionModal(pattern) {
                     cleanupLocalStorage();
 
                     // Try to store the thumbnail
-                    localStorage.setItem('colorflexCurrentThumbnail', pattern.thumbnail);
+                    colorflexStoreCurrentThumbnailForPattern(pattern, pattern.thumbnail);
                     console.log('🖼️ Stored thumbnail in localStorage for product page');
                 } catch (quotaError) {
                     console.warn('⚠️ localStorage quota exceeded, trying with smaller thumbnail...');
@@ -4371,7 +4556,7 @@ function showMaterialSelectionModal(pattern) {
                     const smallerThumbnail = await createCompressedThumbnail(pattern.thumbnail);
                     if (smallerThumbnail) {
                         try {
-                            localStorage.setItem('colorflexCurrentThumbnail', smallerThumbnail);
+                            colorflexStoreCurrentThumbnailForPattern(pattern, smallerThumbnail);
                             console.log('🖼️ Stored compressed thumbnail in localStorage');
                         } catch (stillTooLarge) {
                             console.error('❌ Even compressed thumbnail too large for localStorage');
@@ -4731,31 +4916,7 @@ async function createCompressedThumbnail(originalThumbnail) {
 function redirectToProductConfiguration(pattern, material) {
     try {
         console.log('⚙️ Starting ProductConfigurationFlow for:', pattern.patternName, 'Material:', material);
-        const getRuntimeCartColors = () => {
-            try {
-                if (Array.isArray(appState.layerInputs) && appState.layerInputs.length) {
-                    const fromInputs = appState.layerInputs
-                        .map((li, i) => ({
-                            label: (li && li.label) || `Layer ${i + 1}`,
-                            color: normalizeColorToSwFormat(li && li.input ? li.input.value : '')
-                        }))
-                        .filter((c) => c.color && c.color !== 'Unknown Color');
-                    if (fromInputs.length) return fromInputs;
-                }
-                if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
-                    const fromLayers = appState.currentLayers
-                        .filter((l) => l && l.isShadow !== true)
-                        .map((l, i) => ({
-                            label: l.label || `Layer ${i + 1}`,
-                            color: normalizeColorToSwFormat(l.color || '')
-                        }))
-                        .filter((c) => c.color && c.color !== 'Unknown Color');
-                    if (fromLayers.length) return fromLayers;
-                }
-            } catch (e) {}
-            return Array.isArray(pattern.colors) ? pattern.colors : [];
-        };
-        const effectiveColors = getRuntimeCartColors();
+        const effectiveColors = colorflexEffectiveColorsForProductUrl(pattern);
         if (effectiveColors.length) {
             pattern.colors = effectiveColors;
         }
@@ -4826,7 +4987,7 @@ function redirectToProductConfiguration(pattern, material) {
         if (pattern.thumbnail) {
             try {
                 console.log('🖼️ Storing pattern thumbnail for product page display');
-                localStorage.setItem('colorflexCurrentThumbnail', pattern.thumbnail);
+                colorflexStoreCurrentThumbnailForPattern(pattern, pattern.thumbnail);
             } catch (error) {
                 console.warn('⚠️ Failed to store thumbnail in localStorage:', error);
             }
@@ -4875,40 +5036,27 @@ function fallbackDirectRedirect(pattern, material) {
         currentScale: pattern.currentScale
     });
     console.log('🎨 Material:', material);
-    const getRuntimeCartColors = () => {
-        try {
-            if (Array.isArray(appState.layerInputs) && appState.layerInputs.length) {
-                const fromInputs = appState.layerInputs
-                    .map((li, i) => ({
-                        label: (li && li.label) || `Layer ${i + 1}`,
-                        color: normalizeColorToSwFormat(li && li.input ? li.input.value : '')
-                    }))
-                    .filter((c) => c.color && c.color !== 'Unknown Color');
-                if (fromInputs.length) return fromInputs;
-            }
-            if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
-                const fromLayers = appState.currentLayers
-                    .filter((l) => l && l.isShadow !== true)
-                    .map((l, i) => ({
-                        label: l.label || `Layer ${i + 1}`,
-                        color: normalizeColorToSwFormat(l.color || '')
-                    }))
-                    .filter((c) => c.color && c.color !== 'Unknown Color');
-                if (fromLayers.length) return fromLayers;
-            }
-        } catch (e) {}
-        return Array.isArray(pattern.colors) ? pattern.colors : [];
-    };
-    const effectiveColors = getRuntimeCartColors();
+    const effectiveColors = colorflexEffectiveColorsForProductUrl(pattern);
     if (effectiveColors.length) {
         pattern.colors = effectiveColors;
+        if (colorflexCoordinateMappedRuntimeColors()) {
+            const pName = pattern.name || pattern.patternName || appState.currentPattern?.name || '';
+            if (pName) {
+                const scale =
+                    typeof appState.currentScale === 'number' && appState.currentScale > 0
+                        ? appState.currentScale
+                        : pattern.currentScale || 100;
+                pattern.id = generatePatternId(pName, effectiveColors, scale);
+                pattern.patternId = pattern.id;
+            }
+        }
     }
 
     // Store thumbnail in localStorage for product page display
     if (pattern.thumbnail) {
         try {
             console.log('🖼️ Storing pattern thumbnail for product page display (fallback)');
-            localStorage.setItem('colorflexCurrentThumbnail', pattern.thumbnail);
+            colorflexStoreCurrentThumbnailForPattern(pattern, pattern.thumbnail);
         } catch (error) {
             console.warn('⚠️ Failed to store thumbnail in localStorage:', error);
         }
@@ -4928,7 +5076,7 @@ function fallbackDirectRedirect(pattern, material) {
         console.log('🎉 PROMO: Applying 25% discount to cart redirect');
     }
 
-    // Determine product handle based on material
+    // Sample SKUs use the unified custom-sample product; rolls use custom-wallpaper / custom-fabric.
     let productHandle = 'custom-fabric';
     if (material === 'wallpaper-custom-sample' || material === 'fabric-custom-sample') {
         productHandle = 'custom-sample';
@@ -4959,6 +5107,9 @@ function fallbackDirectRedirect(pattern, material) {
     const sm = pattern.scaleMultiplier != null ? Number(pattern.scaleMultiplier) : NaN;
     if (!isNaN(sm) && sm > 0 && sm !== 1) {
         params.set('scale_multiplier', String(sm));
+    }
+    if (material === 'wallpaper-custom-sample') {
+        params.set('sample_for', 'wallpaper-prepasted');
     }
 
     // 🎄 USE SHOPIFY'S DISCOUNT URL TO AUTO-APPLY THE CODE
@@ -10486,8 +10637,27 @@ function getLayerMappingForPreview(isFurnitureCollection) {
 }
 
 /**
+ * Ordered host currentLayers indices (non-shadow) from anchor through end — one step per coordinate tint layer.
+ */
+function buildCoordinateEligibleHostIndices(layersArr, anchor) {
+    const eligible = [];
+    const len = layersArr ? layersArr.length : 0;
+    if (!layersArr || len === 0 || anchor == null || typeof anchor !== 'number' || anchor < 0 || anchor >= len) {
+        return eligible;
+    }
+    for (let i = anchor; i < len; i++) {
+        if (!layersArr[i]?.isShadow) eligible.push(i);
+    }
+    if (eligible.length === 0) {
+        eligible.push(Math.min(Math.max(0, anchor), len - 1));
+    }
+    return eligible;
+}
+
+/**
  * Map pattern JSON layer index (same index as updatePreview's layer loop) to appState.currentLayers index for tint color.
- * When coordinatePreviewColorStartIndex is set, layer 0 anchors to that slot; further layers advance to next non-shadow slots (matches updatePreview).
+ * When coordinatePreviewColorStartIndex is set: walk forward through non-shadow host slots from the anchor; when the
+ * coordinate has more tint layers than that chain, cycle (modulo) so extra layers reuse the palette in order.
  */
 function resolveCurrentLayersIndexForPatternLayer(layerIx, patternStartIndex) {
     const layersArr = appState.currentLayers;
@@ -10497,14 +10667,84 @@ function resolveCurrentLayersIndexForPatternLayer(layerIx, patternStartIndex) {
     if (anchor == null || typeof anchor !== 'number' || !layersArr) {
         return Math.min(Math.max(0, defaultIdx), Math.max(0, len - 1));
     }
-    let idx = anchor;
-    let n = layerIx;
-    while (n > 0 && idx < len - 1) {
-        idx++;
-        while (idx < len - 1 && layersArr[idx]?.isShadow) idx++;
-        n--;
+    const eligible = buildCoordinateEligibleHostIndices(layersArr, anchor);
+    if (!eligible.length) {
+        return Math.min(Math.max(0, defaultIdx), Math.max(0, len - 1));
     }
-    return Math.min(idx, Math.max(0, len - 1));
+    return eligible[layerIx % eligible.length];
+}
+
+/** Same furniture detection as updatePreview so coordinate color mapping matches the canvas. */
+function colorflexIsFurnitureCollectionForLayerMapping() {
+    const hasFurSuffix =
+        appState.selectedCollection?.name?.includes('.fur') ||
+        appState.selectedCollection?.name?.includes('-fur');
+    const isFurnitureMode =
+        appState.isInFurnitureMode ||
+        window.COLORFLEX_MODE === 'FURNITURE' ||
+        (typeof window !== 'undefined' &&
+            window.location &&
+            typeof window.location.pathname === 'string' &&
+            window.location.pathname.includes('furniture'));
+    return hasFurSuffix || (isFurnitureMode && appState.furnitureConfig && appState.selectedFurnitureType);
+}
+
+/**
+ * When a matching coordinate is active: wall (furniture) + background layer, then only the
+ * host layer colors that tint each coordinate pattern layer (same indices as updatePreview).
+ * Avoids sending unused host pattern colors to cart/PDP while keeping the canvas background.
+ * @returns {Array<{label:string,color:string}>|null} null if not in coordinate preview mode
+ */
+function colorflexCoordinateMappedRuntimeColors() {
+    const layers = appState.currentLayers;
+    const anchor = appState.coordinatePreviewColorStartIndex;
+    const coordPatternLayers =
+        appState.currentPattern && Array.isArray(appState.currentPattern.layers)
+            ? appState.currentPattern.layers
+            : null;
+    if (anchor == null || typeof anchor !== 'number' || !coordPatternLayers || coordPatternLayers.length === 0) {
+        return null;
+    }
+    if (!Array.isArray(layers) || !layers.length) return null;
+
+    const mapping = getLayerMappingForPreview(colorflexIsFurnitureCollectionForLayerMapping());
+    const out = [];
+    const seen = new Set();
+
+    function pushLayerAtIndexOnce(idx) {
+        if (typeof idx !== 'number' || idx < 0 || seen.has(idx)) return;
+        const l = layers[idx];
+        if (!l || l.isShadow === true) return;
+        if (l.color == null || String(l.color).trim() === '') return;
+        const color = normalizeColorToSwFormat(l.color);
+        if (!color || color === 'Unknown Color') return;
+        seen.add(idx);
+        out.push({ label: l.label || `Layer ${idx + 1}`, color });
+    }
+
+    function pushLayerColorForCoordinateSlot(idx) {
+        if (typeof idx !== 'number' || idx < 0) return;
+        const l = layers[idx];
+        if (!l || l.isShadow === true) return;
+        if (l.color == null || String(l.color).trim() === '') return;
+        const color = normalizeColorToSwFormat(l.color);
+        if (!color || color === 'Unknown Color') return;
+        out.push({ label: l.label || `Layer ${idx + 1}`, color });
+    }
+
+    // Preview still uses wall (furniture) + background behind the coordinate art; cart must keep them.
+    if (mapping.wallIndex != null && typeof mapping.wallIndex === 'number') {
+        pushLayerAtIndexOnce(mapping.wallIndex);
+    }
+    if (typeof mapping.backgroundIndex === 'number') {
+        pushLayerAtIndexOnce(mapping.backgroundIndex);
+    }
+
+    for (let i = 0; i < coordPatternLayers.length; i++) {
+        const idx = resolveCurrentLayersIndexForPatternLayer(i, mapping.patternStartIndex);
+        pushLayerColorForCoordinateSlot(idx);
+    }
+    return out.length ? out : null;
 }
 
 function validateLayerMapping() {
