@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Wallpaper pattern · palette proof</title>
+  <!-- Serve repo root (e.g. npx serve .) so ../ paths resolve. -->
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 20px; background: #121212; color: #eaeaea; max-width: 1200px; }
+    h1 { font-size: 1.2rem; font-weight: 600; margin-bottom: 0.35rem; }
+    .pwp-lede { max-width: 48rem; font-size: 0.88rem; opacity: 0.92; line-height: 1.5; margin-bottom: 1rem; color: #bbb; }
+    .pwp-controls { display: flex; flex-wrap: wrap; gap: 12px 16px; align-items: flex-end; margin-bottom: 12px; padding: 12px 14px; background: #1a1a1a; border: 1px solid #333; border-radius: 10px; }
+    .pwp-lab { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 0.78rem; color: #9a9a9a; }
+    .pwp-lab input[type="color"] { width: 48px; height: 36px; padding: 0; border: 1px solid #444; background: #000; cursor: pointer; }
+    .pwp-hex { width: 7.5rem; font-family: ui-monospace, monospace; padding: 6px 8px; border-radius: 6px; border: 1px solid #444; background: #1e1e1e; color: #eee; }
+    .pwp-select { min-width: 10rem; padding: 6px 8px; border-radius: 6px; border: 1px solid #444; background: #1e1e1e; color: #eee; }
+    .pwp-status { font-size: 0.8rem; color: #9a9a8a; margin-bottom: 1rem; line-height: 1.45; max-width: 52rem; }
+    .pwp-rows { display: flex; flex-direction: column; gap: 1.75rem; }
+    .pwp-row { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 14px 16px 16px; }
+    .pwp-row-head { margin-bottom: 12px; }
+    .pwp-name { font-size: 1rem; margin: 0 0 6px; color: #d4c896; font-weight: 600; }
+    .pwp-meta { font-size: 0.8rem; color: #888; line-height: 1.4; }
+    .pwp-pairs { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+    .pwp-pair { display: flex; flex-direction: column; gap: 6px; }
+    .pwp-pair-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: #777; }
+    .pwp-canvas { max-width: min(420px, 100%); height: auto; border: 1px solid #444; display: block; background: #0a0a0a; }
+  </style>
+</head>
+<body>
+  <h1>Wallpaper pattern · deterministic palette proof</h1>
+  <p class="pwp-lede">
+    Isolated demo: real <strong>Cottage Tulips</strong> multi-layer JPGs from <code>src/special/</code>, plus flat references from <code>src/img/</code>.
+    One <strong>locked</strong> palette (from <code>generatePalette</code>) drives every pattern. Layered mode recolors <em>each layer separately</em> toward primary → secondary → … (cycling), then composites — no merge-before-recolor.
+    Flat mode uses <code>applyPaletteToImage</code>. Not wired into ColorFlex or CFM.
+  </p>
+  <div id="pwp-mount"></div>
+  <script type="module" src="./patternWallpaperProof.js"></script>
+</body>
+</html>

@@ -4,105 +4,30 @@
  * Phase 1: generate + lock. Palette generation is independent; a future
  * paintLibraryMatcher (local JSON, no APIs) can conform each hex afterward
  * without changing this module’s contract.
+ *
+ * Pipeline: harmony (color theory) → optional `style` (design/historical) →
+ * optional `artist` (expressive HSL shaping, blended by `artistStrength`) → HEX.
+ * Defaults: harmony analogous, style none, artist none, `artistStrength` 0.35 when artist is set.
+ *
+ * Legacy exact `primary` hex is preserved when both style and artist are unset/`none`.
  */
+
+export {
+  hexToRgb,
+  rgbToHex,
+  rgbToHsl,
+  hslToRgb
+} from './colorPrimitives.js';
+
+import { hexToRgb, rgbToHex, rgbToHsl, hslToRgb } from './colorPrimitives.js';
+import { harmonyPaletteToHslSlots } from './harmonyPalettes.js';
+import { applyStyleToPaletteHsl } from './paletteStyles.js';
+import { applyArtistToPaletteHsl } from './artistStyles.js';
 
 let _lockedPalette = null;
 
-function clamp(n, lo, hi) {
-  return Math.max(lo, Math.min(hi, n));
-}
-
-/** @param {string} hex */
-export function hexToRgb(hex) {
-  const h = String(hex).replace(/^#/, '').trim();
-  if (h.length === 3) {
-    return {
-      r: parseInt(h[0] + h[0], 16),
-      g: parseInt(h[1] + h[1], 16),
-      b: parseInt(h[2] + h[2], 16)
-    };
-  }
-  if (h.length !== 6 || /[^0-9a-fA-F]/.test(h)) {
-    throw new Error('paletteEngine: expected #RRGGBB or RRGGBB, got ' + hex);
-  }
-  return {
-    r: parseInt(h.slice(0, 2), 16),
-    g: parseInt(h.slice(2, 4), 16),
-    b: parseInt(h.slice(4, 6), 16)
-  };
-}
-
-/** @returns {string} #RRGGBB */
-export function rgbToHex(r, g, b) {
-  const x = (n) =>
-    clamp(Math.round(n), 0, 255)
-      .toString(16)
-      .padStart(2, '0');
-  return '#' + x(r) + x(g) + x(b);
-}
-
-/**
- * HSL in [0,360), [0,1], [0,1]
- * @param {number} r
- * @param {number} g
- * @param {number} b
- */
-export function rgbToHsl(r, g, b) {
-  r /= 255;
-  g /= 255;
-  b /= 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const d = max - min;
-  let h = 0;
-  const l = (max + min) / 2;
-  let s = 0;
-  if (d > 1e-8) {
-    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-    switch (max) {
-      case r:
-        h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-        break;
-      case g:
-        h = ((b - r) / d + 2) / 6;
-        break;
-      default:
-        h = ((r - g) / d + 4) / 6;
-        break;
-    }
-  }
-  return { h: h * 360, s, l };
-}
-
-/**
- * @param {number} h 0..360
- * @param {number} s 0..1
- * @param {number} l 0..1
- */
-export function hslToRgb(h, s, l) {
-  h = ((h % 360) + 360) % 360;
-  s = clamp(s, 0, 1);
-  l = clamp(l, 0, 1);
-  if (s < 1e-8) {
-    const v = Math.round(l * 255);
-    return { r: v, g: v, b: v };
-  }
-  const q = l < 0.5 ? l * (1 + s) : l + s - l * s;
-  const p = 2 * l - q;
-  const hk = h / 360;
-  const t = (t) => {
-    let tt = t;
-    if (tt < 0) tt += 1;
-    if (tt > 1) tt -= 1;
-    if (tt < 1 / 6) return p + (q - p) * 6 * tt;
-    if (tt < 1 / 2) return q;
-    if (tt < 2 / 3) return p + (q - p) * (2 / 3 - tt) * 6;
-    return p;
-  };
-  const r = Math.round(255 * t(hk + 1 / 3));
-  const g = Math.round(255 * t(hk));
-  const b = Math.round(255 * t(hk - 1 / 3));
-  return { r, g, b };
+function clamp01(n) {
+  return Math.max(0, Math.min(1, n));
 }
 
 function hexToHsl(hex) {
@@ -115,38 +40,65 @@ function hslToHex(h, s, l) {
   return rgbToHex(r, g, b);
 }
 
+function hslSlotsToHex(slots) {
+  return {
+    primary: hslToHex(slots.primary.h, slots.primary.s, slots.primary.l),
+    secondary: hslToHex(slots.secondary.h, slots.secondary.s, slots.secondary.l),
+    accent: hslToHex(slots.accent.h, slots.accent.s, slots.accent.l),
+    neutral: hslToHex(slots.neutral.h, slots.neutral.s, slots.neutral.l),
+    background: hslToHex(slots.background.h, slots.background.s, slots.background.l)
+  };
+}
+
 /**
  * Deterministic 5-color palette from a single base hex.
  * Structure leaves room for a later pass: each slot can be replaced by
  * matchToPaintLibrary(hex, library) without regenerating the whole palette.
  *
  * @param {string} baseHex
+ * @param {{
+ *   harmony?: string,
+ *   style?: string,
+ *   artist?: string,
+ *   artistStrength?: number
+ * } | undefined} [options]
  * @returns {{ primary: string, secondary: string, accent: string, neutral: string, background: string }}
  */
-export function generatePalette(baseHex) {
-  const { h, s, l } = hexToHsl(baseHex);
-  const { r, g, b } = hexToRgb(baseHex);
-  const primary = rgbToHex(r, g, b);
+export function generatePalette(baseHex, options) {
+  const rawHarmony =
+    options && typeof options === 'object' && typeof options.harmony === 'string'
+      ? options.harmony.trim().toLowerCase()
+      : '';
+  const harmony = !rawHarmony || rawHarmony === 'none' ? 'analogous' : rawHarmony;
 
-  // Secondary: +18° hue, slightly less saturation, modestly lighter
-  const secondary = hslToHex(h + 18, clamp(s * 0.88, 0.08, 0.95), clamp(l + 0.08, 0.12, 0.88));
-
-  // Accent: -15° hue, a bit more saturation, lighter
-  const accent = hslToHex(h - 15 + 360, clamp(s * 1.08, 0.12, 1), clamp(l + 0.12, 0.18, 0.95));
-
-  // Neutral: same hue family, strong desaturation, mid-lightness
-  const neutral = hslToHex(h, clamp(s * 0.14, 0.02, 0.22), 0.56);
-
-  // Background: very light wash, slight chroma
-  const background = hslToHex(h, clamp(s * 0.2, 0.02, 0.32), 0.93);
-
-  return {
-    primary,
-    secondary,
-    accent,
-    neutral,
-    background
-  };
+  let slots = harmonyPaletteToHslSlots(baseHex, harmony);
+  const { h: baseHue } = hexToHsl(baseHex);
+  const style =
+    options && typeof options === 'object' && typeof options.style === 'string'
+      ? options.style.trim().toLowerCase()
+      : '';
+  const artist =
+    options && typeof options === 'object' && typeof options.artist === 'string'
+      ? options.artist.trim().toLowerCase()
+      : '';
+  if (style && style !== 'none') {
+    slots = applyStyleToPaletteHsl(slots, style, baseHue);
+  }
+  if (artist && artist !== 'none') {
+    let artistStrength;
+    if (options && typeof options === 'object' && options.artistStrength != null) {
+      const n = Number(options.artistStrength);
+      if (!Number.isNaN(n)) artistStrength = clamp01(n);
+    }
+    slots = applyArtistToPaletteHsl(slots, artist, baseHue, artistStrength);
+  }
+  const out = hslSlotsToHex(slots);
+  // Legacy primary used exact RGB from the base hex (HSL round-trip can differ by 1 step).
+  if ((!style || style === 'none') && (!artist || artist === 'none')) {
+    const { r, g, b } = hexToRgb(baseHex);
+    out.primary = rgbToHex(r, g, b);
+  }
+  return out;
 }
 
 /**

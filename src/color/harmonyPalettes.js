@@ -6,7 +6,7 @@
  * (ready for a future paint-library conform step per slot).
  */
 
-import { hexToRgb, rgbToHex, rgbToHsl, hslToRgb } from './paletteEngine.js';
+import { hexToRgb, rgbToHex, rgbToHsl, hslToRgb } from './colorPrimitives.js';
 
 function clamp(n, lo, hi) {
   return Math.max(lo, Math.min(hi, n));
@@ -160,4 +160,58 @@ export function generateAllHarmonyPalettes(baseHex) {
     out[id] = fn(baseHex);
   }
   return out;
+}
+
+/** Engine / API ids (`neutral` maps to warm-neutral palette geometry). */
+export const ENGINE_HARMONY_IDS = [
+  'analogous',
+  'complementary',
+  'splitComplementary',
+  'triadic',
+  'monochromatic',
+  'neutral'
+];
+
+const HARMONY_GENERATORS = {
+  analogous: analogousPalette,
+  complementary: complementaryPalette,
+  splitComplementary: splitComplementaryPalette,
+  triadic: triadicPalette,
+  monochromatic: monochromaticPalette,
+  neutral: warmNeutralPalette
+};
+
+/** @param {string} harmonyId */
+function normalizeEngineHarmonyId(harmonyId) {
+  const s = String(harmonyId || 'analogous')
+    .trim()
+    .toLowerCase();
+  if (s === 'none' || s === '') return 'analogous';
+  if (s === 'warmneutral') return 'neutral';
+  if (Object.prototype.hasOwnProperty.call(HARMONY_GENERATORS, s)) return s;
+  return 'analogous';
+}
+
+/**
+ * Five-slot HSL (same slot keys as palette engine) from color-theory harmony, pre style/artist.
+ * @param {string} baseHex
+ * @param {string} [harmonyId]
+ * @returns {Record<'primary'|'secondary'|'accent'|'neutral'|'background', { h: number, s: number, l: number }>}
+ */
+export function harmonyPaletteToHslSlots(baseHex, harmonyId) {
+  const key = normalizeEngineHarmonyId(harmonyId);
+  const gen = HARMONY_GENERATORS[key];
+  const pal = gen(baseHex);
+  /** @param {string} hex */
+  function slot(hex) {
+    const { r, g, b } = hexToRgb(hex);
+    return rgbToHsl(r, g, b);
+  }
+  return {
+    primary: slot(pal.primary),
+    secondary: slot(pal.secondary),
+    accent: slot(pal.accent),
+    neutral: slot(pal.neutral),
+    background: slot(pal.background)
+  };
 }

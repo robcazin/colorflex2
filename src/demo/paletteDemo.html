@@ -10,6 +10,15 @@
     h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.35rem; }
     .lede { max-width: 42rem; font-size: 0.92rem; opacity: 0.92; line-height: 1.5; margin-bottom: 1.25rem; }
     .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+    .engine-panel { margin-bottom: 1.5rem; }
+    .engine-intro { margin-top: 0; }
+    .engine-hint { margin-top: -6px; font-size: 0.8rem; max-width: 52rem; }
+    .style-desc { margin: 0 0 10px; font-size: 0.8rem; max-width: 48rem; color: #a0a090; line-height: 1.45; }
+    .engine-toolbar { display: flex; align-items: flex-end; gap: 14px; flex-wrap: wrap; margin-bottom: 12px; }
+    .engine-combo { font-size: 0.82rem; font-family: ui-monospace, monospace; color: #b8b89a; margin-bottom: 12px; line-height: 1.5; word-break: break-word; }
+    .engine-swatches .swatch-row { margin-top: 4px; }
+    .style-lab { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 0.9rem; }
+    .style-select { padding: 8px 10px; border-radius: 6px; border: 1px solid #444; background: #1e1e1e; color: #eee; min-width: 11rem; }
     .base-lab { display: flex; align-items: center; gap: 10px; font-weight: 600; }
     .base-lab input[type="color"] { width: 52px; height: 40px; padding: 0; border: 1px solid #444; background: #000; cursor: pointer; }
     .hex-text { width: 8.5rem; font-family: ui-monospace, monospace; padding: 8px 10px; border-radius: 6px; border: 1px solid #444; background: #1e1e1e; color: #eee; }
@@ -29,14 +38,28 @@
     .img-pair { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
     .slot .img-label { display: block; font-size: 0.75rem; color: #888; margin-bottom: 4px; }
     .slot canvas { border: 1px solid #444; display: block; }
+    .strength-lab { flex-direction: column; align-items: flex-start; gap: 4px; max-width: 14rem; }
+    .strength-lab-tit { font-weight: 600; font-size: 0.78rem; color: #9a9a9a; }
+    .artist-strength-range { width: 10rem; accent-color: #8a9a7a; }
+    .strength-out { font-family: ui-monospace, monospace; font-size: 0.8rem; color: #b8b8a0; min-width: 2.5rem; }
+    .artist-compare-wrap { margin-top: 1.25rem; padding-top: 1rem; border-top: 1px solid #333; }
+    .artist-compare-lede { margin-top: 0.25rem; margin-bottom: 14px; max-width: 52rem; }
+    .artist-compare-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 12px; }
+    .artist-compare-card { padding: 10px 10px 12px; }
+    .artist-compare-name { font-size: 0.82rem; margin: 0 0 6px; color: #c9b87a; font-weight: 600; }
+    .artist-compare-blurb { font-size: 0.68rem; color: #888; line-height: 1.35; margin: 0 0 8px; min-height: 2.6em; }
+    .swatch-row--mini .swatch-chip { height: 28px; }
+    .swatch-row--mini .swatch-cap { font-size: 0.58rem; }
+    .swatch-row--mini .swatch-hex { font-size: 0.55rem; }
   </style>
 </head>
 <body>
   <h1>Kuler-style harmony generator</h1>
   <p class="lede">
-    One base color produces six fixed color-theory palettes (analogous, complementary, split-complementary, triadic, monochromatic, warm-neutral).
-    Each shows five roles. Math is local HEX → HSL only — no Adobe, APIs, or libraries.
-    Image recoloring below is optional and uses only the <strong>analogous</strong> set, locked for stability.
+    The <strong>engine</strong> (<code>generatePalette</code>) chains <strong>Harmony</strong> (color theory), <strong>design style</strong> (Renaissance through Pastel — refined with shared palette-quality passes), then <strong>artist influence</strong> (blended by <code>artistStrength</code>, default 0.35; style stays dominant).
+    The <strong>reference grid</strong> shows all six harmonies at once for the same base (engine <em>Neutral</em> matches warm-neutral below).
+    Math is local HEX → HSL only — no Adobe, APIs, or libraries.
+    Image recoloring below is optional and uses only the <strong>analogous</strong> harmony set, locked for stability.
   </p>
   <div id="mount"></div>
   <script type="module" src="./paletteDemo.js"></script>
