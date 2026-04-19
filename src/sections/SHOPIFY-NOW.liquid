@@ -243,9 +243,8 @@
                   {%- endif -%}
                 </p>
               {%- when 'description' -%}
-                {%- if product.metafields.color_flex.collection_description.value != blank or product.description != blank -%}
+                {%- if product.description != blank -%}
                   <div class="product__description-stack rte quick-add-hidden" {{ block.shopify_attributes }}>
-                    {% render 'product-collection-description', product: product %}
                     {% render 'product-pattern-description', product: product %}
                   </div>
                 {%- endif -%}
@@ -3624,7 +3623,21 @@ function populateColorFlexProperties(urlParams) {
 
 // 🛡️ COLORFLEX PROPERTY PROTECTION SYSTEM
 // Prevents texture JavaScript double execution from clearing ColorFlex properties
+
+/** Shopify Web Pixels sandboxes load the storefront in an iframe; skip FormData / cart guards there. */
+function colorflexIsWebPixelsSandboxContext() {
+  try {
+    var href = String(window.location.href || '');
+    var path = String(window.location.pathname || '');
+    if (path.indexOf('/web-pixels') !== -1) return true;
+    if (href.indexOf('/web-pixels') !== -1 && href.indexOf('/sandbox/') !== -1) return true;
+  } catch (e) {}
+  return false;
+}
+
 function protectColorFlexProperties() {
+  if (colorflexIsWebPixelsSandboxContext()) return;
+
   const protectionInterval = setInterval(() => {
     const productForm = document.querySelector('form[action*="/cart/add"]');
     if (!productForm) return;
@@ -4002,7 +4015,8 @@ function setupVariantChangeDetection() {
   }
 }
 
-// Start comprehensive ColorFlex integration system when DOM is ready
+// Start comprehensive ColorFlex integration system when DOM is ready (skip Web Pixels sandbox iframe)
+if (!colorflexIsWebPixelsSandboxContext()) {
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing ColorFlex cart integration system...');
@@ -4013,5 +4027,6 @@ if (document.readyState === 'loading') {
   console.log('🚀 Initializing ColorFlex cart integration system...');
   setupVariantChangeDetection();
   protectColorFlexProperties();
+}
 }
 </script>

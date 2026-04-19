@@ -98,16 +98,9 @@
         "padding_top": 24,
         "padding_bottom": 24
       }
-    },
-    "related-products": {
-      "type": "related-products",
-      "settings": {
-        "heading": "You may also like"
-      }
     }
   },
   "order": [
-    "main",
-    "related-products"
+    "main"
   ]
 }

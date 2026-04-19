@@ -423,6 +423,100 @@ a.product__text {
   --gradient-background: radial-gradient(circle at top, #252b35 0%, #12161d 48%, #0b0d12 100%);
 }
 
+/* Coordinates (PDP gallery): full width under the two-column hero (collections.json coordinateCompanions) */
+.colorflex-companions {
+  width: 100%;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.colorflex-companions--hidden {
+  display: none !important;
+}
+
+.colorflex-companions__label {
+  margin: 0 0 0.75rem;
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+  color: rgba(239, 238, 234, 0.85);
+}
+
+.colorflex-companions__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+/* Five columns on desktop: (100% - 4×8px gaps) / 5 */
+@keyframes colorflex-companion-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.colorflex-companions__link {
+  flex: 1 1 calc((100% - 32px) / 5);
+  min-width: 5.5rem;
+  max-width: 12rem;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #0a0c10;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  display: block;
+  cursor: default;
+  opacity: 0;
+  animation: colorflex-companion-reveal 0.48s ease-out forwards;
+  animation-delay: var(--cf-companion-stagger, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .colorflex-companions__link {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+}
+
+.colorflex-companions__thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+@media screen and (max-width: 749px) {
+  .colorflex-companions__link {
+    /* Three columns: (100% - 2×8px gaps) / 3 */
+    flex: 1 1 calc((100% - 16px) / 3);
+    max-width: none;
+  }
+}
+
+/* Catalog pattern PDP: top-align hero with details column; padding sync from colorflexSyncPdpLayout */
+.colorflex-catalog-main .product__media-wrapper .product__media-container {
+  align-items: flex-start;
+}
+
+.colorflex-catalog-main .product__media-wrapper .product__media-container .product__media-item {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+/* Catalog pattern PDP: quantity is chosen in ColorFlex, not on the Shopify PDP */
+.colorflex-catalog-pdp .product-form__quantity {
+  display: none !important;
+}
+
 /* ColorFlex PDP: gold frame + soft lift (flat panel fill — no texture image) */
 #colorflexCustomColors,
 #colorflexMaterialInfo {

@@ -215,9 +215,8 @@
                   {%- endif -%}
                 </p>
               {%- when 'description' -%}
-                {%- if product.metafields.color_flex.collection_description.value != blank or product.description != blank -%}
+                {%- if product.description != blank -%}
                   <div class="product__description-stack rte quick-add-hidden" {{ block.shopify_attributes }}>
-                    {% render 'product-collection-description', product: product %}
                     {% render 'product-pattern-description', product: product %}
                   </div>
                 {%- endif -%}

@@ -560,14 +560,13 @@ case "$DEPLOY_MODE" in
         echo "🛒 Deploying ColorFlex product page bundle (layout + assets + section + snippets)..."
         echo ""
         echo "Why: The live PDP uses snippets/shopify-product-colorflex-button (from product.json) plus"
-        echo "     main-product.liquid, theme.liquid (PDP CSS link), and product-collection-description."
+        echo "     main-product.liquid, theme.liquid (PDP CSS link), and product-pattern-description."
         echo "     Pushing one file often leaves another copy stale (e.g. duplicate button removed from price block)."
         echo ""
         PDP_FILES=(
             layout/theme.liquid
             assets/colorflex-product-page.css
             snippets/shopify-product-colorflex-button.liquid
-            snippets/product-collection-description.liquid
             snippets/product-pattern-description.liquid
             sections/main-product.liquid
         )

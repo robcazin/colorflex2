@@ -357,6 +357,35 @@ async function findNewPatterns(collectionName = null) {
                     
                     const fileSafeName = parsedPatternName.toLowerCase().replace(/\s+/g, '-');
                     const thumbnailPath = `./data/collections/${baseName}/thumbnails/${fileSafeName}.jpg`;
+
+                    const maxPdpGallery = 10;
+                    const ppRaw =
+                        record.get('PP-COORDINATES') ||
+                        record.get('PP COORDINATES') ||
+                        record.get('PP_COORDINATES') ||
+                        record.get('PPCOORDINATES') ||
+                        [];
+                    const legacyRaw = record.get('COMPANIONS') || record.get('COORDINATES COMPANIONS') || [];
+                    const usePp = Array.isArray(ppRaw) && ppRaw.length > 0;
+                    const src = usePp ? ppRaw : legacyRaw;
+                    const coordinateCompanionsMeta = [];
+                    if (src.length > maxPdpGallery) {
+                        console.warn(
+                            `[${usePp ? 'PP-COORDINATES' : 'COMPANIONS'}] ${baseName}/${parsedPatternName}: ${src.length} attachments; using first ${maxPdpGallery} only`
+                        );
+                    }
+                    for (let ai = 0; ai < Math.min(src.length, maxPdpGallery); ai++) {
+                        const att = src[ai];
+                        if (!att || !att.url) continue;
+                        let ext = att.filename ? path.extname(att.filename).toLowerCase() : '.jpg';
+                        if (!['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) ext = '.jpg';
+                        const idx = coordinateCompanionsMeta.length + 1;
+                        const baseFile = usePp ? `${fileSafeName}-pp-coordinates-${idx}` : `${fileSafeName}-companions-${idx}`;
+                        coordinateCompanionsMeta.push({
+                            path: `./data/collections/${baseName}/pp-coordinates/${baseFile}${ext}`,
+                            url: att.url,
+                        });
+                    }
                     
                     // Process layers
                     const layerData = [];
@@ -393,11 +422,17 @@ async function findNewPatterns(collectionName = null) {
                         baseComposite: null, // Simplified for incremental
                         tintWhite: record.get('tintWhite') === true,
                         updatedAt: new Date().toISOString(),
+                        ...(coordinateCompanionsMeta.length > 0
+                            ? { coordinateCompanions: coordinateCompanionsMeta.map((x) => x.path) }
+                            : {}),
                         // Store URLs for downloading
                         _downloadUrls: {
                             thumbnail: thumbnailAttachment?.url,
-                            layers: layerAttachments.map(l => l.url).filter(Boolean)
-                        }
+                            layers: layerAttachments.map(l => l.url).filter(Boolean),
+                            ...(coordinateCompanionsMeta.length > 0
+                                ? { coordinateCompanions: coordinateCompanionsMeta }
+                                : {}),
+                        },
                     };
                     
                     newPatternsInCollection.push(newPattern);
@@ -454,7 +489,8 @@ async function downloadNewPatternImages(newPatternsData, forceDownload = false) 
         const dirs = [
             `./data/collections/${baseName}/thumbnails`,
             `./data/collections/${baseName}/layers`,
-            `./data/collections/${baseName}/proof-layers`
+            `./data/collections/${baseName}/proof-layers`,
+            `./data/collections/${baseName}/pp-coordinates`,
         ];
         
         for (const dir of dirs) {
@@ -482,6 +518,15 @@ async function downloadNewPatternImages(newPatternsData, forceDownload = false) 
                         
                         // Download working layer (optimized)
                         await downloadImage(layerUrl, pattern.layers[i].path, 1400, 3, forceDownload);
+                    }
+                }
+
+                if (pattern._downloadUrls.coordinateCompanions && pattern._downloadUrls.coordinateCompanions.length) {
+                    console.log(`📎 Downloading ${pattern._downloadUrls.coordinateCompanions.length} COMPANIONS image(s)...`);
+                    for (const item of pattern._downloadUrls.coordinateCompanions) {
+                        if (item.url && item.path) {
+                            await downloadImage(item.url, item.path, 2800, 3, forceDownload);
+                        }
                     }
                 }
 

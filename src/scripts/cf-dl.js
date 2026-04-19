@@ -36,6 +36,8 @@ const COLLECTIONS_URL_PATH = '/data/collections/';
 // Paths in collections.json: always ./data/collections/ and ./data/mockups/
 const JSON_PATH_PREFIX = './data/collections/';
 const JSON_MOCKUP_PREFIX = './data/mockups/';
+/** PDP coordinate gallery images live next to thumbnails/layers (not 21-COORDINATES wallpapers). */
+const COORDINATE_COMPANIONS_SUBDIR = 'pp-coordinates';
 
 // Collections that use mockupId (reference src/assets/mockups.json). New collections should use this.
 const COLLECTION_MOCKUP_IDS = {
@@ -48,6 +50,76 @@ function jsonPathToFsPath(jsonPath) {
     if (!jsonPath || typeof jsonPath !== 'string') return jsonPath;
     const p = jsonPath.replace(/^\.\//, '').replace(/^data\//, '');
     return path.join(DATA_ROOT, p);
+}
+
+/** Max gallery images per pattern for PDP "Coordinates" strip (Airtable PP-COORDINATES). */
+const MAX_PDP_COORDINATE_GALLERY = 10;
+
+/** Legacy: Airtable "COMPANIONS" / "COORDINATES COMPANIONS" on the pattern row (filenames use -companions-). */
+function getCompanionsAttachments(record) {
+    const raw = record.get('COMPANIONS') || record.get('COORDINATES COMPANIONS') || [];
+    return Array.isArray(raw) ? raw : [];
+}
+
+/**
+ * Per-pattern PDP gallery: Airtable **PP-COORDINATES** (product-pitch thumbnails).
+ * Field name tries common variants; attachment order = gallery order.
+ */
+function getPpCoordinatesAttachments(record) {
+    if (!record || typeof record.get !== 'function') return [];
+    const raw =
+        record.get('PP-COORDINATES') ||
+        record.get('PP COORDINATES') ||
+        record.get('PP_COORDINATES') ||
+        record.get('PPCOORDINATES') ||
+        [];
+    return Array.isArray(raw) ? raw : [];
+}
+
+/**
+ * JSON paths for PDP coordinate gallery under collections/{base}/pp-coordinates/.
+ * Prefers PP-COORDINATES on the pattern row; falls back to legacy COMPANIONS on that row.
+ * Master row **COORDINATES** is only for collection ColorFlex matching wallpapers (see mapCoordAttachmentFieldToRecords), not this gallery.
+ */
+function buildPdpCoordinateGalleryPaths(record, baseName, fileSafeName) {
+    const pp = getPpCoordinatesAttachments(record);
+    if (pp.length > MAX_PDP_COORDINATE_GALLERY) {
+        console.warn(
+            `[PP-COORDINATES] ${fileSafeName}: ${pp.length} attachments; using first ${MAX_PDP_COORDINATE_GALLERY} only`
+        );
+    }
+    const paths = [];
+    const capPp = Math.min(pp.length, MAX_PDP_COORDINATE_GALLERY);
+    for (let i = 0; i < capPp; i++) {
+        const att = pp[i];
+        if (!att || !att.url) continue;
+        let ext = att.filename ? path.extname(att.filename).toLowerCase() : '.jpg';
+        if (!['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) ext = '.jpg';
+        const idx = paths.length + 1;
+        paths.push(
+            `${JSON_PATH_PREFIX}${baseName}/${COORDINATE_COMPANIONS_SUBDIR}/${fileSafeName}-pp-coordinates-${idx}${ext}`
+        );
+    }
+    if (paths.length) return paths;
+
+    const raw = getCompanionsAttachments(record);
+    if (!raw.length) return [];
+    if (raw.length > MAX_PDP_COORDINATE_GALLERY) {
+        console.warn(
+            `[COORDINATES PDP] Legacy COMPANIONS on pattern ${fileSafeName}: ${raw.length} attachments; using first ${MAX_PDP_COORDINATE_GALLERY} only`
+        );
+    }
+    for (let i = 0; i < Math.min(raw.length, MAX_PDP_COORDINATE_GALLERY); i++) {
+        const att = raw[i];
+        if (!att || !att.url) continue;
+        let ext = att.filename ? path.extname(att.filename).toLowerCase() : '.jpg';
+        if (!['.jpg', '.jpeg', '.png', '.webp'].includes(ext)) ext = '.jpg';
+        const idx = paths.length + 1;
+        paths.push(
+            `${JSON_PATH_PREFIX}${baseName}/${COORDINATE_COMPANIONS_SUBDIR}/${fileSafeName}-companions-${idx}${ext}`
+        );
+    }
+    return paths;
 }
 
 // Global file tracking
@@ -76,12 +148,21 @@ const airtable = new Airtable({ apiKey: airtablePat });
 const base = airtable.base(process.env.AIRTABLE_BASE_ID || 'appsywaKYiyKQTnl3');
 
 // #region agent log
-/** NDJSON debug ingest (session fb7100); no secrets */
+const AGENT_DEBUG_LOG_PATH = path.join(projectRoot, '.cursor', 'debug-0b8664.log');
+/** NDJSON debug (session 0b8664); no secrets — file append + ingest */
 function agentDebugLog(payload) {
-    const body = Object.assign({ sessionId: 'fb7100', timestamp: Date.now() }, payload);
-    fetch('http://127.0.0.1:7851/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
+    const body = Object.assign(
+        { sessionId: '0b8664', timestamp: Date.now(), runId: process.env.CF_DEBUG_RUN_ID || 'run1' },
+        payload
+    );
+    try {
+        fsSync.appendFileSync(AGENT_DEBUG_LOG_PATH, JSON.stringify(body) + '\n');
+    } catch (e) {
+        /* ignore */
+    }
+    fetch('http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': 'fb7100' },
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '0b8664' },
         body: JSON.stringify(body),
     }).catch(() => {});
 }
@@ -253,11 +334,13 @@ function buildDefaultPatternBodyParagraph(pattern, collection, numberData, varia
     return `<p>${pattern.name} pattern from our ${pretty} collection. ${numPart}${flexPart} Available as ${variantDescription}</p>`;
 }
 
-/** Product body for Shopify CSV: prefer Airtable Description on each pattern row */
+/** Product body for Shopify CSV: prefer master (-000) collection Description, then pattern row Description */
 function buildPatternProductBodyHtml(pattern, collection, numberData, variantDescription) {
-    const custom = pattern.description && String(pattern.description).trim();
-    if (custom) {
-        const main = patternDescriptionToBodyHtml(pattern.description);
+    const collectionDesc = collection && collection.description && String(collection.description).trim();
+    const patternDesc = pattern && pattern.description && String(pattern.description).trim();
+    const sourceDesc = collectionDesc || patternDesc;
+    if (sourceDesc) {
+        const main = patternDescriptionToBodyHtml(collectionDesc ? collection.description : pattern.description);
         const avail = variantDescription
             ? `<p><em>Available as ${escapeHtmlForProductBody(variantDescription)}</em></p>`
             : '';
@@ -268,7 +351,9 @@ function buildPatternProductBodyHtml(pattern, collection, numberData, variantDes
 
 function buildPatternSeoDescription(pattern, collection, isColorFlex) {
     const pretty = formatCollectionVendorName(collection.name);
-    const custom = pattern.description && String(pattern.description).trim();
+    const collectionDesc = collection && collection.description && String(collection.description).trim();
+    const patternDesc = pattern && pattern.description && String(pattern.description).trim();
+    const custom = collectionDesc || patternDesc;
     if (custom) {
         const plain = custom.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
         return plain.length > 320 ? `${plain.slice(0, 317)}...` : plain;
@@ -384,8 +469,10 @@ async function uploadImageToShopifyFiles(imagePath, shopifyStore, shopifyToken) 
         const mimeMap = { '.jpg': 'image/jpeg', '.jpeg': 'image/jpeg', '.png': 'image/png', '.gif': 'image/gif', '.webp': 'image/webp' };
         const mimeType = mimeMap[ext] || 'image/jpeg';
         const graphqlUrl = `https://${shopifyStore}.myshopify.com/admin/api/2025-01/graphql.json`;
+        // IMAGE staged targets pair with fileCreate(contentType: IMAGE). FILE can return empty targets on some shops/API versions.
+        const stagedResource = mimeType.startsWith('image/') ? 'IMAGE' : 'FILE';
 
-        // 1. Create staged upload target (resource FILE for Settings > Files)
+        // 1. Create staged upload target (Settings > Files via fileCreate after upload)
         const stagedMutation = `mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
           stagedUploadsCreate(input: $input) {
             stagedTargets { url resourceUrl parameters { name value } }
@@ -396,16 +483,25 @@ async function uploadImageToShopifyFiles(imagePath, shopifyStore, shopifyToken) 
             method: 'POST',
             headers: {
                 'X-Shopify-Access-Token': shopifyToken,
-                'Content-Type': 'application/json'
+                'Content-Type': 'application/json',
+                Accept: 'application/json'
             },
             body: JSON.stringify({
                 query: stagedMutation,
                 variables: {
-                    input: [{ filename, mimeType, resource: 'FILE', httpMethod: 'POST' }]
+                    input: [{ filename, mimeType, resource: stagedResource, httpMethod: 'POST' }]
                 }
             })
         });
-        const stagedJson = await stagedRes.json();
+        const stagedJson = await stagedRes.json().catch(() => null);
+        if (!stagedRes.ok) {
+            throw new Error(
+                `stagedUploadsCreate HTTP ${stagedRes.status}: ${stagedJson ? JSON.stringify(stagedJson).slice(0, 1200) : 'no body'}`
+            );
+        }
+        if (stagedJson?.errors?.length) {
+            throw new Error(`stagedUploadsCreate GraphQL: ${JSON.stringify(stagedJson.errors).slice(0, 1200)}`);
+        }
         const createData = stagedJson.data?.stagedUploadsCreate;
         const userErrors = createData?.userErrors || [];
         if (userErrors.length) {
@@ -413,7 +509,9 @@ async function uploadImageToShopifyFiles(imagePath, shopifyStore, shopifyToken) 
         }
         const target = createData?.stagedTargets?.[0];
         if (!target?.url || !target?.resourceUrl) {
-            throw new Error('Staged upload did not return url/resourceUrl');
+            throw new Error(
+                `Staged upload did not return url/resourceUrl (resource=${stagedResource}). Response: ${JSON.stringify(stagedJson).slice(0, 1500)}`
+            );
         }
 
         // 2. POST file to staged target (multipart form with params + file)
@@ -511,9 +609,18 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
         shopifyToken = shopifyToken || credentials.shopifyToken;
     }
     
-    const shouldUploadToShopify = shopifyStore && shopifyToken;
-    
-    if (shouldUploadToShopify) {
+    const skipFileUploadEnv =
+        process.env.CF_SKIP_SHOPIFY_FILE_UPLOAD === '1' ||
+        process.env.CF_SKIP_SHOPIFY_FILE_UPLOAD === 'true' ||
+        process.env.SHOPIFY_CSV_SKIP_FILE_UPLOAD === '1' ||
+        process.env.SHOPIFY_CSV_SKIP_FILE_UPLOAD === 'true';
+    let uploadThumbnailsToShopify = !!(shopifyStore && shopifyToken) && !skipFileUploadEnv;
+
+    if (skipFileUploadEnv && shopifyStore && shopifyToken) {
+        console.log(
+            `[CSV] CF_SKIP_SHOPIFY_FILE_UPLOAD (or SHOPIFY_CSV_SKIP_FILE_UPLOAD) set — skipping Shopify Files uploads; Image Src will use external URLs`
+        );
+    } else if (uploadThumbnailsToShopify) {
         console.log(`[CSV] Shopify upload enabled - images will be uploaded to Shopify Files`);
     } else {
         console.log(`[CSV] ⚠️  Shopify credentials not found - using external URLs (thumbnails may not display in CSV import)`);
@@ -602,9 +709,10 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
                 const thumbnailPathFs = jsonPathToFsPath(pattern.thumbnail);
                 
                 let thumbnailUrl;
-                
-                // Try to upload to Shopify Files if credentials are available
-                if (shouldUploadToShopify) {
+                const externalThumb = `${baseServerUrl}${COLLECTIONS_URL_PATH}${collection.name}/thumbnails/${patternFileName}.jpg`;
+
+                // Try to upload to Shopify Files if credentials are available and not skipped / not disabled after auth failure
+                if (uploadThumbnailsToShopify) {
                     try {
                         // Check thumbnails-shopify first, then thumbnails
                         let localThumbnailPath = null;
@@ -613,26 +721,32 @@ async function generateShopifyCSV(collectionsData, baseServerUrl, shopifyStore =
                         } else if (fsSync.existsSync(thumbnailPathFs)) {
                             localThumbnailPath = thumbnailPathFs;
                         }
-                        
+
                         if (localThumbnailPath) {
-                            // Upload to Shopify Files
                             thumbnailUrl = await uploadImageToShopifyFiles(localThumbnailPath, shopifyStore, shopifyToken);
                             console.log(`[CSV] ✅ Using Shopify-hosted URL for ${pattern.name}`);
-                            
-                            // Rate limiting - Shopify allows 2 requests per second
                             await new Promise(resolve => setTimeout(resolve, 550));
                         } else {
                             console.warn(`[CSV] ⚠️  Thumbnail not found locally for ${pattern.name}, using external URL`);
-                            thumbnailUrl = `${baseServerUrl}${COLLECTIONS_URL_PATH}${collection.name}/thumbnails/${patternFileName}.jpg`;
+                            thumbnailUrl = externalThumb;
                         }
                     } catch (uploadError) {
-                        console.error(`[CSV] ❌ Failed to upload thumbnail for ${pattern.name}:`, uploadError.message);
-                        // Fallback to external URL
-                        thumbnailUrl = `${baseServerUrl}${COLLECTIONS_URL_PATH}${collection.name}/thumbnails/${patternFileName}.jpg`;
+                        const msg = uploadError && uploadError.message ? uploadError.message : String(uploadError);
+                        console.error(`[CSV] ❌ Failed to upload thumbnail for ${pattern.name}:`, msg);
+                        const authLike =
+                            /\b401\b/.test(msg) ||
+                            /\b403\b/.test(msg) ||
+                            /Invalid API key|access token|unrecognized login|wrong password/i.test(msg);
+                        if (authLike) {
+                            uploadThumbnailsToShopify = false;
+                            console.warn(
+                                `[CSV] Shopify Files upload disabled for the rest of this run (auth error). Fix SHOPIFY_ACCESS_TOKEN / app scopes, or set CF_SKIP_SHOPIFY_FILE_UPLOAD=1. Using external URLs.`
+                            );
+                        }
+                        thumbnailUrl = externalThumb;
                     }
                 } else {
-                    // No credentials - use external URL
-                    thumbnailUrl = `${baseServerUrl}${COLLECTIONS_URL_PATH}${collection.name}/thumbnails/${patternFileName}.jpg`;
+                    thumbnailUrl = externalThumb;
                 }
             
             // Determine product type based on ColorFlex flag
@@ -2064,6 +2178,7 @@ const collections = await getCollectionsFromAirtable();
                 );
                 // Do not fall back to master (-000) row coordinates; leave pattern blank when it has none.
                 const mergedPatternCoordinates = fromPatternAttachments;
+                const coordinateCompanionsPaths = buildPdpCoordinateGalleryPaths(record, baseName, fileSafeName);
 
                 jsonRecords.push({
                     id: recordId,
@@ -2078,6 +2193,7 @@ const collections = await getCollectionsFromAirtable();
                     designer_colors: designerColors,
                     colorFlex: isColorFlex, // Add ColorFlex flag
                     coordinates: mergedPatternCoordinates.length > 0 ? mergedPatternCoordinates : null,
+                    ...(coordinateCompanionsPaths.length > 0 ? { coordinateCompanions: coordinateCompanionsPaths } : {}),
                     baseComposite: baseCompositePath,
                     tintWhite: tintWhite,
                     ...(patternDescription ? { description: patternDescription } : {}),
@@ -2175,6 +2291,16 @@ function patternMatchesFilter(pattern, filterNorm) {
     );
 }
 
+/** Match CLI collection name (e.g. silk-road) to JSON collection.name (silk-road, silk_road, …). */
+function collectionNameMatchesCli(cName, cliArg) {
+    if (!cliArg || String(cliArg).toLowerCase() === 'null') return true;
+    const ca = normalizePatternFilterToken(cName);
+    const cb = normalizePatternFilterToken(cliArg);
+    if (!ca || !cb) return false;
+    if (ca === cb) return true;
+    return ca.includes(cb) || cb.includes(ca);
+}
+
 async function downloadImagesForCollections(
     data,
     collectionName = null,
@@ -2183,13 +2309,22 @@ async function downloadImagesForCollections(
 ) {
     const patternFilterNorm = patternFilter ? normalizePatternFilterToken(patternFilter) : '';
     console.log(`\n[DOWNLOAD START] Starting downloadImagesForCollections with collectionName=${collectionName}, forceDownload=${forceDownload}, patternFilter=${patternFilterNorm || '(none)'}`);
-    console.log(`[DOWNLOAD START] Collections available:`, data.collections.map(c => c.name));
-    
-    let targetCollections = data.collections;
+    console.log(`[DOWNLOAD START] DATA_ROOT=${DATA_ROOT}`);
+    console.log(`[DOWNLOAD START] Collections available in this run:`, (data.collections || []).map((c) => c.name));
+    console.log(
+        `[DOWNLOAD START] On disk, thumbnails/layers/${COORDINATE_COMPANIONS_SUBDIR} go under: ${path.join(DATA_ROOT, 'collections', '<handle>', '…')} (if COLORFLEX_DATA_PATH is set, include the trailing /data segment in that env)`
+    );
+
+    let targetCollections = data.collections || [];
     if (collectionName && collectionName !== 'null') {
-        targetCollections = data.collections.filter(c => c.name.toLowerCase().includes(collectionName.toLowerCase()));
+        targetCollections = targetCollections.filter((c) => collectionNameMatchesCli(c && c.name, collectionName));
         if (!targetCollections.length) {
-            console.error(`[DOWNLOAD ERROR] No collection found matching: ${collectionName}`);
+            const names = (data.collections || []).map((c) => c.name).join(', ') || '(none)';
+            console.error(`[DOWNLOAD ERROR] No collection found matching CLI name: "${collectionName}"`);
+            console.error(`[DOWNLOAD ERROR] Names present in collections.json for this run: ${names}`);
+            console.error(
+                `[DOWNLOAD ERROR] No mkdir run — fix the name mismatch or ensure fetch wrote this collection into ${path.join(DATA_ROOT, 'collections.json')}`
+            );
             return;
         }
         console.log(`[DOWNLOAD] Downloading images for single collection: ${collectionName}`);
@@ -2209,6 +2344,7 @@ async function downloadImagesForCollections(
             path.join(DATA_ROOT, 'collections', baseName, 'layers'),
             path.join(DATA_ROOT, 'collections', baseName, 'proof-layers'),
             path.join(DATA_ROOT, 'collections', baseName, 'coordinates'),
+            path.join(DATA_ROOT, 'collections', baseName, COORDINATE_COMPANIONS_SUBDIR),
             path.join(DATA_ROOT, 'collections', 'coordinates', 'thumbnails'),
             path.join(DATA_ROOT, 'collections', 'coordinates', 'layers')
         ];
@@ -2257,10 +2393,41 @@ async function downloadImagesForCollections(
             try {
                 const patternRecord = await base(collection.tableName).find(pattern.id);
                 const thumbnailUrl = patternRecord.get('THUMBNAIL')?.[0]?.url;
-                
+                // #region agent log
+                agentDebugLog({
+                    location: 'cf-dl.js:downloadImagesForCollections:pattern',
+                    message: 'pattern image download start',
+                    hypothesisId: 'TH-CLI',
+                    data: {
+                        collection: baseName,
+                        patternName: pattern.name,
+                        patternId: pattern.id,
+                        hasThumbnailUrl: !!thumbnailUrl,
+                        layersLen: Array.isArray(pattern.layers) ? pattern.layers.length : -1,
+                        colorFlex: pattern.colorFlex,
+                        sizeOk: Array.isArray(pattern.size) && pattern.size.length >= 2,
+                        jsonThumbTail: typeof pattern.thumbnail === 'string' ? pattern.thumbnail.slice(-64) : null,
+                    },
+                });
+                // #endregion
+
                 if (thumbnailUrl) {
                     console.log(`[DOWNLOAD THUMB] Downloading thumbnail for ${pattern.name}`);
                     const metadata = await downloadImage(thumbnailUrl, jsonPathToFsPath(pattern.thumbnail), 2800, 3, forceDownload);
+                    // #region agent log
+                    agentDebugLog({
+                        location: 'cf-dl.js:downloadImagesForCollections:afterThumb',
+                        message: 'thumbnail download finished',
+                        hypothesisId: 'TH-CLI-meta',
+                        data: {
+                            collection: baseName,
+                            patternName: pattern.name,
+                            metaW: metadata && metadata.width,
+                            metaH: metadata && metadata.height,
+                            destBasename: pattern.thumbnail ? path.basename(String(pattern.thumbnail)) : null,
+                        },
+                    });
+                    // #endregion
                     if (metadata) {
                         const pixelAspect = metadata.width / metadata.height;
                         pattern.size[1] = Math.round(pattern.size[0] / pixelAspect);
@@ -2331,8 +2498,40 @@ async function downloadImagesForCollections(
                         console.log(`[DEBUG] LAYER SEPARATIONS field content:`, patternRecord.get('LAYER SEPARATIONS'));
                     }
                 }
+
+                if (pattern.coordinateCompanions && pattern.coordinateCompanions.length > 0) {
+                    const ppAtt = getPpCoordinatesAttachments(patternRecord);
+                    const legacyAtt = getCompanionsAttachments(patternRecord);
+                    const usePp = ppAtt.length > 0;
+                    const companionsAtt = usePp ? ppAtt : legacyAtt;
+                    console.log(
+                        `[DOWNLOAD COORDINATES PDP] ${pattern.name}: ${pattern.coordinateCompanions.length} file(s) (source: ${usePp ? 'PP-COORDINATES' : 'COMPANIONS legacy'})`
+                    );
+                    for (let i = 0; i < pattern.coordinateCompanions.length; i++) {
+                        const destJson = pattern.coordinateCompanions[i];
+                        const url = companionsAtt[i]?.url;
+                        if (!url || !destJson) continue;
+                        try {
+                            await downloadImage(url, jsonPathToFsPath(destJson), 2800, 3, forceDownload);
+                        } catch (e) {
+                            console.error(`[DOWNLOAD ERROR] COORDINATES PDP ${pattern.name} #${i + 1}:`, e.message);
+                        }
+                    }
+                }
             } catch (error) {
                 console.error(`[DOWNLOAD ERROR] Failed to process pattern ${pattern.name}:`, error);
+                // #region agent log
+                agentDebugLog({
+                    location: 'cf-dl.js:downloadImagesForCollections:catch',
+                    message: 'pattern download failed',
+                    hypothesisId: 'TH-CLI-err',
+                    data: {
+                        collection: baseName,
+                        patternName: pattern.name,
+                        errMsg: error && error.message ? String(error.message).slice(0, 200) : String(error).slice(0, 200),
+                    },
+                });
+                // #endregion
             }
         }
 

@@ -265,6 +265,7 @@ app.post('/api/upload-thumbnail', async (req, res) => {
             tokenPrefix: cleanToken.substring(0, 10) + '...'
         });
 
+        const stagedResource = mimeType.startsWith('image/') ? 'IMAGE' : 'FILE';
         const stagedMutation = `mutation stagedUploadsCreate($input: [StagedUploadInput!]!) {
           stagedUploadsCreate(input: $input) {
             stagedTargets { url resourceUrl parameters { name value } }
@@ -281,7 +282,7 @@ app.post('/api/upload-thumbnail', async (req, res) => {
             body: JSON.stringify({
                 query: stagedMutation,
                 variables: {
-                    input: [{ filename: finalFilename, mimeType, resource: 'FILE', httpMethod: 'POST' }]
+                    input: [{ filename: finalFilename, mimeType, resource: stagedResource, httpMethod: 'POST' }]
                 }
             })
         });
@@ -325,7 +326,12 @@ app.post('/api/upload-thumbnail', async (req, res) => {
         }
         const target = stagedData?.stagedTargets?.[0];
         if (!target?.url || !target?.resourceUrl) {
-            throw Object.assign(new Error('Staged upload did not return url/resourceUrl'), { step: 'stagedUploadsCreate' });
+            throw Object.assign(
+                new Error(
+                    `Staged upload did not return url/resourceUrl (resource=${stagedResource}). ${JSON.stringify(stagedJson).slice(0, 1500)}`
+                ),
+                { step: 'stagedUploadsCreate' }
+            );
         }
 
         // Multipart POST to Shopify/S3 — use node-fetch + Content-Length (global fetch often breaks streams; S3 may reject without length).

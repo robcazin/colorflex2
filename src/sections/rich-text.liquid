@@ -3,7 +3,7 @@
   Section IDs (e.g. rich_text_76niMp) and block IDs (e.g. text_tHbt3W) are Shopify-generated; we just define the types.
 {% endcomment %}
 <div class="rich-text page-width section-{{ section.id }}-padding" style="--padding-top: {{ section.settings.padding_top }}px; --padding-bottom: {{ section.settings.padding_bottom }}px;">
-  <div class="rich-text__wrapper rich-text__wrapper--{{ section.settings.desktop_content_position }} rich-text__wrapper--{{ section.settings.content_alignment }}{% if section.settings.full_width %} rich-text__wrapper--full-width{% endif %}">
+  <div class="rich-text__wrapper rich-text__wrapper--position-{{ section.settings.desktop_content_position }} rich-text__wrapper--align-{{ section.settings.content_alignment }}{% if section.settings.full_width %} rich-text__wrapper--full-width{% endif %}">
     <div class="rich-text__blocks">
       {% for block in section.blocks %}
         {% case block.type %}
@@ -34,16 +34,83 @@
 </div>
 
 <style>
-  .rich-text { padding-top: var(--padding-top); padding-bottom: var(--padding-bottom); }
-  .rich-text__wrapper { margin: 0 auto; }
-  .rich-text__wrapper--full-width { max-width: 100%; }
-  .rich-text__heading { margin: 0 0 1rem; }
-  .rich-text__text { margin: 0 0 1rem; }
-  .rich-text__text.rte p { margin-bottom: 1em; }
-  .rich-text__text.rte p:last-child { margin-bottom: 0; }
-  .rich-text__caption { margin: 0 0 1rem; }
-  .rich-text__buttons { margin-top: 1rem; display: flex; flex-wrap: wrap; gap: 1rem; }
-  .rich-text__buttons .button { display: inline-block; padding: 0.75rem 1.5rem; text-decoration: none; border-radius: 0.25rem; }
+  .rich-text {
+    padding-top: var(--padding-top);
+    padding-bottom: var(--padding-bottom);
+    display: flex;
+    flex-direction: column;
+  }
+  .rich-text__wrapper {
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+  }
+  .rich-text__wrapper--position-left {
+    align-self: flex-start;
+    margin-left: 0;
+    margin-right: auto;
+  }
+  .rich-text__wrapper--position-center {
+    align-self: center;
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .rich-text__wrapper--position-right {
+    align-self: flex-end;
+    margin-left: auto;
+    margin-right: 0;
+  }
+  .rich-text__wrapper--align-left {
+    text-align: left;
+    align-items: flex-start;
+  }
+  .rich-text__wrapper--align-center {
+    text-align: center;
+    align-items: center;
+  }
+  .rich-text__wrapper--align-right {
+    text-align: right;
+    align-items: flex-end;
+  }
+  .rich-text__wrapper--align-left .rich-text__buttons {
+    justify-content: flex-start;
+  }
+  .rich-text__wrapper--align-center .rich-text__buttons {
+    justify-content: center;
+  }
+  .rich-text__wrapper--align-right .rich-text__buttons {
+    justify-content: flex-end;
+  }
+  .rich-text__wrapper--full-width {
+    max-width: 100%;
+  }
+  .rich-text__heading {
+    margin: 0 0 1rem;
+  }
+  .rich-text__text {
+    margin: 0 0 1rem;
+  }
+  .rich-text__text.rte p {
+    margin-bottom: 1em;
+  }
+  .rich-text__text.rte p:last-child {
+    margin-bottom: 0;
+  }
+  .rich-text__caption {
+    margin: 0 0 1rem;
+  }
+  .rich-text__buttons {
+    margin-top: 1rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  .rich-text__buttons .button {
+    display: inline-block;
+    padding: 0.75rem 1.5rem;
+    text-decoration: none;
+    border-radius: 0.25rem;
+  }
 </style>
 
 {% schema %}

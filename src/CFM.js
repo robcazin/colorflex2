@@ -681,6 +681,25 @@ function patternIsStandard(pattern, collection) {
     return !!colName && STANDARD_COLLECTION_NAMES.includes(colNameNorm || colName);
 }
 
+// #region agent log
+function cfAgentDebug(location, message, hypothesisId, data) {
+    if (typeof fetch !== 'function') return;
+    fetch('http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '0b8664' },
+        body: JSON.stringify({
+            sessionId: '0b8664',
+            runId: typeof window !== 'undefined' && window.__CF_DEBUG_RUN_ID ? window.__CF_DEBUG_RUN_ID : 'run1',
+            location: location,
+            message: message,
+            hypothesisId: hypothesisId,
+            data: data || {},
+            timestamp: Date.now(),
+        }),
+    }).catch(function () {});
+}
+// #endregion
+
 // Designer-requested order: sort collections by collection number (from tableName e.g. "22 - IKATS" -> 22)
 function getCollectionOrderNumber(c) {
     if (c == null) return 999;
@@ -813,6 +832,16 @@ function capturePatternThumbnail() {
         document.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
 
         const usableCanvases = candidates.filter(isVisible);
+        // #region agent log
+        cfAgentDebug('CFM.js:capturePatternThumbnail', 'preview canvas candidates', 'TH-CAPTURE', {
+            candidateCount: candidates.length,
+            usableCount: usableCanvases.length,
+            isStd: appState.currentPattern
+                ? patternIsStandard(appState.currentPattern, appState.selectedCollection)
+                : null,
+            collection: appState.selectedCollection && appState.selectedCollection.name,
+        });
+        // #endregion
         if (!usableCanvases.length) {
             console.warn('⚠️ No usable preview canvas found for thumbnail capture');
             return null;
@@ -6055,16 +6084,6 @@ function urlForCorsFetch(url) {
     return url + sep + '_cf=cors';
 }
 
-/**
- * B2 S3-compatible GETs often return Access-Control-Allow-Credentials: true together with a reflected
- * Access-Control-Allow-Origin. Per Fetch CORS, a credentialed response is not allowed when the request
- * uses credentials mode "omit" (HTML crossOrigin="anonymous"), so the image fails before drawImage.
- * Omit crossOrigin for these URLs so the bitmap loads; canvas may be tainted (on-screen display is fine).
- */
-function colorFlexB2OmitImgCrossOrigin(url) {
-    return !!(url && typeof url === 'string' && url.toLowerCase().includes('backblazeb2.com'));
-}
-
 /** Same paths as mockups.json `white-dresser`; used when mockups.json cannot be loaded. */
 var WHITE_DRESSER_FALLBACK_MAP_ENTRY = {
     id: 'white-dresser',
@@ -10365,6 +10384,28 @@ function getLayerMappingForPreview(isFurnitureCollection) {
     }
 }
 
+/**
+ * Map pattern JSON layer index (same index as updatePreview's layer loop) to appState.currentLayers index for tint color.
+ * When coordinatePreviewColorStartIndex is set, layer 0 anchors to that slot; further layers advance to next non-shadow slots (matches updatePreview).
+ */
+function resolveCurrentLayersIndexForPatternLayer(layerIx, patternStartIndex) {
+    const layersArr = appState.currentLayers;
+    const len = layersArr ? layersArr.length : 0;
+    const defaultIdx = patternStartIndex + layerIx;
+    const anchor = appState.coordinatePreviewColorStartIndex;
+    if (anchor == null || typeof anchor !== 'number' || !layersArr) {
+        return Math.min(Math.max(0, defaultIdx), Math.max(0, len - 1));
+    }
+    let idx = anchor;
+    let n = layerIx;
+    while (n > 0 && idx < len - 1) {
+        idx++;
+        while (idx < len - 1 && layersArr[idx]?.isShadow) idx++;
+        n--;
+    }
+    return Math.min(idx, Math.max(0, len - 1));
+}
+
 function validateLayerMapping() {
     const isFurnitureCollection = false; // Removed furniture logic
     const mapping = getLayerMappingForPreview(isFurnitureCollection);
@@ -12016,6 +12057,19 @@ function populatePatternThumbnails(patterns) {
 
         // Lazy loading: Load first 3 thumbnails immediately, rest on scroll
         const thumbnailUrl = normalizePath(pattern.thumbnail) || normalizePath("data/collections/fallback.jpg");
+        // #region agent log
+        (function () {
+            var cn = appState.selectedCollection && appState.selectedCollection.name;
+            if (cn === 'abundance' && (index === 0 || index === 5)) {
+                cfAgentDebug('CFM.js:populatePatternThumbnails', 'collection thumb url', 'TH-UI', {
+                    index: index,
+                    lazy: index >= 3,
+                    pathTail: String(thumbnailUrl).slice(-120),
+                    rawThumb: pattern.thumbnail,
+                });
+            }
+        })();
+        // #endregion
 
         if (index < 3) {
             // Load first 3 immediately for instant display
@@ -12163,11 +12217,20 @@ function populatePatternThumbnails(patterns) {
     }
 }
 
-/** Per-pattern `coordinates` only; no fallback to collection master (-000) row (blank when none). */
+/**
+ * Matching coordinate wallpapers for the coordinates strip: pattern row **COORDINATES** if set,
+ * else collection **coordinates** from master (-000) (Airtable COORDINATES on the placeholder row).
+ */
 function getCoordinateListForCurrentUI() {
     const p = appState.currentPattern;
-    if (!p || !Array.isArray(p.coordinates)) return [];
-    return p.coordinates.length > 0 ? p.coordinates : [];
+    const col = appState.selectedCollection;
+    if (p && Array.isArray(p.coordinates) && p.coordinates.length > 0) {
+        return p.coordinates;
+    }
+    if (col && Array.isArray(col.coordinates) && col.coordinates.length > 0) {
+        return col.coordinates;
+    }
+    return [];
 }
 
 /**
@@ -13147,27 +13210,36 @@ let processImage = (
   isWall = false
 ) => {
   const normalizedUrl = normalizePath(url);
-  const fetchUrl = urlForCorsFetch(normalizedUrl);
-  const needsB2FetchDecode = colorFlexB2OmitImgCrossOrigin(fetchUrl);
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.decoding = "async";
+  // ⚠️ CRITICAL FIX: Removed ?t=${Date.now()} timestamp to allow browser caching
+  // The timestamp was causing duplicate downloads of the same image (4x downloads!)
+  // Browser cache + imageCache system will handle cache management properly
+  img.src = normalizedUrl;
 
-  /** Draw decoded pixels and run mask / shadow / recolor (requires getImageData — canvas must not be tainted). */
-  function runDecodePipeline(drawSource, w, h) {
+  img.onload = () => {
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+
     const canvas = document.createElement("canvas");
-    canvas.width = w;
+    canvas.width = w;            // tile-sized; no DPR scaling here
     canvas.height = h;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
 
+    // Solid wall fast-path unchanged (keeps your behavior)
     if (isWall && (!url || url === "")) {
       ctx.clearRect(0, 0, w, h);
       callback(canvas);
       return;
     }
 
-    ctx.drawImage(drawSource, 0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
 
     if (isShadow) {
+      // Shadow from luminance (gamma-correct-ish)
       let id;
       try { id = ctx.getImageData(0, 0, w, h); }
       catch (e) { callback(canvas); return; }
@@ -13187,13 +13259,16 @@ let processImage = (
 
     if (!layerColor) { callback(canvas); return; }
 
+    // --- White->transparent soft mask, then recolor ---
+    // (This preserves anti-aliased edges and makes the tile repeat cleanly.)
     let id;
     try { id = ctx.getImageData(0, 0, w, h); }
     catch (e) { callback(canvas); return; }
     const d = id.data;
 
-    const t0 = 0.80;
-    const t1 = 0.30;
+    // thresholds in linear space: t0 ~ start fading whites; t1 ~ full ink
+    const t0 = 0.80; // near-white
+    const t1 = 0.30; // darker = fully opaque
     const smoothstep = (x) => (x<=0?0 : x>=1?1 : x*x*(3-2*x));
 
     for (let i = 0; i < d.length; i += 4) {
@@ -13203,64 +13278,23 @@ let processImage = (
       const lb = sb<=0.04045 ? sb/12.92 : Math.pow((sb+0.055)/1.055,2.4);
       const L = 0.2126*lr + 0.7152*lg + 0.0722*lb;
 
+      // mask: 0 at white (>=t0), 1 at ink (<=t1), smooth in-between
       const x = (t0 - L) / (t0 - t1);
       const m = smoothstep(Math.max(0, Math.min(1, x)));
-      d[i+3] = Math.round(255 * m);
+      d[i+3] = Math.round(255 * m);   // keep RGB; alpha becomes the mask
     }
     ctx.putImageData(id, 0, 0);
 
+    // Recolor using compositing over the new soft mask
     ctx.globalCompositeOperation = "source-in";
     ctx.fillStyle = layerColor;
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = "source-over";
 
     callback(canvas);
-  }
+  };
 
-  function startWithImage(useCrossOriginAnonymous) {
-    const img = new Image();
-    if (useCrossOriginAnonymous) img.crossOrigin = "anonymous";
-    img.decoding = "async";
-    img.onload = () => {
-      const w = img.naturalWidth || img.width;
-      const h = img.naturalHeight || img.height;
-      runDecodePipeline(img, w, h);
-    };
-    img.onerror = () => {
-      if (needsB2FetchDecode && useCrossOriginAnonymous) {
-        startWithImage(false);
-        return;
-      }
-      console.error(`Canvas image load failed: ${url} (resolved: ${fetchUrl})`);
-    };
-    img.src = fetchUrl;
-  }
-
-  // Omitting crossOrigin on B2 loads the bitmap but taints the canvas → getImageData fails → raw B&W separations.
-  // Decode B2 via fetch + ImageBitmap so pixel readback stays allowed; fall back to <img crossOrigin="anonymous">.
-  if (needsB2FetchDecode && typeof fetch === "function" && typeof createImageBitmap === "function") {
-    fetch(fetchUrl, { mode: "cors", credentials: "omit", cache: "default" })
-      .then((res) => {
-        if (!res.ok) throw new Error(String(res.status));
-        return res.blob();
-      })
-      .then((blob) => createImageBitmap(blob))
-      .then((bmp) => {
-        try {
-          runDecodePipeline(bmp, bmp.width, bmp.height);
-        } finally {
-          try { bmp.close(); } catch (e2) { /* ignore */ }
-        }
-      })
-      .catch((err) => {
-        if (window.COLORFLEX_DEBUG_URLS) {
-          console.warn("[ColorFlex] processImage B2 fetch decode failed, trying <img>:", err && err.message);
-        }
-        startWithImage(true);
-      });
-  } else {
-    startWithImage(true);
-  }
+  img.onerror = () => console.error(`Canvas image load failed: ${url}`);
 };
    // GUARD / TRACE WRAPPER
     if (USE_GUARD && DEBUG_TRACE) {
@@ -14466,10 +14500,10 @@ let updatePreview = async () => {
                 previewCanvas.width = canvasSize;
                 previewCanvas.height = canvasSize;
                 
-                // Load thumbnail as pattern image (crossOrigin enables non-tainted canvas when CORS allows omit+credentials)
+                // Load thumbnail as pattern image (crossOrigin required for canvas draw)
                 const thumbUrl = urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));
                 const patternImg = new Image();
-                if (!colorFlexB2OmitImgCrossOrigin(thumbUrl)) patternImg.crossOrigin = "Anonymous";
+                patternImg.crossOrigin = "Anonymous";
                 patternImg.src = thumbUrl;
                 let usedFallback = false;
                 
@@ -14580,6 +14614,12 @@ let updatePreview = async () => {
                         resolve();
                     };
                     patternImg.onerror = () => {
+                        // #region agent log
+                        cfAgentDebug('CFM.js:updatePreview:standardThumb', 'standard thumb load error', 'TH-CORS', {
+                            thumbTail: String(thumbUrl || '').slice(-100),
+                            patternName: appState.currentPattern && appState.currentPattern.name,
+                        });
+                        // #endregion
                         console.error("❌ Failed to load standard pattern thumbnail (CORS or 404); falling back to img display");
                         usedFallback = true;
                         // Fallback: show thumbnail in <img> without crossOrigin so it can display even when CORS blocks canvas
@@ -14815,24 +14855,6 @@ let updatePreview = async () => {
                 }).then(async (patternBounds) => {
                     if (!patternBounds) return;
 
-                    /** Map pattern layer ordinal to currentLayers index; coordinate mode anchors at the slot the user replaced. */
-                    const resolvePreviewInputIndex = (layerIx) => {
-                        const len = appState.currentLayers?.length || 0;
-                        const defaultIdx = layerMapping.patternStartIndex + layerIx;
-                        const anchor = appState.coordinatePreviewColorStartIndex;
-                        if (anchor == null || typeof anchor !== "number") {
-                            return defaultIdx;
-                        }
-                        let idx = anchor;
-                        let n = layerIx;
-                        while (n > 0 && idx < len - 1) {
-                            idx++;
-                            while (idx < len - 1 && appState.currentLayers[idx]?.isShadow) idx++;
-                            n--;
-                        }
-                        return Math.min(idx, Math.max(0, len - 1));
-                    };
-                    
                     // Render each layer with correct color mapping (including shadow layers at fixed opacity)
                     for (let layerIndex = 0; layerIndex < patternToRender.layers.length; layerIndex++) {
                         const layer = patternToRender.layers[layerIndex];
@@ -14842,7 +14864,7 @@ let updatePreview = async () => {
                             (layerPath && (String(layerPath).toUpperCase().includes('_SHADOW_') || String(layerPath).toUpperCase().includes('SHADOW_LAYER') || String(layerPath).toUpperCase().includes('ISSHADOW')));
                         let layerColor = null;
                         if (!isShadow) {
-                            const inputIndex = resolvePreviewInputIndex(layerIndex);
+                            const inputIndex = resolveCurrentLayersIndexForPatternLayer(layerIndex, layerMapping.patternStartIndex);
                             if (inputIndex >= (appState.currentLayers?.length || 0)) {
                                 console.error(`  ❌ Pattern preview: inputIndex ${inputIndex} out of bounds for layer ${layerIndex}`);
                                 layerColor = lookupColor("Snowbound");
@@ -16011,7 +16033,7 @@ let updateRoomMockup = async () => {
 
       const roomImg = new Image();
       const roomMockupSrc = normalizePath(effectiveMockup.mockup);
-      if (!colorFlexB2OmitImgCrossOrigin(roomMockupSrc)) roomImg.crossOrigin = "Anonymous";
+      roomImg.crossOrigin = "Anonymous";
       roomImg.src = roomMockupSrc;
 
       roomImg.onerror = () => {
@@ -16037,7 +16059,7 @@ let updateRoomMockup = async () => {
 
         const patternImg = new Image();
         const stdThumbSrc = urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));
-        if (!colorFlexB2OmitImgCrossOrigin(stdThumbSrc)) patternImg.crossOrigin = "Anonymous";
+        patternImg.crossOrigin = "Anonymous";
         patternImg.src = stdThumbSrc;
 
         function drawStandardRoomWithOptionalShadow() {
@@ -16046,7 +16068,7 @@ let updateRoomMockup = async () => {
           if (effectiveMockup.mockupShadow) {
             const shadowOverlay = new Image();
             const shadowSrcEarly = normalizePath(effectiveMockup.mockupShadow);
-            if (!colorFlexB2OmitImgCrossOrigin(shadowSrcEarly)) shadowOverlay.crossOrigin = "Anonymous";
+            shadowOverlay.crossOrigin = "Anonymous";
             shadowOverlay.src = shadowSrcEarly;
             shadowOverlay.onload = () => {
               ctx.globalCompositeOperation = "multiply";
@@ -16117,7 +16139,7 @@ let updateRoomMockup = async () => {
             console.log("✅ STANDARD PATTERN: Found mockupShadow, loading shadow overlay...");
             const shadowOverlay = new Image();
             const shadowSrcLate = normalizePath(effectiveMockup.mockupShadow);
-            if (!colorFlexB2OmitImgCrossOrigin(shadowSrcLate)) shadowOverlay.crossOrigin = "Anonymous";
+            shadowOverlay.crossOrigin = "Anonymous";
             shadowOverlay.src = shadowSrcLate;
             shadowOverlay.onload = () => {
               console.log("✅ STANDARD PATTERN: Shadow overlay loaded successfully!");
@@ -16158,6 +16180,7 @@ let updateRoomMockup = async () => {
 
     // ---------- REGULAR / PANELS ----------
     const processOverlay = async () => {
+      const rmLayerMapping = getLayerMappingForPreview(false);
       // Paint wall base (CSS px)
       ctx.fillStyle = wallColor;
       ctx.fillRect(0, 0, cssW, cssH);
@@ -16190,25 +16213,22 @@ let updateRoomMockup = async () => {
         panelCtx.imageSmoothingQuality = "high";
         panelCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        // Build input color mapping (skip background)
-        const inputLayers = appState.currentLayers.filter(l => !l.isShadow);
-        let inputIdx = 0;
-
         for (let i = 0; i < appState.currentPattern.layers.length; i++) {
           const layer = appState.currentPattern.layers[i];
           const pathStr = layer && (layer.path || layer.proofPath) ? (layer.path || layer.proofPath) : '';
           const isShadow = !!layer.isShadow || (pathStr && (String(pathStr).toUpperCase().includes('_SHADOW_') || String(pathStr).toUpperCase().includes('SHADOW_LAYER') || String(pathStr).toUpperCase().includes('ISSHADOW')));
           let layerColor = null;
           if (!isShadow) {
-            layerColor = lookupColor(inputLayers[inputIdx + 1]?.color || "Snowbound");
-            inputIdx++;
+            const clIdx = resolveCurrentLayersIndexForPatternLayer(i, rmLayerMapping.patternStartIndex);
+            layerColor = lookupColor(appState.currentLayers[clIdx]?.color || "Snowbound");
           }
 
           const tilingType = appState.currentPattern.tilingType || "";
           const isHalfDrop = isHalfDropTiling(tilingType);
 
           await new Promise((resolve) => {
-            processImage(layer.path, (processedCanvas) => {
+            const layerLoadPath = layer && (layer.path || layer.proofPath);
+            processImage(layerLoadPath, (processedCanvas) => {
               if (!(processedCanvas instanceof HTMLCanvasElement)) return resolve();
 
               const scale = (appState.scaleMultiplier || .5) * 0.1;
@@ -16311,22 +16331,19 @@ let updateRoomMockup = async () => {
         patternCtx.imageSmoothingQuality = "high";
         patternCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        // map user colors (skip bg in input list)
-        const inputLayers = appState.currentLayers.filter(l => !l.isShadow);
-        let inputIdx = 0;
-
         for (let i = 0; i < appState.currentPattern.layers.length; i++) {
           const layer = appState.currentPattern.layers[i];
           const pathStr = layer && (layer.path || layer.proofPath) ? (layer.path || layer.proofPath) : '';
           const isShadow = !!layer.isShadow || (pathStr && (String(pathStr).toUpperCase().includes('_SHADOW_') || String(pathStr).toUpperCase().includes('SHADOW_LAYER') || String(pathStr).toUpperCase().includes('ISSHADOW')));
           let layerColor = null;
           if (!isShadow) {
-            layerColor = lookupColor(inputLayers[inputIdx + 1]?.color || "Snowbound");
-            inputIdx++;
+            const clIdx = resolveCurrentLayersIndexForPatternLayer(i, rmLayerMapping.patternStartIndex);
+            layerColor = lookupColor(appState.currentLayers[clIdx]?.color || "Snowbound");
           }
 
           await new Promise((resolve) => {
-            processImage(layer.path, (processedCanvas) => {
+            const layerLoadPath = layer && (layer.path || layer.proofPath);
+            processImage(layerLoadPath, (processedCanvas) => {
               if (!(processedCanvas instanceof HTMLCanvasElement)) return resolve();
 
               const { tileW, tileH } = computeTileSizeFromInches(appState.currentPattern, appState.scaleMultiplier || 1);
@@ -17875,7 +17892,7 @@ const updateFurniturePreview = async () => {
             const normalizedCoordPath = normalizePath(layerPaths[0]);
             const coordLayerSrc = urlForCorsFetch(normalizedCoordPath);
             console.log(`🔍 Coordinate click path: "${layerPaths[0]}" → normalized: "${normalizedCoordPath}"`);
-            if (!colorFlexB2OmitImgCrossOrigin(coordLayerSrc)) coordImage.crossOrigin = "Anonymous";
+            coordImage.crossOrigin = "Anonymous";
             coordImage.src = coordLayerSrc;
             coordImage.onload = async () => {
                 // Limit coordinate image dimensions to prevent oversized canvases
