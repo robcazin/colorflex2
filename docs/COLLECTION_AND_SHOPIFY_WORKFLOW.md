@@ -101,7 +101,7 @@ Do not rely on pushing only `main-product.liquid` unless you know your theme use
 npm run theme:push:pdp
 ```
 
-Includes: `layout/theme.liquid`, `assets/colorflex-product-page.css`, `shopify-product-colorflex-button.liquid`, `product-collection-description.liquid`, `product-pattern-description.liquid`, `sections/main-product.liquid`.
+Includes: `layout/theme.liquid`, `assets/colorflex-product-page.css`, `shopify-product-colorflex-button.liquid`, `product-pattern-description.liquid`, `sections/main-product.liquid`. (The file `product-collection-description.liquid` still exists in the repo but is **not** part of the default PDP description block—see §7.)
 
 **Git-based partial push:**
 ```bash
@@ -113,8 +113,10 @@ Includes: `layout/theme.liquid`, `assets/colorflex-product-page.css`, `shopify-p
 
 ## 7. PDP copy (collection vs product body)
 
-- **Collection story (Airtable `-000`):** product metafield `color_flex.collection_description`, rendered by `snippets/product-collection-description.liquid`.
-- **Pattern / Shopify body:** `snippets/product-pattern-description.liquid` strips duplicate collection text from `product.description` when it matches the metafield (so you are not shown the same blurb twice).
+**Regression guard (2026):** The product description block in `sections/main-product.liquid` (`when 'description'`) must render **only** `product-pattern-description`—not `product-collection-description`. We removed the collection marketing paragraph from the PDP more than once; each time it came back, the long Airtable collection blurb (metafield `color_flex.collection_description`) appeared above every pattern’s real body and looked like the product copy had been “replaced.” If you need that story on the storefront, put it on **collection** templates or a dedicated section—not inside the per-pattern description stack.
+
+- **Collection story (Airtable `-000`):** still synced to product metafield `color_flex.collection_description` (CSV / API). Optional snippet: `snippets/product-collection-description.liquid`—**do not** wire it back into the main-product `description` block without an explicit product decision.
+- **Pattern / Shopify body:** `snippets/product-pattern-description.liquid` outputs `product.description` and still strips duplicate collection text from the body when an old import embedded the same copy twice.
 
 After changing metafields, run **`sync`** (or `shopify-create-products` with `--update`) so Shopify has the new values.
 

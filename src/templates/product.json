@@ -43,7 +43,7 @@
         "quantity_field": {
           "type": "custom_liquid",
           "settings": {
-            "custom_liquid": "<div class=\"product-form__input product-form__quantity\" style=\"margin: 1rem 0;\"><label class=\"quantity__label form__label\" style=\"display: block; margin-bottom: 8px; font-weight: bold;\">Quantity</label><div style=\"display: flex; align-items: center; gap: 8px;\"><button type=\"button\" onclick=\"changeQty(-1)\" style=\"background: #000; color: white; border: none; width: 44px; height: 44px; cursor: pointer; border-radius: 4px; font-size: 18px;\">−</button><input type=\"number\" id=\"customQuantity\" class=\"quantity-input\" min=\"1\" max=\"10\" value=\"1\" style=\"width: 80px; height: 44px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 16px;\"><button type=\"button\" onclick=\"changeQty(1)\" style=\"background: #000; color: white; border: none; width: 44px; height: 44px; cursor: pointer; border-radius: 4px; font-size: 18px;\">+</button></div></div><script>function changeQty(change) { const input = document.getElementById('customQuantity'); const newVal = Math.max(1, Math.min(10, parseInt(input.value) + change)); input.value = newVal; console.log('🔢 Custom quantity changed to:', newVal); syncQuantityToForms(newVal); } function syncQuantityToForms(qty) { const forms = document.querySelectorAll('form[action*=\"/cart/add\"]'); console.log('🔄 Syncing quantity to', forms.length, 'forms'); forms.forEach((form, index) => { let qtyInput = form.querySelector('input[name=\"quantity\"]'); if (!qtyInput) { qtyInput = document.createElement('input'); qtyInput.type = 'hidden'; qtyInput.name = 'quantity'; form.appendChild(qtyInput); console.log(`✅ Created quantity input for form ${index + 1}`); } qtyInput.value = qty; console.log(`✅ Set form ${index + 1} quantity to:`, qty); }); } document.addEventListener('DOMContentLoaded', function() { syncQuantityToForms(1); setTimeout(() => syncQuantityToForms(1), 1000); }); console.log('✅ Enhanced quantity field loaded');</script>"
+            "custom_liquid": "<div class=\"product-form__input product-form__quantity\" style=\"margin: 1rem 0;\"><label class=\"quantity__label form__label\" style=\"display: block; margin-bottom: 8px; font-weight: bold;\">Quantity</label><div style=\"display: flex; align-items: center; gap: 8px;\"><button type=\"button\" onclick=\"changeQty(-1)\" style=\"background: #000; color: white; border: none; width: 44px; height: 44px; cursor: pointer; border-radius: 4px; font-size: 18px;\">−</button><input type=\"number\" id=\"customQuantity\" class=\"quantity-input\" min=\"1\" max=\"10\" value=\"1\" style=\"width: 80px; height: 44px; text-align: center; border: 1px solid #ccc; border-radius: 4px; font-size: 16px; background-color: #000; color: #fff; -webkit-text-fill-color: #fff;\"><button type=\"button\" onclick=\"changeQty(1)\" style=\"background: #000; color: white; border: none; width: 44px; height: 44px; cursor: pointer; border-radius: 4px; font-size: 18px;\">+</button></div></div><script>function changeQty(change) { const input = document.getElementById('customQuantity'); const newVal = Math.max(1, Math.min(10, parseInt(input.value) + change)); input.value = newVal; console.log('🔢 Custom quantity changed to:', newVal); syncQuantityToForms(newVal); } function syncQuantityToForms(qty) { const forms = document.querySelectorAll('form[action*=\"/cart/add\"]'); console.log('🔄 Syncing quantity to', forms.length, 'forms'); forms.forEach((form, index) => { let qtyInput = form.querySelector('input[name=\"quantity\"]'); if (!qtyInput) { qtyInput = document.createElement('input'); qtyInput.type = 'hidden'; qtyInput.name = 'quantity'; form.appendChild(qtyInput); console.log(`✅ Created quantity input for form ${index + 1}`); } qtyInput.value = qty; console.log(`✅ Set form ${index + 1} quantity to:`, qty); }); } document.addEventListener('DOMContentLoaded', function() { syncQuantityToForms(1); setTimeout(() => syncQuantityToForms(1), 1000); }); console.log('✅ Enhanced quantity field loaded');</script>"
           }
         },
         "colorflex_button": {
@@ -88,7 +88,7 @@
         "media_size": "medium",
         "constrain_to_viewport": true,
         "media_fit": "contain",
-        "gallery_layout": "columns",
+        "gallery_layout": "stacked",
         "mobile_thumbnails": "hide",
         "media_position": "left",
         "image_zoom": "lightbox",
@@ -97,22 +97,9 @@
         "padding_top": 24,
         "padding_bottom": 24
       }
-    },
-    "related-products": {
-      "type": "related-products",
-      "settings": {
-        "heading": "You may also like",
-        "heading_size": "h2",
-        "products_to_show": 4,
-        "columns_desktop": 4,
-        "columns_mobile": "2",
-        "padding_top": 36,
-        "padding_bottom": 68
-      }
     }
   },
   "order": [
-    "main",
-    "related-products"
+    "main"
   ]
 }

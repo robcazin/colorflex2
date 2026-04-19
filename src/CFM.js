@@ -687,6 +687,25 @@ function patternIsStandard(pattern, collection) {
     return !!colName && STANDARD_COLLECTION_NAMES.includes(colNameNorm || colName);
 }
 
+// #region agent log
+function cfAgentDebug(location, message, hypothesisId, data) {
+    if (typeof fetch !== 'function') return;
+    fetch('http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '0b8664' },
+        body: JSON.stringify({
+            sessionId: '0b8664',
+            runId: typeof window !== 'undefined' && window.__CF_DEBUG_RUN_ID ? window.__CF_DEBUG_RUN_ID : 'run1',
+            location: location,
+            message: message,
+            hypothesisId: hypothesisId,
+            data: data || {},
+            timestamp: Date.now(),
+        }),
+    }).catch(function () {});
+}
+// #endregion
+
 // Designer-requested order: sort collections by collection number (from tableName e.g. "22 - IKATS" -> 22)
 function getCollectionOrderNumber(c) {
     if (c == null) return 999;
@@ -795,30 +814,56 @@ function capturePatternThumbnail() {
             if (el && arr.indexOf(el) === -1) arr.push(el);
         };
 
+        const collectCanvasesUnder = (root) => {
+            const list = [];
+            if (!root) return list;
+            if (root.tagName === 'CANVAS') list.push(root);
+            root.querySelectorAll('canvas').forEach((c) => addUnique(list, c));
+            return list;
+        };
+
         const candidates = [];
-        const previewRoots = [
-            '#preview',
-            '#pattern-preview',
-            '.pattern-preview',
-            '#colorflex-preview',
-            '.colorflex-preview',
-            '#pattern-display',
-            '.pattern-display',
-            '#roomMockup',
-        ];
+        // When #preview has a live canvas, it is the flat "Pattern Preview" — never prefer #roomMockup,
+        // which often has a huge backing buffer and wins the area score while showing a room composite.
+        const previewHost = (typeof dom !== 'undefined' && dom.preview) || document.getElementById('preview');
+        const scopedPreview = collectCanvasesUnder(previewHost).filter(isVisible);
 
-        previewRoots.forEach((selector) => {
-            const root = document.querySelector(selector);
-            if (root) {
-                if (root.tagName === 'CANVAS') addUnique(candidates, root);
-                root.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
-            }
-        });
+        if (scopedPreview.length > 0) {
+            scopedPreview.forEach((c) => addUnique(candidates, c));
+        } else {
+            const previewRoots = [
+                '#preview',
+                '#pattern-preview',
+                '.pattern-preview',
+                '#colorflex-preview',
+                '.colorflex-preview',
+                '#pattern-display',
+                '.pattern-display',
+                '#roomMockup',
+            ];
 
-        // Global fallback scan (still filtered by visibility/size).
-        document.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
+            previewRoots.forEach((selector) => {
+                const root = document.querySelector(selector);
+                if (root) {
+                    if (root.tagName === 'CANVAS') addUnique(candidates, root);
+                    root.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
+                }
+            });
+
+            document.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
+        }
 
         const usableCanvases = candidates.filter(isVisible);
+        // #region agent log
+        cfAgentDebug('CFM.js:capturePatternThumbnail', 'preview canvas candidates', 'TH-CAPTURE', {
+            candidateCount: candidates.length,
+            usableCount: usableCanvases.length,
+            isStd: appState.currentPattern
+                ? patternIsStandard(appState.currentPattern, appState.selectedCollection)
+                : null,
+            collection: appState.selectedCollection && appState.selectedCollection.name,
+        });
+        // #endregion
         if (!usableCanvases.length) {
             console.warn('⚠️ No usable preview canvas found for thumbnail capture');
             return null;
@@ -852,35 +897,25 @@ function capturePatternThumbnail() {
 
         const srcW = previewCanvas.width || 1;
         const srcH = previewCanvas.height || 1;
-        const scale = appState.scaleMultiplier || 1.0;
 
-        if (scale !== 1.0 && appState.currentPattern) {
-            // Tile for zoomed patterns so thumbnail reflects scale detail.
-            const tileWidth = 800 / scale;
-            const tileHeight = 800 / scale;
-            for (let x = 0; x < 800; x += tileWidth) {
-                for (let y = 0; y < 800; y += tileHeight) {
-                    ctx.drawImage(previewCanvas, 0, 0, srcW, srcH, x, y, tileWidth, tileHeight);
-                }
-            }
-        } else {
-            // Cover-fit to avoid tiny centered preview and preserve detail.
-            const srcAspect = srcW / srcH;
-            const dstAspect = 1; // 800x800
-            let cropW = srcW;
-            let cropH = srcH;
-            let cropX = 0;
-            let cropY = 0;
+        // Always center-crop from the live preview canvas. The on-screen preview already applies
+        // currentScale / tiling; re-tiling here by scaleMultiplier broke captures when multiplier < 1
+        // (e.g. 0.25 → destination tiles wider than the output canvas → clipped / off-center zoom).
+        const srcAspect = srcW / srcH;
+        const dstAspect = 1; // 800x800
+        let cropW = srcW;
+        let cropH = srcH;
+        let cropX = 0;
+        let cropY = 0;
 
-            if (srcAspect > dstAspect) {
-                cropW = srcH * dstAspect;
-                cropX = (srcW - cropW) / 2;
-            } else if (srcAspect < dstAspect) {
-                cropH = srcW / dstAspect;
-                cropY = (srcH - cropH) / 2;
-            }
-            ctx.drawImage(previewCanvas, cropX, cropY, cropW, cropH, 0, 0, 800, 800);
+        if (srcAspect > dstAspect) {
+            cropW = srcH * dstAspect;
+            cropX = (srcW - cropW) / 2;
+        } else if (srcAspect < dstAspect) {
+            cropH = srcW / dstAspect;
+            cropY = (srcH - cropH) / 2;
         }
+        ctx.drawImage(previewCanvas, cropX, cropY, cropW, cropH, 0, 0, 800, 800);
 
         // Convert to base64 data URL at higher quality for better detail.
         const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
@@ -892,6 +927,8 @@ function capturePatternThumbnail() {
         return null;
     }
 }
+
+window.capturePatternThumbnail = capturePatternThumbnail;
 
 // 🎯 NORMALIZE COLOR TO SW FORMAT
 // Converts color names to consistent "SW#### COLORNAME" format for cart display
@@ -1132,6 +1169,23 @@ function cartThumbnailStorageKeyFromPattern(pattern) {
         return 'cart_thumbnail_' + String(pn).replace(/[^a-zA-Z0-9-]/g, '_') + '_' + String(cn).replace(/[^a-zA-Z0-9-]/g, '_');
     }
     return '';
+}
+
+/**
+ * Persist global PDP thumbnail together with pattern id so product pages can ignore stale cross-pattern data.
+ */
+function colorflexStoreCurrentThumbnailForPattern(pattern, dataUrl) {
+    if (!dataUrl || typeof dataUrl !== 'string') return;
+    try {
+        localStorage.setItem('colorflexCurrentThumbnail', dataUrl);
+        const rawId = pattern && (pattern.id || pattern.patternId);
+        const pid = rawId != null && String(rawId).trim() !== '' ? String(rawId).trim() : '';
+        if (pid) {
+            localStorage.setItem('colorflexCurrentThumbnailPatternId', pid);
+        } else {
+            localStorage.removeItem('colorflexCurrentThumbnailPatternId');
+        }
+    } catch (_) {}
 }
 
 // CFM-SEARCH: SAVED_PRESET_ENTRY_ID
@@ -3236,20 +3290,22 @@ window.switchCollection = function(collectionName) {
         }
     }
 
-    // Update curated colors for the new collection (clear if none, else populate)
+    // Update curated colors for the new collection — always wipe the strip first so
+    // we never show the previous collection's swatches when the new branch skips populateCuratedColors.
+    const curatedColorsContainer = dom.curatedColorsContainer || document.getElementById("curatedColorsContainer");
+    if (curatedColorsContainer) {
+        curatedColorsContainer.innerHTML = "";
+    }
+
     const hasColorFlexPatterns = targetCollection.patterns?.some(p => p.colorFlex === true);
     const hasCuratedColors = (targetCollection.curatedColors || []).length > 0;
     const isBassett = window.COLORFLEX_MODE === 'BASSETT';
     if (!hasColorFlexPatterns && !(isBassett && hasCuratedColors)) {
-        console.log('🧹 Clearing curated colors for standard collection');
-        const curatedColorsContainer = document.getElementById('curatedColorsContainer');
-        if (curatedColorsContainer) {
-            curatedColorsContainer.innerHTML = '';
-        }
+        console.log("🧹 Curated colors cleared for collection (no ColorFlex patterns / not Bassett palette case)");
         appState.curatedColors = [];
     } else {
         appState.curatedColors = targetCollection.curatedColors || [];
-        if (appState.curatedColors.length && dom.curatedColorsContainer && Array.isArray(appState.colorsData) && appState.colorsData.length) {
+        if (appState.curatedColors.length && curatedColorsContainer && Array.isArray(appState.colorsData) && appState.colorsData.length) {
             populateCuratedColors(appState.curatedColors);
         }
     }
@@ -3488,6 +3544,20 @@ const FABRIC_SPECIFICATIONS = {
         minimumRolls: 1,
         description: 'Unpasted wallpaper 24" x 30\' per roll',
         material: 'wallpaper'
+    },
+    'CUSTOM-SAMPLE-WALLPAPER': {
+        pricePerRoll: 12,
+        coverage: 'Sample',
+        minimumRolls: 1,
+        description: 'Sample of your specified paper type with your custom ColorFlex design',
+        material: 'wallpaper'
+    },
+    'CUSTOM-SAMPLE-FABRIC': {
+        pricePerYard: 12,
+        width: 'Sample',
+        minimumYards: 1,
+        description: 'Sample of your specified fabric type with your custom ColorFlex design',
+        material: 'fabric'
     }
 };
 
@@ -3579,6 +3649,83 @@ const FABRIC_SPECIFICATIONS = {
  * @see updateCartItemViaAPI - Updates existing cart items
  * @see getMaterialDisplayName - Gets user-friendly material names
  */
+
+/** Colors for sample PDP URL (same priority as proceed-to-cart / fallback redirect). */
+function colorflexEffectiveColorsForProductUrl(pattern) {
+    try {
+        const coordMapped = colorflexCoordinateMappedRuntimeColors();
+        if (coordMapped && coordMapped.length) return coordMapped;
+
+        if (Array.isArray(appState.layerInputs) && appState.layerInputs.length) {
+            const fromInputs = appState.layerInputs
+                .map((li, i) => ({
+                    label: (li && li.label) || `Layer ${i + 1}`,
+                    color: normalizeColorToSwFormat(li && li.input ? li.input.value : '')
+                }))
+                .filter((c) => c.color && c.color !== 'Unknown Color');
+            if (fromInputs.length) return fromInputs;
+        }
+        if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
+            const fromLayers = appState.currentLayers
+                .filter((l) => l && l.isShadow !== true)
+                .map((l, i) => ({
+                    label: l.label || `Layer ${i + 1}`,
+                    color: normalizeColorToSwFormat(l.color || '')
+                }))
+                .filter((c) => c.color && c.color !== 'Unknown Color');
+            if (fromLayers.length) return fromLayers;
+        }
+    } catch (e) { /* ignore */ }
+    return Array.isArray(pattern.colors) ? pattern.colors : [];
+}
+
+/**
+ * Fabric-only: physical sample PDP (custom-sample) with fabric-custom-sample + sample_for
+ * so cart / PDP show "Fabric Custom Sample — {substrate}" and the same ColorFlex URL params as proceed-to-cart.
+ */
+function buildColorflexFabricSampleProductUrl(pattern, fabricSubstrateId) {
+    let substrate = String(fabricSubstrateId || '').trim();
+    if (!substrate.startsWith('fabric-')) {
+        substrate = 'fabric-soft-velvet';
+    }
+    const effectiveColors = colorflexEffectiveColorsForProductUrl(pattern);
+    const customColorsParam = effectiveColors
+        .filter((c) => c && c.color != null && String(c.color).trim() !== '')
+        .map((c) => normalizeColorToSwFormat(c.color))
+        .filter((s) => s && s !== 'Unknown Color')
+        .join(',');
+
+    const collection =
+        (pattern && (pattern.collection || pattern.collectionName)) ||
+        (typeof appState !== 'undefined' && appState.selectedCollection && appState.selectedCollection.name) ||
+        '';
+
+    const params = new URLSearchParams({
+        pattern_name: pattern.name || pattern.patternName || '',
+        collection: collection,
+        pattern_id: pattern.id || '',
+        custom_colors: customColorsParam,
+        scale: pattern.currentScale || 100,
+        source: 'colorflex_saved_patterns',
+        preferred_material: 'fabric-custom-sample',
+        sample_for: substrate,
+        save_date: pattern.timestamp || pattern.saveDate || new Date().toISOString()
+    });
+    const sm = pattern.scaleMultiplier != null ? Number(pattern.scaleMultiplier) : NaN;
+    if (!isNaN(sm) && sm > 0 && sm !== 1) {
+        params.set('scale_multiplier', String(sm));
+    }
+
+    const productUrl = '/products/custom-sample?' + params.toString();
+
+    const promoCode = sessionStorage.getItem('cfm_promo_code');
+    const promoUsed = sessionStorage.getItem('cfm_promo_used') === 'true';
+    if (promoCode && promoUsed && String(promoCode).toUpperCase() === 'FIRSTROLL25') {
+        return '/discount/' + promoCode + '?redirect=' + encodeURIComponent(productUrl);
+    }
+    return productUrl;
+}
+
 function showMaterialSelectionModal(pattern) {
     console.log('🎄 showMaterialSelectionModal called - promo section will be added');
 
@@ -3587,6 +3734,9 @@ function showMaterialSelectionModal(pattern) {
     if (existingModal) {
         existingModal.remove();
     }
+
+    ensureCollectionThumbnailsInLeftSidebar();
+    resetStandardSidebarThumbnailStripLayout();
 
     // Create modal overlay
     var modal = document.createElement('div');
@@ -3787,7 +3937,7 @@ function showMaterialSelectionModal(pattern) {
         }
     }, 100);
 
-    // Group materials by category
+    // Wallpaper: rolls + wallpaper sample radio. Fabric: each variant has roll radio + separate sample radio (small text, not a link).
     var wallpaperOptions = [
         {
             value: 'wallpaper-prepasted',
@@ -3812,6 +3962,12 @@ function showMaterialSelectionModal(pattern) {
             label: 'Grasscloth Wallpaper',
             price: 'Contact for pricing',
             description: 'Natural Grass Cloth • 24" wide x 27\' long • Quietly elevates any space'
+        },
+        {
+            value: 'wallpaper-custom-sample',
+            label: 'Wallpaper Custom Sample',
+            price: '$12/sample',
+            description: 'Physical sample of your pattern • Confirm color and scale before ordering rolls'
         }
     ];
 
@@ -3858,8 +4014,7 @@ function showMaterialSelectionModal(pattern) {
     var accordionContainer = document.createElement('div');
     accordionContainer.style.cssText = 'display: flex; flex-direction: column; gap: 10px;';
 
-    // Helper function to create accordion section (scrollContainer: modal content to autoscroll after choice)
-    function createAccordionSection(title, icon, options, isOpen, scrollContainer) {
+    function createAccordionSection(title, icon, options, isOpen, scrollContainer, patternForSamples) {
         var section = document.createElement('div');
         section.style.cssText = 'border: 2px solid #4a5568; border-radius: 8px; overflow: hidden;';
 
@@ -3900,6 +4055,7 @@ function showMaterialSelectionModal(pattern) {
 
         // Add options
         options.forEach(function(option, index) {
+            var radioSample = null;
             var optionDiv = document.createElement('div');
             optionDiv.style.cssText = `
                 border: 1px solid #4a5568;
@@ -3915,10 +4071,10 @@ function showMaterialSelectionModal(pattern) {
             radio.name = 'material';
             radio.value = option.value;
             radio.id = 'material_' + option.value;
-            radio.style.cssText = 'margin-right: 10px;';
+            radio.style.cssText = 'margin-top: 4px; flex-shrink: 0;';
 
-            // Default to first wallpaper option
-            if (title === 'Wallpaper' && index === 0) {
+            // Default: Prepasted Wallpaper
+            if (title === 'Wallpaper' && option.value === 'wallpaper-prepasted') {
                 radio.checked = true;
             }
 
@@ -3930,8 +4086,37 @@ function showMaterialSelectionModal(pattern) {
                 <span style="color: #d4af37; font-size: 14px;">${option.price}</span>
             `;
 
-            optionDiv.appendChild(radio);
-            optionDiv.appendChild(label);
+            var row = document.createElement('div');
+            row.style.cssText = 'display: flex; align-items: flex-start; gap: 10px; width: 100%;';
+            var col = document.createElement('div');
+            col.style.cssText = 'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;';
+            col.appendChild(label);
+
+            if (title === 'Fabric') {
+                var sampleSubRow = document.createElement('div');
+                sampleSubRow.className = 'colorflex-modal-fabric-sample-subrow';
+                sampleSubRow.style.cssText =
+                    'margin-top: 8px; padding-left: 28px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; cursor: pointer;';
+
+                radioSample = document.createElement('input');
+                radioSample.type = 'radio';
+                radioSample.name = 'material';
+                radioSample.value = 'fabric-sample:' + option.value;
+                radioSample.id = 'material_fabric_sample_' + String(option.value).replace(/[^a-zA-Z0-9-]/g, '_');
+                radioSample.style.cssText = 'flex-shrink: 0; margin-top: 0;';
+
+                var sampleHint = document.createElement('span');
+                sampleHint.textContent = 'Order a physical sample (this material)';
+                sampleHint.style.cssText = 'font-size: 11px; color: #a0aec0; line-height: 1.35; user-select: none;';
+
+                sampleSubRow.appendChild(sampleHint);
+                sampleSubRow.appendChild(radioSample);
+                col.appendChild(sampleSubRow);
+            }
+
+            row.appendChild(radio);
+            row.appendChild(col);
+            optionDiv.appendChild(row);
 
             // Hover effects
             optionDiv.addEventListener('mouseenter', function() {
@@ -3940,14 +4125,41 @@ function showMaterialSelectionModal(pattern) {
             });
 
             optionDiv.addEventListener('mouseleave', function() {
-                if (!radio.checked) {
+                var any = radio.checked;
+                if (radioSample) {
+                    any = any || radioSample.checked;
+                }
+                if (!any) {
                     optionDiv.style.borderColor = '#4a5568';
                     optionDiv.style.background = '#2d3748';
                 }
             });
 
-            // Click to select
+            // Click: fabric sample sub-row selects sample radio only; rest of card selects roll/wallpaper radio
             optionDiv.addEventListener('click', function(e) {
+                if (radioSample && e.target && e.target.closest && e.target.closest('.colorflex-modal-fabric-sample-subrow')) {
+                    if (e.target !== radioSample) {
+                        radioSample.checked = true;
+                    }
+                    accordionContainer.querySelectorAll('input[type="radio"]').forEach(function(r) {
+                        var container = r.closest('div[style*="border: 1px"]');
+                        if (container) {
+                            if (r.checked) {
+                                container.style.borderColor = '#d4af37';
+                                container.style.background = '#374151';
+                            } else {
+                                container.style.borderColor = '#4a5568';
+                                container.style.background = '#2d3748';
+                            }
+                        }
+                    });
+                    if (scrollContainer) {
+                        setTimeout(function() {
+                            scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
+                        }, 200);
+                    }
+                    return;
+                }
                 if (e.target !== radio) {
                     radio.checked = true;
                 }
@@ -4002,9 +4214,9 @@ function showMaterialSelectionModal(pattern) {
         return section;
     }
 
-    // Create wallpaper and fabric sections (both collapsed by default); pass modalContent for autoscroll after choice
-    var wallpaperSection = createAccordionSection('Wallpaper', '🗂️', wallpaperOptions, false, modalContent);
-    var fabricSection = createAccordionSection('Fabric', '🧵', fabricOptions, false, modalContent);
+    // Wallpaper open by default so prepasted is visible.
+    var wallpaperSection = createAccordionSection('Wallpaper', '🗂️', wallpaperOptions, true, modalContent, pattern);
+    var fabricSection = createAccordionSection('Fabric', '🧵', fabricOptions, false, modalContent, pattern);
 
     accordionContainer.appendChild(wallpaperSection);
     accordionContainer.appendChild(fabricSection);
@@ -4084,19 +4296,73 @@ function showMaterialSelectionModal(pattern) {
         var selectedMaterial = selectedMaterialInput.value;
         console.log('✅ Selected material:', selectedMaterial);
 
+        // #region agent log
+        try {
+            const _tn = pattern && pattern.thumbnail ? String(pattern.thumbnail) : "";
+            const _sameCur = pattern === appState.currentPattern;
+            const _sameCat = !!(appState.selectedCollection && Array.isArray(appState.selectedCollection.patterns) && appState.selectedCollection.patterns.some((p) => p === pattern));
+            fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+                body: JSON.stringify({
+                    sessionId: "0b8664",
+                    runId: "pre",
+                    hypothesisId: "H1-H5",
+                    location: "CFM.js:proceed-to-cart:start",
+                    message: "Proceed to cart click",
+                    data: {
+                        stdFromCurrent: !!(appState.currentPattern && patternIsStandard(appState.currentPattern, appState.selectedCollection)),
+                        thumbPrefix: _tn.slice(0, 16),
+                        thumbLen: _tn.length,
+                        sameRefAsCurrentPattern: _sameCur,
+                        sameRefAsCatalogPattern: _sameCat,
+                        patternName: pattern && (pattern.name || pattern.patternName),
+                        collection: appState.selectedCollection && appState.selectedCollection.name,
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(function () {});
+        } catch (_e) {}
+        // #endregion
+
         // Rebuild pattern payload from live runtime state at click-time.
         // This prevents stale saved-pattern data (colors/thumbnail) from overriding correct preview output.
         try {
+            try {
+                localStorage.removeItem('colorflexCurrentThumbnail');
+                localStorage.removeItem('colorflexCurrentThumbnailPatternId');
+                sessionStorage.removeItem('colorflexProceedProofDataUrl');
+                sessionStorage.removeItem('colorflexProceedProofMeta');
+                localStorage.removeItem('colorflexProceedProofDataUrl');
+                localStorage.removeItem('colorflexProceedProofMeta');
+            } catch (_clearStale) {}
             if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
-                const runtimeColors = appState.currentLayers
-                    .filter((l) => l && l.isShadow !== true && l.color != null && String(l.color).trim() !== '')
-                    .map((l, idx) => ({
-                        label: l.label || `Layer ${idx + 1}`,
-                        color: normalizeColorToSwFormat(l.color)
-                    }))
-                    .filter((c) => c.color && c.color !== 'Unknown Color');
+                const mappedCoord = colorflexCoordinateMappedRuntimeColors();
+                const runtimeColors =
+                    mappedCoord && mappedCoord.length
+                        ? mappedCoord
+                        : appState.currentLayers
+                              .filter((l) => l && l.isShadow !== true && l.color != null && String(l.color).trim() !== '')
+                              .map((l, idx) => ({
+                                  label: l.label || `Layer ${idx + 1}`,
+                                  color: normalizeColorToSwFormat(l.color)
+                              }))
+                              .filter((c) => c.color && c.color !== 'Unknown Color');
                 if (runtimeColors.length) {
                     pattern.colors = runtimeColors;
+                    if (mappedCoord && mappedCoord.length) {
+                        const pName =
+                            pattern.name || pattern.patternName || appState.currentPattern?.name || '';
+                        if (pName) {
+                            const scale =
+                                typeof appState.currentScale === 'number' && appState.currentScale > 0
+                                    ? appState.currentScale
+                                    : pattern.currentScale || 100;
+                            const newId = generatePatternId(pName, runtimeColors, scale);
+                            pattern.id = newId;
+                            pattern.patternId = newId;
+                        }
+                    }
                     console.log('✅ Proceed-to-cart runtime colors applied:', runtimeColors);
                 }
             }
@@ -4105,7 +4371,7 @@ function showMaterialSelectionModal(pattern) {
                 const runtimeProofDataUrl = await window.generatePrintPreviewDataUrl();
                 if (runtimeProofDataUrl && typeof runtimeProofDataUrl === 'string' && runtimeProofDataUrl.startsWith('data:image')) {
                     pattern.thumbnail = runtimeProofDataUrl;
-                    try { localStorage.setItem('colorflexCurrentThumbnail', runtimeProofDataUrl); } catch (_) {}
+                    colorflexStoreCurrentThumbnailForPattern(pattern, runtimeProofDataUrl);
                     try {
                         const lockedColors = Array.isArray(pattern.colors)
                             ? pattern.colors.map((c) => (c && c.color ? String(c.color) : '')).filter(Boolean)
@@ -4124,12 +4390,12 @@ function showMaterialSelectionModal(pattern) {
                     } catch (_) {}
                     console.log('✅ Proceed-to-cart runtime proof captured via generatePrintPreviewDataUrl');
                 }
-            } else if (typeof window.capturePatternThumbnail === 'function') {
+            } else if (typeof capturePatternThumbnail === 'function') {
                 // Fallback only when proof helper is unavailable.
-                const runtimeThumb = window.capturePatternThumbnail();
+                const runtimeThumb = capturePatternThumbnail();
                 if (runtimeThumb && typeof runtimeThumb === 'string' && runtimeThumb.startsWith('data:image')) {
                     pattern.thumbnail = runtimeThumb;
-                    try { localStorage.setItem('colorflexCurrentThumbnail', runtimeThumb); } catch (_) {}
+                    colorflexStoreCurrentThumbnailForPattern(pattern, runtimeThumb);
                     try {
                         const lockedColors = Array.isArray(pattern.colors)
                             ? pattern.colors.map((c) => (c && c.color ? String(c.color) : '')).filter(Boolean)
@@ -4163,6 +4429,46 @@ function showMaterialSelectionModal(pattern) {
             }
         } catch (runtimeSyncError) {
             console.warn('⚠️ Proceed-to-cart runtime sync failed, continuing with existing pattern payload:', runtimeSyncError);
+        }
+
+        // #region agent log
+        try {
+            const _t2 = pattern && pattern.thumbnail ? String(pattern.thumbnail) : "";
+            const _sameCat2 = !!(appState.selectedCollection && Array.isArray(appState.selectedCollection.patterns) && appState.selectedCollection.patterns.some((p) => p === pattern));
+            fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+                body: JSON.stringify({
+                    sessionId: "0b8664",
+                    runId: "pre",
+                    hypothesisId: "H1-H5",
+                    location: "CFM.js:proceed-to-cart:after-runtime-sync",
+                    message: "After proceed runtime thumbnail sync",
+                    data: {
+                        thumbIsDataUrl: _t2.startsWith("data:"),
+                        thumbLen: _t2.length,
+                        sameRefAsCatalogPattern: _sameCat2,
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(function () {});
+        } catch (_e2) {}
+        // #endregion
+
+        var fabricSampleSub = null;
+        var fabricSampleRe = /^fabric-sample:(.+)$/;
+        var fabricSampleM = fabricSampleRe.exec(selectedMaterial);
+        if (fabricSampleM) {
+            fabricSampleSub = fabricSampleM[1];
+        }
+        if (fabricSampleSub) {
+            if (isFromCartEdit) {
+                alert('Sample options cannot be updated from this dialog. Remove the line item and add a new sample from ColorFlex if needed.');
+                return;
+            }
+            modal.remove();
+            window.location.href = buildColorflexFabricSampleProductUrl(pattern, fabricSampleSub);
+            return;
         }
 
         if (isFromCartEdit) {
@@ -4260,7 +4566,7 @@ function showMaterialSelectionModal(pattern) {
                     cleanupLocalStorage();
 
                     // Try to store the thumbnail
-                    localStorage.setItem('colorflexCurrentThumbnail', pattern.thumbnail);
+                    colorflexStoreCurrentThumbnailForPattern(pattern, pattern.thumbnail);
                     console.log('🖼️ Stored thumbnail in localStorage for product page');
                 } catch (quotaError) {
                     console.warn('⚠️ localStorage quota exceeded, trying with smaller thumbnail...');
@@ -4269,7 +4575,7 @@ function showMaterialSelectionModal(pattern) {
                     const smallerThumbnail = await createCompressedThumbnail(pattern.thumbnail);
                     if (smallerThumbnail) {
                         try {
-                            localStorage.setItem('colorflexCurrentThumbnail', smallerThumbnail);
+                            colorflexStoreCurrentThumbnailForPattern(pattern, smallerThumbnail);
                             console.log('🖼️ Stored compressed thumbnail in localStorage');
                         } catch (stillTooLarge) {
                             console.error('❌ Even compressed thumbnail too large for localStorage');
@@ -4281,8 +4587,38 @@ function showMaterialSelectionModal(pattern) {
 
             try {
                 console.log('📍 About to call redirectToProductConfiguration...');
+                ensureCollectionThumbnailsInLeftSidebar();
+                resetStandardSidebarThumbnailStripLayout();
                 redirectToProductConfiguration(pattern, selectedMaterial);
                 console.log('✅ redirectToProductConfiguration called successfully');
+                // #region agent log
+                try {
+                    const _ls = document.getElementById("leftSidebar");
+                    const _ct = document.getElementById("collectionThumbnails");
+                    let _lsW = null;
+                    let _ctDisp = null;
+                    if (_ls && typeof getComputedStyle === "function") _lsW = getComputedStyle(_ls).width;
+                    if (_ct && typeof getComputedStyle === "function") _ctDisp = getComputedStyle(_ct).display + "/" + getComputedStyle(_ct).flexDirection;
+                    fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+                        body: JSON.stringify({
+                            sessionId: "0b8664",
+                            runId: "pre",
+                            hypothesisId: "H3",
+                            location: "CFM.js:proceed-to-cart:before-modal-remove",
+                            message: "Layout snapshot before modal.remove",
+                            data: {
+                                bodyOverflow: document.body && document.body.style.overflow,
+                                docElOverflow: document.documentElement && document.documentElement.style.overflow,
+                                leftSidebarWidth: _lsW,
+                                collectionThumbnailsDisplayFlexDir: _ctDisp,
+                            },
+                            timestamp: Date.now(),
+                        }),
+                    }).catch(function () {});
+                } catch (_e3) {}
+                // #endregion
                 modal.remove();
             } catch (error) {
                 console.error('❌ Error during redirect:', error);
@@ -4604,31 +4940,7 @@ function redirectToProductConfiguration(pattern, material) {
             return;
         }
         console.log('⚙️ Starting ProductConfigurationFlow for:', pattern.patternName, 'Material:', material);
-        const getRuntimeCartColors = () => {
-            try {
-                if (Array.isArray(appState.layerInputs) && appState.layerInputs.length) {
-                    const fromInputs = appState.layerInputs
-                        .map((li, i) => ({
-                            label: (li && li.label) || `Layer ${i + 1}`,
-                            color: normalizeColorToSwFormat(li && li.input ? li.input.value : '')
-                        }))
-                        .filter((c) => c.color && c.color !== 'Unknown Color');
-                    if (fromInputs.length) return fromInputs;
-                }
-                if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
-                    const fromLayers = appState.currentLayers
-                        .filter((l) => l && l.isShadow !== true)
-                        .map((l, i) => ({
-                            label: l.label || `Layer ${i + 1}`,
-                            color: normalizeColorToSwFormat(l.color || '')
-                        }))
-                        .filter((c) => c.color && c.color !== 'Unknown Color');
-                    if (fromLayers.length) return fromLayers;
-                }
-            } catch (e) {}
-            return Array.isArray(pattern.colors) ? pattern.colors : [];
-        };
-        const effectiveColors = getRuntimeCartColors();
+        const effectiveColors = colorflexEffectiveColorsForProductUrl(pattern);
         if (effectiveColors.length) {
             pattern.colors = effectiveColors;
         }
@@ -4699,7 +5011,7 @@ function redirectToProductConfiguration(pattern, material) {
         if (pattern.thumbnail) {
             try {
                 console.log('🖼️ Storing pattern thumbnail for product page display');
-                localStorage.setItem('colorflexCurrentThumbnail', pattern.thumbnail);
+                colorflexStoreCurrentThumbnailForPattern(pattern, pattern.thumbnail);
             } catch (error) {
                 console.warn('⚠️ Failed to store thumbnail in localStorage:', error);
             }
@@ -4753,40 +5065,27 @@ function fallbackDirectRedirect(pattern, material) {
         currentScale: pattern.currentScale
     });
     console.log('🎨 Material:', material);
-    const getRuntimeCartColors = () => {
-        try {
-            if (Array.isArray(appState.layerInputs) && appState.layerInputs.length) {
-                const fromInputs = appState.layerInputs
-                    .map((li, i) => ({
-                        label: (li && li.label) || `Layer ${i + 1}`,
-                        color: normalizeColorToSwFormat(li && li.input ? li.input.value : '')
-                    }))
-                    .filter((c) => c.color && c.color !== 'Unknown Color');
-                if (fromInputs.length) return fromInputs;
-            }
-            if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
-                const fromLayers = appState.currentLayers
-                    .filter((l) => l && l.isShadow !== true)
-                    .map((l, i) => ({
-                        label: l.label || `Layer ${i + 1}`,
-                        color: normalizeColorToSwFormat(l.color || '')
-                    }))
-                    .filter((c) => c.color && c.color !== 'Unknown Color');
-                if (fromLayers.length) return fromLayers;
-            }
-        } catch (e) {}
-        return Array.isArray(pattern.colors) ? pattern.colors : [];
-    };
-    const effectiveColors = getRuntimeCartColors();
+    const effectiveColors = colorflexEffectiveColorsForProductUrl(pattern);
     if (effectiveColors.length) {
         pattern.colors = effectiveColors;
+        if (colorflexCoordinateMappedRuntimeColors()) {
+            const pName = pattern.name || pattern.patternName || appState.currentPattern?.name || '';
+            if (pName) {
+                const scale =
+                    typeof appState.currentScale === 'number' && appState.currentScale > 0
+                        ? appState.currentScale
+                        : pattern.currentScale || 100;
+                pattern.id = generatePatternId(pName, effectiveColors, scale);
+                pattern.patternId = pattern.id;
+            }
+        }
     }
 
     // Store thumbnail in localStorage for product page display
     if (pattern.thumbnail) {
         try {
             console.log('🖼️ Storing pattern thumbnail for product page display (fallback)');
-            localStorage.setItem('colorflexCurrentThumbnail', pattern.thumbnail);
+            colorflexStoreCurrentThumbnailForPattern(pattern, pattern.thumbnail);
         } catch (error) {
             console.warn('⚠️ Failed to store thumbnail in localStorage:', error);
         }
@@ -4806,8 +5105,13 @@ function fallbackDirectRedirect(pattern, material) {
         console.log('🎉 PROMO: Applying 25% discount to cart redirect');
     }
 
-    // Determine product handle based on material (check if material starts with 'wallpaper-' or 'fabric-')
-    const productHandle = material.startsWith('wallpaper-') ? 'custom-wallpaper' : 'custom-fabric';
+    // Sample SKUs use the unified custom-sample product; rolls use custom-wallpaper / custom-fabric.
+    let productHandle = 'custom-fabric';
+    if (material === 'wallpaper-custom-sample' || material === 'fabric-custom-sample') {
+        productHandle = 'custom-sample';
+    } else if (material.startsWith('wallpaper-')) {
+        productHandle = 'custom-wallpaper';
+    }
     console.log('🏷️ Product handle:', productHandle);
 
     // Build URL parameters using saved pattern structure
@@ -4829,6 +5133,13 @@ function fallbackDirectRedirect(pattern, material) {
         'preferred_material': material,
         'save_date': pattern.timestamp || pattern.saveDate || new Date().toISOString()
     });
+    const sm = pattern.scaleMultiplier != null ? Number(pattern.scaleMultiplier) : NaN;
+    if (!isNaN(sm) && sm > 0 && sm !== 1) {
+        params.set('scale_multiplier', String(sm));
+    }
+    if (material === 'wallpaper-custom-sample') {
+        params.set('sample_for', 'wallpaper-prepasted');
+    }
 
     // 🎄 USE SHOPIFY'S DISCOUNT URL TO AUTO-APPLY THE CODE
     // This requires creating the discount code in Shopify Admin first:
@@ -6080,16 +6391,6 @@ function urlForCorsFetch(url) {
     if (!url || typeof url !== 'string') return url;
     var sep = url.indexOf('?') >= 0 ? '&' : '?';
     return url + sep + '_cf=cors';
-}
-
-/**
- * B2 S3-compatible GETs often return Access-Control-Allow-Credentials: true together with a reflected
- * Access-Control-Allow-Origin. Per Fetch CORS, a credentialed response is not allowed when the request
- * uses credentials mode "omit" (HTML crossOrigin="anonymous"), so the image fails before drawImage.
- * Omit crossOrigin for these URLs so the bitmap loads; canvas may be tainted (on-screen display is fine).
- */
-function colorFlexB2OmitImgCrossOrigin(url) {
-    return !!(url && typeof url === 'string' && url.toLowerCase().includes('backblazeb2.com'));
 }
 
 /** Same paths as mockups.json `white-dresser`; used when mockups.json cannot be loaded. */
@@ -8383,7 +8684,7 @@ async function loadColors() {
             console.log("🎯 Using embedded Sherwin-Williams colors");
             appState.colorsData = window.ColorFlexData.colors;
             console.log("✅ Colors loaded:", appState.colorsData.length);
-            if (appState.curatedColors?.length && typeof populateCuratedColors === 'function') {
+            if (appState.curatedColors?.length && typeof populateCuratedColors === "function") {
                 populateCuratedColors(appState.curatedColors);
             }
             return;
@@ -10237,7 +10538,8 @@ function populateCuratedColors(colors) {
   console.log("  Is standard pattern:", isStandardPattern);
 
   if (isStandardPattern && !isBassett) {
-    console.log("⏭️ Standard pattern: leaving curated colors in place (not used for this pattern)");
+    console.log("🧹 Standard pattern (non-Bassett): clearing curated colors strip");
+    container.innerHTML = "";
     return;
   }
   if (isStandardPattern && isBassett) {
@@ -10390,6 +10692,117 @@ function getLayerMappingForPreview(isFurnitureCollection) {
             wallIndex: null            // No wall color
         };
     }
+}
+
+/**
+ * Ordered host currentLayers indices (non-shadow) from anchor through end — one step per coordinate tint layer.
+ */
+function buildCoordinateEligibleHostIndices(layersArr, anchor) {
+    const eligible = [];
+    const len = layersArr ? layersArr.length : 0;
+    if (!layersArr || len === 0 || anchor == null || typeof anchor !== 'number' || anchor < 0 || anchor >= len) {
+        return eligible;
+    }
+    for (let i = anchor; i < len; i++) {
+        if (!layersArr[i]?.isShadow) eligible.push(i);
+    }
+    if (eligible.length === 0) {
+        eligible.push(Math.min(Math.max(0, anchor), len - 1));
+    }
+    return eligible;
+}
+
+/**
+ * Map pattern JSON layer index (same index as updatePreview's layer loop) to appState.currentLayers index for tint color.
+ * When coordinatePreviewColorStartIndex is set: walk forward through non-shadow host slots from the anchor; when the
+ * coordinate has more tint layers than that chain, cycle (modulo) so extra layers reuse the palette in order.
+ */
+function resolveCurrentLayersIndexForPatternLayer(layerIx, patternStartIndex) {
+    const layersArr = appState.currentLayers;
+    const len = layersArr ? layersArr.length : 0;
+    const defaultIdx = patternStartIndex + layerIx;
+    const anchor = appState.coordinatePreviewColorStartIndex;
+    if (anchor == null || typeof anchor !== 'number' || !layersArr) {
+        return Math.min(Math.max(0, defaultIdx), Math.max(0, len - 1));
+    }
+    const eligible = buildCoordinateEligibleHostIndices(layersArr, anchor);
+    if (!eligible.length) {
+        return Math.min(Math.max(0, defaultIdx), Math.max(0, len - 1));
+    }
+    return eligible[layerIx % eligible.length];
+}
+
+/** Same furniture detection as updatePreview so coordinate color mapping matches the canvas. */
+function colorflexIsFurnitureCollectionForLayerMapping() {
+    const hasFurSuffix =
+        appState.selectedCollection?.name?.includes('.fur') ||
+        appState.selectedCollection?.name?.includes('-fur');
+    const isFurnitureMode =
+        appState.isInFurnitureMode ||
+        window.COLORFLEX_MODE === 'FURNITURE' ||
+        (typeof window !== 'undefined' &&
+            window.location &&
+            typeof window.location.pathname === 'string' &&
+            window.location.pathname.includes('furniture'));
+    return hasFurSuffix || (isFurnitureMode && appState.furnitureConfig && appState.selectedFurnitureType);
+}
+
+/**
+ * When a matching coordinate is active: wall (furniture) + background layer, then only the
+ * host layer colors that tint each coordinate pattern layer (same indices as updatePreview).
+ * Avoids sending unused host pattern colors to cart/PDP while keeping the canvas background.
+ * @returns {Array<{label:string,color:string}>|null} null if not in coordinate preview mode
+ */
+function colorflexCoordinateMappedRuntimeColors() {
+    const layers = appState.currentLayers;
+    const anchor = appState.coordinatePreviewColorStartIndex;
+    const coordPatternLayers =
+        appState.currentPattern && Array.isArray(appState.currentPattern.layers)
+            ? appState.currentPattern.layers
+            : null;
+    if (anchor == null || typeof anchor !== 'number' || !coordPatternLayers || coordPatternLayers.length === 0) {
+        return null;
+    }
+    if (!Array.isArray(layers) || !layers.length) return null;
+
+    const mapping = getLayerMappingForPreview(colorflexIsFurnitureCollectionForLayerMapping());
+    const out = [];
+    const seen = new Set();
+
+    function pushLayerAtIndexOnce(idx) {
+        if (typeof idx !== 'number' || idx < 0 || seen.has(idx)) return;
+        const l = layers[idx];
+        if (!l || l.isShadow === true) return;
+        if (l.color == null || String(l.color).trim() === '') return;
+        const color = normalizeColorToSwFormat(l.color);
+        if (!color || color === 'Unknown Color') return;
+        seen.add(idx);
+        out.push({ label: l.label || `Layer ${idx + 1}`, color });
+    }
+
+    function pushLayerColorForCoordinateSlot(idx) {
+        if (typeof idx !== 'number' || idx < 0) return;
+        const l = layers[idx];
+        if (!l || l.isShadow === true) return;
+        if (l.color == null || String(l.color).trim() === '') return;
+        const color = normalizeColorToSwFormat(l.color);
+        if (!color || color === 'Unknown Color') return;
+        out.push({ label: l.label || `Layer ${idx + 1}`, color });
+    }
+
+    // Preview still uses wall (furniture) + background behind the coordinate art; cart must keep them.
+    if (mapping.wallIndex != null && typeof mapping.wallIndex === 'number') {
+        pushLayerAtIndexOnce(mapping.wallIndex);
+    }
+    if (typeof mapping.backgroundIndex === 'number') {
+        pushLayerAtIndexOnce(mapping.backgroundIndex);
+    }
+
+    for (let i = 0; i < coordPatternLayers.length; i++) {
+        const idx = resolveCurrentLayersIndexForPatternLayer(i, mapping.patternStartIndex);
+        pushLayerColorForCoordinateSlot(idx);
+    }
+    return out.length ? out : null;
 }
 
 function validateLayerMapping() {
@@ -11990,6 +12403,44 @@ function initThumbnailLazyLoading() {
     console.log('👁️ Thumbnail lazy loading initialized');
 }
 
+/**
+ * page.colorflex.liquid moves #collectionThumbnails into #patternsModalContent for mobile.
+ * If that modal is left open or bypassed, the strip can stay detached from #leftSidebar.
+ * Restoring uses the page's closePatternsModal when present.
+ */
+function ensureCollectionThumbnailsInLeftSidebar() {
+    try {
+        if (typeof window.closePatternsModal === 'function') {
+            window.closePatternsModal();
+        }
+    } catch (e) {
+        console.warn('ensureCollectionThumbnailsInLeftSidebar:', e);
+    }
+}
+
+/** Strip JS-applied simple-mode flex overrides so stylesheet column layout applies again. */
+function resetStandardSidebarThumbnailStripLayout() {
+    if (window.COLORFLEX_SIMPLE_MODE === true) return;
+    const el = document.getElementById('collectionThumbnails');
+    if (!el) return;
+    const containerProps = [
+        'display', 'flex-direction', 'flex-wrap', 'justify-content', 'gap',
+        'width', 'max-width', 'position', 'left', 'top', 'padding'
+    ];
+    containerProps.forEach((p) => {
+        try {
+            el.style.removeProperty(p);
+        } catch (_) {}
+    });
+    el.querySelectorAll('.thumbnail').forEach((thumb) => {
+        ['display', 'float', 'position'].forEach((p) => {
+            try {
+                thumb.style.removeProperty(p);
+            } catch (_) {}
+        });
+    });
+}
+
 // Populate pattern thumbnails in sidebar with lazy loading
 function populatePatternThumbnails(patterns) {
     console.log("populatePatternThumbnails called with patterns:", patterns);
@@ -11997,6 +12448,7 @@ function populatePatternThumbnails(patterns) {
         console.error("collectionThumbnails not found in DOM");
         return;
     }
+    ensureCollectionThumbnailsInLeftSidebar();
     if (!Array.isArray(patterns)) {
         console.error("Patterns is not an array:", patterns);
         return;
@@ -12032,6 +12484,35 @@ function populatePatternThumbnails(patterns) {
 
     dom.collectionThumbnails.innerHTML = "";
     console.log("Cleared existing thumbnails");
+    resetStandardSidebarThumbnailStripLayout();
+
+    // #region agent log
+    try {
+        const _cs = dom.collectionThumbnails && typeof getComputedStyle === "function" ? getComputedStyle(dom.collectionThumbnails) : null;
+        const _ls0 = document.getElementById("leftSidebar");
+        const _lsS = _ls0 && typeof getComputedStyle === "function" ? getComputedStyle(_ls0) : null;
+        fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+            body: JSON.stringify({
+                sessionId: "0b8664",
+                runId: "pre",
+                hypothesisId: "H2-H4",
+                location: "CFM.js:populatePatternThumbnails:entry",
+                message: "populatePatternThumbnails start",
+                data: {
+                    nPatterns: validPatterns.length,
+                    simpleMode: window.COLORFLEX_SIMPLE_MODE === true,
+                    collection: appState.selectedCollection && appState.selectedCollection.name,
+                    ctDisplay: _cs && _cs.display,
+                    ctFlexDir: _cs && _cs.flexDirection,
+                    leftSidebarWidth: _lsS && _lsS.width,
+                },
+                timestamp: Date.now(),
+            }),
+        }).catch(function () {});
+    } catch (_e4) {}
+    // #endregion
 
     // 🎨 SIMPLE MODE: Force horizontal layout
     const isSimpleMode = window.COLORFLEX_SIMPLE_MODE === true;
@@ -12061,6 +12542,19 @@ function populatePatternThumbnails(patterns) {
 
         // Lazy loading: Load first 3 thumbnails immediately, rest on scroll
         const thumbnailUrl = normalizePath(pattern.thumbnail) || normalizePath("data/collections/fallback.jpg");
+        // #region agent log
+        (function () {
+            var cn = appState.selectedCollection && appState.selectedCollection.name;
+            if (cn === 'abundance' && (index === 0 || index === 5)) {
+                cfAgentDebug('CFM.js:populatePatternThumbnails', 'collection thumb url', 'TH-UI', {
+                    index: index,
+                    lazy: index >= 3,
+                    pathTail: String(thumbnailUrl).slice(-120),
+                    rawThumb: pattern.thumbnail,
+                });
+            }
+        })();
+        // #endregion
 
         if (index < 3) {
             // Load first 3 immediately for instant display
@@ -12171,6 +12665,38 @@ function populatePatternThumbnails(patterns) {
         console.log("✅ Horizontal layout forced on", thumbnails.length, "thumbnails");
     }
 
+    // #region agent log
+    try {
+        let _dataUrlN = 0;
+        validPatterns.forEach((p) => {
+            const u = p && p.thumbnail ? String(p.thumbnail) : "";
+            if (u.startsWith("data:")) _dataUrlN++;
+        });
+        const _cs2 = dom.collectionThumbnails && typeof getComputedStyle === "function" ? getComputedStyle(dom.collectionThumbnails) : null;
+        const _ls1 = document.getElementById("leftSidebar");
+        const _lsS2 = _ls1 && typeof getComputedStyle === "function" ? getComputedStyle(_ls1) : null;
+        fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+            body: JSON.stringify({
+                sessionId: "0b8664",
+                runId: "pre",
+                hypothesisId: "H2-H5",
+                location: "CFM.js:populatePatternThumbnails:after-layout",
+                message: "populatePatternThumbnails end layout",
+                data: {
+                    dataUrlThumbnailCount: _dataUrlN,
+                    simpleMode: window.COLORFLEX_SIMPLE_MODE === true,
+                    ctDisplay: _cs2 && _cs2.display,
+                    ctJustify: _cs2 && _cs2.justifyContent,
+                    leftSidebarWidth: _lsS2 && _lsS2.width,
+                },
+                timestamp: Date.now(),
+            }),
+        }).catch(function () {});
+    } catch (_e5) {}
+    // #endregion
+
     // Update collection header
     // ✅ FIX: Support both standard furniture page format (h6 element) and simple mode format
     const collectionHeader = dom.collectionHeader || document.getElementById('collectionHeader');
@@ -12208,11 +12734,20 @@ function populatePatternThumbnails(patterns) {
     }
 }
 
-/** Per-pattern `coordinates` only; no fallback to collection master (-000) row (blank when none). */
+/**
+ * Matching coordinate wallpapers for the coordinates strip: pattern row **COORDINATES** if set,
+ * else collection **coordinates** from master (-000) (Airtable COORDINATES on the placeholder row).
+ */
 function getCoordinateListForCurrentUI() {
     const p = appState.currentPattern;
-    if (!p || !Array.isArray(p.coordinates)) return [];
-    return p.coordinates.length > 0 ? p.coordinates : [];
+    const col = appState.selectedCollection;
+    if (p && Array.isArray(p.coordinates) && p.coordinates.length > 0) {
+        return p.coordinates;
+    }
+    if (col && Array.isArray(col.coordinates) && col.coordinates.length > 0) {
+        return col.coordinates;
+    }
+    return [];
 }
 
 /**
@@ -12505,6 +13040,14 @@ function populateLayerInputs(pattern = appState.currentPattern) {
       return;
     }
 
+    const colorControlsEl = document.getElementById("colorControls");
+    if (colorControlsEl) {
+      colorControlsEl.classList.remove("colorControls--standard");
+    }
+    if (dom.layerInputsContainer) {
+      dom.layerInputsContainer.classList.remove("layerInputsContainer--standard");
+    }
+
     // ⚡ Standard = not ColorFlex by data, or in a standard-only collection (farmhouse, oceana, abundance). Pass through — no layer inputs.
     const isStandard = patternIsStandard(pattern, appState.selectedCollection);
     if (isStandard) {
@@ -12530,8 +13073,11 @@ function populateLayerInputs(pattern = appState.currentPattern) {
         const sizeStr = `${sizeIn[0]}×${sizeIn[1]}`;
         const fallbackHtml = `<p>Each pattern repeat is ${sizeStr} inches and can be scaled to suit your need.</p>`;
         const inner = primaryHtml || fallbackHtml;
-        dom.layerInputsContainer.style.gridTemplateColumns = "repeat(1, 1fr)";
-        dom.layerInputsContainer.innerHTML = `<div style="text-align:center;padding:30px 20px;color:#d4af37;font-family:'IM Fell English',serif;font-size:1.1rem;line-height:1.8;max-width:800px;margin:0 auto;">${inner}</div>`;
+        dom.layerInputsContainer.classList.add("layerInputsContainer--standard");
+        if (colorControlsEl) {
+          colorControlsEl.classList.add("colorControls--standard");
+        }
+        dom.layerInputsContainer.innerHTML = `<div class="cf-standard-blurb">${inner}</div>`;
       }
       handlePatternSelection(pattern.name, appState.colorsLocked);
       addSaveButton();
@@ -13192,27 +13738,36 @@ let processImage = (
   isWall = false
 ) => {
   const normalizedUrl = normalizePath(url);
-  const fetchUrl = urlForCorsFetch(normalizedUrl);
-  const needsB2FetchDecode = colorFlexB2OmitImgCrossOrigin(fetchUrl);
+  const img = new Image();
+  img.crossOrigin = "anonymous";
+  img.decoding = "async";
+  // ⚠️ CRITICAL FIX: Removed ?t=${Date.now()} timestamp to allow browser caching
+  // The timestamp was causing duplicate downloads of the same image (4x downloads!)
+  // Browser cache + imageCache system will handle cache management properly
+  img.src = normalizedUrl;
 
-  /** Draw decoded pixels and run mask / shadow / recolor (requires getImageData — canvas must not be tainted). */
-  function runDecodePipeline(drawSource, w, h) {
+  img.onload = () => {
+    const w = img.naturalWidth || img.width;
+    const h = img.naturalHeight || img.height;
+
     const canvas = document.createElement("canvas");
-    canvas.width = w;
+    canvas.width = w;            // tile-sized; no DPR scaling here
     canvas.height = h;
     const ctx = canvas.getContext("2d", { willReadFrequently: true });
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
 
+    // Solid wall fast-path unchanged (keeps your behavior)
     if (isWall && (!url || url === "")) {
       ctx.clearRect(0, 0, w, h);
       callback(canvas);
       return;
     }
 
-    ctx.drawImage(drawSource, 0, 0, w, h);
+    ctx.drawImage(img, 0, 0, w, h);
 
     if (isShadow) {
+      // Shadow from luminance (gamma-correct-ish)
       let id;
       try { id = ctx.getImageData(0, 0, w, h); }
       catch (e) { callback(canvas); return; }
@@ -13232,13 +13787,16 @@ let processImage = (
 
     if (!layerColor) { callback(canvas); return; }
 
+    // --- White->transparent soft mask, then recolor ---
+    // (This preserves anti-aliased edges and makes the tile repeat cleanly.)
     let id;
     try { id = ctx.getImageData(0, 0, w, h); }
     catch (e) { callback(canvas); return; }
     const d = id.data;
 
-    const t0 = 0.80;
-    const t1 = 0.30;
+    // thresholds in linear space: t0 ~ start fading whites; t1 ~ full ink
+    const t0 = 0.80; // near-white
+    const t1 = 0.30; // darker = fully opaque
     const smoothstep = (x) => (x<=0?0 : x>=1?1 : x*x*(3-2*x));
 
     for (let i = 0; i < d.length; i += 4) {
@@ -13248,64 +13806,23 @@ let processImage = (
       const lb = sb<=0.04045 ? sb/12.92 : Math.pow((sb+0.055)/1.055,2.4);
       const L = 0.2126*lr + 0.7152*lg + 0.0722*lb;
 
+      // mask: 0 at white (>=t0), 1 at ink (<=t1), smooth in-between
       const x = (t0 - L) / (t0 - t1);
       const m = smoothstep(Math.max(0, Math.min(1, x)));
-      d[i+3] = Math.round(255 * m);
+      d[i+3] = Math.round(255 * m);   // keep RGB; alpha becomes the mask
     }
     ctx.putImageData(id, 0, 0);
 
+    // Recolor using compositing over the new soft mask
     ctx.globalCompositeOperation = "source-in";
     ctx.fillStyle = layerColor;
     ctx.fillRect(0, 0, w, h);
     ctx.globalCompositeOperation = "source-over";
 
     callback(canvas);
-  }
+  };
 
-  function startWithImage(useCrossOriginAnonymous) {
-    const img = new Image();
-    if (useCrossOriginAnonymous) img.crossOrigin = "anonymous";
-    img.decoding = "async";
-    img.onload = () => {
-      const w = img.naturalWidth || img.width;
-      const h = img.naturalHeight || img.height;
-      runDecodePipeline(img, w, h);
-    };
-    img.onerror = () => {
-      if (needsB2FetchDecode && useCrossOriginAnonymous) {
-        startWithImage(false);
-        return;
-      }
-      console.error(`Canvas image load failed: ${url} (resolved: ${fetchUrl})`);
-    };
-    img.src = fetchUrl;
-  }
-
-  // Omitting crossOrigin on B2 loads the bitmap but taints the canvas → getImageData fails → raw B&W separations.
-  // Decode B2 via fetch + ImageBitmap so pixel readback stays allowed; fall back to <img crossOrigin="anonymous">.
-  if (needsB2FetchDecode && typeof fetch === "function" && typeof createImageBitmap === "function") {
-    fetch(fetchUrl, { mode: "cors", credentials: "omit", cache: "default" })
-      .then((res) => {
-        if (!res.ok) throw new Error(String(res.status));
-        return res.blob();
-      })
-      .then((blob) => createImageBitmap(blob))
-      .then((bmp) => {
-        try {
-          runDecodePipeline(bmp, bmp.width, bmp.height);
-        } finally {
-          try { bmp.close(); } catch (e2) { /* ignore */ }
-        }
-      })
-      .catch((err) => {
-        if (window.COLORFLEX_DEBUG_URLS) {
-          console.warn("[ColorFlex] processImage B2 fetch decode failed, trying <img>:", err && err.message);
-        }
-        startWithImage(true);
-      });
-  } else {
-    startWithImage(true);
-  }
+  img.onerror = () => console.error(`Canvas image load failed: ${url}`);
 };
    // GUARD / TRACE WRAPPER
     if (USE_GUARD && DEBUG_TRACE) {
@@ -14006,9 +14523,16 @@ async function loadPatternData(collection, patternId) {
         console.log(">>> Updated appState.currentPattern:", JSON.stringify(pattern, null, 2));
         appState.curatedColors = appState.selectedCollection.curatedColors || [];
         console.log(">>> Updated appState.curatedColors:", appState.curatedColors);
-        
-        // ✅ Populate curated colors when we have colors data; don't block preview/mockup on it
-        if (Array.isArray(appState.colorsData) && appState.colorsData.length && collection.curatedColors?.length) {
+
+        const isBassettMode = window.COLORFLEX_MODE === "BASSETT";
+        const standardHideCurated = patternIsStandard(pattern, collection) && !isBassettMode;
+        const curatedStrip = dom.curatedColorsContainer || document.getElementById("curatedColorsContainer");
+
+        // ✅ Curated strip: only for ColorFlex-style patterns (Bassett keeps collection palette on standards)
+        if (standardHideCurated) {
+            console.log("🧹 loadPatternData: standard pattern — curated strip cleared");
+            if (curatedStrip) curatedStrip.innerHTML = "";
+        } else if (Array.isArray(appState.colorsData) && appState.colorsData.length && collection.curatedColors?.length) {
             appState.curatedColors = collection.curatedColors;
             populateCuratedColors(appState.curatedColors);
         } else if (!Array.isArray(appState.colorsData) || appState.colorsData.length === 0) {
@@ -14511,10 +15035,10 @@ let updatePreview = async () => {
                 previewCanvas.width = canvasSize;
                 previewCanvas.height = canvasSize;
                 
-                // Load thumbnail as pattern image (crossOrigin enables non-tainted canvas when CORS allows omit+credentials)
+                // Load thumbnail as pattern image (crossOrigin required for canvas draw)
                 const thumbUrl = urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));
                 const patternImg = new Image();
-                if (!colorFlexB2OmitImgCrossOrigin(thumbUrl)) patternImg.crossOrigin = "Anonymous";
+                patternImg.crossOrigin = "Anonymous";
                 patternImg.src = thumbUrl;
                 let usedFallback = false;
                 
@@ -14625,6 +15149,12 @@ let updatePreview = async () => {
                         resolve();
                     };
                     patternImg.onerror = () => {
+                        // #region agent log
+                        cfAgentDebug('CFM.js:updatePreview:standardThumb', 'standard thumb load error', 'TH-CORS', {
+                            thumbTail: String(thumbUrl || '').slice(-100),
+                            patternName: appState.currentPattern && appState.currentPattern.name,
+                        });
+                        // #endregion
                         console.error("❌ Failed to load standard pattern thumbnail (CORS or 404); falling back to img display");
                         usedFallback = true;
                         // Fallback: show thumbnail in <img> without crossOrigin so it can display even when CORS blocks canvas
@@ -14860,24 +15390,6 @@ let updatePreview = async () => {
                 }).then(async (patternBounds) => {
                     if (!patternBounds) return;
 
-                    /** Map pattern layer ordinal to currentLayers index; coordinate mode anchors at the slot the user replaced. */
-                    const resolvePreviewInputIndex = (layerIx) => {
-                        const len = appState.currentLayers?.length || 0;
-                        const defaultIdx = layerMapping.patternStartIndex + layerIx;
-                        const anchor = appState.coordinatePreviewColorStartIndex;
-                        if (anchor == null || typeof anchor !== "number") {
-                            return defaultIdx;
-                        }
-                        let idx = anchor;
-                        let n = layerIx;
-                        while (n > 0 && idx < len - 1) {
-                            idx++;
-                            while (idx < len - 1 && appState.currentLayers[idx]?.isShadow) idx++;
-                            n--;
-                        }
-                        return Math.min(idx, Math.max(0, len - 1));
-                    };
-                    
                     // Render each layer with correct color mapping (including shadow layers at fixed opacity)
                     for (let layerIndex = 0; layerIndex < patternToRender.layers.length; layerIndex++) {
                         const layer = patternToRender.layers[layerIndex];
@@ -14887,7 +15399,7 @@ let updatePreview = async () => {
                             (layerPath && (String(layerPath).toUpperCase().includes('_SHADOW_') || String(layerPath).toUpperCase().includes('SHADOW_LAYER') || String(layerPath).toUpperCase().includes('ISSHADOW')));
                         let layerColor = null;
                         if (!isShadow) {
-                            const inputIndex = resolvePreviewInputIndex(layerIndex);
+                            const inputIndex = resolveCurrentLayersIndexForPatternLayer(layerIndex, layerMapping.patternStartIndex);
                             if (inputIndex >= (appState.currentLayers?.length || 0)) {
                                 console.error(`  ❌ Pattern preview: inputIndex ${inputIndex} out of bounds for layer ${layerIndex}`);
                                 layerColor = lookupColor("Snowbound");
@@ -16056,7 +16568,7 @@ let updateRoomMockup = async () => {
 
       const roomImg = new Image();
       const roomMockupSrc = normalizePath(effectiveMockup.mockup);
-      if (!colorFlexB2OmitImgCrossOrigin(roomMockupSrc)) roomImg.crossOrigin = "Anonymous";
+      roomImg.crossOrigin = "Anonymous";
       roomImg.src = roomMockupSrc;
 
       roomImg.onerror = () => {
@@ -16082,7 +16594,7 @@ let updateRoomMockup = async () => {
 
         const patternImg = new Image();
         const stdThumbSrc = urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));
-        if (!colorFlexB2OmitImgCrossOrigin(stdThumbSrc)) patternImg.crossOrigin = "Anonymous";
+        patternImg.crossOrigin = "Anonymous";
         patternImg.src = stdThumbSrc;
 
         function drawStandardRoomWithOptionalShadow() {
@@ -16091,7 +16603,7 @@ let updateRoomMockup = async () => {
           if (effectiveMockup.mockupShadow) {
             const shadowOverlay = new Image();
             const shadowSrcEarly = normalizePath(effectiveMockup.mockupShadow);
-            if (!colorFlexB2OmitImgCrossOrigin(shadowSrcEarly)) shadowOverlay.crossOrigin = "Anonymous";
+            shadowOverlay.crossOrigin = "Anonymous";
             shadowOverlay.src = shadowSrcEarly;
             shadowOverlay.onload = () => {
               ctx.globalCompositeOperation = "multiply";
@@ -16162,7 +16674,7 @@ let updateRoomMockup = async () => {
             console.log("✅ STANDARD PATTERN: Found mockupShadow, loading shadow overlay...");
             const shadowOverlay = new Image();
             const shadowSrcLate = normalizePath(effectiveMockup.mockupShadow);
-            if (!colorFlexB2OmitImgCrossOrigin(shadowSrcLate)) shadowOverlay.crossOrigin = "Anonymous";
+            shadowOverlay.crossOrigin = "Anonymous";
             shadowOverlay.src = shadowSrcLate;
             shadowOverlay.onload = () => {
               console.log("✅ STANDARD PATTERN: Shadow overlay loaded successfully!");
@@ -16203,6 +16715,7 @@ let updateRoomMockup = async () => {
 
     // ---------- REGULAR / PANELS ----------
     const processOverlay = async () => {
+      const rmLayerMapping = getLayerMappingForPreview(false);
       // Paint wall base (CSS px)
       ctx.fillStyle = wallColor;
       ctx.fillRect(0, 0, cssW, cssH);
@@ -16235,25 +16748,22 @@ let updateRoomMockup = async () => {
         panelCtx.imageSmoothingQuality = "high";
         panelCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        // Build input color mapping (skip background)
-        const inputLayers = appState.currentLayers.filter(l => !l.isShadow);
-        let inputIdx = 0;
-
         for (let i = 0; i < appState.currentPattern.layers.length; i++) {
           const layer = appState.currentPattern.layers[i];
           const pathStr = layer && (layer.path || layer.proofPath) ? (layer.path || layer.proofPath) : '';
           const isShadow = !!layer.isShadow || (pathStr && (String(pathStr).toUpperCase().includes('_SHADOW_') || String(pathStr).toUpperCase().includes('SHADOW_LAYER') || String(pathStr).toUpperCase().includes('ISSHADOW')));
           let layerColor = null;
           if (!isShadow) {
-            layerColor = lookupColor(inputLayers[inputIdx + 1]?.color || "Snowbound");
-            inputIdx++;
+            const clIdx = resolveCurrentLayersIndexForPatternLayer(i, rmLayerMapping.patternStartIndex);
+            layerColor = lookupColor(appState.currentLayers[clIdx]?.color || "Snowbound");
           }
 
           const tilingType = appState.currentPattern.tilingType || "";
           const isHalfDrop = isHalfDropTiling(tilingType);
 
           await new Promise((resolve) => {
-            processImage(layer.path, (processedCanvas) => {
+            const layerLoadPath = layer && (layer.path || layer.proofPath);
+            processImage(layerLoadPath, (processedCanvas) => {
               if (!(processedCanvas instanceof HTMLCanvasElement)) return resolve();
 
               const scale = (appState.scaleMultiplier || .5) * 0.1;
@@ -16356,22 +16866,19 @@ let updateRoomMockup = async () => {
         patternCtx.imageSmoothingQuality = "high";
         patternCtx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
-        // map user colors (skip bg in input list)
-        const inputLayers = appState.currentLayers.filter(l => !l.isShadow);
-        let inputIdx = 0;
-
         for (let i = 0; i < appState.currentPattern.layers.length; i++) {
           const layer = appState.currentPattern.layers[i];
           const pathStr = layer && (layer.path || layer.proofPath) ? (layer.path || layer.proofPath) : '';
           const isShadow = !!layer.isShadow || (pathStr && (String(pathStr).toUpperCase().includes('_SHADOW_') || String(pathStr).toUpperCase().includes('SHADOW_LAYER') || String(pathStr).toUpperCase().includes('ISSHADOW')));
           let layerColor = null;
           if (!isShadow) {
-            layerColor = lookupColor(inputLayers[inputIdx + 1]?.color || "Snowbound");
-            inputIdx++;
+            const clIdx = resolveCurrentLayersIndexForPatternLayer(i, rmLayerMapping.patternStartIndex);
+            layerColor = lookupColor(appState.currentLayers[clIdx]?.color || "Snowbound");
           }
 
           await new Promise((resolve) => {
-            processImage(layer.path, (processedCanvas) => {
+            const layerLoadPath = layer && (layer.path || layer.proofPath);
+            processImage(layerLoadPath, (processedCanvas) => {
               if (!(processedCanvas instanceof HTMLCanvasElement)) return resolve();
 
               const { tileW, tileH } = computeTileSizeFromInches(appState.currentPattern, appState.scaleMultiplier || 1);
@@ -17920,7 +18427,7 @@ const updateFurniturePreview = async () => {
             const normalizedCoordPath = normalizePath(layerPaths[0]);
             const coordLayerSrc = urlForCorsFetch(normalizedCoordPath);
             console.log(`🔍 Coordinate click path: "${layerPaths[0]}" → normalized: "${normalizedCoordPath}"`);
-            if (!colorFlexB2OmitImgCrossOrigin(coordLayerSrc)) coordImage.crossOrigin = "Anonymous";
+            coordImage.crossOrigin = "Anonymous";
             coordImage.src = coordLayerSrc;
             coordImage.onload = async () => {
                 // Limit coordinate image dimensions to prevent oversized canvases
@@ -18378,9 +18885,9 @@ const generatePrintPreview = (options = {}) => {
 
         // Source-of-truth path: use the exact visible preview capture when available.
         // This keeps print/save output visually identical to the UI preview.
-        if (options.preferVisibleCapture !== false && typeof window.capturePatternThumbnail === 'function') {
+        if (options.preferVisibleCapture !== false && typeof capturePatternThumbnail === 'function') {
             try {
-                const visibleDataUrl = window.capturePatternThumbnail();
+                const visibleDataUrl = capturePatternThumbnail();
                 if (visibleDataUrl && typeof visibleDataUrl === 'string' && visibleDataUrl.startsWith('data:image')) {
                     await new Promise((resolve) => {
                         const img = new Image();
@@ -21095,6 +21602,7 @@ function getFabricSpecByMaterialId(materialId) {
     }
 
     const wallpaperMap = {
+        'wallpaper-custom-sample': 'CUSTOM-SAMPLE-WALLPAPER',
         'wallpaper-prepasted': 'WALLPAPER-PREPASTED',
         'wallpaper-peel-stick': 'WALLPAPER-PEEL-STICK',
         'wallpaper-unpasted': 'WALLPAPER-UNPASTED',
@@ -21106,6 +21614,7 @@ function getFabricSpecByMaterialId(materialId) {
     }
 
     const fabricMap = {
+        'fabric-custom-sample': 'CUSTOM-SAMPLE-FABRIC',
         'fabric-soft-velvet': 'SOFT VELVET',
         'fabric-decorator-linen': 'DECORATOR LINEN',
         'fabric-drapery-sheer': 'DRAPERY SHEER',
@@ -21156,6 +21665,9 @@ function calculateMaterialPrice(materialId, quantity) {
 
 // Get display name for material types
 function getMaterialDisplayName(materialId) {
+    if (materialId === 'wallpaper-custom-sample' || materialId === 'fabric-custom-sample') {
+        return 'Custom Sample';
+    }
     const spec = getFabricSpecByMaterialId(materialId);
     if (spec) {
         return materialId.includes('fabric-') ?
@@ -21176,6 +21688,9 @@ function getMaterialDisplayName(materialId) {
 
 // Get pricing for material types
 function getMaterialPrice(materialId) {
+    if (materialId === 'wallpaper-custom-sample' || materialId === 'fabric-custom-sample') {
+        return '$12.00/sample';
+    }
     const spec = getFabricSpecByMaterialId(materialId);
     if (spec) {
         return spec.material === 'fabric' ?

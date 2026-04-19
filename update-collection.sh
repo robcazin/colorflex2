@@ -88,6 +88,7 @@ Flags:
   --update-products     With metadata: pass --update to shopify-create-products.js (refresh copy + metafields on existing)
   --skip-products       Skip Shopify API (you will CSV import manually)
   --skip-images         With sync: node script gets --skip-images (text/metafields only)
+  --skip-csv-shopify-upload  CSV only: do not upload thumbnails to Shopify Files (Image Src = cf-data/B2 URLs). Use when token is wrong or you import images separately.
   --pattern <slug>      Optional: with a single collection (not "all"), pass to cf-dl so image downloads and CSV rows are limited to pattern name/slug/number matches (collections.json still contains the full collection from Airtable)
 
 Collection Names:
@@ -104,6 +105,7 @@ Examples:
   $0 metadata bombay --update-products   # Same data/CSV path as sync, but opt-in to --update via flag
   $0 complete abundance              # Complete abundance collection update + create Shopify products
   $0 metadata english-cottage --skip-products   # CSV only, no Admin API
+  $0 complete folksie --skip-csv-shopify-upload # Full run but CSV uses B2 URLs for Image Src (no Files API)
   $0 images botanicals                # Download and deploy images only for botanicals (no products)
   $0 add-pattern coordinates          # New patterns only + NEW Shopify products
   $0 complete all                     # Full update for all collections + create all Shopify products
@@ -112,6 +114,7 @@ Examples:
 Environment Variables (can be set in config/local.env):
   COLORFLEX_DATA_PATH          Data folder: mount smb://soanimation._smb._tcp.local/jobs/cf-data and set to mount path (folder containing data/).
   COLORFLEX_DATA_BASE_URL      Optional: Backblaze B2 public URL for data; set so CSV/theme use it for image URLs.
+  CF_SKIP_SHOPIFY_FILE_UPLOAD  Set to 1 to skip Shopify Files staged uploads during CSV generation (same as --skip-csv-shopify-upload).
   B2_KEY_ID, B2_APPLICATION_KEY  When set, update-collection.sh applies S3 CORS to the cf-data bucket at the end of each run (see docs/BACKBLAZE_CORS_FIX.md).
 
 EOF
@@ -511,6 +514,7 @@ COLLECTION_NAME=${2:-""}
 SKIP_PRODUCTS=false
 UPDATE_PRODUCTS=false
 SKIP_IMAGES_SHOPIFY=false
+SKIP_CSV_SHOPIFY_UPLOAD=false
 PATTERN_FILTER=""
 
 # Shift past command to parse remaining options
@@ -529,6 +533,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --skip-images)
             SKIP_IMAGES_SHOPIFY=true
+            shift
+            ;;
+        --skip-csv-shopify-upload)
+            SKIP_CSV_SHOPIFY_UPLOAD=true
             shift
             ;;
         --pattern)
@@ -654,7 +662,12 @@ fi
 main() {
     print_header "ColorFlex Collection Update Script"
     print_status "Starting update process..."
-    
+
+    if [ "$SKIP_CSV_SHOPIFY_UPLOAD" = true ]; then
+        export CF_SKIP_SHOPIFY_FILE_UPLOAD=1
+        print_status "CSV thumbnail upload to Shopify Files: disabled (--skip-csv-shopify-upload)"
+    fi
+
     # Show configuration
     echo
     print_status "Configuration:"
@@ -667,6 +680,7 @@ main() {
     echo "  Generate CSV: $GENERATE_CSV"
     echo "  Deploy: $DEPLOY"
     echo "  Incremental Mode: $INCREMENTAL_MODE"
+    echo "  CSV skip Shopify Files upload: $SKIP_CSV_SHOPIFY_UPLOAD"
     echo "  Create Shopify Products: $CREATE_PRODUCTS"
     if [ "$CREATE_PRODUCTS" = true ]; then
         echo "  Update Existing Products: $UPDATE_PRODUCTS"

@@ -1,6 +1,14 @@
+{%- assign _pd_title_l = product.title | downcase -%}
+{%- assign _pd_type_l = product.type | downcase -%}
+{%- assign _cf_catalog_pdp = false -%}
+{%- unless product.handle == 'custom-wallpaper' or product.handle == 'custom-fabric' or product.handle contains 'sample' or _pd_title_l contains 'sample' or _pd_type_l contains 'sample' -%}
+  {%- if product.metafields.color_flex.collection.value != blank -%}
+    {%- assign _cf_catalog_pdp = true -%}
+  {%- endif -%}
+{%- endunless -%}
 <product-info
   id="MainProduct-{{ section.id }}"
-  class="section-{{ section.id }}-padding gradient color-{{ section.settings.color_scheme }}"
+  class="section-{{ section.id }}-padding gradient color-{{ section.settings.color_scheme }}{% if product.handle == 'custom-wallpaper' or product.handle == 'custom-fabric' or product.handle contains 'sample' or _pd_title_l contains 'sample' or _pd_type_l contains 'sample' %} colorflex-trade-bg{% endif %}{% if _cf_catalog_pdp %} colorflex-catalog-pdp{% endif %}"
   data-section="{{ section.id }}"
   data-product-id="{{ product.id }}"
   data-update-url="true"
@@ -10,8 +18,6 @@
   {% endif %}
 >
   {%- comment -%} Ad traffic (Pinterest, Meta, etc.): skip product landing and open ColorFlex with pattern. Append ?skip_cf_redirect=1 to stay on PDP. {%- endcomment -%}
-  {%- assign _pd_title_l = product.title | downcase -%}
-  {%- assign _pd_type_l = product.type | downcase -%}
   {%- assign _pd_skip_ad_redirect = false -%}
   {%- if product.handle == 'custom-wallpaper' or product.handle == 'custom-fabric' or product.handle contains 'sample' or _pd_title_l contains 'sample' or _pd_type_l contains 'sample' -%}
     {%- assign _pd_skip_ad_redirect = true -%}
@@ -962,6 +968,207 @@
       colorsUrl: '{{ "colors.json" | asset_url }}',
       collectionsUrl: '{{ "collections.json" | asset_url }}'
     };
+    window.colorflexPdpMeta = {
+      catalogLayout: {% if _cf_catalog_pdp %}true{% else %}false{% endif %},
+      collection: {{ product.metafields.color_flex.collection.value | default: '' | json }},
+      pattern: {{ product.metafields.color_flex.pattern.value | default: '' | json }},
+      baseUrl: {{ product.metafields.color_flex.base_url.value | default: '' | json }}
+    };
+    window.colorflexDataUrlFromJsonPath = function (relPath) {
+      if (!relPath || typeof relPath !== 'string') return '';
+      var base = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '');
+      if (!/^https?:\/\//i.test(base)) base = 'https://' + base;
+      var p = relPath.replace(/^\.\//, '');
+      // Legacy JSON used ./data/collections/{col}/companions/; on-disk layout is pp-coordinates/
+      p = p.split('/companions/').join('/pp-coordinates/');
+      return base + '/' + p;
+    };
+    window.colorflexPatternNamesMatch = function (a, b) {
+      return String(a || '').trim().toLowerCase() === String(b || '').trim().toLowerCase();
+    };
+    window.colorflexSlugifyPatternKey = function (s) {
+      return String(s || '')
+        .trim()
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/^-+|-+$/g, '');
+    };
+    /** PDP metafield color_flex.pattern is usually the file slug (e.g. folk-vine); JSON row has name "Folk Vine" and optional slug. */
+    window.colorflexPatternRowMatchesMeta = function (p, metaPattern) {
+      if (!p || metaPattern == null || String(metaPattern).trim() === '') return false;
+      var m = String(metaPattern).trim();
+      if (window.colorflexPatternNamesMatch(p.name, m)) return true;
+      if (p.slug && window.colorflexPatternNamesMatch(p.slug, m)) return true;
+      if (p.displayName && window.colorflexPatternNamesMatch(p.displayName, m)) return true;
+      if (p.number && window.colorflexPatternNamesMatch(p.number, m)) return true;
+      var metaSlug = window.colorflexSlugifyPatternKey(m);
+      if (metaSlug && window.colorflexSlugifyPatternKey(p.name) === metaSlug) return true;
+      if (p.slug && window.colorflexSlugifyPatternKey(p.slug) === metaSlug) return true;
+      return false;
+    };
+    window.colorflexFindPdpPattern = function (data, meta) {
+      var col = (data.collections || []).find(function (c) {
+        if (!c) return false;
+        if (window.colorflexPatternNamesMatch(c.name, meta.collection)) return true;
+        return window.colorflexSlugifyPatternKey(c.name) === window.colorflexSlugifyPatternKey(meta.collection);
+      });
+      if (!col || !col.patterns) return { col: null, pat: null };
+      var pat = col.patterns.find(function (p) {
+        return p && window.colorflexPatternRowMatchesMeta(p, meta.pattern);
+      });
+      return { col: col, pat: pat || null };
+    };
+    window.colorflexPdpCoordinatePathsFromPattern = function (pat) {
+      if (!pat) return null;
+      if (pat.coordinateCompanions && pat.coordinateCompanions.length) return pat.coordinateCompanions;
+      if (pat.coordinateAds && pat.coordinateAds.length) return pat.coordinateAds;
+      return null;
+    };
+    window.colorflexMountPatternCompanions = function () {
+      var el = document.getElementById('colorflexPatternCompanions');
+      var meta = window.colorflexPdpMeta || {};
+      if (!el || !meta.collection || !meta.pattern) return;
+      var url = '';
+      var bu = meta.baseUrl && String(meta.baseUrl).trim();
+      if (bu) {
+        var b = bu.replace(/\/$/, '');
+        url = b.replace(/\/collections\/?$/, '') + '/collections.json';
+      }
+      if (!url) url = (window.ColorFlexAssets && window.ColorFlexAssets.collectionsUrl) || '';
+      if (!url) return;
+      var themeCollectionsUrl = (window.ColorFlexAssets && window.ColorFlexAssets.collectionsUrl) || '';
+      var loadCollectionsData = function (u) {
+        return fetch(u).then(function (r) {
+          if (!r.ok) throw new Error('collections.json ' + r.status);
+          return r.json();
+        });
+      };
+      var mountStrip = function (paths) {
+        if (!paths || !paths.length) return;
+        var inner = document.createElement('div');
+        inner.className = 'colorflex-companions__inner';
+        var title = document.createElement('p');
+        title.className = 'colorflex-companions__label';
+        title.textContent = 'Coordinates';
+        inner.appendChild(title);
+        var row = document.createElement('div');
+        row.className = 'colorflex-companions__row';
+        var companionVisualIndex = 0;
+        paths.forEach(function (jsonPath) {
+          var u = window.colorflexDataUrlFromJsonPath(jsonPath);
+          if (!u) return;
+          var tile = document.createElement('span');
+          tile.className = 'colorflex-companions__link';
+          tile.style.setProperty('--cf-companion-stagger', companionVisualIndex * 100 + 'ms');
+          companionVisualIndex += 1;
+          tile.setAttribute('data-colorflex-image-src', u);
+          if (jsonPath) tile.setAttribute('data-colorflex-json-path', jsonPath);
+          var img = document.createElement('img');
+          img.src = u;
+          img.alt = '';
+          img.className = 'colorflex-companions__thumb';
+          img.loading = 'lazy';
+          img.draggable = false;
+          tile.appendChild(img);
+          row.appendChild(tile);
+        });
+        if (companionVisualIndex === 0) return;
+        inner.appendChild(row);
+        el.innerHTML = '';
+        el.appendChild(inner);
+        el.removeAttribute('hidden');
+        el.classList.remove('colorflex-companions--hidden');
+        el.removeAttribute('aria-hidden');
+        if (typeof window.colorflexSyncPdpLayout === 'function') {
+          requestAnimationFrame(function () {
+            window.colorflexSyncPdpLayout();
+          });
+        }
+      };
+      var tryData = function (data) {
+        var r = window.colorflexFindPdpPattern(data, meta);
+        if (!r.pat) {
+          return { paths: null, hasPat: false, pat: null };
+        }
+        return {
+          paths: window.colorflexPdpCoordinatePathsFromPattern(r.pat),
+          hasPat: true,
+          pat: r.pat,
+        };
+      };
+      loadCollectionsData(url)
+        .catch(function (err) {
+          if (themeCollectionsUrl && themeCollectionsUrl !== url) {
+            console.warn('ColorFlex coordinates PDP: primary collections.json failed, trying theme asset.', err);
+            return loadCollectionsData(themeCollectionsUrl);
+          }
+          throw err;
+        })
+        .then(function (data) {
+          var t1 = tryData(data);
+          if (t1.paths && t1.paths.length) {
+            mountStrip(t1.paths);
+            return;
+          }
+          var canTryTheme = themeCollectionsUrl && themeCollectionsUrl !== url;
+          if (!canTryTheme) {
+            if (!t1.hasPat) {
+              console.warn(
+                '[ColorFlex coordinates PDP] No pattern row for collection="' +
+                  meta.collection +
+                  '" pattern="' +
+                  meta.pattern +
+                  '". Check color_flex metafields and collections.json.'
+              );
+            } else {
+              console.warn(
+                '[ColorFlex coordinates PDP] No coordinateCompanions in the only available collections.json. Add **PP-COORDINATES** in Airtable, run **complete** update, and deploy **collections.json** (and push the theme or upload to the data host).'
+              );
+            }
+            return;
+          }
+          return loadCollectionsData(themeCollectionsUrl).then(function (data2) {
+            var t2 = tryData(data2);
+            if (t2.paths && t2.paths.length) {
+              if (!t1.paths && t1.hasPat) {
+                console.info(
+                  '[ColorFlex coordinates PDP] Using **theme** collections.json for gallery paths (data host file had no coordinateCompanions; deploy the updated JSON to B2 or use theme-only until then).'
+                );
+              }
+              mountStrip(t2.paths);
+              return;
+            }
+            if (!t1.hasPat && !t2.hasPat) {
+              console.warn(
+                '[ColorFlex coordinates PDP] No pattern row in primary or theme JSON for collection="' +
+                  meta.collection +
+                  '" pattern="' +
+                  meta.pattern +
+                  '".'
+              );
+              return;
+            }
+            console.warn(
+              '[ColorFlex coordinates PDP] Pattern found but no coordinateCompanions in **primary or theme** collections. Add **PP-COORDINATES** in Airtable, run **complete** update, push **assets/collections.json** in the theme, and upload the same file to the data host.'
+            );
+          });
+        })
+        .catch(function (e) {
+          console.warn('ColorFlex coordinates PDP:', e);
+        });
+    };
+    document.addEventListener('DOMContentLoaded', function () {
+      var meta = window.colorflexPdpMeta || {};
+      if (meta.catalogLayout && typeof window.colorflexSyncPdpLayout === 'function') {
+        window.colorflexSyncPdpLayout();
+        setTimeout(function () {
+          window.colorflexSyncPdpLayout();
+        }, 350);
+      }
+      if (typeof window.colorflexMountPatternCompanions === 'function') {
+        window.colorflexMountPatternCompanions();
+      }
+    });
   </script>
   {%- if product.quantity_price_breaks_configured? -%}
     <script src="{{ 'show-more.js' | asset_url }}" defer="defer"></script>
@@ -996,7 +1203,7 @@
 
   {% assign variant_images = product.images | where: 'attached_to_variant?', true | map: 'src' %}
   <div class="page-width">
-    <div class="product product--{{ section.settings.media_size }} product--{{ section.settings.media_position }} product--{{ section.settings.gallery_layout }} product--mobile-{{ section.settings.mobile_thumbnails }} grid grid--1-col {% if product.media.size > 0 %}grid--2-col-tablet{% else %}product--no-media{% endif %}">
+    <div class="product product--{{ section.settings.media_size }} product--{{ section.settings.media_position }} product--{{ section.settings.gallery_layout }} product--mobile-{{ section.settings.mobile_thumbnails }} grid grid--1-col {% if product.media.size > 0 %}grid--2-col-tablet{% else %}product--no-media{% endif %}{% if _cf_catalog_pdp %} colorflex-catalog-main{% endif %}">
       <div class="grid__item product__media-wrapper">
         {%- comment -%} Inline product media gallery (snippet not in repo) {%- endcomment -%}
         {%- if product.media.size > 0 -%}
@@ -1045,19 +1252,79 @@
           <product-form data-section-id="{{ section.id }}">
             {%- form 'product', product, id: product_form_id, class: 'product-form', novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
               <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}" class="product-variant-id"{% if product.selected_or_first_available_variant.available == false %} disabled{% endif %}>
-          {%- if product.handle == 'custom-wallpaper' or product.handle == 'custom-fabric' -%}
+          {%- if product.handle == 'custom-wallpaper' or product.handle == 'custom-fabric' or product.handle == 'custom-sample' -%}
           <script type="application/json" id="colorflex-variants-json">
 {{ product.variants | json }}
           </script>
           {%- endif -%}
 
           <!-- ColorFlex Material Info Box - Always rendered, positioned by JavaScript -->
-          <div id="colorflexMaterialInfo" style="display: none; margin: 20px 0; padding: 15px; background: rgb(204, 171, 108); border-radius: 6px; border: 1px solid rgb(204, 171, 108);">
-            <h3 style="color: #1a202c; font-size: 16px; margin: 0 0 8px 0; font-weight: bold;">📋 Your Selected Material</h3>
+          <div id="colorflexMaterialInfo" style="display: none;">
+            <h3 class="colorflex-material-info__title">📋 Your Selected Material</h3>
             <div id="materialDetails"></div>
           </div>
 
           <script>
+          (function colorflexPdpLayoutHelpers() {
+            window.colorflexAlignMediaToProductTitle = function () {
+              const mediaWrap = document.querySelector('.product.grid:not(.product--no-media) .product__media-wrapper');
+              if (!mediaWrap) return;
+              if (window.innerWidth < 750) {
+                mediaWrap.style.paddingTop = '';
+                return;
+              }
+              function colorflexPdpLayoutTargetIsVisible(el) {
+                if (!el) return false;
+                const st = getComputedStyle(el);
+                if (st.display === 'none' || st.visibility === 'hidden') return false;
+                const r = el.getBoundingClientRect();
+                return r.width > 2 && r.height > 2;
+              }
+              // Align media column with the ColorFlex summary strip: custom swatches (#colorflexCustomColors)
+              // or standard pattern card (#patternInfo). Avoid using #colorflexMaterialInfo (much lower).
+              const patternInfo = document.getElementById('patternInfo');
+              const colorsBox = document.getElementById('colorflexCustomColors');
+              const title = document.querySelector('.product__info-container .product__title');
+              let target = null;
+              if (colorflexPdpLayoutTargetIsVisible(colorsBox)) {
+                target = colorsBox;
+              } else if (colorflexPdpLayoutTargetIsVisible(patternInfo)) {
+                target = patternInfo;
+              } else {
+                target = title;
+              }
+              if (!target) return;
+              const delta = Math.round(target.getBoundingClientRect().top - mediaWrap.getBoundingClientRect().top);
+              mediaWrap.style.paddingTop = delta > 2 ? delta + 'px' : '';
+            };
+            window.colorflexMatchInfoBoxesToAddToCart = function () {
+              const btn = document.querySelector('.product-form__buttons button[name="add"], .product-form__buttons .product-form__submit[type="submit"]');
+              ['colorflexCustomColors', 'patternInfo', 'colorflexMaterialInfo'].forEach(function (id) {
+                const el = document.getElementById(id);
+                if (!el || !btn) return;
+                const w = Math.round(btn.getBoundingClientRect().width);
+                if (w > 0) {
+                  el.style.width = w + 'px';
+                  el.style.maxWidth = '100%';
+                  el.style.boxSizing = 'border-box';
+                }
+              });
+            };
+            window.colorflexSyncPdpLayout = function () {
+              window.colorflexAlignMediaToProductTitle();
+              window.colorflexMatchInfoBoxesToAddToCart();
+            };
+            if (!window._colorflexPdpResizeBound) {
+              window._colorflexPdpResizeBound = true;
+              let rt;
+              window.addEventListener('resize', function () {
+                clearTimeout(rt);
+                rt = setTimeout(function () {
+                  if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+                }, 150);
+              });
+            }
+          })();
           (function() {
             console.log('🔍 Material info script starting...');
             const urlParams = new URLSearchParams(window.location.search);
@@ -1174,10 +1441,44 @@
                   'Function: Light-blocking drapery fabric',
                   'Best for: Blackout curtains, privacy applications'
                 ]
+              },
+              'wallpaper-custom-sample': {
+                name: 'Wallpaper Custom Sample',
+                price: '$12/sample',
+                specs: [
+                  'Physical sample of your custom wallpaper pattern and colors',
+                  'Use to confirm color and scale before ordering rolls',
+                  'Printed to order; lead time matches custom wallpaper',
+                  'One sample per cart line'
+                ]
+              },
+              'fabric-custom-sample': {
+                name: 'Fabric Custom Sample',
+                price: '$12/sample',
+                specs: [
+                  'Physical sample of your custom fabric pattern and colors',
+                  'Use to confirm color and hand before ordering yardage',
+                  'Printed to order; lead time matches custom fabric',
+                  'One sample per cart line'
+                ]
               }
             };
 
-            const material = materialInfo[preferredMaterial];
+            let material = materialInfo[preferredMaterial];
+            const sampleForRaw = urlParams.get('sample_for');
+            if (sampleForRaw && (preferredMaterial === 'wallpaper-custom-sample' || preferredMaterial === 'fabric-custom-sample')) {
+              let sfr = sampleForRaw;
+              if (sfr === 'wallpaper-unpasted') sfr = 'wallpaper-prepasted';
+              const sub = materialInfo[sfr];
+              const sampleDef = materialInfo[preferredMaterial];
+              if (sub && sampleDef) {
+                material = {
+                  name: sampleDef.name + ' — ' + sub.name,
+                  price: sampleDef.price,
+                  specs: ['Substrate: ' + sub.name + ' (' + sub.price + ')'].concat(sampleDef.specs)
+                };
+              }
+            }
             console.log('🔍 Material lookup result:', material);
 
             if (material) {
@@ -1189,15 +1490,18 @@
 
               if (container && details) {
                 details.innerHTML = `
-                  <h4 style="color: #1a202c; font-size: 15px; margin: 0 0 4px 0; font-weight: 600;">${material.name}</h4>
-                  <p style="color: #667eea; font-weight: bold; margin: 0 0 8px 0; font-size: 13px;">${material.price}</p>
-                  <ul style="color: #010101ff; font-size: 13px; line-height: 1.5; margin: 0; padding-left: 18px;">
-                    ${material.specs.map(spec => `<li style="margin-bottom: 3px;">${spec}</li>`).join('')}
+                  <h4 class="colorflex-material-info__name">${material.name}</h4>
+                  <p class="colorflex-material-info__price">${material.price}</p>
+                  <ul class="colorflex-material-info__specs">
+                    ${material.specs.map(spec => `<li>${spec}</li>`).join('')}
                   </ul>
                 `;
 
                 container.style.display = 'block';
                 console.log('✅ Displaying material info for:', material.name);
+                setTimeout(function () {
+                  if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+                }, 50);
               } else {
                 console.error('❌ DOM elements not found - container:', container, 'details:', details);
               }
@@ -1261,7 +1565,7 @@
                     <span>{{ 'products.product.volume_pricing.note' | t }}</span>
                   </div>
                 {%- endif -%}
-                {%- if cart.taxes_included or cart.duties_included or shop.shipping_policy.body != blank -%}
+                {%- if cart.taxes_included or cart.duties_included -%}
                   <div class="product__tax caption rte">
                     {%- if cart.duties_included and cart.taxes_included -%}
                       {{ 'products.product.duties_and_taxes_included' | t }}
@@ -1269,9 +1573,6 @@
                       {{ 'products.product.taxes_included' | t }}
                     {%- elsif cart.duties_included -%}
                       {{ 'products.product.duties_included' | t }}
-                    {%- endif -%}
-                    {%- if shop.shipping_policy.body != blank -%}
-                      {{ 'products.product.shipping_policy_html' | t: link: shop.shipping_policy.url }}
                     {%- endif -%}
                   </div>
                 {%- endif -%}
@@ -1341,17 +1642,20 @@
                   {%- endif -%}
                 </p>
               {%- when 'description' -%}
-                {%- if product.metafields.color_flex.collection_description.value != blank or product.description != blank -%}
+                {% comment %}
+                  PDP: pattern body only. Do not render product-collection-description here — it duplicates
+                  color_flex.collection_description and has been mistakenly re-added before; see docs/COLLECTION_AND_SHOPIFY_WORKFLOW.md §7.
+                {% endcomment %}
+                {%- if product.description != blank -%}
                   <div class="product__description-stack rte quick-add-hidden" {{ block.shopify_attributes }}>
-                    {% render 'product-collection-description', product: product %}
                     {% render 'product-pattern-description', product: product %}
                   </div>
                 {%- endif -%}
 
               {%- when 'colorflex_material_info' -%}
                 <!-- ColorFlex Material Info Block - Independently positionable -->
-                <div id="colorflexMaterialInfo" style="display: none; margin-top: 20px; margin-bottom: 20px; padding: 15px; background: rgb(204, 171, 108); border-radius: 6px; border: 1px solid rgb(204, 171, 108);" {{ block.shopify_attributes }}>
-                  <h3 style="color: #1a202c; font-size: 16px; margin: 0 0 8px 0; font-weight: bold;">📋 Your Selected Material</h3>
+                <div id="colorflexMaterialInfo" style="display: none;" {{ block.shopify_attributes }}>
+                  <h3 class="colorflex-material-info__title">📋 Your Selected Material</h3>
                   <div id="materialDetails"></div>
                 </div>
 
@@ -1361,7 +1665,7 @@
                   const urlParams = new URLSearchParams(window.location.search);
                   console.log('🔍 Full URL:', window.location.href);
                   console.log('🔍 Search params:', window.location.search);
-                  const preferredMaterial = urlParams.get('preferred_material');
+                  let preferredMaterial = urlParams.get('preferred_material');
                   console.log('🔍 preferredMaterial value:', preferredMaterial);
 
                   if (!preferredMaterial) {
@@ -1472,10 +1776,44 @@
                         'Function: Light-blocking drapery fabric',
                         'Best for: Blackout curtains, privacy applications'
                       ]
+                    },
+                    'wallpaper-custom-sample': {
+                      name: 'Wallpaper Custom Sample',
+                      price: '$12/sample',
+                      specs: [
+                        'Physical sample of your custom wallpaper pattern and colors',
+                        'Use to confirm color and scale before ordering rolls',
+                        'Printed to order; lead time matches custom wallpaper',
+                        'One sample per cart line'
+                      ]
+                    },
+                    'fabric-custom-sample': {
+                      name: 'Fabric Custom Sample',
+                      price: '$12/sample',
+                      specs: [
+                        'Physical sample of your custom fabric pattern and colors',
+                        'Use to confirm color and hand before ordering yardage',
+                        'Printed to order; lead time matches custom fabric',
+                        'One sample per cart line'
+                      ]
                     }
                   };
 
-                  const material = materialInfo[preferredMaterial];
+                  let material = materialInfo[preferredMaterial];
+                  const sampleForRaw = urlParams.get('sample_for');
+                  if (sampleForRaw && (preferredMaterial === 'wallpaper-custom-sample' || preferredMaterial === 'fabric-custom-sample')) {
+                    let sfr = sampleForRaw;
+                    if (sfr === 'wallpaper-unpasted') sfr = 'wallpaper-prepasted';
+                    const sub = materialInfo[sfr];
+                    const sampleDef = materialInfo[preferredMaterial];
+                    if (sub && sampleDef) {
+                      material = {
+                        name: sampleDef.name + ' — ' + sub.name,
+                        price: sampleDef.price,
+                        specs: ['Substrate: ' + sub.name + ' (' + sub.price + ')'].concat(sampleDef.specs)
+                      };
+                    }
+                  }
                   console.log('🔍 Material lookup result:', material);
 
                   if (material) {
@@ -1487,15 +1825,18 @@
 
                     if (container && details) {
                       details.innerHTML = `
-                        <h4 style="color: #1a202c; font-size: 15px; margin: 0 0 4px 0; font-weight: 600;">${material.name}</h4>
-                        <p style="color: #667eea; font-weight: bold; margin: 0 0 8px 0; font-size: 13px;">${material.price}</p>
-                        <ul style="color: #010101ff; font-size: 13px; line-height: 1.5; margin: 0; padding-left: 18px;">
-                          ${material.specs.map(spec => `<li style="margin-bottom: 3px;">${spec}</li>`).join('')}
+                        <h4 class="colorflex-material-info__name">${material.name}</h4>
+                        <p class="colorflex-material-info__price">${material.price}</p>
+                        <ul class="colorflex-material-info__specs">
+                          ${material.specs.map(spec => `<li>${spec}</li>`).join('')}
                         </ul>
                       `;
 
                       container.style.display = 'block';
                       console.log('✅ Displaying material info for:', material.name);
+                      setTimeout(function () {
+                        if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+                      }, 50);
                     } else {
                       console.error('❌ DOM elements not found - container:', container, 'details:', details);
                     }
@@ -1542,7 +1883,10 @@ if (colorFlexBtn) {
     const existingCollection = urlParams.get('collection');
     const existingColors = urlParams.get('custom_colors');
     const existingScale = urlParams.get('scale');
-    const isCustomized = urlParams.get('source') === 'colorflex_saved_patterns';
+    const colorflexSrc = urlParams.get('source');
+    const isCustomized = colorflexSrc === 'colorflex_saved_patterns' ||
+      colorflexSrc === 'colorflex_configuration_flow' ||
+      urlParams.get('colorflex_design') === 'true';
 
     if (isCustomized && existingPatternName && existingCollection) {
       console.log('🔄 Re-opening customized pattern in ColorFlex...');
@@ -1810,6 +2154,8 @@ if (colorFlexBtn) {
                   </details>
                 </div>
               {%- when 'quantity_selector' -%}
+                {%- comment -%} Catalog pattern PDPs: customize in ColorFlex only — no cart quantity here. {%- endcomment -%}
+                {%- unless _cf_catalog_pdp -%}
                 <div
                   id="Quantity-Form-{{ section.id }}"
                   class="product-form__input product-form__quantity{% if settings.inputs_shadow_vertical_offset != 0 and settings.inputs_shadow_vertical_offset < 0 %} product-form__quantity-top{% endif %}"
@@ -2036,6 +2382,7 @@ if (colorFlexBtn) {
                     </volume-pricing>
                   {%- endif -%}
                 </div>
+                {%- endunless -%}
               {%- when 'popup' -%}
                 <modal-opener
                   class="product-popup-modal__opener quick-add-hidden"
@@ -2064,7 +2411,10 @@ if (colorFlexBtn) {
                 <script>
                   // Check if this is a ColorFlex-configured product
                   const checkParams = new URLSearchParams(window.location.search);
-                  const isColorFlexProduct = checkParams.get('source') === 'colorflex_saved_patterns';
+                  const colorflexSource = checkParams.get('source');
+                  const isColorFlexProduct = colorflexSource === 'colorflex_saved_patterns' ||
+                    colorflexSource === 'colorflex_configuration_flow' ||
+                    checkParams.get('colorflex_design') === 'true';
                   
                   if (isColorFlexProduct) {
                     console.log('🎨 ColorFlex product detected - setting up custom properties');
@@ -2072,14 +2422,27 @@ if (colorFlexBtn) {
                     // Replace main product image and show ColorFlex indicator
                     document.addEventListener('DOMContentLoaded', function() {
                       var urlParams = new URLSearchParams(window.location.search);
-                      if (typeof window.replaceMainProductImage === 'function') {
-                        window.replaceMainProductImage(urlParams);
-                      } else {
-                        console.warn('⚠️ replaceMainProductImage function not found');
-                      }
+                      var p = Promise.resolve();
                       if (typeof populateColorFlexProperties === 'function') {
-                        populateColorFlexProperties(urlParams);
+                        p = p.then(function () { return populateColorFlexProperties(urlParams); });
                       }
+                      p.then(function () {
+                        function runReplace() {
+                          if (typeof window.replaceMainProductImage === 'function') {
+                            window.replaceMainProductImage(urlParams);
+                          } else {
+                            console.warn('⚠️ replaceMainProductImage function not found');
+                          }
+                        }
+                        runReplace();
+                        // Theme gallery / section JS can rebuild media after first paint — re-apply once.
+                        setTimeout(runReplace, 280);
+                      }).catch(function (err) {
+                        console.error('❌ ColorFlex populateColorFlexProperties:', err);
+                        if (typeof window.replaceMainProductImage === 'function') {
+                          window.replaceMainProductImage(urlParams);
+                        }
+                      });
                     });
                   }
                 </script>
@@ -2289,6 +2652,15 @@ if (colorFlexBtn) {
         </section>
       </div>
     </div>
+
+    {%- if _cf_catalog_pdp and product.metafields.color_flex.pattern.value != blank -%}
+      <div
+        id="colorflexPatternCompanions"
+        class="colorflex-companions colorflex-companions--hidden"
+        data-colorflex-companions="true"
+        hidden
+      ></div>
+    {%- endif -%}
 
     {% render 'product-media-modal', variant_images: variant_images %}
 
@@ -3949,11 +4321,51 @@ window.replaceMainProductImage = function(urlParams) {
   const collection = urlParams.get('collection');
   const material = urlParams.get('material');
   const customColors = urlParams.get('custom_colors');
+  const urlPatternId = urlParams.get('pattern_id') || urlParams.get('saved_pattern_id');
   let thumbnail = urlParams.get('thumbnail');
-  
-  // If no thumbnail in URL, check localStorage
+
+  function colorflexReadCartThumbnailByPatternId(pid) {
+    if (!pid || !String(pid).trim()) return '';
+    try {
+      const suffix = typeof window.colorflexSanitizeCartThumbSuffix === 'function'
+        ? window.colorflexSanitizeCartThumbSuffix(pid)
+        : String(pid).replace(/[^a-zA-Z0-9-]/g, '_');
+      const cartKey = 'cart_thumbnail_' + suffix;
+      const raw = localStorage.getItem(cartKey);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data && data.thumbnail) {
+          console.log('🖼️ Retrieved thumbnail from cart storage key:', cartKey);
+          return data.thumbnail;
+        }
+      }
+    } catch (_e) { /* ignore */ }
+    return '';
+  }
+
+  // Prefer per-colorway cart bucket when URL pins pattern_id (avoids stale global colorflexCurrentThumbnail).
+  if (!thumbnail || thumbnail.trim() === '') {
+    if (urlPatternId) {
+      thumbnail = colorflexReadCartThumbnailByPatternId(urlPatternId);
+      if (thumbnail) {
+        try {
+          localStorage.setItem('colorflexCurrentThumbnail', thumbnail);
+          localStorage.setItem('colorflexCurrentThumbnailPatternId', String(urlPatternId).trim());
+        } catch (_sync) {}
+      }
+    }
+  }
+
+  // If no thumbnail in URL / cart bucket, check localStorage (skip when pattern_id disagrees with stored meta)
   if (!thumbnail || thumbnail.trim() === '') {
     thumbnail = localStorage.getItem('colorflexCurrentThumbnail');
+    if (thumbnail && urlPatternId) {
+      const thumbPid = localStorage.getItem('colorflexCurrentThumbnailPatternId');
+      if (thumbPid && String(thumbPid) !== String(urlPatternId).trim()) {
+        thumbnail = '';
+        console.warn('🖼️ Ignoring stale colorflexCurrentThumbnail (pattern_id mismatch)');
+      }
+    }
     if (thumbnail) {
       console.log('🖼️ Retrieved thumbnail from localStorage');
     } else {
@@ -3969,7 +4381,12 @@ window.replaceMainProductImage = function(urlParams) {
             thumbnail = matchingPattern.thumbnail;
             console.log('🖼️ Retrieved thumbnail from saved patterns');
             // Store it in localStorage for future use
-            localStorage.setItem('colorflexCurrentThumbnail', thumbnail);
+            try {
+              localStorage.setItem('colorflexCurrentThumbnail', thumbnail);
+              if (urlPatternId) {
+                localStorage.setItem('colorflexCurrentThumbnailPatternId', String(urlPatternId).trim());
+              }
+            } catch (_sp) {}
           } else {
             console.warn('⚠️ No thumbnail found in localStorage or saved patterns');
           }
@@ -4001,8 +4418,61 @@ window.replaceMainProductImage = function(urlParams) {
 
   if (!patternName) return;
 
-  // Find the main product image to replace
-  const mainImage = document.querySelector('.product__media img, .product-single__photo img, [data-product-image] img, .product__media-wrapper img');
+  // Scope to product media only — avoid `product-info … img` (camelion badge, apps, etc.) which can sort first and steal the pattern src.
+  const productRoot = document.querySelector('product-info[id^="MainProduct-"]') || document.querySelector('product-info');
+  const mediaWrap = productRoot
+    ? productRoot.querySelector('.product__media-wrapper')
+    : document.querySelector('.product__media-wrapper');
+  const injectedImg = mediaWrap && mediaWrap.querySelector('.product__media-item[data-colorflex-injected] img');
+  // Descendant-only selectors (mediaWrap is already .product__media-wrapper — no nested wrapper).
+  const mediaScopedSelectors = [
+    'media-gallery img',
+    '.product__media img',
+    '.product__media-container img',
+    '.product__media-item img',
+    'img.product__media-item-image',
+    'img'
+  ].join(', ');
+  let mainImage = injectedImg || (mediaWrap ? mediaWrap.querySelector(mediaScopedSelectors) : null);
+  if (!mainImage) {
+    mainImage = document.querySelector(
+      'media-gallery img, .product-media-container img, .product-single__photo img, [data-product-image] img'
+    );
+  }
+
+  // Products like custom-sample often have zero Shopify media — no <img> exists to patch
+  if (!mainImage && thumbnail && thumbnail.trim() !== '') {
+    const wrap = mediaWrap || document.querySelector('.product__media-wrapper');
+    if (wrap) {
+      let container = wrap.querySelector('.product__media-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'product__media-container';
+        wrap.appendChild(container);
+      }
+      let item = container.querySelector('.product__media-item[data-colorflex-injected]');
+      if (!item) {
+        item = document.createElement('div');
+        item.className = 'product__media-item';
+        item.setAttribute('data-media-id', 'colorflex-injected');
+        item.setAttribute('data-colorflex-injected', 'true');
+        mainImage = document.createElement('img');
+        mainImage.loading = 'eager';
+        item.appendChild(mainImage);
+        container.appendChild(item);
+      } else {
+        mainImage = item.querySelector('img');
+      }
+      const noMediaGrid = document.querySelector('.product.grid.product--no-media');
+      if (noMediaGrid) {
+        noMediaGrid.classList.remove('product--no-media');
+        if (!noMediaGrid.classList.contains('grid--2-col-tablet')) {
+          noMediaGrid.classList.add('grid--2-col-tablet');
+        }
+      }
+      console.log('🖼️ Injected gallery image for ColorFlex (product had no media)');
+    }
+  }
 
   if (mainImage && thumbnail && thumbnail.trim() !== '') {
     console.log('🖼️ Replacing main product image with custom pattern thumbnail');
@@ -4029,12 +4499,13 @@ window.replaceMainProductImage = function(urlParams) {
     // Only show custom colors display for ColorFlex patterns
     if (!isStandardPattern) {
       // Add custom colors display under product name instead of overlay
-      addCustomColorsDisplay(patternName, collection, material, customColors);
+      addCustomColorsDisplay(patternName, collection, material, customColors, urlParams);
 
       // Don't show "Customize Options" button - pattern already customized
       console.log('🎨 ColorFlex pattern detected - showing colors display, hiding customize button');
     } else {
       console.log('🎨 Standard pattern detected - hiding custom colors display and customize button');
+      addPatternInfoDisplay(patternName, collection, urlParams);
     }
 
     console.log('✅ Main product image replaced with custom pattern thumbnail');
@@ -4047,21 +4518,131 @@ window.replaceMainProductImage = function(urlParams) {
     // Only show custom colors display for ColorFlex patterns
     if (!isStandardPattern) {
       // Still show custom colors display even without thumbnail
-      addCustomColorsDisplay(patternName, collection, material, customColors);
+      addCustomColorsDisplay(patternName, collection, material, customColors, urlParams);
 
       // Don't show "Customize Options" button - pattern already customized
       console.log('🎨 ColorFlex pattern detected (no thumbnail) - showing colors display, hiding customize button');
     } else {
       console.log('🎨 Standard pattern detected - hiding custom colors display and customize button');
+      addPatternInfoDisplay(patternName, collection, urlParams);
     }
 
   } else {
     console.warn('❌ Could not find main product image to replace');
+    if (isStandardPattern) {
+      addPatternInfoDisplay(patternName, collection, urlParams);
+    }
+  }
+
+  if (typeof window.colorflexSyncPdpLayout === 'function') {
+    requestAnimationFrame(function () {
+      window.colorflexSyncPdpLayout();
+    });
+    setTimeout(function () {
+      window.colorflexSyncPdpLayout();
+    }, 280);
   }
 }
 
+function colorflexEscapeHtmlForPdp(str) {
+  if (str == null) return '';
+  const d = document.createElement('div');
+  d.textContent = String(str);
+  return d.innerHTML;
+}
+
+/** Human-readable repeat line from URL (scale / scale_multiplier). Empty string = default ×1 at 100%. */
+function colorflexPdpRepeatLabelFromParams(urlParams) {
+  const params =
+    urlParams && typeof urlParams.get === 'function'
+      ? urlParams
+      : new URLSearchParams(typeof window !== 'undefined' && window.location ? window.location.search : '');
+  const scaleRaw = params.get('scale');
+  const mulRaw = params.get('scale_multiplier');
+  let scalePct = scaleRaw != null && String(scaleRaw).trim() !== '' ? parseInt(scaleRaw, 10) : 100;
+  if (isNaN(scalePct)) scalePct = 100;
+  let scaleMul = mulRaw != null && String(mulRaw).trim() !== '' ? parseFloat(mulRaw) : 1;
+  if (isNaN(scaleMul) || scaleMul <= 0) scaleMul = 1;
+
+  if (scalePct === 50) return 'Pattern repeats: ½×';
+  if (scalePct === 200) return 'Pattern repeats: ×2';
+  if (scalePct === 300) return 'Pattern repeats: ×3';
+  if (scalePct === 400) return 'Pattern repeats: ×4';
+  if (scalePct !== 100) return 'Pattern repeats: ×' + scalePct / 100;
+  if (scaleMul !== 1) return 'Pattern repeats: ×' + scaleMul;
+  return '';
+}
+
+/** Standard ColorFlex PDP: pattern + collection + scale (URL), same slot as custom colors for layout sync. */
+function addPatternInfoDisplay(patternName, collection, urlParams) {
+  if (document.getElementById('colorflexCustomColors')) return;
+  const old = document.getElementById('patternInfo');
+  if (old) old.remove();
+
+  const productTitle = document.querySelector('.product__title, h1, .product-single__title');
+  if (!productTitle || !patternName) return;
+
+  const repeatLine = colorflexPdpRepeatLabelFromParams(urlParams);
+  const scaleLine = repeatLine
+    ? `<div class="colorflex-pattern-info__scale">${colorflexEscapeHtmlForPdp(repeatLine)}</div>`
+    : '';
+
+  const matHint =
+    urlParams && typeof urlParams.get === 'function'
+      ? urlParams.get('preferred_material') || urlParams.get('selected_category') || urlParams.get('material') || ''
+      : '';
+  const matBit = matHint
+    ? ` <span style="color: rgba(239,238,234,0.55);">· ${colorflexEscapeHtmlForPdp(matHint.replace(/-/g, ' '))}</span>`
+    : '';
+
+  const baseUrl = (function () {
+    var b = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '');
+    return b && !/^https?:\/\//i.test(b) ? 'https://' + b : b;
+  })();
+
+  const el = document.createElement('div');
+  el.id = 'patternInfo';
+  el.className = 'colorflex-pattern-info';
+  el.style.cssText = 'box-sizing: border-box;';
+  el.innerHTML =
+    '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">' +
+    '<img src="' +
+    baseUrl +
+    '/img/camelion-sm-r.jpg" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(212, 175, 55, 0.75); box-shadow: 0 2px 8px rgba(0,0,0,0.45);" alt="ColorFlex">' +
+    '<div style="font-size: 14px;">' +
+    '<strong>' +
+    colorflexEscapeHtmlForPdp(patternName) +
+    '</strong> <span style="color: rgba(239,238,234,0.78);">from ' +
+    colorflexEscapeHtmlForPdp(collection || '') +
+    ' collection</span>' +
+    matBit +
+    '</div></div>' +
+    scaleLine;
+
+  productTitle.parentNode.insertBefore(el, productTitle.nextSibling);
+  console.log('✅ patternInfo added for standard ColorFlex PDP');
+
+  setTimeout(function () {
+    const materialInfoBox = document.getElementById('colorflexMaterialInfo');
+    if (materialInfoBox && materialInfoBox.style.display !== 'none') {
+      el.parentNode.insertBefore(materialInfoBox, el.nextSibling);
+      console.log('✅ Material info repositioned after patternInfo');
+    }
+    if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+  }, 100);
+  setTimeout(function () {
+    if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+  }, 350);
+  setTimeout(function () {
+    if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+  }, 700);
+}
+
 // Add custom colors display under product name
-function addCustomColorsDisplay(patternName, collection, material, customColors) {
+function addCustomColorsDisplay(patternName, collection, material, customColors, urlParams) {
+  const rmPatternInfo = document.getElementById('patternInfo');
+  if (rmPatternInfo) rmPatternInfo.remove();
+
   // Parse custom colors
   let colorArray = [];
   if (customColors && customColors.trim() !== '') {
@@ -4075,30 +4656,27 @@ function addCustomColorsDisplay(patternName, collection, material, customColors)
   // Create custom colors display
   const colorsDisplay = document.createElement('div');
   colorsDisplay.id = 'colorflexCustomColors';
-  colorsDisplay.style.cssText = `
-    margin: 12px 0;
-    padding: 12px 16px;
-    background: #2d3748;
-    border-radius: 8px;
-    color: white;
-    font-size: 14px;
-    border: 1px solid #4a5568;
-  `;
+  colorsDisplay.style.cssText = 'box-sizing: border-box;';
   
   let displayHTML = `
     <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 8px;">
-      <img src="${(function(){ var b = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, ''); return (b && !/^https?:\/\//i.test(b)) ? 'https://' + b : b; })()}/img/camelion-sm-r.jpg" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(212, 175, 55, 0.6); box-shadow: 0 2px 6px rgba(0,0,0,0.3);" alt="ColorFlex">
-      <div>
+      <img src="${(function(){ var b = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, ''); return (b && !/^https?:\/\//i.test(b)) ? 'https://' + b : b; })()}/img/camelion-sm-r.jpg" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(212, 175, 55, 0.75); box-shadow: 0 2px 8px rgba(0,0,0,0.45);" alt="ColorFlex">
+      <div style="font-size: 14px;">
         <strong>${patternName}</strong> from ${collection} collection
         ${material ? ' • ' + material.charAt(0).toUpperCase() + material.slice(1) : ''}
       </div>
     </div>
   `;
+
+  const repeatLine = colorflexPdpRepeatLabelFromParams(urlParams);
+  if (repeatLine) {
+    displayHTML += `<div class="colorflex-pattern-info__scale">${colorflexEscapeHtmlForPdp(repeatLine)}</div>`;
+  }
   
   if (colorArray.length > 0) {
     displayHTML += `
       <div style="margin-top: 8px;">
-        <div style="font-size: 12px; margin-bottom: 6px; opacity: 0.9;">Your Custom Colors:</div>
+        <div class="colorflex-custom-colors-heading">Your Custom Colors:</div>
         <div style="display: flex; flex-wrap: wrap; gap: 6px;">
     `;
     
@@ -4176,15 +4754,7 @@ function addCustomColorsDisplay(patternName, collection, material, customColors)
               onmouseover="this.style.transform='scale(1.1)'" 
               onmouseout="this.style.transform='scale(1)'">
               </div>
-              <div style="
-                font-size: 10px;
-                text-align: center;
-                opacity: 0.8;
-                max-width: 60px;
-                word-wrap: break-word;
-                line-height: 1.1;
-                color: #e2e8f0;
-              ">${displayName}</div>
+              <div class="colorflex-swatch-label">${displayName}</div>
             </div>
           `;
         });
@@ -4223,15 +4793,7 @@ function addCustomColorsDisplay(patternName, collection, material, customColors)
               onmouseover="this.style.transform='scale(1.1)'" 
               onmouseout="this.style.transform='scale(1)'">
               </div>
-              <div style="
-                font-size: 10px;
-                text-align: center;
-                opacity: 0.8;
-                max-width: 60px;
-                word-wrap: break-word;
-                line-height: 1.1;
-                color: #e2e8f0;
-              ">${color}</div>
+              <div class="colorflex-swatch-label">${color}</div>
             </div>
           `;
         });
@@ -4260,18 +4822,35 @@ function addCustomColorsDisplay(patternName, collection, material, customColors)
       colorsDisplay.parentNode.insertBefore(materialInfoBox, colorsDisplay.nextSibling);
       console.log('✅ Material info box repositioned after custom colors badge');
     }
-  }, 100); // Small delay to ensure material info is rendered
+    if (typeof window.colorflexSyncPdpLayout === 'function') {
+      window.colorflexSyncPdpLayout();
+    }
+  }, 100);
+  setTimeout(() => {
+    if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+  }, 350);
+  setTimeout(() => {
+    if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+  }, 700);
 }
 
 // Hide description, variant picker, and shipping notice when product is customized from ColorFlex
 function hideElementsForCustomizedProduct() {
   console.log('🔧 Hiding elements for customized ColorFlex product...');
 
-  // Hide product description
-  const descriptionBlock = document.querySelector('.product__description');
-  if (descriptionBlock) {
-    descriptionBlock.style.display = 'none';
-    console.log('✅ Hidden product description');
+  // Hide full description stack (pattern body + collection story). Previously we only hid
+  // .product__description, which left .product__collection-description visible — looked like
+  // the pattern blurb was replaced by collection marketing copy.
+  const descriptionStack = document.querySelector('.product__description-stack');
+  if (descriptionStack) {
+    descriptionStack.style.display = 'none';
+    console.log('✅ Hidden product description stack (pattern + collection)');
+  } else {
+    const descriptionBlock = document.querySelector('.product__description');
+    if (descriptionBlock) {
+      descriptionBlock.style.display = 'none';
+      console.log('✅ Hidden product description');
+    }
   }
 
   // Hide variant picker (wallpaper type buttons)
@@ -4917,12 +5496,85 @@ function formatPreferredMaterial(pm) {
     'wallpaper-prepasted': 'Prepasted Wallpaper',
     'wallpaper-grasscloth': 'Grasscloth Wallpaper',
     'wallpaper-traditional': 'Traditional Wallpaper',
-    'wallpaper-textured': 'Textured Wallpaper'
+    'wallpaper-textured': 'Textured Wallpaper',
+    'wallpaper-custom-sample': 'Wallpaper Custom Sample',
+    'fabric-custom-sample': 'Fabric Custom Sample'
   };
   return map[pm] || pm.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
-function populateColorFlexProperties(urlParams) {
+/** Cart line Material Type when arriving from material modal sample links (preferred_material + sample_for). */
+function colorflexMaterialTypeLabelForCart(urlParams) {
+  const sampleFor = urlParams.get('sample_for');
+  const pm = urlParams.get('preferred_material');
+  if (sampleFor && (pm === 'wallpaper-custom-sample' || pm === 'fabric-custom-sample')) {
+    let sf = sampleFor;
+    if (sf === 'wallpaper-unpasted') sf = 'wallpaper-prepasted';
+    const sampleName = pm === 'fabric-custom-sample' ? 'Fabric Custom Sample' : 'Wallpaper Custom Sample';
+    return sampleName + ' — ' + formatPreferredMaterial(sf);
+  }
+  return urlParams.get('application') || urlParams.get('material') || formatPreferredMaterial(urlParams.get('preferred_material')) || '';
+}
+
+/**
+ * Shrink huge data-URL previews (~2MB+) so localStorage cart_thumbnail_* JSON fits quota and <img src> is reliable.
+ * Persists the smaller URL back to colorflexCurrentThumbnail when compression runs.
+ */
+function colorflexCompressDataUrlForLocalStorage(dataUrl, opts) {
+  opts = opts || {};
+  var maxChars = opts.maxChars != null ? opts.maxChars : 450000;
+  var maxSide = opts.maxSide != null ? opts.maxSide : 1100;
+  var quality = opts.quality != null ? opts.quality : 0.82;
+  if (!dataUrl || typeof dataUrl !== 'string' || dataUrl.indexOf('data:image') !== 0) {
+    return Promise.resolve(dataUrl);
+  }
+  if (dataUrl.length <= maxChars) {
+    return Promise.resolve(dataUrl);
+  }
+  return new Promise(function (resolve) {
+    var img = new Image();
+    img.onload = function () {
+      try {
+        var w = img.naturalWidth || img.width;
+        var h = img.naturalHeight || img.height;
+        if (!w || !h) {
+          resolve(dataUrl);
+          return;
+        }
+        var scale = Math.min(1, maxSide / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * scale));
+        var ch = Math.max(1, Math.round(h * scale));
+        var canvas = document.createElement('canvas');
+        canvas.width = cw;
+        canvas.height = ch;
+        var ctx = canvas.getContext('2d');
+        if (!ctx) {
+          resolve(dataUrl);
+          return;
+        }
+        ctx.drawImage(img, 0, 0, cw, ch);
+        var out = canvas.toDataURL('image/jpeg', quality);
+        if (out.length >= dataUrl.length * 0.92 && quality > 0.55) {
+          out = canvas.toDataURL('image/jpeg', Math.max(0.55, quality - 0.15));
+        }
+        try {
+          localStorage.setItem('colorflexCurrentThumbnail', out);
+        } catch (e) { /* ignore */ }
+        console.log('🖼️ Compressed ColorFlex thumbnail for storage:', dataUrl.length, '→', out.length, 'chars');
+        resolve(out);
+      } catch (e) {
+        console.warn('⚠️ colorflexCompressDataUrlForLocalStorage:', e);
+        resolve(dataUrl);
+      }
+    };
+    img.onerror = function () {
+      resolve(dataUrl);
+    };
+    img.src = dataUrl;
+  });
+}
+
+async function populateColorFlexProperties(urlParams) {
   // Get pattern data
   const patternName = urlParams.get('pattern_name');
   const collection = urlParams.get('collection');
@@ -4932,6 +5584,7 @@ function populateColorFlexProperties(urlParams) {
     .map(color => color.trim().replace(/^(SW|SC|SWs|SCs|Sw|Sc|swsw|SWsw|SCsc|SCcs|Swsc|swsc)\d+\s*/i, "").trim())
     .join(', ') : '';
   const patternScale = urlParams.get('scale') || '100';
+  const patternScaleMultiplierRaw = urlParams.get('scale_multiplier') || '';
 
   // Generate pattern ID using same logic as saved patterns (pattern name + SW numbers)
   function generatePatternId(patternName, customColors) {
@@ -4996,8 +5649,8 @@ function populateColorFlexProperties(urlParams) {
   // Generate cart thumbnail key for restoration script (patternId includes colorway — avoids stale thumbs)
   const cartThumbnailKey = patternId ? ('cart_thumbnail_' + colorflexSanitizeCartThumbSuffix(patternId)) : '';
 
-  // Store thumbnail for cart restoration in saved pattern format
-  const thumbnail = localStorage.getItem('colorflexCurrentThumbnail');
+  // Store thumbnail for cart restoration in saved pattern format (compress first — multi‑MB data URLs exceed localStorage quota)
+  let thumbnail = await colorflexCompressDataUrlForLocalStorage(localStorage.getItem('colorflexCurrentThumbnail'));
   console.log('🔍 Cart thumbnail debug:', {
     thumbnailExists: !!thumbnail,
     thumbnailLength: thumbnail ? thumbnail.length : 0,
@@ -5040,7 +5693,23 @@ function populateColorFlexProperties(urlParams) {
         console.error('❌ Cart thumbnail storage failed - no data found after storage');
       }
     } catch (error) {
-      console.error('❌ Error storing cart thumbnail data:', error);
+      var isQuota = error && (error.name === 'QuotaExceededError' || error.code === 22);
+      if (isQuota && thumbnail) {
+        console.warn('⚠️ localStorage quota — recompressing thumbnail and retrying cart storage…');
+        try {
+          thumbnail = await colorflexCompressDataUrlForLocalStorage(thumbnail, { maxChars: 0, maxSide: 560, quality: 0.68 });
+          cartPatternData.thumbnail = thumbnail;
+          try {
+            localStorage.setItem('colorflexCurrentThumbnail', thumbnail);
+          } catch (e2) { /* ignore */ }
+          localStorage.setItem(cartThumbnailKey, JSON.stringify(cartPatternData));
+          console.log('💾 Stored cart pattern data after aggressive compress:', cartThumbnailKey);
+        } catch (e3) {
+          console.error('❌ Error storing cart thumbnail data (after retry):', e3);
+        }
+      } else {
+        console.error('❌ Error storing cart thumbnail data:', error);
+      }
     }
   } else {
     console.warn('⚠️ Cannot store cart thumbnail:', {
@@ -5070,13 +5739,13 @@ function populateColorFlexProperties(urlParams) {
           if (latestPattern.thumbnail) {
             console.log('🎯 Found matching saved pattern for fallback cart thumbnail:', latestPattern.id);
 
-            // Store with cart thumbnail key for restoration
+            var ftThumb = await colorflexCompressDataUrlForLocalStorage(latestPattern.thumbnail);
             const fallbackCartData = {
               id: latestPattern.id,
               name: patternName,
               collection: collection,
               colors: latestPattern.colors || [],
-              thumbnail: latestPattern.thumbnail,
+              thumbnail: ftThumb,
               timestamp: new Date().toISOString(),
               material: urlParams.get('application') || urlParams.get('material'),
               currentScale: parseInt(patternScale) || 100,
@@ -5084,8 +5753,12 @@ function populateColorFlexProperties(urlParams) {
               source: 'fallback_saved_pattern'
             };
 
-            localStorage.setItem(cartThumbnailKey, JSON.stringify(fallbackCartData));
-            console.log('✅ Stored fallback cart thumbnail data:', cartThumbnailKey);
+            try {
+              localStorage.setItem(cartThumbnailKey, JSON.stringify(fallbackCartData));
+              console.log('✅ Stored fallback cart thumbnail data:', cartThumbnailKey);
+            } catch (fe) {
+              console.warn('⚠️ Fallback cart thumbnail storage failed (quota?):', fe);
+            }
 
             // Store the thumbnail key in the cart properties so restoration can find it
             const fallbackThumbnailKey = cartThumbnailKey;
@@ -5103,24 +5776,32 @@ function populateColorFlexProperties(urlParams) {
   }
 
   // Populate hidden form fields with ColorFlex data (using names cart restoration script expects)
+  const srcParam = (urlParams.get('source') || '').toLowerCase();
+  const sourceLabel = srcParam === 'colorflex_configuration_flow'
+    ? 'ColorFlex Configuration Flow'
+    : 'ColorFlex Saved Pattern';
+
   const fields = {
     'colorflex-pattern-name': patternName,
     'colorflex-collection': collection,
     'colorflex-custom-colors': customColors,
+    'colorflex-source': sourceLabel,
     'colorflex-thumbnail-key': cartThumbnailKey,
-    'colorflex-material-type': urlParams.get('application') || urlParams.get('material') || formatPreferredMaterial(urlParams.get('preferred_material')),
+    'colorflex-material-type': colorflexMaterialTypeLabelForCart(urlParams),
+    'colorflex-design': 'Yes',
     'colorflex-pattern-id': patternId, // Use generated ID instead of URL parameter
     'colorflex-save-date': new Date().toISOString(),
     'colorflex-pattern-scale': (() => {
       const scale = parseInt(patternScale) || 100;
-      switch (scale) {
-        case 50: return '0.5X';
-        case 100: return 'Normal';
-        case 200: return '2X';
-        case 300: return '3X';
-        case 400: return '4X';
-        default: return `${scale}%`;
-      }
+      const mul = parseFloat(patternScaleMultiplierRaw);
+      const mulOk = !isNaN(mul) && mul > 0 && mul !== 1;
+      if (scale === 50) return '½×';
+      if (scale === 200) return '×2';
+      if (scale === 300) return '×3';
+      if (scale === 400) return '×4';
+      if (scale !== 100) return '×' + (scale / 100);
+      if (mulOk) return '×' + mul;
+      return '×1';
     })()
   };
   
@@ -5253,7 +5934,21 @@ function populateColorFlexProperties(urlParams) {
 
 // 🛡️ COLORFLEX PROPERTY PROTECTION SYSTEM
 // Prevents texture JavaScript double execution from clearing ColorFlex properties
+
+/** Shopify Web Pixels / custom pixels run a sandboxed iframe whose URL contains /web-pixels and /sandbox/. Do not patch FormData or attach cart guards there — it causes timeouts, noise in console, and can interact badly with strict sandbox rules. */
+function colorflexIsWebPixelsSandboxContext() {
+  try {
+    var href = String(window.location.href || '');
+    var path = String(window.location.pathname || '');
+    if (path.indexOf('/web-pixels') !== -1) return true;
+    if (href.indexOf('/web-pixels') !== -1 && href.indexOf('/sandbox/') !== -1) return true;
+  } catch (e) {}
+  return false;
+}
+
 function protectColorFlexProperties() {
+  if (colorflexIsWebPixelsSandboxContext()) return;
+
   const protectionInterval = setInterval(() => {
     const productForm = document.querySelector('form[action*="/cart/add"]');
     if (!productForm) return;
@@ -5794,18 +6489,57 @@ function trySetVariantFromProductJson(preferredMaterial) {
   return false;
 }
 
+/**
+ * custom-sample is often a single-SKU product with no variant options in Admin.
+ * Wallpaper vs fabric is carried in line item properties (preferred_material / Material Type), not Shopify variants.
+ */
+function tryCustomSampleSingleVariantNoOp(preferredMaterial) {
+  if (preferredMaterial !== 'wallpaper-custom-sample' && preferredMaterial !== 'fabric-custom-sample') {
+    return false;
+  }
+  const el = document.getElementById('colorflex-variants-json');
+  if (!el) return false;
+  let variants;
+  try {
+    variants = JSON.parse(el.textContent);
+  } catch (e) {
+    return false;
+  }
+  if (!Array.isArray(variants) || variants.length > 1) return false;
+  console.log(
+    'ℹ️ ColorFlex: custom-sample has a single Shopify variant (no options). Wallpaper vs fabric is set via cart line properties only — nothing to pre-select on the variant picker.'
+  );
+  return true;
+}
+
 // Map ColorFlex material IDs → substrings to match option labels/values (radios, selects, buttons)
 function getMaterialToVariantSearchMap() {
   return {
     'wallpaper-prepasted': ['prepasted', 'pre-pasted', 'pre pasted', 'prepasted wallpaper'],
     'wallpaper-peel-stick': ['peel', 'stick', 'peel & stick', 'peel and stick', 'removable'],
     'wallpaper-grasscloth': ['grasscloth', 'grass cloth', 'grass-cloth'],
+    'wallpaper-custom-sample': [
+      'wallpaper custom sample',
+      'wallpaper sample',
+      'wallpaper custom',
+      'custom wallpaper sample',
+      'sample — wallpaper',
+      'sample - wallpaper'
+    ],
     'fabric-soft-velvet': ['soft velvet', 'soft-velvet', 'velvet'],
     'fabric-decorator-linen': ['decorator linen', 'decorator-linen', 'linen', 'decorator'],
     'fabric-drapery-sheer': ['drapery sheer', 'drapery-sheer', 'sheer'],
     'fabric-lightweight-linen': ['lightweight linen', 'lightweight-linen', 'light linen', 'lightweight'],
     'fabric-faux-suede': ['faux suede', 'faux-suede', 'suede'],
-    'fabric-drapery-light-block': ['light block', 'lightblock', 'light-block', 'blackout', 'drapery light']
+    'fabric-drapery-light-block': ['light block', 'lightblock', 'light-block', 'blackout', 'drapery light'],
+    'fabric-custom-sample': [
+      'fabric custom sample',
+      'fabric sample',
+      'fabric custom',
+      'custom fabric sample',
+      'sample — fabric',
+      'sample - fabric'
+    ]
   };
 }
 
@@ -5825,6 +6559,10 @@ function applyPreferredMaterialFromUrl() {
     return false;
   }
   console.log('🔍 Searching for terms:', searchTerms);
+
+  if (tryCustomSampleSingleVariantNoOp(preferredMaterial)) {
+    return true;
+  }
 
   if (trySetVariantFromProductJson(preferredMaterial)) {
     return true;
@@ -6078,7 +6816,8 @@ function setupVariantChangeDetection() {
   }
 }
 
-// Start comprehensive ColorFlex integration system when DOM is ready
+// Start comprehensive ColorFlex integration system when DOM is ready (skip Web Pixels sandbox iframe)
+if (!colorflexIsWebPixelsSandboxContext()) {
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing ColorFlex cart integration system...');
@@ -6297,7 +7036,7 @@ if (patternName && collection) {
       'properties[Custom Colors]': cleanedCustomColors,
       'properties[ColorFlex Source]': 'ColorFlex Saved Pattern',
       'properties[Thumbnail Key]': formCartThumbnailKey,
-      'properties[Material Type]': urlParams.get('application') || urlParams.get('material') || formatPreferredMaterial(urlParams.get('preferred_material')),
+      'properties[Material Type]': colorflexMaterialTypeLabelForCart(urlParams),
       'properties[ColorFlex Design]': 'Yes',
       'properties[Pattern ID]': resolvedPatternId,
       'properties[Save Date]': new Date().toISOString(),
@@ -6389,4 +7128,5 @@ if (patternName && collection) {
     console.log('🎉 PROMO CODE DETECTED (non-ColorFlex):', promoCode, promoDiscount + '%');
   }
 }
+} // end !colorflexIsWebPixelsSandboxContext()
 </script>

@@ -19,7 +19,8 @@ Use this when you add a new wallpaper collection (e.g. **30 - STRIPES**, fully C
 - Set **ACTIVE** = 1 (or checked) so the collection is included.
 - Set **ColorFlex** (or **Color-Flex**) = **checked** so the whole collection is treated as ColorFlex.
 - Set **THUMBNAIL**: attach the collection thumbnail image (required for image download step).
-- Optionally: **MOCKUP** (room mockup id or path), curated color fields, **COORDINATES** (if used).
+- Optionally: **MOCKUP** (room mockup id or path), curated color fields.
+- **COORDINATES** (on the master row only): attachments that define **collection-level matching coordinates** for the ColorFlex UI (linked to **21 - COORDINATES** in the pipeline). Do not put PDP gallery images here.
 
 ### Pattern rows
 
@@ -27,6 +28,8 @@ Use this when you add a new wallpaper collection (e.g. **30 - STRIPES**, fully C
 - **ACTIVE** = 1, **NAME** = pattern name.
 - **LAYER SEPARATIONS**: attach layer images in order (required for ColorFlex; order = layer order).
 - **THUMBNAIL**: attach pattern thumbnail image.
+- **PP-COORDINATES** (recommended): up to **10** image attachments per pattern for the **PDP “Coordinates”** product-pitch gallery. Stored under `data/collections/{collection}/pp-coordinates/` as `{pattern-slug}-pp-coordinates-1.jpg`, …, and listed in `collections.json` as `coordinateCompanions`.
+- Legacy optional **COMPANIONS** (or **COORDINATES COMPANIONS**) on the **pattern** row still work if **PP-COORDINATES** is empty (filenames use `-companions-`).
 - For a fully ColorFlex collection, ensure each pattern has **Color-Flex** checked (or rely on collection-level ColorFlex from the master row).
 
 ---

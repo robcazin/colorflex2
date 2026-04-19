@@ -152,7 +152,7 @@
                     <span>{{ 'products.product.volume_pricing.note' | t }}</span>
                   </div>
                 {%- endif -%}
-                {%- if cart.taxes_included or cart.duties_included or shop.shipping_policy.body != blank -%}
+                {%- if cart.taxes_included or cart.duties_included -%}
                   <div class="product__tax caption rte">
                     {%- if cart.duties_included and cart.taxes_included -%}
                       {{ 'products.product.duties_and_taxes_included' | t }}
@@ -160,9 +160,6 @@
                       {{ 'products.product.taxes_included' | t }}
                     {%- elsif cart.duties_included -%}
                       {{ 'products.product.duties_included' | t }}
-                    {%- endif -%}
-                    {%- if shop.shipping_policy.body != blank -%}
-                      {{ 'products.product.shipping_policy_html' | t: link: shop.shipping_policy.url }}
                     {%- endif -%}
                   </div>
                 {%- endif -%}
@@ -246,9 +243,8 @@
                   {%- endif -%}
                 </p>
               {%- when 'description' -%}
-                {%- if product.metafields.color_flex.collection_description.value != blank or product.description != blank -%}
+                {%- if product.description != blank -%}
                   <div class="product__description-stack rte quick-add-hidden" {{ block.shopify_attributes }}>
-                    {% render 'product-collection-description', product: product %}
                     {% render 'product-pattern-description', product: product %}
                   </div>
                 {%- endif -%}
@@ -681,20 +677,24 @@ document.getElementById('openColorFlexBtn').addEventListener('click', function()
                 <script>
                   // Check if this is a ColorFlex-configured product
                   const urlParams = new URLSearchParams(window.location.search);
-                  const isColorFlexProduct = urlParams.get('source') === 'colorflex_saved_patterns';
+                  const colorflexSource = urlParams.get('source');
+                  const isColorFlexProduct = colorflexSource === 'colorflex_saved_patterns' ||
+                    colorflexSource === 'colorflex_configuration_flow' ||
+                    urlParams.get('colorflex_design') === 'true';
                   
                   if (isColorFlexProduct) {
                     console.log('🎨 ColorFlex product detected - setting up custom properties');
                     
                     // Replace main product image and show ColorFlex indicator
                     document.addEventListener('DOMContentLoaded', function() {
+                      var urlParams = new URLSearchParams(window.location.search);
+                      if (typeof populateColorFlexProperties === 'function') {
+                        populateColorFlexProperties(urlParams);
+                      }
                       if (typeof window.replaceMainProductImage === 'function') {
                         window.replaceMainProductImage(urlParams);
                       } else {
                         console.warn('⚠️ replaceMainProductImage function not found');
-                      }
-                      if (typeof populateColorFlexProperties === 'function') {
-                        populateColorFlexProperties(urlParams);
                       }
                     });
                   }
@@ -2523,6 +2523,24 @@ window.replaceMainProductImage = function(urlParams) {
       // It will be cleared after cart properties are populated
     }
   }
+
+  if (!thumbnail || thumbnail.trim() === '') {
+    const pid = urlParams.get('pattern_id') || urlParams.get('saved_pattern_id');
+    if (pid) {
+      try {
+        const suffix = String(pid).replace(/[^a-zA-Z0-9-]/g, '_');
+        const cartKey = 'cart_thumbnail_' + suffix;
+        const raw = localStorage.getItem(cartKey);
+        if (raw) {
+          const data = JSON.parse(raw);
+          if (data && data.thumbnail) {
+            thumbnail = data.thumbnail;
+            console.log('🖼️ Retrieved thumbnail from cart storage key:', cartKey);
+          }
+        }
+      } catch (_e) { /* ignore */ }
+    }
+  }
   
   // Debug logging
   console.log('🎨 ColorFlex Debug:', {
@@ -2537,9 +2555,51 @@ window.replaceMainProductImage = function(urlParams) {
   });
   
   if (!patternName) return;
-  
-  // Find the main product image to replace
-  const mainImage = document.querySelector('.product__media img, .product-single__photo img, [data-product-image] img, .product__media-wrapper img');
+
+  const imgSelectors = [
+    '.product__media-wrapper .product__media img',
+    '.product__media img',
+    '.product__media-wrapper img',
+    'media-gallery img',
+    '.product-media-container img',
+    'product-info .grid__item img',
+    '.product-single__photo img',
+    '[data-product-image] img'
+  ].join(', ');
+  let mainImage = document.querySelector(imgSelectors);
+
+  if (!mainImage && thumbnail && thumbnail.trim() !== '') {
+    const wrap = document.querySelector('.product__media-wrapper');
+    if (wrap) {
+      let container = wrap.querySelector('.product__media-container');
+      if (!container) {
+        container = document.createElement('div');
+        container.className = 'product__media-container';
+        wrap.appendChild(container);
+      }
+      let item = container.querySelector('.product__media-item[data-colorflex-injected]');
+      if (!item) {
+        item = document.createElement('div');
+        item.className = 'product__media-item';
+        item.setAttribute('data-media-id', 'colorflex-injected');
+        item.setAttribute('data-colorflex-injected', 'true');
+        mainImage = document.createElement('img');
+        mainImage.loading = 'eager';
+        item.appendChild(mainImage);
+        container.appendChild(item);
+      } else {
+        mainImage = item.querySelector('img');
+      }
+      const noMediaGrid = document.querySelector('.product.grid.product--no-media');
+      if (noMediaGrid) {
+        noMediaGrid.classList.remove('product--no-media');
+        if (!noMediaGrid.classList.contains('grid--2-col-tablet')) {
+          noMediaGrid.classList.add('grid--2-col-tablet');
+        }
+      }
+      console.log('🖼️ Injected gallery image for ColorFlex (product had no media)');
+    }
+  }
   
   if (mainImage && thumbnail && thumbnail.trim() !== '') {
     console.log('🖼️ Replacing main product image with custom pattern thumbnail');
@@ -3563,7 +3623,21 @@ function populateColorFlexProperties(urlParams) {
 
 // 🛡️ COLORFLEX PROPERTY PROTECTION SYSTEM
 // Prevents texture JavaScript double execution from clearing ColorFlex properties
+
+/** Shopify Web Pixels sandboxes load the storefront in an iframe; skip FormData / cart guards there. */
+function colorflexIsWebPixelsSandboxContext() {
+  try {
+    var href = String(window.location.href || '');
+    var path = String(window.location.pathname || '');
+    if (path.indexOf('/web-pixels') !== -1) return true;
+    if (href.indexOf('/web-pixels') !== -1 && href.indexOf('/sandbox/') !== -1) return true;
+  } catch (e) {}
+  return false;
+}
+
 function protectColorFlexProperties() {
+  if (colorflexIsWebPixelsSandboxContext()) return;
+
   const protectionInterval = setInterval(() => {
     const productForm = document.querySelector('form[action*="/cart/add"]');
     if (!productForm) return;
@@ -3941,7 +4015,8 @@ function setupVariantChangeDetection() {
   }
 }
 
-// Start comprehensive ColorFlex integration system when DOM is ready
+// Start comprehensive ColorFlex integration system when DOM is ready (skip Web Pixels sandbox iframe)
+if (!colorflexIsWebPixelsSandboxContext()) {
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', function() {
     console.log('🚀 Initializing ColorFlex cart integration system...');
@@ -3952,5 +4027,6 @@ if (document.readyState === 'loading') {
   console.log('🚀 Initializing ColorFlex cart integration system...');
   setupVariantChangeDetection();
   protectColorFlexProperties();
+}
 }
 </script>

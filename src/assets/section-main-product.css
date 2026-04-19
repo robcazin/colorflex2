@@ -418,6 +418,199 @@ a.product__text {
   max-width: 44rem;
 }
 
+/* ColorFlex PDP background: match trade page radial gradient */
+.colorflex-trade-bg {
+  --gradient-background: radial-gradient(circle at top, #252b35 0%, #12161d 48%, #0b0d12 100%);
+}
+
+/* Coordinates (PDP gallery): full width under the two-column hero (collections.json coordinateCompanions) */
+.colorflex-companions {
+  width: 100%;
+  margin-top: 2rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(212, 175, 55, 0.25);
+}
+
+.colorflex-companions--hidden {
+  display: none !important;
+}
+
+.colorflex-companions__label {
+  margin: 0 0 0.75rem;
+  font-size: 1.3rem;
+  letter-spacing: 0.04em;
+  color: rgba(239, 238, 234, 0.85);
+}
+
+.colorflex-companions__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: stretch;
+  justify-content: flex-start;
+}
+
+/* Five columns on desktop: (100% - 4×8px gaps) / 5 */
+@keyframes colorflex-companion-reveal {
+  from {
+    opacity: 0;
+    transform: translateX(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.colorflex-companions__link {
+  flex: 1 1 calc((100% - 32px) / 5);
+  min-width: 5.5rem;
+  max-width: 12rem;
+  border: 1px solid rgba(212, 175, 55, 0.35);
+  border-radius: 6px;
+  overflow: hidden;
+  background: #0a0c10;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  display: block;
+  cursor: default;
+  opacity: 0;
+  animation: colorflex-companion-reveal 0.48s ease-out forwards;
+  animation-delay: var(--cf-companion-stagger, 0ms);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .colorflex-companions__link {
+    opacity: 1;
+    animation: none;
+    transform: none;
+  }
+}
+
+.colorflex-companions__thumb {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1;
+  object-fit: cover;
+}
+
+@media screen and (max-width: 749px) {
+  .colorflex-companions__link {
+    /* Three columns: (100% - 2×8px gaps) / 3 */
+    flex: 1 1 calc((100% - 16px) / 3);
+    max-width: none;
+  }
+}
+
+/* Catalog pattern PDP: top-align hero with details column; padding sync from colorflexSyncPdpLayout */
+.colorflex-catalog-main .product__media-wrapper .product__media-container {
+  align-items: flex-start;
+}
+
+.colorflex-catalog-main .product__media-wrapper .product__media-container .product__media-item {
+  align-items: flex-start;
+  justify-content: flex-start;
+}
+
+/* Catalog pattern PDP: quantity is chosen in ColorFlex, not on the Shopify PDP */
+.colorflex-catalog-pdp .product-form__quantity {
+  display: none !important;
+}
+
+/* ColorFlex PDP: gold frame + soft lift (flat panel fill — no texture image) */
+#colorflexCustomColors,
+#colorflexMaterialInfo,
+#patternInfo {
+  box-sizing: border-box;
+  margin: 12px 0;
+  padding: 14px 16px;
+  background-color: #000;
+  border: 2px solid #d4af37;
+  border-radius: 8px;
+  color: rgba(239, 238, 234, 0.92);
+  box-shadow:
+    0 12px 34px rgba(0, 0, 0, 0.35),
+    0 4px 12px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+
+#colorflexMaterialInfo .colorflex-material-info__title {
+  color: #d4af37;
+  font-family: 'Island Moments', cursive;
+  font-size: 32px;
+  font-weight: bold;
+  margin: 0 0 10px 0;
+  line-height: 1.2;
+}
+
+#colorflexMaterialInfo .colorflex-material-info__name {
+  color: #efd197;
+  font-size: 16px;
+  margin: 0 0 6px 0;
+  font-weight: 600;
+}
+
+#colorflexMaterialInfo .colorflex-material-info__price {
+  color: #d4af37;
+  font-weight: bold;
+  margin: 0 0 10px 0;
+  font-size: 15px;
+}
+
+#colorflexMaterialInfo .colorflex-material-info__specs {
+  color: rgba(239, 238, 234, 0.92);
+  font-size: 13px;
+  line-height: 1.55;
+  margin: 0;
+  padding-left: 18px;
+}
+
+#colorflexMaterialInfo .colorflex-material-info__specs li {
+  margin-bottom: 4px;
+}
+
+#colorflexCustomColors strong {
+  color: #efd197;
+}
+
+#colorflexCustomColors .colorflex-custom-colors-heading {
+  color: rgba(239, 238, 234, 0.88);
+  font-size: 12px;
+  margin-bottom: 6px;
+  letter-spacing: 0.06rem;
+  text-transform: uppercase;
+}
+
+#colorflexCustomColors .colorflex-swatch-label {
+  font-size: 10px;
+  text-align: center;
+  max-width: 60px;
+  word-wrap: break-word;
+  line-height: 1.15;
+  color: rgba(239, 238, 234, 0.88) !important;
+}
+
+@media screen and (min-width: 750px) {
+  #colorflexCustomColors,
+  #colorflexMaterialInfo,
+  #patternInfo {
+    width: 100%;
+    max-width: 44rem;
+  }
+}
+
+#patternInfo .colorflex-pattern-info__scale,
+#colorflexCustomColors .colorflex-pattern-info__scale {
+  color: rgba(239, 238, 234, 0.85);
+  font-size: 13px;
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+#patternInfo strong {
+  color: #efd197;
+}
+
 .product--no-media .product__info-container > modal-opener {
   display: block;
   text-align: center;

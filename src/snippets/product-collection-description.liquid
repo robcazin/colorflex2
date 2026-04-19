@@ -1,6 +1,10 @@
 {% comment %}
   Collection marketing from Airtable master row (NUMBER …-000), not hard-coded in the theme.
   Sync path: cf-dl → collections.json → product metafield namespace `color_flex`, key `collection_description`.
+
+  Not included in the default product description block (main-product `when 'description'`): putting this on every
+  PDP duplicated the long collection blurb above pattern copy. Use on collection pages or a custom section if needed.
+  See docs/COLLECTION_AND_SHOPIFY_WORKFLOW.md §7.
 {% endcomment %}
 {%- assign col_mf = product.metafields.color_flex.collection_description -%}
 {%- assign col_v = col_mf.value | default: '' | strip -%}
