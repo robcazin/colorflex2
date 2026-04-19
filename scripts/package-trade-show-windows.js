@@ -108,6 +108,20 @@ function main() {
     path.join(REPO_ROOT, 'trade-show-windows-runtime.package.json'),
     path.join(destRoot, 'package.json')
   );
+  fs.writeFileSync(
+    path.join(destRoot, 'WHY_PACKAGE_JSON_HERE.txt'),
+    [
+      'This folder intentionally has package.json at the top level.',
+      '',
+      'It is the Windows "runtime" manifest: only Express, so `npm install` can run',
+      'without the full Shopify theme repo. It is NOT a mistake and not a leak of',
+      'the main app package.json.',
+      '',
+      'Source in dev repo: trade-show-windows-runtime.package.json',
+      ''
+    ].join('\r\n'),
+    'utf8'
+  );
 
   const cfSrc = args.cfData || process.env.TRADE_SHOW_CF_DATA;
   if (cfSrc) {

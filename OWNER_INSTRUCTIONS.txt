@@ -6,6 +6,7 @@ Before first use on this computer
 
 What should be in your folder
   • Start-Trade-Show-Demo.cmd  ← use this one (at the top level of the folder)
+  • package.json  ← small file on purpose: only Express for the local server (not the full Shopify project)
   • trade-show-local
   • demo-snapshot
   • cf-data        ← full wallpaper images/data (folder must contain a “data” subfolder — staff copies this)

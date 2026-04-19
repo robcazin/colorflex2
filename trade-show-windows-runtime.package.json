@@ -2,7 +2,7 @@
   "name": "colorflex-trade-show-windows-runtime",
   "private": true,
   "version": "1.0.0",
-  "description": "Minimal npm metadata for Windows golden master: only Express, used by trade-show-local/server.js",
+  "description": "NOT the Shopify app — this file belongs ONLY at the root of the ColorFlexTradeShow handoff folder. Minimal deps (Express) so Windows can run `npm install` and `trade-show-local/server.js`. Do not copy into the main theme repo as its package.json.",
   "dependencies": {
     "express": "^4.22.1"
   }
