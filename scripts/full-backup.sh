@@ -32,6 +32,7 @@ DIRS_TO_BACKUP=(
     "docs"
     "scripts"
     "config"
+    "trade-show-local"
 )
 
 # Files to backup (root level important files)

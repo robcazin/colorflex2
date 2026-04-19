@@ -128,3 +128,9 @@ Fix the master before cloning.
 - **Port 3340** must be free (one demo at a time unless you change port + launcher URL).
 - **`furniture-config.json`** may be absent in the snapshot — wallpaper demo tolerates it (possible console warning).
 - **`cf-data`** must be present for offline rasters; without it the server logs that `/cf-data` is not mounted and images will fail.
+
+---
+
+## 7. Backup and git history
+
+See **[BACKUP_AND_HISTORY.md](./BACKUP_AND_HISTORY.md)** — push `demo/trade-show-offline`, optional release tags, `npm run backup` / `full-backup.sh`, and how that relates to the Windows handoff folder.

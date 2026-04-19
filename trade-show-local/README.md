@@ -1,51 +1,48 @@
-# Trade-show local server (wallpaper-only offline demo)
+# Trade-show offline demo (wallpaper)
 
-Minimal **localhost** static server. **Phase 1:** shell only. **Phase 2:** `index.html` bootstraps globals and loads `color-flex-trade-demo.min.js` from `/assets` (build first).
+Local **Express** server + static **`index.html`** that mirrors the live ColorFlex wallpaper shell (theme header + ColorFlex layout). No Shopify runtime; CFM uses `COLORFLEX_DEMO_OFFLINE` / `COLORFLEX_TRADE_SHOW` for cart/checkout.
 
-## Offline snapshot (wallpaper data + images)
+## Quick start (Mac / dev)
 
-From the repo root:
+```bash
+npm install
+npm run build:trade-demo
+npm run build:trade-show-snapshot
+npm run serve:trade-demo
+```
+
+Open **http://127.0.0.1:3340/** — JSON from `demo-snapshot/data/`, rasters from **`cf-data/`** (or B2 proxy when `cf-data` is absent). See `server.js`.
+
+## Windows golden master
+
+```bash
+npm run package:trade-show-windows
+# optional rasters:
+npm run package:trade-show-windows -- --cf-data=/path/to/cf-data
+```
+
+Handoff folder: **`ColorFlexTradeShow/`** (default; gitignored). Inside it, open **`PACKAGE_BUILD.txt`** to confirm build id after copying to a PC.
+
+| Doc | Audience |
+|-----|----------|
+| **[WINDOWS_DEPLOY.md](./WINDOWS_DEPLOY.md)** | Staff — folder tree, `npm install` on Windows, checks |
+| **[BACKUP_AND_HISTORY.md](./BACKUP_AND_HISTORY.md)** | Git push, tags, `npm run backup`, recovery |
+| **[../OWNER_INSTRUCTIONS.txt](../OWNER_INSTRUCTIONS.txt)** | Show-floor owner |
+
+## Offline snapshot
 
 ```bash
 npm run build:trade-show-snapshot
 ```
 
-Writes `demo-snapshot/data/` JSON from **`src/assets/collections.json`** (wallpaper-only filter), plus **`mockups.json`** and **`colors.json`**. Layer/thumbnail rasters resolve under **`COLORFLEX_DATA_BASE_URL`** (`origin + '/cf-data'`); place the full data tree in **`cf-data/`** next to **`trade-show-local/`** (see `server.js`).
+Writes **`demo-snapshot/data/`** from `src/assets/collections.json` (wallpaper filter) plus `colors.json`, `mockups.json`, etc.
 
-## Build the demo bundle
+## Routes (`server.js`)
 
-From the repo root:
+- **`/`** → `trade-show-local/index.html`
+- **`/home.html`**, **`/home`** → thin landing / redirect
+- **`/demo-snapshot`**, **`/assets`**, **`/cf-data`** when folders exist; else B2 proxy for `/cf-data`
 
-```bash
-npm run build:trade-demo
-```
+## History
 
-Output: `src/assets/color-flex-trade-demo.min.js`
-
-## Run
-
-From the repo root:
-
-```bash
-npm run serve:trade-demo
-```
-
-Default URL: **http://127.0.0.1:3340**
-
-Override host/port:
-
-```bash
-TRADE_SHOW_HOST=127.0.0.1 TRADE_SHOW_PORT=3340 npm run serve:trade-demo
-```
-
-## Static mounts (when folders exist)
-
-- `/` → `trade-show-local/index.html`
-- `/demo-snapshot` → repo `demo-snapshot/` (optional; omitted if missing)
-- `/assets` → repo `src/assets/` (optional; omitted if missing)
-
-## Windows — turnkey golden master
-
-- **Owner:** **`OWNER_INSTRUCTIONS.txt`** at the repo root (copy it next to `Start-Trade-Show-Demo.cmd` in the distributed folder).
-- **Launcher:** double-click **`Start-Trade-Show-Demo.cmd`** at the **root** of the golden master folder. A second copy inside `trade-show-local` only forwards to that same root file.
-- **Technical:** **[WINDOWS_DEPLOY.md](./WINDOWS_DEPLOY.md)** — exact folder tree, how to build `node_modules` once on Windows, and verification before duplicating to multiple PCs.
+This area evolved from a minimal shell to the full stash-restored layout. Preserve history with **git** and optional **`npm run backup`** (see BACKUP_AND_HISTORY.md).
