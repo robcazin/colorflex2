@@ -10,7 +10,7 @@ From the repo root:
 npm run build:trade-show-snapshot
 ```
 
-Writes `demo-snapshot/data/` JSON from **`src/assets/collections.json`** (wallpaper-only filter), plus **`mockups.json`** and **`colors.json`**. Layer/thumbnail rasters load at runtime from **`COLORFLEX_DATA_BASE_URL`** (canonical cf-data in `index.html`), not from the snapshot folder.
+Writes `demo-snapshot/data/` JSON from **`src/assets/collections.json`** (wallpaper-only filter), plus **`mockups.json`** and **`colors.json`**. Layer/thumbnail rasters resolve under **`COLORFLEX_DATA_BASE_URL`** (`origin + '/cf-data'`); place the full data tree in **`cf-data/`** next to **`trade-show-local/`** (see `server.js`).
 
 ## Build the demo bundle
 

@@ -17,18 +17,20 @@ ColorFlexTradeShow\
   package.json                  ← from trade-show-windows-runtime.package.json rename, or full repo package.json
   package-lock.json             ← optional
   node_modules\                 ← required on each copy; build on Windows (§2)
+  cf-data\                      ← full local data tree (must contain data\collections\…, data\mockups\…, etc.)
   trade-show-local\
     index.html
     server.js
     WINDOWS_DEPLOY.md
     Start-Trade-Show-Demo.cmd   ← forwards to root launcher (same as root)
   demo-snapshot\
-    data\
-    img\
+    data\                       ← JSON snapshot (collections, colors, mockups metadata)
   src\
     assets\
       color-flex-trade-demo.min.js
 ```
+
+**`COLORFLEX_DATA_BASE_URL`** is **`http://127.0.0.1:3340/cf-data`** (same origin). The server maps **`/cf-data`** → **`ColorFlexTradeShow\cf-data`** on disk. URLs look like **`/cf-data/data/collections/…`** and **`/cf-data/data/mockups/…`** — no Backblaze in this layout.
 
 **Cloneability:** Zip or xcopy the **entire** folder including **`node_modules`**. Same build works on other Windows 10/11 PCs with Node installed — no `npm install` on each show PC.
 
@@ -47,7 +49,7 @@ npm run build:trade-show-snapshot
 
 ### B. Install `node_modules` for distribution (**Windows**, in the staging folder that will become the golden master)
 
-1. Copy into the empty staging folder: `trade-show-local\`, `demo-snapshot\`, `src\assets\color-flex-trade-demo.min.js`, root **`Start-Trade-Show-Demo.cmd`**, **`OWNER_INSTRUCTIONS.txt`**, **`trade-show-windows-runtime.package.json`**.
+1. Copy into the staging folder: `trade-show-local\`, `demo-snapshot\`, `src\assets\color-flex-trade-demo.min.js`, root **`Start-Trade-Show-Demo.cmd`**, **`OWNER_INSTRUCTIONS.txt`**, **`trade-show-windows-runtime.package.json`**, and the full **`cf-data\`** tree (folder whose child is **`data\`** with `collections\`, `mockups\`, etc.).
 
 2. In that folder:
 
@@ -83,7 +85,7 @@ On one **Windows** machine that matches the show PCs:
 | Launch | No error dialogs from `Start-Trade-Show-Demo.cmd` |
 | Path with spaces | Copy master to e.g. `C:\Test Folder With Spaces\ColorFlexTradeShow` and launch — still works |
 | Browser | Opens to `http://127.0.0.1:3340/` |
-| Demo | Collections load; preview and mockup work; no broken snapshot images |
+| Demo | Collections load; preview and mockup work; thumbnails/layers load from **`/cf-data/data/...`** (no 404s if `cf-data` is complete) |
 | Stop | Closing the server window frees the app |
 
 Fix the master before cloning.
@@ -102,9 +104,4 @@ Fix the master before cloning.
 - **`node_modules`** should be built on **Windows** for Windows show machines.
 - **Port 3340** must be free (one demo at a time unless you change port + launcher URL).
 - **`furniture-config.json`** may be absent in the snapshot — wallpaper demo tolerates it (possible console warning).
-
----
-
-## 7. Merge note (`main` → `demo/trade-show-offline`)
-
-Live **`CFM.js`** updates are merged here; offline bootstrap in **`trade-show-local/index.html`** is unchanged.
+- **`cf-data`** must be present for offline rasters; without it the server logs that `/cf-data` is not mounted and images will fail.

@@ -8,6 +8,7 @@ What should be in your folder
   • Start-Trade-Show-Demo.cmd  ← use this one (at the top level of the folder)
   • trade-show-local
   • demo-snapshot
+  • cf-data        ← full wallpaper images/data (folder must contain a “data” subfolder — staff copies this)
   • node_modules   ← must be included; copy the whole folder you were given
 
 Run the demo

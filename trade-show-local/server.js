@@ -19,6 +19,8 @@ const HOST = process.env.TRADE_SHOW_HOST || '0.0.0.0';
 const indexHtml = path.join(__dirname, 'index.html');
 const demoSnapshotDir = path.join(REPO_ROOT, 'demo-snapshot');
 const assetsDir = path.join(REPO_ROOT, 'src', 'assets');
+/** Offline raster + JSON under deployment root: cf-data/data/collections/…, cf-data/data/mockups/… */
+const cfDataDir = path.join(REPO_ROOT, 'cf-data');
 
 const app = express();
 
@@ -34,6 +36,10 @@ if (fs.existsSync(assetsDir)) {
   app.use('/assets', express.static(assetsDir));
 }
 
+if (fs.existsSync(cfDataDir)) {
+  app.use('/cf-data', express.static(cfDataDir));
+}
+
 app.listen(PORT, HOST, function () {
   console.log('ColorFlex trade-show local server (Phase 1 shell)');
   console.log('  URL: http://127.0.0.1:' + PORT);
@@ -43,5 +49,10 @@ app.listen(PORT, HOST, function () {
   }
   if (!fs.existsSync(assetsDir)) {
     console.log('  (src/assets/ not present — /assets not mounted)');
+  }
+  if (!fs.existsSync(cfDataDir)) {
+    console.log('  (cf-data/ not present — /cf-data not mounted; copy full data tree next to trade-show-local)');
+  } else {
+    console.log('  /cf-data →', cfDataDir);
   }
 });
