@@ -1273,17 +1273,33 @@
                 mediaWrap.style.paddingTop = '';
                 return;
               }
+              function colorflexPdpLayoutTargetIsVisible(el) {
+                if (!el) return false;
+                const st = getComputedStyle(el);
+                if (st.display === 'none' || st.visibility === 'hidden') return false;
+                const r = el.getBoundingClientRect();
+                return r.width > 2 && r.height > 2;
+              }
+              // Align media column with the ColorFlex summary strip: custom swatches (#colorflexCustomColors)
+              // or standard pattern card (#patternInfo). Avoid using #colorflexMaterialInfo (much lower).
+              const patternInfo = document.getElementById('patternInfo');
               const colorsBox = document.getElementById('colorflexCustomColors');
               const title = document.querySelector('.product__info-container .product__title');
-              const target =
-                colorsBox && colorsBox.getClientRects().length > 0 ? colorsBox : title;
+              let target = null;
+              if (colorflexPdpLayoutTargetIsVisible(colorsBox)) {
+                target = colorsBox;
+              } else if (colorflexPdpLayoutTargetIsVisible(patternInfo)) {
+                target = patternInfo;
+              } else {
+                target = title;
+              }
               if (!target) return;
               const delta = Math.round(target.getBoundingClientRect().top - mediaWrap.getBoundingClientRect().top);
               mediaWrap.style.paddingTop = delta > 2 ? delta + 'px' : '';
             };
             window.colorflexMatchInfoBoxesToAddToCart = function () {
               const btn = document.querySelector('.product-form__buttons button[name="add"], .product-form__buttons .product-form__submit[type="submit"]');
-              ['colorflexCustomColors', 'colorflexMaterialInfo'].forEach(function (id) {
+              ['colorflexCustomColors', 'patternInfo', 'colorflexMaterialInfo'].forEach(function (id) {
                 const el = document.getElementById(id);
                 if (!el || !btn) return;
                 const w = Math.round(btn.getBoundingClientRect().width);
@@ -4431,12 +4447,13 @@ window.replaceMainProductImage = function(urlParams) {
     // Only show custom colors display for ColorFlex patterns
     if (!isStandardPattern) {
       // Add custom colors display under product name instead of overlay
-      addCustomColorsDisplay(patternName, collection, material, customColors);
+      addCustomColorsDisplay(patternName, collection, material, customColors, urlParams);
 
       // Don't show "Customize Options" button - pattern already customized
       console.log('🎨 ColorFlex pattern detected - showing colors display, hiding customize button');
     } else {
       console.log('🎨 Standard pattern detected - hiding custom colors display and customize button');
+      addPatternInfoDisplay(patternName, collection, urlParams);
     }
 
     console.log('✅ Main product image replaced with custom pattern thumbnail');
@@ -4449,16 +4466,20 @@ window.replaceMainProductImage = function(urlParams) {
     // Only show custom colors display for ColorFlex patterns
     if (!isStandardPattern) {
       // Still show custom colors display even without thumbnail
-      addCustomColorsDisplay(patternName, collection, material, customColors);
+      addCustomColorsDisplay(patternName, collection, material, customColors, urlParams);
 
       // Don't show "Customize Options" button - pattern already customized
       console.log('🎨 ColorFlex pattern detected (no thumbnail) - showing colors display, hiding customize button');
     } else {
       console.log('🎨 Standard pattern detected - hiding custom colors display and customize button');
+      addPatternInfoDisplay(patternName, collection, urlParams);
     }
 
   } else {
     console.warn('❌ Could not find main product image to replace');
+    if (isStandardPattern) {
+      addPatternInfoDisplay(patternName, collection, urlParams);
+    }
   }
 
   if (typeof window.colorflexSyncPdpLayout === 'function') {
@@ -4471,8 +4492,105 @@ window.replaceMainProductImage = function(urlParams) {
   }
 }
 
+function colorflexEscapeHtmlForPdp(str) {
+  if (str == null) return '';
+  const d = document.createElement('div');
+  d.textContent = String(str);
+  return d.innerHTML;
+}
+
+/** Human-readable repeat line from URL (scale / scale_multiplier). Empty string = default ×1 at 100%. */
+function colorflexPdpRepeatLabelFromParams(urlParams) {
+  const params =
+    urlParams && typeof urlParams.get === 'function'
+      ? urlParams
+      : new URLSearchParams(typeof window !== 'undefined' && window.location ? window.location.search : '');
+  const scaleRaw = params.get('scale');
+  const mulRaw = params.get('scale_multiplier');
+  let scalePct = scaleRaw != null && String(scaleRaw).trim() !== '' ? parseInt(scaleRaw, 10) : 100;
+  if (isNaN(scalePct)) scalePct = 100;
+  let scaleMul = mulRaw != null && String(mulRaw).trim() !== '' ? parseFloat(mulRaw) : 1;
+  if (isNaN(scaleMul) || scaleMul <= 0) scaleMul = 1;
+
+  if (scalePct === 50) return 'Pattern repeats: ½×';
+  if (scalePct === 200) return 'Pattern repeats: ×2';
+  if (scalePct === 300) return 'Pattern repeats: ×3';
+  if (scalePct === 400) return 'Pattern repeats: ×4';
+  if (scalePct !== 100) return 'Pattern repeats: ×' + scalePct / 100;
+  if (scaleMul !== 1) return 'Pattern repeats: ×' + scaleMul;
+  return '';
+}
+
+/** Standard ColorFlex PDP: pattern + collection + scale (URL), same slot as custom colors for layout sync. */
+function addPatternInfoDisplay(patternName, collection, urlParams) {
+  if (document.getElementById('colorflexCustomColors')) return;
+  const old = document.getElementById('patternInfo');
+  if (old) old.remove();
+
+  const productTitle = document.querySelector('.product__title, h1, .product-single__title');
+  if (!productTitle || !patternName) return;
+
+  const repeatLine = colorflexPdpRepeatLabelFromParams(urlParams);
+  const scaleLine = repeatLine
+    ? `<div class="colorflex-pattern-info__scale">${colorflexEscapeHtmlForPdp(repeatLine)}</div>`
+    : '';
+
+  const matHint =
+    urlParams && typeof urlParams.get === 'function'
+      ? urlParams.get('preferred_material') || urlParams.get('selected_category') || urlParams.get('material') || ''
+      : '';
+  const matBit = matHint
+    ? ` <span style="color: rgba(239,238,234,0.55);">· ${colorflexEscapeHtmlForPdp(matHint.replace(/-/g, ' '))}</span>`
+    : '';
+
+  const baseUrl = (function () {
+    var b = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '');
+    return b && !/^https?:\/\//i.test(b) ? 'https://' + b : b;
+  })();
+
+  const el = document.createElement('div');
+  el.id = 'patternInfo';
+  el.className = 'colorflex-pattern-info';
+  el.style.cssText = 'box-sizing: border-box;';
+  el.innerHTML =
+    '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">' +
+    '<img src="' +
+    baseUrl +
+    '/img/camelion-sm-r.jpg" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(212, 175, 55, 0.75); box-shadow: 0 2px 8px rgba(0,0,0,0.45);" alt="ColorFlex">' +
+    '<div style="font-size: 14px;">' +
+    '<strong>' +
+    colorflexEscapeHtmlForPdp(patternName) +
+    '</strong> <span style="color: rgba(239,238,234,0.78);">from ' +
+    colorflexEscapeHtmlForPdp(collection || '') +
+    ' collection</span>' +
+    matBit +
+    '</div></div>' +
+    scaleLine;
+
+  productTitle.parentNode.insertBefore(el, productTitle.nextSibling);
+  console.log('✅ patternInfo added for standard ColorFlex PDP');
+
+  setTimeout(function () {
+    const materialInfoBox = document.getElementById('colorflexMaterialInfo');
+    if (materialInfoBox && materialInfoBox.style.display !== 'none') {
+      el.parentNode.insertBefore(materialInfoBox, el.nextSibling);
+      console.log('✅ Material info repositioned after patternInfo');
+    }
+    if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+  }, 100);
+  setTimeout(function () {
+    if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+  }, 350);
+  setTimeout(function () {
+    if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+  }, 700);
+}
+
 // Add custom colors display under product name
-function addCustomColorsDisplay(patternName, collection, material, customColors) {
+function addCustomColorsDisplay(patternName, collection, material, customColors, urlParams) {
+  const rmPatternInfo = document.getElementById('patternInfo');
+  if (rmPatternInfo) rmPatternInfo.remove();
+
   // Parse custom colors
   let colorArray = [];
   if (customColors && customColors.trim() !== '') {
@@ -4497,6 +4615,11 @@ function addCustomColorsDisplay(patternName, collection, material, customColors)
       </div>
     </div>
   `;
+
+  const repeatLine = colorflexPdpRepeatLabelFromParams(urlParams);
+  if (repeatLine) {
+    displayHTML += `<div class="colorflex-pattern-info__scale">${colorflexEscapeHtmlForPdp(repeatLine)}</div>`;
+  }
   
   if (colorArray.length > 0) {
     displayHTML += `
@@ -5396,6 +5519,7 @@ async function populateColorFlexProperties(urlParams) {
     .map(color => color.trim().replace(/^(SW|SC|SWs|SCs|Sw|Sc|swsw|SWsw|SCsc|SCcs|Swsc|swsc)\d+\s*/i, "").trim())
     .join(', ') : '';
   const patternScale = urlParams.get('scale') || '100';
+  const patternScaleMultiplierRaw = urlParams.get('scale_multiplier') || '';
 
   // Generate pattern ID using same logic as saved patterns (pattern name + SW numbers)
   function generatePatternId(patternName, customColors) {
@@ -5604,14 +5728,15 @@ async function populateColorFlexProperties(urlParams) {
     'colorflex-save-date': new Date().toISOString(),
     'colorflex-pattern-scale': (() => {
       const scale = parseInt(patternScale) || 100;
-      switch (scale) {
-        case 50: return '0.5X';
-        case 100: return 'Normal';
-        case 200: return '2X';
-        case 300: return '3X';
-        case 400: return '4X';
-        default: return `${scale}%`;
-      }
+      const mul = parseFloat(patternScaleMultiplierRaw);
+      const mulOk = !isNaN(mul) && mul > 0 && mul !== 1;
+      if (scale === 50) return '½×';
+      if (scale === 200) return '×2';
+      if (scale === 300) return '×3';
+      if (scale === 400) return '×4';
+      if (scale !== 100) return '×' + (scale / 100);
+      if (mulOk) return '×' + mul;
+      return '×1';
     })()
   };
   

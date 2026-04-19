@@ -4,6 +4,28 @@
  * Load after color-flex-core.min.css. Safe to remove if issues occur.
  */
 
+/*
+ * Standard collections only — hooks for visual tweaks (no outer grid changes).
+ * JS adds: #colorControls.colorControls--standard, #layerInputsContainer.layerInputsContainer--standard,
+ * and .cf-standard-blurb on the description wrapper. Adjust those selectors below.
+ */
+#layerInputsContainer.layerInputsContainer--standard .cf-standard-blurb {
+  text-align: center;
+  padding: 30px 20px;
+  color: #af9e68;
+  font-family: "IM Fell English", serif;
+  font-size: 1.5rem;
+  line-height: 1.8;
+  max-width: 800px;
+  margin: 0 auto;
+  box-sizing: border-box;
+}
+
+/* Core CSS uses two columns on #layerInputsContainer; single column for standard blurb only */
+#layerInputsContainer.layerInputsContainer--standard {
+  grid-template-columns: 1fr !important;
+}
+
 /* Desktop tweaks (loaded after core CSS) */
 @media screen and (min-width: 1025px) {
   /* Pull "Matching Coordinates" block up */

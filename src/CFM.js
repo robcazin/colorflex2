@@ -808,28 +808,44 @@ function capturePatternThumbnail() {
             if (el && arr.indexOf(el) === -1) arr.push(el);
         };
 
+        const collectCanvasesUnder = (root) => {
+            const list = [];
+            if (!root) return list;
+            if (root.tagName === 'CANVAS') list.push(root);
+            root.querySelectorAll('canvas').forEach((c) => addUnique(list, c));
+            return list;
+        };
+
         const candidates = [];
-        const previewRoots = [
-            '#preview',
-            '#pattern-preview',
-            '.pattern-preview',
-            '#colorflex-preview',
-            '.colorflex-preview',
-            '#pattern-display',
-            '.pattern-display',
-            '#roomMockup',
-        ];
+        // When #preview has a live canvas, it is the flat "Pattern Preview" — never prefer #roomMockup,
+        // which often has a huge backing buffer and wins the area score while showing a room composite.
+        const previewHost = (typeof dom !== 'undefined' && dom.preview) || document.getElementById('preview');
+        const scopedPreview = collectCanvasesUnder(previewHost).filter(isVisible);
 
-        previewRoots.forEach((selector) => {
-            const root = document.querySelector(selector);
-            if (root) {
-                if (root.tagName === 'CANVAS') addUnique(candidates, root);
-                root.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
-            }
-        });
+        if (scopedPreview.length > 0) {
+            scopedPreview.forEach((c) => addUnique(candidates, c));
+        } else {
+            const previewRoots = [
+                '#preview',
+                '#pattern-preview',
+                '.pattern-preview',
+                '#colorflex-preview',
+                '.colorflex-preview',
+                '#pattern-display',
+                '.pattern-display',
+                '#roomMockup',
+            ];
 
-        // Global fallback scan (still filtered by visibility/size).
-        document.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
+            previewRoots.forEach((selector) => {
+                const root = document.querySelector(selector);
+                if (root) {
+                    if (root.tagName === 'CANVAS') addUnique(candidates, root);
+                    root.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
+                }
+            });
+
+            document.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
+        }
 
         const usableCanvases = candidates.filter(isVisible);
         // #region agent log
@@ -875,35 +891,25 @@ function capturePatternThumbnail() {
 
         const srcW = previewCanvas.width || 1;
         const srcH = previewCanvas.height || 1;
-        const scale = appState.scaleMultiplier || 1.0;
 
-        if (scale !== 1.0 && appState.currentPattern) {
-            // Tile for zoomed patterns so thumbnail reflects scale detail.
-            const tileWidth = 800 / scale;
-            const tileHeight = 800 / scale;
-            for (let x = 0; x < 800; x += tileWidth) {
-                for (let y = 0; y < 800; y += tileHeight) {
-                    ctx.drawImage(previewCanvas, 0, 0, srcW, srcH, x, y, tileWidth, tileHeight);
-                }
-            }
-        } else {
-            // Cover-fit to avoid tiny centered preview and preserve detail.
-            const srcAspect = srcW / srcH;
-            const dstAspect = 1; // 800x800
-            let cropW = srcW;
-            let cropH = srcH;
-            let cropX = 0;
-            let cropY = 0;
+        // Always center-crop from the live preview canvas. The on-screen preview already applies
+        // currentScale / tiling; re-tiling here by scaleMultiplier broke captures when multiplier < 1
+        // (e.g. 0.25 → destination tiles wider than the output canvas → clipped / off-center zoom).
+        const srcAspect = srcW / srcH;
+        const dstAspect = 1; // 800x800
+        let cropW = srcW;
+        let cropH = srcH;
+        let cropX = 0;
+        let cropY = 0;
 
-            if (srcAspect > dstAspect) {
-                cropW = srcH * dstAspect;
-                cropX = (srcW - cropW) / 2;
-            } else if (srcAspect < dstAspect) {
-                cropH = srcW / dstAspect;
-                cropY = (srcH - cropH) / 2;
-            }
-            ctx.drawImage(previewCanvas, cropX, cropY, cropW, cropH, 0, 0, 800, 800);
+        if (srcAspect > dstAspect) {
+            cropW = srcH * dstAspect;
+            cropX = (srcW - cropW) / 2;
+        } else if (srcAspect < dstAspect) {
+            cropH = srcW / dstAspect;
+            cropY = (srcH - cropH) / 2;
         }
+        ctx.drawImage(previewCanvas, cropX, cropY, cropW, cropH, 0, 0, 800, 800);
 
         // Convert to base64 data URL at higher quality for better detail.
         const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
@@ -915,6 +921,8 @@ function capturePatternThumbnail() {
         return null;
     }
 }
+
+window.capturePatternThumbnail = capturePatternThumbnail;
 
 // 🎯 NORMALIZE COLOR TO SW FORMAT
 // Converts color names to consistent "SW#### COLORNAME" format for cart display
@@ -3250,20 +3258,22 @@ window.switchCollection = function(collectionName) {
         }
     }
 
-    // Update curated colors for the new collection (clear if none, else populate)
+    // Update curated colors for the new collection — always wipe the strip first so
+    // we never show the previous collection's swatches when the new branch skips populateCuratedColors.
+    const curatedColorsContainer = dom.curatedColorsContainer || document.getElementById("curatedColorsContainer");
+    if (curatedColorsContainer) {
+        curatedColorsContainer.innerHTML = "";
+    }
+
     const hasColorFlexPatterns = targetCollection.patterns?.some(p => p.colorFlex === true);
     const hasCuratedColors = (targetCollection.curatedColors || []).length > 0;
     const isBassett = window.COLORFLEX_MODE === 'BASSETT';
     if (!hasColorFlexPatterns && !(isBassett && hasCuratedColors)) {
-        console.log('🧹 Clearing curated colors for standard collection');
-        const curatedColorsContainer = document.getElementById('curatedColorsContainer');
-        if (curatedColorsContainer) {
-            curatedColorsContainer.innerHTML = '';
-        }
+        console.log("🧹 Curated colors cleared for collection (no ColorFlex patterns / not Bassett palette case)");
         appState.curatedColors = [];
     } else {
         appState.curatedColors = targetCollection.curatedColors || [];
-        if (appState.curatedColors.length && dom.curatedColorsContainer && Array.isArray(appState.colorsData) && appState.colorsData.length) {
+        if (appState.curatedColors.length && curatedColorsContainer && Array.isArray(appState.colorsData) && appState.colorsData.length) {
             populateCuratedColors(appState.curatedColors);
         }
     }
@@ -3615,6 +3625,9 @@ function showMaterialSelectionModal(pattern) {
     if (existingModal) {
         existingModal.remove();
     }
+
+    ensureCollectionThumbnailsInLeftSidebar();
+    resetStandardSidebarThumbnailStripLayout();
 
     // Create modal overlay
     var modal = document.createElement('div');
@@ -4124,6 +4137,35 @@ function showMaterialSelectionModal(pattern) {
         var selectedMaterial = selectedMaterialInput.value;
         console.log('✅ Selected material:', selectedMaterial);
 
+        // #region agent log
+        try {
+            const _tn = pattern && pattern.thumbnail ? String(pattern.thumbnail) : "";
+            const _sameCur = pattern === appState.currentPattern;
+            const _sameCat = !!(appState.selectedCollection && Array.isArray(appState.selectedCollection.patterns) && appState.selectedCollection.patterns.some((p) => p === pattern));
+            fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+                body: JSON.stringify({
+                    sessionId: "0b8664",
+                    runId: "pre",
+                    hypothesisId: "H1-H5",
+                    location: "CFM.js:proceed-to-cart:start",
+                    message: "Proceed to cart click",
+                    data: {
+                        stdFromCurrent: !!(appState.currentPattern && patternIsStandard(appState.currentPattern, appState.selectedCollection)),
+                        thumbPrefix: _tn.slice(0, 16),
+                        thumbLen: _tn.length,
+                        sameRefAsCurrentPattern: _sameCur,
+                        sameRefAsCatalogPattern: _sameCat,
+                        patternName: pattern && (pattern.name || pattern.patternName),
+                        collection: appState.selectedCollection && appState.selectedCollection.name,
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(function () {});
+        } catch (_e) {}
+        // #endregion
+
         // Rebuild pattern payload from live runtime state at click-time.
         // This prevents stale saved-pattern data (colors/thumbnail) from overriding correct preview output.
         try {
@@ -4164,9 +4206,9 @@ function showMaterialSelectionModal(pattern) {
                     } catch (_) {}
                     console.log('✅ Proceed-to-cart runtime proof captured via generatePrintPreviewDataUrl');
                 }
-            } else if (typeof window.capturePatternThumbnail === 'function') {
+            } else if (typeof capturePatternThumbnail === 'function') {
                 // Fallback only when proof helper is unavailable.
-                const runtimeThumb = window.capturePatternThumbnail();
+                const runtimeThumb = capturePatternThumbnail();
                 if (runtimeThumb && typeof runtimeThumb === 'string' && runtimeThumb.startsWith('data:image')) {
                     pattern.thumbnail = runtimeThumb;
                     try { localStorage.setItem('colorflexCurrentThumbnail', runtimeThumb); } catch (_) {}
@@ -4204,6 +4246,30 @@ function showMaterialSelectionModal(pattern) {
         } catch (runtimeSyncError) {
             console.warn('⚠️ Proceed-to-cart runtime sync failed, continuing with existing pattern payload:', runtimeSyncError);
         }
+
+        // #region agent log
+        try {
+            const _t2 = pattern && pattern.thumbnail ? String(pattern.thumbnail) : "";
+            const _sameCat2 = !!(appState.selectedCollection && Array.isArray(appState.selectedCollection.patterns) && appState.selectedCollection.patterns.some((p) => p === pattern));
+            fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+                body: JSON.stringify({
+                    sessionId: "0b8664",
+                    runId: "pre",
+                    hypothesisId: "H1-H5",
+                    location: "CFM.js:proceed-to-cart:after-runtime-sync",
+                    message: "After proceed runtime thumbnail sync",
+                    data: {
+                        thumbIsDataUrl: _t2.startsWith("data:"),
+                        thumbLen: _t2.length,
+                        sameRefAsCatalogPattern: _sameCat2,
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(function () {});
+        } catch (_e2) {}
+        // #endregion
 
         if (isFromCartEdit) {
             // Handle cart item update
@@ -4317,8 +4383,38 @@ function showMaterialSelectionModal(pattern) {
 
             try {
                 console.log('📍 About to call redirectToProductConfiguration...');
+                ensureCollectionThumbnailsInLeftSidebar();
+                resetStandardSidebarThumbnailStripLayout();
                 redirectToProductConfiguration(pattern, selectedMaterial);
                 console.log('✅ redirectToProductConfiguration called successfully');
+                // #region agent log
+                try {
+                    const _ls = document.getElementById("leftSidebar");
+                    const _ct = document.getElementById("collectionThumbnails");
+                    let _lsW = null;
+                    let _ctDisp = null;
+                    if (_ls && typeof getComputedStyle === "function") _lsW = getComputedStyle(_ls).width;
+                    if (_ct && typeof getComputedStyle === "function") _ctDisp = getComputedStyle(_ct).display + "/" + getComputedStyle(_ct).flexDirection;
+                    fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+                        body: JSON.stringify({
+                            sessionId: "0b8664",
+                            runId: "pre",
+                            hypothesisId: "H3",
+                            location: "CFM.js:proceed-to-cart:before-modal-remove",
+                            message: "Layout snapshot before modal.remove",
+                            data: {
+                                bodyOverflow: document.body && document.body.style.overflow,
+                                docElOverflow: document.documentElement && document.documentElement.style.overflow,
+                                leftSidebarWidth: _lsW,
+                                collectionThumbnailsDisplayFlexDir: _ctDisp,
+                            },
+                            timestamp: Date.now(),
+                        }),
+                    }).catch(function () {});
+                } catch (_e3) {}
+                // #endregion
                 modal.remove();
             } catch (error) {
                 console.error('❌ Error during redirect:', error);
@@ -4860,6 +4956,10 @@ function fallbackDirectRedirect(pattern, material) {
         'preferred_material': material,
         'save_date': pattern.timestamp || pattern.saveDate || new Date().toISOString()
     });
+    const sm = pattern.scaleMultiplier != null ? Number(pattern.scaleMultiplier) : NaN;
+    if (!isNaN(sm) && sm > 0 && sm !== 1) {
+        params.set('scale_multiplier', String(sm));
+    }
 
     // 🎄 USE SHOPIFY'S DISCOUNT URL TO AUTO-APPLY THE CODE
     // This requires creating the discount code in Shopify Admin first:
@@ -8375,7 +8475,7 @@ async function loadColors() {
             console.log("🎯 Using embedded Sherwin-Williams colors");
             appState.colorsData = window.ColorFlexData.colors;
             console.log("✅ Colors loaded:", appState.colorsData.length);
-            if (appState.curatedColors?.length && typeof populateCuratedColors === 'function') {
+            if (appState.curatedColors?.length && typeof populateCuratedColors === "function") {
                 populateCuratedColors(appState.curatedColors);
             }
             return;
@@ -10229,7 +10329,8 @@ function populateCuratedColors(colors) {
   console.log("  Is standard pattern:", isStandardPattern);
 
   if (isStandardPattern && !isBassett) {
-    console.log("⏭️ Standard pattern: leaving curated colors in place (not used for this pattern)");
+    console.log("🧹 Standard pattern (non-Bassett): clearing curated colors strip");
+    container.innerHTML = "";
     return;
   }
   if (isStandardPattern && isBassett) {
@@ -11986,6 +12087,44 @@ function initThumbnailLazyLoading() {
     console.log('👁️ Thumbnail lazy loading initialized');
 }
 
+/**
+ * page.colorflex.liquid moves #collectionThumbnails into #patternsModalContent for mobile.
+ * If that modal is left open or bypassed, the strip can stay detached from #leftSidebar.
+ * Restoring uses the page's closePatternsModal when present.
+ */
+function ensureCollectionThumbnailsInLeftSidebar() {
+    try {
+        if (typeof window.closePatternsModal === 'function') {
+            window.closePatternsModal();
+        }
+    } catch (e) {
+        console.warn('ensureCollectionThumbnailsInLeftSidebar:', e);
+    }
+}
+
+/** Strip JS-applied simple-mode flex overrides so stylesheet column layout applies again. */
+function resetStandardSidebarThumbnailStripLayout() {
+    if (window.COLORFLEX_SIMPLE_MODE === true) return;
+    const el = document.getElementById('collectionThumbnails');
+    if (!el) return;
+    const containerProps = [
+        'display', 'flex-direction', 'flex-wrap', 'justify-content', 'gap',
+        'width', 'max-width', 'position', 'left', 'top', 'padding'
+    ];
+    containerProps.forEach((p) => {
+        try {
+            el.style.removeProperty(p);
+        } catch (_) {}
+    });
+    el.querySelectorAll('.thumbnail').forEach((thumb) => {
+        ['display', 'float', 'position'].forEach((p) => {
+            try {
+                thumb.style.removeProperty(p);
+            } catch (_) {}
+        });
+    });
+}
+
 // Populate pattern thumbnails in sidebar with lazy loading
 function populatePatternThumbnails(patterns) {
     console.log("populatePatternThumbnails called with patterns:", patterns);
@@ -11993,6 +12132,7 @@ function populatePatternThumbnails(patterns) {
         console.error("collectionThumbnails not found in DOM");
         return;
     }
+    ensureCollectionThumbnailsInLeftSidebar();
     if (!Array.isArray(patterns)) {
         console.error("Patterns is not an array:", patterns);
         return;
@@ -12028,6 +12168,35 @@ function populatePatternThumbnails(patterns) {
 
     dom.collectionThumbnails.innerHTML = "";
     console.log("Cleared existing thumbnails");
+    resetStandardSidebarThumbnailStripLayout();
+
+    // #region agent log
+    try {
+        const _cs = dom.collectionThumbnails && typeof getComputedStyle === "function" ? getComputedStyle(dom.collectionThumbnails) : null;
+        const _ls0 = document.getElementById("leftSidebar");
+        const _lsS = _ls0 && typeof getComputedStyle === "function" ? getComputedStyle(_ls0) : null;
+        fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+            body: JSON.stringify({
+                sessionId: "0b8664",
+                runId: "pre",
+                hypothesisId: "H2-H4",
+                location: "CFM.js:populatePatternThumbnails:entry",
+                message: "populatePatternThumbnails start",
+                data: {
+                    nPatterns: validPatterns.length,
+                    simpleMode: window.COLORFLEX_SIMPLE_MODE === true,
+                    collection: appState.selectedCollection && appState.selectedCollection.name,
+                    ctDisplay: _cs && _cs.display,
+                    ctFlexDir: _cs && _cs.flexDirection,
+                    leftSidebarWidth: _lsS && _lsS.width,
+                },
+                timestamp: Date.now(),
+            }),
+        }).catch(function () {});
+    } catch (_e4) {}
+    // #endregion
 
     // 🎨 SIMPLE MODE: Force horizontal layout
     const isSimpleMode = window.COLORFLEX_SIMPLE_MODE === true;
@@ -12179,6 +12348,38 @@ function populatePatternThumbnails(patterns) {
 
         console.log("✅ Horizontal layout forced on", thumbnails.length, "thumbnails");
     }
+
+    // #region agent log
+    try {
+        let _dataUrlN = 0;
+        validPatterns.forEach((p) => {
+            const u = p && p.thumbnail ? String(p.thumbnail) : "";
+            if (u.startsWith("data:")) _dataUrlN++;
+        });
+        const _cs2 = dom.collectionThumbnails && typeof getComputedStyle === "function" ? getComputedStyle(dom.collectionThumbnails) : null;
+        const _ls1 = document.getElementById("leftSidebar");
+        const _lsS2 = _ls1 && typeof getComputedStyle === "function" ? getComputedStyle(_ls1) : null;
+        fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+            body: JSON.stringify({
+                sessionId: "0b8664",
+                runId: "pre",
+                hypothesisId: "H2-H5",
+                location: "CFM.js:populatePatternThumbnails:after-layout",
+                message: "populatePatternThumbnails end layout",
+                data: {
+                    dataUrlThumbnailCount: _dataUrlN,
+                    simpleMode: window.COLORFLEX_SIMPLE_MODE === true,
+                    ctDisplay: _cs2 && _cs2.display,
+                    ctJustify: _cs2 && _cs2.justifyContent,
+                    leftSidebarWidth: _lsS2 && _lsS2.width,
+                },
+                timestamp: Date.now(),
+            }),
+        }).catch(function () {});
+    } catch (_e5) {}
+    // #endregion
 
     // Update collection header
     // ✅ FIX: Support both standard furniture page format (h6 element) and simple mode format
@@ -12523,6 +12724,14 @@ function populateLayerInputs(pattern = appState.currentPattern) {
       return;
     }
 
+    const colorControlsEl = document.getElementById("colorControls");
+    if (colorControlsEl) {
+      colorControlsEl.classList.remove("colorControls--standard");
+    }
+    if (dom.layerInputsContainer) {
+      dom.layerInputsContainer.classList.remove("layerInputsContainer--standard");
+    }
+
     // ⚡ Standard = not ColorFlex by data, or in a standard-only collection (farmhouse, oceana, abundance). Pass through — no layer inputs.
     const isStandard = patternIsStandard(pattern, appState.selectedCollection);
     if (isStandard) {
@@ -12548,8 +12757,11 @@ function populateLayerInputs(pattern = appState.currentPattern) {
         const sizeStr = `${sizeIn[0]}×${sizeIn[1]}`;
         const fallbackHtml = `<p>Each pattern repeat is ${sizeStr} inches and can be scaled to suit your need.</p>`;
         const inner = primaryHtml || fallbackHtml;
-        dom.layerInputsContainer.style.gridTemplateColumns = "repeat(1, 1fr)";
-        dom.layerInputsContainer.innerHTML = `<div style="text-align:center;padding:30px 20px;color:#d4af37;font-family:'IM Fell English',serif;font-size:1.1rem;line-height:1.8;max-width:800px;margin:0 auto;">${inner}</div>`;
+        dom.layerInputsContainer.classList.add("layerInputsContainer--standard");
+        if (colorControlsEl) {
+          colorControlsEl.classList.add("colorControls--standard");
+        }
+        dom.layerInputsContainer.innerHTML = `<div class="cf-standard-blurb">${inner}</div>`;
       }
       handlePatternSelection(pattern.name, appState.colorsLocked);
       addSaveButton();
@@ -13995,9 +14207,16 @@ async function loadPatternData(collection, patternId) {
         console.log(">>> Updated appState.currentPattern:", JSON.stringify(pattern, null, 2));
         appState.curatedColors = appState.selectedCollection.curatedColors || [];
         console.log(">>> Updated appState.curatedColors:", appState.curatedColors);
-        
-        // ✅ Populate curated colors when we have colors data; don't block preview/mockup on it
-        if (Array.isArray(appState.colorsData) && appState.colorsData.length && collection.curatedColors?.length) {
+
+        const isBassettMode = window.COLORFLEX_MODE === "BASSETT";
+        const standardHideCurated = patternIsStandard(pattern, collection) && !isBassettMode;
+        const curatedStrip = dom.curatedColorsContainer || document.getElementById("curatedColorsContainer");
+
+        // ✅ Curated strip: only for ColorFlex-style patterns (Bassett keeps collection palette on standards)
+        if (standardHideCurated) {
+            console.log("🧹 loadPatternData: standard pattern — curated strip cleared");
+            if (curatedStrip) curatedStrip.innerHTML = "";
+        } else if (Array.isArray(appState.colorsData) && appState.colorsData.length && collection.curatedColors?.length) {
             appState.curatedColors = collection.curatedColors;
             populateCuratedColors(appState.curatedColors);
         } else if (!Array.isArray(appState.colorsData) || appState.colorsData.length === 0) {
@@ -18350,9 +18569,9 @@ const generatePrintPreview = (options = {}) => {
 
         // Source-of-truth path: use the exact visible preview capture when available.
         // This keeps print/save output visually identical to the UI preview.
-        if (options.preferVisibleCapture !== false && typeof window.capturePatternThumbnail === 'function') {
+        if (options.preferVisibleCapture !== false && typeof capturePatternThumbnail === 'function') {
             try {
-                const visibleDataUrl = window.capturePatternThumbnail();
+                const visibleDataUrl = capturePatternThumbnail();
                 if (visibleDataUrl && typeof visibleDataUrl === 'string' && visibleDataUrl.startsWith('data:image')) {
                     await new Promise((resolve) => {
                         const img = new Image();

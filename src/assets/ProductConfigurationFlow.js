@@ -1320,7 +1320,11 @@ class ProductConfigurationFlow {
             if (this.state.pattern.currentScale && this.state.pattern.currentScale !== 100) {
                 params.set('scale', this.state.pattern.currentScale);
             }
-            
+            const sm = this.state.pattern.scaleMultiplier != null ? Number(this.state.pattern.scaleMultiplier) : NaN;
+            if (!isNaN(sm) && sm > 0 && sm !== 1) {
+                params.set('scale_multiplier', String(sm));
+            }
+
             // Material and texture selection (for variant pre-selection)
             params.set('selected_category', this.state.category);
             if (this.state.variant && this.state.variant.name) {

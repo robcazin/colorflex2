@@ -519,7 +519,8 @@ a.product__text {
 
 /* ColorFlex PDP: gold frame + soft lift (flat panel fill — no texture image) */
 #colorflexCustomColors,
-#colorflexMaterialInfo {
+#colorflexMaterialInfo,
+#patternInfo {
   box-sizing: border-box;
   margin: 12px 0;
   padding: 14px 16px;
@@ -591,10 +592,23 @@ a.product__text {
 
 @media screen and (min-width: 750px) {
   #colorflexCustomColors,
-  #colorflexMaterialInfo {
+  #colorflexMaterialInfo,
+  #patternInfo {
     width: 100%;
     max-width: 44rem;
   }
+}
+
+#patternInfo .colorflex-pattern-info__scale,
+#colorflexCustomColors .colorflex-pattern-info__scale {
+  color: rgba(239, 238, 234, 0.85);
+  font-size: 13px;
+  margin-top: 8px;
+  line-height: 1.45;
+}
+
+#patternInfo strong {
+  color: #efd197;
 }
 
 .product--no-media .product__info-container > modal-opener {
