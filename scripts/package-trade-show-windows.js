@@ -21,6 +21,21 @@ const path = require('path');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 
+/**
+ * Must match <link> / <script> hrefs in trade-show-local/index.html (same-origin /assets/…).
+ * The dev server on Mac serves the whole repo src/assets; the Windows handoff only has what we copy here.
+ */
+const TRADE_SHOW_ASSET_FILES = [
+  'base.css',
+  'component-list-menu.css',
+  'component-search.css',
+  'component-menu-drawer.css',
+  'component-cart-notification.css',
+  'color-flex-core.min.css',
+  'colorflex-responsive.css',
+  'color-flex-trade-demo.min.js'
+];
+
 function parseArgs(argv) {
   const out = { dest: null, cfData: null, zip: false };
   for (let i = 2; i < argv.length; i++) {
@@ -80,9 +95,12 @@ function main() {
   copyDir(path.join(REPO_ROOT, 'trade-show-local'), path.join(destRoot, 'trade-show-local'));
   copyDir(path.join(REPO_ROOT, 'demo-snapshot'), path.join(destRoot, 'demo-snapshot'));
 
+  const assetsSrc = path.join(REPO_ROOT, 'src', 'assets');
   const assetsOut = path.join(destRoot, 'src', 'assets');
   fs.mkdirSync(assetsOut, { recursive: true });
-  copyFile(tradeDemoJs, path.join(assetsOut, 'color-flex-trade-demo.min.js'));
+  for (const name of TRADE_SHOW_ASSET_FILES) {
+    copyFile(path.join(assetsSrc, name), path.join(assetsOut, name));
+  }
 
   copyFile(path.join(REPO_ROOT, 'Start-Trade-Show-Demo.cmd'), path.join(destRoot, 'Start-Trade-Show-Demo.cmd'));
   copyFile(path.join(REPO_ROOT, 'OWNER_INSTRUCTIONS.txt'), path.join(destRoot, 'OWNER_INSTRUCTIONS.txt'));
@@ -122,6 +140,7 @@ function main() {
       '5. Double-click Start-Trade-Show-Demo.cmd at this folder root.',
       '',
       'Verify: browser at http://127.0.0.1:3340/ — collections and images load.',
+      'If layout looks unstyled: ensure src\\assets\\ contains all .css files from the packager (see repo script).',
       '',
       'Full technical notes: trade-show-local\\WINDOWS_DEPLOY.md',
       ''

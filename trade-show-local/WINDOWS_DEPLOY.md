@@ -28,6 +28,13 @@ ColorFlexTradeShow\
     data\                       ← JSON snapshot (collections, colors, mockups metadata)
   src\
     assets\
+      base.css
+      component-list-menu.css
+      component-search.css
+      component-menu-drawer.css
+      component-cart-notification.css
+      color-flex-core.min.css
+      colorflex-responsive.css
       color-flex-trade-demo.min.js
 ```
 
