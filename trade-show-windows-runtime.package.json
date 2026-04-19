@@ -1,0 +1,9 @@
+{
+  "name": "colorflex-trade-show-windows-runtime",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Minimal npm metadata for Windows golden master: only Express, used by trade-show-local/server.js",
+  "dependencies": {
+    "express": "^4.22.1"
+  }
+}

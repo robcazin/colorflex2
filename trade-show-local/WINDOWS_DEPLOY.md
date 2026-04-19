@@ -1,53 +1,27 @@
-# ColorFlex trade-show demo — Windows deployment
+# ColorFlex trade-show — Windows deployment (technical)
 
-This document matches **`demo/trade-show-offline`** after merging **`main`** (wallpaper / CFM improvements) while keeping offline bootstrap and demo gating.
+Branch: **`demo/trade-show-offline`**. Wallpaper-only offline demo; no Shopify runtime in the shell.
 
-## A. Exact folders/files to copy to each Windows PC
+---
 
-Copy a single folder (recommended name: `ColorFlexTradeShow`) whose layout **preserves paths relative to the repo root** (the parent of `trade-show-local/`):
+## 1. Golden master folder (what gets copied to every PC)
 
-| Path | Purpose |
-|------|---------|
-| `trade-show-local/` | `index.html` (offline globals + `/demo-snapshot` base URL), `server.js` |
-| `demo-snapshot/` | Local JSON + raster assets (`data/collections.json`, `data/colors.json`, `data/mockups.json`, `data/collections/…`, `data/mockups/…`, `img/…`) |
-| `src/assets/color-flex-trade-demo.min.js` | Built wallpaper trade-demo bundle (only this file is required under `src/assets/` for runtime) |
-| `package.json` | Root `package.json` (so `npm install` can install `express`) |
-| `package-lock.json` | Optional but recommended for reproducible installs |
+Use one **fully prepared** folder (example name: `ColorFlexTradeShow`). The owner double-clicks **`Start-Trade-Show-Demo.cmd`** at the **root** of this folder (same level as `trade-show-local`).
 
-You do **not** need the full `src/` tree, theme, or webpack on the PC if the bundle and snapshot are already built on the source machine.
-
-**Do not** rely on `bassett-local/` or Bassett bundles for this demo.
-
-## B. Pre-copy build steps (source machine — macOS/Linux)
-
-On branch **`demo/trade-show-offline`**, from the repo root:
-
-```bash
-git checkout demo/trade-show-offline
-git pull   # if you use a remote
-npm install
-npm run build:trade-demo
-npm run build:trade-show-snapshot
-```
-
-- **`build:trade-demo`** writes `src/assets/color-flex-trade-demo.min.js` (embeds merged `CFM.js` + wallpaper trade entry).
-- **`build:trade-show-snapshot`** regenerates `demo-snapshot/` (requires `sharp` + `src/tools/colors.json` in the repo).
-
-Then copy the folder layout in section A to the PC (USB, network share, etc.).
-
-## C. Recommended folder layout on the Windows PC
-
-Example:
+### Exact tree (required)
 
 ```text
-C:\ColorFlexTradeShow\
-  package.json
-  package-lock.json
+ColorFlexTradeShow\
+  Start-Trade-Show-Demo.cmd          ← primary launcher (root)
+  OWNER_INSTRUCTIONS.txt             ← short notes for the owner
+  package.json                       ← use minimal runtime (see below) OR full repo package.json
+  package-lock.json                  ← optional; recommended if using full npm install
+  node_modules\                      ← MUST be present for turnkey use (built on Windows; see §2)
   trade-show-local\
     index.html
     server.js
-    Start-Trade-Show-Demo.cmd
     WINDOWS_DEPLOY.md
+    Start-Trade-Show-Demo.cmd        ← optional; forwards to root launcher
   demo-snapshot\
     data\
     img\
@@ -56,56 +30,95 @@ C:\ColorFlexTradeShow\
       color-flex-trade-demo.min.js
 ```
 
-## D. Launch steps on the Windows PC
+- **App code:** `trade-show-local/`, `src/assets/color-flex-trade-demo.min.js`
+- **Data:** `demo-snapshot/`
+- **Runtime:** `node_modules/` (Express only if you use the minimal `package.json` below)
 
-1. Install **Node.js LTS** (includes `node` and `npm` on PATH) if not already installed.
-2. Open **Command Prompt** or **PowerShell**, `cd` to `C:\ColorFlexTradeShow` (or your path).
-3. Install dependencies (once per machine):
+You do **not** need the rest of the repo, webpack, or `npm install` on each show PC if `node_modules` is shipped with the golden master.
+
+---
+
+## 2. Before creating the golden master (build machine)
+
+### On any OS (Mac/Linux/Windows) — branch `demo/trade-show-offline`, repo root:
+
+```bash
+git checkout demo/trade-show-offline
+npm install
+npm run build:trade-demo
+npm run build:trade-show-snapshot
+```
+
+This produces **`src/assets/color-flex-trade-demo.min.js`** and a full **`demo-snapshot/`**.
+
+### On Windows only — create `node_modules` for copying (recommended)
+
+`node_modules` **must be produced on Windows** if you want a turnkey copy (same OS as the show PCs).
+
+1. Create a staging folder and copy into it:
+
+   - `trade-show-local/` (as above)
+   - `demo-snapshot/`
+   - `src/assets/color-flex-trade-demo.min.js` (keep path `src\assets\`)
+   - Root **`Start-Trade-Show-Demo.cmd`**, **`OWNER_INSTRUCTIONS.txt`**, **`trade-show-windows-runtime.package.json`** from this repo
+
+2. In that staging folder, install **only** what the server needs (small, fast):
 
    ```bat
-   npm install --omit=dev
+   copy /Y trade-show-windows-runtime.package.json package.json
+   npm install
    ```
 
-   This installs runtime deps from root `package.json` (including `express`). DevDependencies are omitted to save time and disk.
+   (Or use the repo’s full `package.json` + `npm install --omit=dev` — larger `node_modules`, same result for Express.)
 
-4. Start the server:
+3. Zip the **entire** folder (including `node_modules`) or copy it to USB. That zip/folder is the **golden master**.
 
-   ```bat
-   node trade-show-local\server.js
-   ```
+---
 
-   Or double-click **`trade-show-local\Start-Trade-Show-Demo.cmd`** from Explorer (runs from repo root).
+## 3. Owner workflow (show floor)
 
-5. In the browser, open **http://127.0.0.1:3340/** (default).  
-   Override port/host if needed:
+1. Copy the **whole** golden master folder to the PC.
+2. Install **Node.js LTS** once on that PC if not already installed (https://nodejs.org/), with **Add to PATH** enabled.
+3. Double-click **`Start-Trade-Show-Demo.cmd`** at the **root** of the folder.
+4. The default browser should open to **http://127.0.0.1:3340/** after a couple of seconds.
+5. **Stop:** close the window titled **“ColorFlex Server — close this window to stop”**.
 
-   ```bat
-   set TRADE_SHOW_PORT=3340
-   set TRADE_SHOW_HOST=127.0.0.1
-   node trade-show-local\server.js
-   ```
+Details: **`OWNER_INSTRUCTIONS.txt`**.
 
-## E. Remaining runtime dependencies (not fully local)
+---
 
-- **Node.js** is required to run `trade-show-local/server.js` (Express static server). There is no file:// workflow in this implementation.
-- With **`COLORFLEX_DEMO_OFFLINE`** / **`COLORFLEX_TRADE_SHOW`** set in `trade-show-local/index.html`, CFM **does not** add Backblaze as a fallback for colors when offline (`loadColors`), and cart / Shopify customer flows are gated.
-- **Raster and JSON** for the curated snapshot are served from **`/demo-snapshot`** on the same origin — no CDN for those assets when the snapshot is present.
-- If you later add remote fonts, analytics, or third-party scripts to `index.html`, list them here; the stock trade-show `index.html` uses system UI fonts only.
+## 4. Verification checklist (run on the golden master PC before cloning to other PCs)
 
-## F. What changed when merging `main` into `demo/trade-show-offline`
+Do this once on a **Windows** machine that matches the show environment:
 
-Important **`main`**-side improvements brought in (wallpaper-relevant):
+| Check | How |
+|--------|-----|
+| Launch | Double-click `Start-Trade-Show-Demo.cmd` — no errors in the console that opens. |
+| Browser | Default browser opens to `http://127.0.0.1:3340/`. |
+| Collections | Page loads; collection UI shows the snapshot (e.g. Bombay demo content). |
+| Preview | Select a pattern; preview area updates. |
+| Mockup | Room mockup area responds for wallpaper mockup in snapshot. |
+| Assets | No broken image icons for thumbnails/layers in the Network tab (all under `/demo-snapshot/`). |
+| Stop | Closing the server window stops the app; port is free for next launch. |
 
-- **`fix(colorflex): canonical layer compositing and documented CORS policy`** — CFM / compositing and data-fetch behavior aligned with live pipeline docs.
-- **PDP / preview thumbnail and repeat-label behavior** — theme and CFM updates for product-page accuracy (mostly visible on Shopify; CFM core still benefits the bundle).
-- **Theme styling / calculator / contact gradient** — primarily Shopify theme assets; the offline shell does not load full theme CSS unless you add `<link>` tags later.
+If anything fails, fix the master **before** duplicating to other machines.
 
-**Preserved on the demo branch:**
+---
 
-- `isColorFlexDemoOffline()` and **`COLORFLEX_DEMO_OFFLINE` / `COLORFLEX_TRADE_SHOW`** gating in `CFM.js`.
-- `trade-show-local/index.html` bootstrap: `COLORFLEX_DATA_BASE_URL = origin + '/demo-snapshot'`, `ColorFlexAssets` pointing at `/demo-snapshot/data/*.json`, `ShopifyCustomer = null`, `COLORFLEX_MODE = 'WALLPAPER'`.
-- No Shopify cart/checkout runtime for the offline shell.
+## 5. Remaining prerequisites on each PC
 
-## G. Suggested next step for maximum portability
+- **Node.js LTS** on PATH (one-time install per machine). The demo does **not** embed Node; `node_modules` only removes the need for **`npm install`**, not Node itself.
 
-Bundle a **portable Node** build or a single **installer** that adds Node to PATH and drops a desktop shortcut running `Start-Trade-Show-Demo.cmd`. Alternatively, pre-run `npm install --omit=dev` on one PC and zip **`node_modules`** along with the app (same Windows + Node major version recommended).
+---
+
+## 6. Risks / limitations
+
+- **Node + Windows version:** `node_modules` built on one Windows PC should be copied to similar Windows PCs; if you mix OS versions, reinstall with `npm install` using `trade-show-windows-runtime.package.json` as `package.json` on a machine that fails.
+- **`furniture-config.json`** may 404 in the snapshot; wallpaper-only demo tolerates that (console warning only).
+- **Port 3340** must be free; change `TRADE_SHOW_PORT` only if you also change the launcher URL (advanced).
+
+---
+
+## 7. Merge note (`main` → `demo/trade-show-offline`)
+
+Live wallpaper improvements in **`CFM.js`** are merged into this branch; offline gating (`COLORFLEX_DEMO_OFFLINE` / `COLORFLEX_TRADE_SHOW`) and `/demo-snapshot` bootstrap are unchanged in `trade-show-local/index.html`.

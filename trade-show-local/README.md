@@ -44,6 +44,8 @@ TRADE_SHOW_HOST=127.0.0.1 TRADE_SHOW_PORT=3340 npm run serve:trade-demo
 - `/demo-snapshot` → repo `demo-snapshot/` (optional; omitted if missing)
 - `/assets` → repo `src/assets/` (optional; omitted if missing)
 
-## Windows PCs (copy / trade show)
+## Windows — turnkey golden master
 
-See **[WINDOWS_DEPLOY.md](./WINDOWS_DEPLOY.md)** for folder layout, pre-copy builds, `npm install`, and **`Start-Trade-Show-Demo.cmd`**.
+- **Owner:** **`OWNER_INSTRUCTIONS.txt`** at the repo root (copy it next to `Start-Trade-Show-Demo.cmd` in the distributed folder).
+- **Launcher:** double-click **`Start-Trade-Show-Demo.cmd`** at the **root** of the golden master folder (opens the browser after starting the server).
+- **Technical:** **[WINDOWS_DEPLOY.md](./WINDOWS_DEPLOY.md)** — exact folder tree, how to build `node_modules` once on Windows, and verification before duplicating to multiple PCs.

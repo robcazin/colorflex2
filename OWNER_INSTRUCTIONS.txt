@@ -1,0 +1,21 @@
+ColorFlex — trade show demo (offline)
+
+What you need on the computer first
+  • Node.js (LTS) from https://nodejs.org/ — install with “Add to PATH” enabled.
+  • This folder must include node_modules (the person who prepared the master copy should have included it). If you see an error about missing node_modules, use a complete copy of the golden master folder.
+
+How to run the demo
+  1. Copy this entire folder to the PC (Desktop or Documents is fine).
+  2. Double-click:  Start-Trade-Show-Demo.cmd
+  3. Wait a moment — your browser should open to the ColorFlex demo.
+  4. If the browser does not open, go to:  http://127.0.0.1:3340/
+
+How to stop
+  • Close the black window titled “ColorFlex Server — close this window to stop”.
+  • You can leave the browser tab open or close it; closing the server window stops the demo.
+
+If something goes wrong
+  • Make sure no other program is using the same address — only one demo should run at a time on this PC.
+  • Try closing the server window and double-click Start-Trade-Show-Demo.cmd again.
+
+For technical setup of the master copy, see trade-show-local\WINDOWS_DEPLOY.md

@@ -1,18 +1,11 @@
 @echo off
-REM Run from repo root (parent of trade-show-local). Opens ColorFlex trade-show server on http://127.0.0.1:3340
+REM Delegates to Start-Trade-Show-Demo.cmd in the parent folder (golden master root).
 cd /d "%~dp0\.."
-if not exist "trade-show-local\server.js" (
-  echo ERROR: Run this from the ColorFlex repo root, or keep Start-Trade-Show-Demo.cmd inside trade-show-local.
-  pause
-  exit /b 1
+if exist "Start-Trade-Show-Demo.cmd" (
+  call "Start-Trade-Show-Demo.cmd"
+  exit /b %ERRORLEVEL%
 )
-where node >nul 2>&1
-if errorlevel 1 (
-  echo ERROR: Node.js is not on PATH. Install Node.js LTS, then try again.
-  pause
-  exit /b 1
-)
-echo Starting ColorFlex trade-show demo...
-echo URL: http://127.0.0.1:3340
-node trade-show-local\server.js
+echo [ColorFlex] Missing Start-Trade-Show-Demo.cmd in the folder above this one.
+echo Use the complete golden master folder; double-click Start-Trade-Show-Demo.cmd at the top level.
 pause
+exit /b 1
