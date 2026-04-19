@@ -1,21 +1,68 @@
 /**
- * paletteDemo.js — browser-only POC.
+ * paletteDemo.js — Kuler-style harmony POC (primary) + optional image recolor (secondary).
  *
- * Open from a local HTTP server (ES modules):
- *   npx --yes serve -p 5050 .
- *   visit http://127.0.0.1:5050/src/demo/paletteDemo.html
- *
- * One base color → generatePalette → lockPalette. All sample images use
- * getLockedPalette() so swapping images never changes the palette.
+ * Serve repo over HTTP, then open:
+ *   http://127.0.0.1:5050/src/demo/paletteDemo.html
  */
 
-import { generatePalette, lockPalette, getLockedPalette } from '../color/paletteEngine.js';
+import { lockPalette, getLockedPalette } from '../color/paletteEngine.js';
 import { applyPaletteToImage } from '../color/applyPalette.js';
+import { HARMONY_DEFINITIONS, generateAllHarmonyPalettes } from '../color/harmonyPalettes.js';
 
-/** Single driver color for the whole demo */
-const DEMO_BASE_HEX = '#5a7d9a';
+const SLOT_LABELS = ['primary', 'secondary', 'accent', 'neutral', 'background'];
 
-/** @returns {HTMLCanvasElement} horizontal ramp dark → light */
+function normalizeHex(v) {
+  let h = String(v || '').trim();
+  if (!h) return '#5a7d9a';
+  if (h[0] !== '#') h = '#' + h;
+  if (h.length === 4) {
+    h = '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+  }
+  if (h.length !== 7) return '#5a7d9a';
+  return h.toLowerCase();
+}
+
+function el(tag, cls, html) {
+  const e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (html != null) e.innerHTML = html;
+  return e;
+}
+
+function renderSwatchRow(palette) {
+  const row = el('div', 'swatch-row');
+  for (const key of SLOT_LABELS) {
+    const cell = el('div', 'swatch-cell');
+    const chip = el('div', 'swatch-chip');
+    chip.style.background = palette[key];
+    chip.title = palette[key];
+    const cap = el('div', 'swatch-cap', key);
+    const hex = el('div', 'swatch-hex', palette[key]);
+    cell.appendChild(chip);
+    cell.appendChild(cap);
+    cell.appendChild(hex);
+    row.appendChild(cell);
+  }
+  return row;
+}
+
+function renderHarmonySection(def, palette) {
+  const card = el('section', 'harm-card');
+  card.appendChild(el('h2', 'harm-title', def.label));
+  card.appendChild(renderSwatchRow(palette));
+  return card;
+}
+
+function renderHarmonies(container, baseHex) {
+  container.innerHTML = '';
+  const all = generateAllHarmonyPalettes(baseHex);
+  for (const def of HARMONY_DEFINITIONS) {
+    container.appendChild(renderHarmonySection(def, all[def.id]));
+  }
+}
+
+/** ---------- Secondary: image recolor (fixed analogous palette) ---------- */
+
 function makeRampCanvas(w, h) {
   const c = document.createElement('canvas');
   c.width = w;
@@ -31,7 +78,6 @@ function makeRampCanvas(w, h) {
   return c;
 }
 
-/** @returns {HTMLCanvasElement} soft blobs (mid saturation) */
 function makeBlobCanvas(w, h) {
   const c = document.createElement('canvas');
   c.width = w;
@@ -52,7 +98,6 @@ function makeBlobCanvas(w, h) {
   return c;
 }
 
-/** @returns {HTMLCanvasElement} mostly desaturated regions */
 function makeGrayCanvas(w, h) {
   const c = document.createElement('canvas');
   c.width = w;
@@ -67,51 +112,101 @@ function makeGrayCanvas(w, h) {
   return c;
 }
 
+function renderImageRecolor(mount, baseHex) {
+  const wrap = el('div', 'secondary-wrap');
+  wrap.appendChild(el('h2', 'section-kicker', 'Secondary · image recolor'));
+  const p = el('p', 'muted', 'Uses the <strong>analogous</strong> harmony only, locked so thumbnails stay stable when you change the base above.');
+  wrap.appendChild(p);
+
+  const all = generateAllHarmonyPalettes(baseHex);
+  lockPalette(all.analogous);
+  const locked = getLockedPalette();
+  if (!locked) throw new Error('demo: lock failed');
+
+  const samples = [
+    { name: 'Ramp', canvas: makeRampCanvas(200, 120) },
+    { name: 'Blobs', canvas: makeBlobCanvas(200, 120) },
+    { name: 'Gray', canvas: makeGrayCanvas(200, 120) }
+  ];
+
+  const grid = el('div', 'img-grid');
+  for (const { name, canvas } of samples) {
+    const pair = el('div', 'img-pair');
+    const a = el('div', 'slot');
+    a.appendChild(el('span', 'img-label', 'before · ' + name));
+    a.appendChild(canvas);
+    const b = el('div', 'slot');
+    b.appendChild(el('span', 'img-label', 'after'));
+    b.appendChild(applyPaletteToImage(canvas, locked));
+    pair.appendChild(a);
+    pair.appendChild(b);
+    grid.appendChild(pair);
+  }
+  wrap.appendChild(grid);
+  mount.appendChild(wrap);
+}
+
 /**
  * @param {HTMLElement} mount
  */
 export function runPaletteDemo(mount) {
   mount.innerHTML = '';
 
-  const generated = generatePalette(DEMO_BASE_HEX);
-  lockPalette(generated);
-  const palette = getLockedPalette();
-  if (!palette) throw new Error('paletteDemo: lock failed');
+  const controls = el('div', 'controls');
+  const lab = el('label', 'base-lab');
+  lab.textContent = 'Base color';
+  const colorIn = el('input', '');
+  colorIn.type = 'color';
+  colorIn.id = 'baseColor';
+  colorIn.value = '#5a7d9a';
+  const textIn = el('input', 'hex-text');
+  textIn.type = 'text';
+  textIn.setAttribute('spellcheck', 'false');
+  textIn.value = '#5a7d9a';
+  textIn.setAttribute('aria-label', 'Base hex');
+  lab.appendChild(colorIn);
+  lab.appendChild(textIn);
+  controls.appendChild(lab);
 
-  const info = document.getElementById('palInfo');
-  if (info) {
-    info.textContent = [
-      'base = ' + DEMO_BASE_HEX,
-      'locked = ' +
-        [palette.primary, palette.secondary, palette.accent, palette.neutral, palette.background].join('  ')
-    ].join('  |  ');
+  const harmoniesMount = el('div', 'harmonies');
+  const meta = el('div', 'meta', '');
+
+  function syncFromColor() {
+    const hex = normalizeHex(colorIn.value);
+    textIn.value = hex;
+    renderHarmonies(harmoniesMount, hex);
+    meta.textContent =
+      'Deterministic HSL harmonies from ' + hex + ' · same input → same palettes (no network).';
+    const secondary = mount.querySelector('.secondary-wrap');
+    if (secondary) secondary.remove();
+    renderImageRecolor(mount, hex);
   }
 
-  const samples = [
-    { name: 'Ramp (dark→light)', el: makeRampCanvas(220, 140) },
-    { name: 'Blobs (saturated)', el: makeBlobCanvas(220, 140) },
-    { name: 'Gray fields (low sat)', el: makeGrayCanvas(220, 140) }
-  ];
-
-  for (const { name, el } of samples) {
-    const row = document.createElement('div');
-    row.className = 'row';
-
-    const left = document.createElement('div');
-    left.className = 'slot';
-    left.innerHTML = '<div>original · ' + name + '</div>';
-    left.appendChild(el);
-
-    const processed = applyPaletteToImage(el, palette);
-    const right = document.createElement('div');
-    right.className = 'slot';
-    right.innerHTML = '<div>palette-locked</div>';
-    right.appendChild(processed);
-
-    row.appendChild(left);
-    row.appendChild(right);
-    mount.appendChild(row);
+  function syncFromText() {
+    const hex = normalizeHex(textIn.value);
+    try {
+      colorIn.value = hex.length === 7 ? hex : colorIn.value;
+    } catch (_e) {}
+    textIn.value = hex;
+    renderHarmonies(harmoniesMount, hex);
+    meta.textContent =
+      'Deterministic HSL harmonies from ' + hex + ' · same input → same palettes (no network).';
+    const secondary = mount.querySelector('.secondary-wrap');
+    if (secondary) secondary.remove();
+    renderImageRecolor(mount, hex);
   }
+
+  colorIn.addEventListener('input', syncFromColor);
+  textIn.addEventListener('change', syncFromText);
+  textIn.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter') syncFromText();
+  });
+
+  mount.appendChild(controls);
+  mount.appendChild(meta);
+  mount.appendChild(harmoniesMount);
+
+  syncFromColor();
 }
 
 if (typeof document !== 'undefined') {

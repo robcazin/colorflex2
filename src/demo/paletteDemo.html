@@ -3,23 +3,41 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Palette engine POC</title>
-  <!-- Serve repo root over HTTP so ../color/*.js resolves (e.g. npx serve .) -->
+  <title>Harmony palettes POC</title>
+  <!-- Serve repo root over HTTP (e.g. npx serve .) so ES modules resolve. -->
   <style>
-    body { font-family: system-ui, sans-serif; margin: 16px; background: #111; color: #eee; }
-    .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 20px; }
-    .slot { text-align: center; max-width: 100%; }
-    canvas { display: block; border: 1px solid #444; margin-top: 6px; }
-    h1 { font-size: 1.15rem; font-weight: 600; }
-    #palInfo { font-family: ui-monospace, monospace; font-size: 11px; background: #1e1e1e; padding: 10px; border-radius: 6px; line-height: 1.5; margin-bottom: 16px; word-break: break-all; }
+    body { font-family: system-ui, sans-serif; margin: 20px; background: #121212; color: #eaeaea; max-width: 1100px; }
+    h1 { font-size: 1.25rem; font-weight: 600; margin-bottom: 0.35rem; }
+    .lede { max-width: 42rem; font-size: 0.92rem; opacity: 0.92; line-height: 1.5; margin-bottom: 1.25rem; }
+    .controls { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-bottom: 10px; }
+    .base-lab { display: flex; align-items: center; gap: 10px; font-weight: 600; }
+    .base-lab input[type="color"] { width: 52px; height: 40px; padding: 0; border: 1px solid #444; background: #000; cursor: pointer; }
+    .hex-text { width: 8.5rem; font-family: ui-monospace, monospace; padding: 8px 10px; border-radius: 6px; border: 1px solid #444; background: #1e1e1e; color: #eee; }
+    .meta { font-size: 0.82rem; color: #9a9a9a; margin-bottom: 1.25rem; line-height: 1.45; }
+    .harmonies { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
+    .harm-card { background: #1a1a1a; border: 1px solid #333; border-radius: 10px; padding: 12px 14px 14px; }
+    .harm-title { font-size: 0.95rem; margin: 0 0 10px; color: #d4c896; font-weight: 600; }
+    .swatch-row { display: flex; gap: 8px; flex-wrap: wrap; }
+    .swatch-cell { width: calc(20% - 7px); min-width: 44px; flex: 1 1 44px; }
+    .swatch-chip { height: 44px; border-radius: 6px; border: 1px solid rgba(255,255,255,0.12); }
+    .swatch-cap { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.04em; color: #888; margin-top: 4px; }
+    .swatch-hex { font-size: 0.62rem; font-family: ui-monospace, monospace; color: #666; word-break: break-all; }
+    .secondary-wrap { margin-top: 2.5rem; padding-top: 1.5rem; border-top: 1px solid #333; }
+    .section-kicker { font-size: 1rem; color: #a8a078; margin-bottom: 0.35rem; }
+    .muted { font-size: 0.85rem; color: #9a9a9a; line-height: 1.45; margin-bottom: 12px; max-width: 48rem; }
+    .img-grid { display: flex; flex-direction: column; gap: 14px; }
+    .img-pair { display: flex; gap: 14px; flex-wrap: wrap; align-items: flex-start; }
+    .slot .img-label { display: block; font-size: 0.75rem; color: #888; margin-bottom: 4px; }
+    .slot canvas { border: 1px solid #444; display: block; }
   </style>
 </head>
 <body>
-  <h1>Palette engine POC</h1>
-  <p style="max-width:52rem;font-size:0.9rem;opacity:0.9;">
-    One base color drives all rows. Palette is generated once, locked, then reused for every image — swapping sources does not change colors.
+  <h1>Kuler-style harmony generator</h1>
+  <p class="lede">
+    One base color produces six fixed color-theory palettes (analogous, complementary, split-complementary, triadic, monochromatic, warm-neutral).
+    Each shows five roles. Math is local HEX → HSL only — no Adobe, APIs, or libraries.
+    Image recoloring below is optional and uses only the <strong>analogous</strong> set, locked for stability.
   </p>
-  <div id="palInfo"></div>
   <div id="mount"></div>
   <script type="module" src="./paletteDemo.js"></script>
 </body>
