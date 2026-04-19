@@ -65,7 +65,8 @@ npm run package:trade-show-windows
 
 - **Include rasters** (large): `npm run package:trade-show-windows -- --cf-data=/absolute/path/to/cf-data`
 - **Custom output path:** `npm run package:trade-show-windows -- "D:\Out\ColorFlexTradeShow"`
-- **Optional zip** (macOS/Linux if `zip` is installed): `npm run package:trade-show-windows -- --zip`
+- **Optional zip** (macOS/Linux if `zip` is installed): `npm run package:trade-show-windows -- --zip`  
+  That writes **`ColorFlexTradeShow.zip`** in the **same directory that contains** `ColorFlexTradeShow/` (usually the repo root)—**next to** the folder, not inside it. For handoff, copy either the **folder** or the **zip**, not the whole repo.
 
 ### B. Install `node_modules` for distribution (**Windows**, in the staging folder that will become the golden master)
 

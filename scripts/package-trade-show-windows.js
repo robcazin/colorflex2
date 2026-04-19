@@ -128,6 +128,9 @@ function main() {
     [
       'ColorFlex trade-show — staff setup (Windows)',
       '',
+      'Handoff: copy THIS FOLDER (ColorFlexTradeShow) to the PC — not the parent repo.',
+      'If you used --zip, ColorFlexTradeShow.zip sits next to this folder; that is normal.',
+      '',
       'This folder was built on a dev machine. Before handing it to show PCs:',
       '',
       '1. Copy this entire folder to a Windows 10/11 machine.',
