@@ -1,18 +1,124 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="js" lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>ColorFlex Trade Show (offline shell)</title>
+  <title>ColorFlex</title>
+
+  <!-- Theme frame (src/layout/theme.liquid + src/sections/header.liquid) — static, no Shopify runtime -->
+  <link rel="stylesheet" href="/assets/base.css">
+  <link rel="stylesheet" href="/assets/component-list-menu.css" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="/assets/component-search.css" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="/assets/component-menu-drawer.css" media="print" onload="this.media='all'">
+  <link rel="stylesheet" href="/assets/component-cart-notification.css" media="print" onload="this.media='all'">
+  <link href="https://fonts.googleapis.com/css2?family=Aleo:ital,wght@0,400;0,700;1,400&family=Besley:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
   <style>
-    body { font-family: system-ui, sans-serif; margin: 0; padding: 0.75rem 1rem; line-height: 1.45; color: #1a1a1a; background: #f8f8f4; }
-    .banner { background: #1a202c; color: #e2e8f0; padding: 0.5rem 1rem; margin: -0.75rem -1rem 1rem; font-size: 0.9rem; }
-    .banner strong { color: #d4af37; }
-    .shell-note { font-size: 0.85rem; color: #444; max-width: 48rem; margin-bottom: 1rem; }
-    #preview { min-height: 120px; background: #fff; border: 1px solid #ccc; }
-    #roomMockup { min-height: 80px; background: #eee; border: 1px dashed #999; margin-top: 0.5rem; }
-    code { font-size: 0.88em; }
+    /* Mirrors theme {% style %} essentials: scheme-1 from src/config/settings_data.json (current) */
+    :root {
+      --font-body-family: "Aleo", serif;
+      --font-body-style: normal;
+      --font-body-weight: 400;
+      --font-heading-family: "Besley", serif;
+      --font-heading-style: normal;
+      --font-heading-weight: 400;
+      --font-body-scale: 1.25;
+      --font-heading-scale: 1.45;
+      --page-width: 130rem;
+      --page-width-margin: 0rem;
+      --header-height: 80px;
+    }
+    .color-scheme-1 {
+      --color-background: 0, 0, 0;
+      --color-foreground: 255, 255, 255;
+      --color-button: 155, 4, 111;
+      --color-button-text: 239, 209, 151;
+      --color-secondary-button: 0, 0, 0;
+      --color-secondary-button-text: 46, 42, 57;
+      --color-link: 46, 42, 57;
+      --color-badge-foreground: 255, 255, 255;
+      --color-badge-background: 0, 0, 0;
+      --color-badge-border: 255, 255, 255;
+      --gradient-background: #000000;
+    }
+    body {
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      grid-template-columns: 100%;
+      min-height: 100%;
+      margin: 0;
+      font-size: calc(var(--font-body-scale) * 62.5%);
+      letter-spacing: 0.06rem;
+      line-height: calc(1 + 0.8 / var(--font-body-scale));
+      font-family: var(--font-body-family);
+      font-style: var(--font-body-style);
+      font-weight: var(--font-body-weight);
+      color: rgba(var(--color-foreground), 0.75);
+      background-color: rgb(var(--color-background));
+    }
+    .trade-show-offline-frame .header__icon[aria-disabled="true"],
+    .trade-show-offline-frame .header__icon.is-disabled {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+    /* Matches header section spacing (header-group.json padding ~20, margin_bottom 20) */
+    .trade-show-offline-frame .section-header {
+      position: relative;
+      margin-bottom: 20px;
+    }
+    @media screen and (min-width: 990px) {
+      .trade-show-offline-frame .header {
+        padding-top: 20px;
+        padding-bottom: 20px;
+      }
+    }
+    .trade-show-offline-frame .header {
+      padding-left: 3rem;
+      padding-right: 3rem;
+    }
+    /* Inline nav removed: keep Sense grid (navigation | heading | icons) */
+    .trade-show-offline-frame .header--middle-center > details.menu-drawer-container {
+      grid-area: navigation;
+      justify-self: start;
+      align-self: center;
+    }
   </style>
+
+  <!-- Font imports (matches src/templates/page.colorflex.liquid) -->
+  <link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Island+Moments&family=Special+Elite&display=swap" rel="stylesheet">
+
+  <!-- ColorFlex page: black background (matches production page template) -->
+  <style>
+    body:has(.colorflex-section),
+    html:has(.colorflex-section) {
+      background: #000 !important;
+    }
+    #mainContainer {
+      margin-top: -24px;
+    }
+  </style>
+
+  <!-- Collections modal title + tiled background (matches production) -->
+  <style>
+    #collectionsModal .collections-modal-title {
+      color: #d4af37 !important;
+      font-size: 2rem !important;
+      margin-bottom: 1.5rem !important;
+      font-family: 'Island Moments', cursive !important;
+      text-align: center !important;
+    }
+    #collectionsModal .collections-modal-content {
+      background-color: #000;
+      background-image: url(/cf-data/img/garden-path-bg.jpg);
+      background-repeat: repeat;
+      background-size: auto;
+    }
+  </style>
+
+  <!--
+    Local ColorFlex (no Shopify): CFM uses COLORFLEX_DEMO_OFFLINE for cart/checkout/metafields.
+    JSON: /demo-snapshot/data/*.json. Rasters: /cf-data (local static folder when present; else server
+    proxies Backblaze under /cf-data for CORS-safe canvas use).
+  -->
   <script>
     (function () {
       window.COLORFLEX_DEMO_OFFLINE = true;
@@ -20,7 +126,6 @@
       window.COLORFLEX_MODE = 'WALLPAPER';
       window.ShopifyCustomer = null;
 
-      /* JSON from /demo-snapshot; rasters + bucket JSON from local /cf-data (same layout as cf-data on disk). */
       window.COLORFLEX_DATA_BASE_URL = window.location.origin + '/cf-data';
 
       var snap = window.location.origin + '/demo-snapshot/data';
@@ -31,30 +136,700 @@
         mockupsUrl: snap + '/mockups.json'
       };
 
-      /* Load colors + collections from snapshot URLs (not embedded). */
       window.ColorFlexData = { colors: null, collections: null };
     })();
   </script>
-</head>
-<body>
-  <div class="banner">
-    <strong>Wallpaper-only</strong> offline trade-show demo shell — <code>COLORFLEX_MODE=WALLPAPER</code>, no Shopify runtime.
-  </div>
-  <p class="shell-note">
-    Offline snapshot: <code>demo-snapshot/</code> (run <code>npm run build:trade-show-snapshot</code> after changing curated data).
-    Bundle: <code>npm run build:trade-demo</code> → <code>/assets/color-flex-trade-demo.min.js</code>.
-  </p>
 
-  <!-- IDs required by CFM dom.* (minimal stubs; full layout arrives with snapshot/UI work) -->
-  <div id="patternName"></div>
-  <div id="collectionHeader"></div>
-  <div id="collectionThumbnails"></div>
-  <div id="layerInputsContainer"></div>
-  <div id="curatedColorsContainer"></div>
-  <div id="coordinatesContainer"></div>
-  <div id="preview"></div>
-  <div id="roomMockup"></div>
-  <button type="button" id="printButton" hidden aria-hidden="true"></button>
+  <link rel="stylesheet" href="/assets/color-flex-core.min.css">
+  <link rel="stylesheet" href="/assets/colorflex-responsive.css">
+</head>
+<body class="gradient color-scheme-1 trade-show-offline-frame">
+
+<a class="skip-to-content-link button visually-hidden" href="#MainContent">Skip to content</a>
+
+<!-- Static header: class structure from src/sections/header.liquid (middle-center logo, sticky wrapper) -->
+<div id="shopify-section-sections--header" class="shopify-section shopify-section-group-header-group section-header">
+  <div class="header-wrapper color-scheme-1 gradient header-wrapper--border-bottom">
+    <header class="header header--middle-center header--mobile-left page-width header--has-account" role="banner">
+      <details id="Details-menu-drawer-offline" class="menu-drawer-container">
+          <summary class="header__icon header__icon--menu header__icon--summary link focus-inset" aria-label="Menu">
+            <span>
+              <span class="svg-wrapper"><svg xmlns="http://www.w3.org/2000/svg" fill="none" class="icon icon-hamburger" viewBox="0 0 18 16"><path fill="currentColor" d="M0 1.75A.75.75 0 0 1 .75 1h16.5a.75.75 0 0 1 0 1.5H.75A.75.75 0 0 1 0 1.75m0 6.25a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H.75A.75.75 0 0 1 0 8m0 6.25a.75.75 0 0 1 .75-.75h16.5a.75.75 0 0 1 0 1.5H.75a.75.75 0 0 1-.75-.75"/></span>
+            </span>
+          </summary>
+          <div id="menu-drawer-offline" class="gradient menu-drawer motion-reduce color-scheme-1" style="max-height:70vh;overflow:auto;">
+            <div class="menu-drawer__inner-container">
+              <nav class="menu-drawer__navigation">
+                <ul class="menu-drawer__menu list-menu" role="list">
+                  <li><span class="menu-drawer__menu-item list-menu__item" style="opacity:0.7;">Navigation (offline preview)</span></li>
+                </ul>
+              </nav>
+            </div>
+          </div>
+        </details>
+
+      <a href="/" class="header__heading-link link link--text focus-inset">
+        <div class="header__heading-logo-wrapper">
+          <img
+            src="https://saffroncottage.shop/cdn/shop/files/SC-header-mage_28caebdb-f595-4c80-bf6c-a084b26cd3b4.jpg?v=1751055900&amp;width=300"
+            srcset="https://saffroncottage.shop/cdn/shop/files/SC-header-mage_28caebdb-f595-4c80-bf6c-a084b26cd3b4.jpg?v=1751055900&amp;width=300 300w, https://saffroncottage.shop/cdn/shop/files/SC-header-mage_28caebdb-f595-4c80-bf6c-a084b26cd3b4.jpg?v=1751055900&amp;width=450 450w, https://saffroncottage.shop/cdn/shop/files/SC-header-mage_28caebdb-f595-4c80-bf6c-a084b26cd3b4.jpg?v=1751055900&amp;width=600 600w"
+            width="300"
+            height="62"
+            sizes="(min-width: 750px) 300px, 50vw"
+            loading="eager"
+            class="header__heading-logo"
+            alt="Saffron Cottage"
+          >
+        </div>
+      </a>
+
+      <div class="header__icons">
+        <a href="#" class="header__icon header__icon--search link focus-inset" aria-disabled="true" onclick="return false" tabindex="-1">
+          <span class="svg-wrapper"><svg fill="none" class="icon icon-search" viewBox="0 0 18 19" width="18" height="19" xmlns="http://www.w3.org/2000/svg"><path fill="currentColor" fill-rule="evenodd" d="M11.03 11.68A5.784 5.784 0 1 1 2.85 3.5a5.784 5.784 0 0 1 8.18 8.18m.26 1.12a6.78 6.78 0 1 1 .72-.7l5.4 5.4a.5.5 0 1 1-.71.7z" clip-rule="evenodd"/></svg></span>
+          <span class="visually-hidden">Search</span>
+        </a>
+        <a href="#" class="header__icon header__icon--calculator link focus-inset" aria-label="Wallpaper Calculator" title="Wallpaper Calculator" rel="nofollow" onclick="return false" tabindex="-1">
+          <span class="svg-wrapper">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="currentColor" class="icon icon-calculator" viewBox="0 0 18 19" width="18" height="19"><path fill="currentColor" fill-rule="evenodd" d="M4 2.5a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-12a2 2 0 0 0-2-2H4Zm0 1h10a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-12a1 1 0 0 1 1-1Zm1 2.5a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H5Zm0 2.5a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H5Zm0 2.5a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H5Zm0 2.5a.5.5 0 0 0 0 1h8a.5.5 0 0 0 0-1H5Z" clip-rule="evenodd"></path></svg>
+          </span>
+        </a>
+        <span class="header__icon header__icon--account link focus-inset is-disabled" aria-disabled="true">
+          <span class="svg-wrapper"><svg xmlns="http://www.w3.org/2000/svg" fill="none" class="icon icon-account" viewBox="0 0 18 19" width="18" height="19"><path fill="currentColor" fill-rule="evenodd" d="M6 4.5a3 3 0 1 1 6 0 3 3 0 0 1-6 0m3-4a4 4 0 1 0 0 8 4 4 0 0 0 0-8m5.58 12.15c1.12.82 1.83 2.24 1.91 4.85H1.51c.08-2.6.79-4.03 1.9-4.85C4.66 11.75 6.5 11.5 9 11.5s4.35.26 5.58 1.15M9 10.5c-2.5 0-4.65.24-6.17 1.35C1.27 12.98.5 14.93.5 18v.5h17V18c0-3.07-.77-5.02-2.33-6.15-1.52-1.1-3.67-1.35-6.17-1.35" clip-rule="evenodd"/></svg></span>
+          <span class="visually-hidden">Account (offline)</span>
+        </span>
+        <span class="header__icon header__icon--cart link focus-inset is-disabled" id="cart-icon-bubble" aria-disabled="true">
+          <span class="svg-wrapper"><svg xmlns="http://www.w3.org/2000/svg" fill="none" class="icon icon-cart-empty" viewBox="0 0 40 40" width="20" height="20"><path fill="currentColor" fill-rule="evenodd" d="M15.75 11.8h-3.16l-.77 11.6a5 5 0 0 0 4.99 5.34h7.38a5 5 0 0 0 4.99-5.33L28.4 11.8zm0 1h-2.22l-.71 10.67a4 4 0 0 0 3.99 4.27h7.38a4 4 0 0 0 4-4.27l-.72-10.67h-2.22v.63a4.75 4.75 0 1 1-9.5 0zm8.5 0h-7.5v.63a3.75 3.75 0 1 0 7.5 0z"/></svg></span>
+          <span class="visually-hidden">Cart</span>
+        </span>
+      </div>
+    </header>
+  </div>
+</div>
+
+<main id="MainContent" class="content-for-layout focus-none" role="main" tabindex="-1">
+
+<!-- Simple Back Button using browser history (matches production) -->
+<div id="backButton" style="
+  position: fixed;
+  top: calc(var(--header-height, 80px) + 16px);
+  left: 20px;
+  z-index: 1000;
+  background: rgba(26, 32, 44, 0.9);
+  border: 2px solid #d4af37;
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  color: #d4af37;
+  transition: all 0.3s ease;
+" onclick="window.history.back()" title="Go Back">
+  ←
+</div>
+
+<script>
+  document.getElementById('backButton').addEventListener('mouseenter', function() {
+    this.style.transform = 'scale(1.1)';
+    this.style.background = 'rgba(212, 175, 55, 0.2)';
+  });
+
+  document.getElementById('backButton').addEventListener('mouseleave', function() {
+    this.style.transform = 'scale(1)';
+    this.style.background = 'rgba(26, 32, 44, 0.9)';
+  });
+</script>
+
+<!-- First-Time Visitor Welcome Modal (matches production) -->
+<div id="welcomeModal" style="
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10000;
+  align-items: center;
+  justify-content: center;
+">
+  <div style="
+    background: #000;
+    border: 3px solid #d4af37;
+    border-radius: 16px;
+    padding: 2.5rem;
+    max-width: 580px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    color: white;
+  ">
+    <button id="closeWelcomeModal" style="
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      border: 2px solid #d4af37;
+      color: #d4af37;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      transition: all 0.3s ease;
+    " onmouseover="this.style.background='rgba(212, 175, 55, 0.2)'" onmouseout="this.style.background='transparent'">
+      ×
+    </button>
+
+    <h2 style="
+      color: #d4af37;
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+      font-family: 'Island Moments', cursive;
+      text-align: center;
+    ">Welcome to ColorFlex!</h2>
+
+    <div style="font-size: 1rem; line-height: 1.6; color: #e2e8f0; margin-bottom: 2rem;">
+      <p style="margin-bottom: 1rem;">
+        <strong style="color: #d4af37;">✨ Customize Your Perfect Pattern</strong><br>
+        Choose from our beautiful collections, then personalize every color to match your space perfectly.
+      </p>
+
+      <p style="margin-bottom: 1rem;">
+        <strong style="color: #d4af37;">🎨 Quick Start Guide:</strong>
+      </p>
+
+      <ul style="margin: 0 0 1rem 1.5rem; padding: 0; list-style: none;">
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">1.</span> Click the <strong>Collection</strong> header to switch collections
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">2.</span> Browse <strong>Patterns</strong> using thumbnails on the left
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">3.</span> Click <strong>Color Layers</strong> to customize each element
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">4.</span> Adjust <strong>Scale</strong> and <strong>Room Mockup</strong> to visualize
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">5.</span> <strong>Save to My Designs</strong> or select your material!
+        </li>
+      </ul>
+
+      <p style="margin-bottom: 0; color: #cbd5e0; font-size: 0.9rem; font-style: italic;">
+        💡 Tip: Use "My Designs" to view and edit all your saved patterns anytime.
+      </p>
+    </div>
+
+    <button id="startCustomizing" style="
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      background: linear-gradient(135deg, #d4af37 0%, #c69a2d 100%);
+      border: none;
+      border-radius: 8px;
+      color: #1a202c;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(212, 175, 55, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(212, 175, 55, 0.3)'">
+      Start Customizing →
+    </button>
+
+    <div style="text-align: center; margin-top: 1rem;">
+      <label style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; color: #a0aec0;">
+        <input type="checkbox" id="dontShowAgain" style="cursor: pointer;">
+        Don't show this again
+      </label>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const modal = document.getElementById('welcomeModal');
+  const closeBtn = document.getElementById('closeWelcomeModal');
+  const startBtn = document.getElementById('startCustomizing');
+  const dontShowCheckbox = document.getElementById('dontShowAgain');
+
+  const hasSeenWelcome = localStorage.getItem('colorflexWelcomeSeen');
+  const params = new URLSearchParams(window.location.search);
+  const source = (params.get('source') || '').toLowerCase();
+  const openedFromCartEdit =
+    source === 'cart' ||
+    source === 'cart_saved_pattern' ||
+    source === 'cart_edit' ||
+    source === 'colorflex_saved_patterns' ||
+    !!params.get('saved_pattern_id') ||
+    !!params.get('pattern_id');
+
+  if (!hasSeenWelcome && !openedFromCartEdit) {
+    modal.style.display = 'flex';
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+
+    if (dontShowCheckbox.checked) {
+      localStorage.setItem('colorflexWelcomeSeen', 'true');
+    }
+  }
+
+  closeBtn.addEventListener('click', closeModal);
+  startBtn.addEventListener('click', closeModal);
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      closeModal();
+    }
+  });
+})();
+</script>
+
+<!-- Collections Selection Modal (matches production) -->
+<div id="collectionsModal" style="
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 10001;
+  align-items: center;
+  justify-content: center;
+">
+  <div class="collections-modal-content" style="
+    border: 3px solid #d4af37;
+    border-radius: 16px;
+    padding: 2rem;
+    max-width: 900px;
+    width: 90%;
+    max-height: 85vh;
+    overflow-y: auto;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    color: white;
+  ">
+    <button id="closeCollectionsModal" style="
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      border: 2px solid #d4af37;
+      color: #d4af37;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      transition: all 0.3s ease;
+    " onmouseover="this.style.background='rgba(212, 175, 55, 0.2)'" onmouseout="this.style.background='transparent'">
+      ×
+    </button>
+
+    <h2 class="collections-modal-title">Select a Collection</h2>
+
+    <div id="collectionsGrid" style="
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    ">
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const modal = document.getElementById('collectionsModal');
+  const closeBtn = document.getElementById('closeCollectionsModal');
+  const collectionsGrid = document.getElementById('collectionsGrid');
+
+  window.openCollectionsModal = function() {
+    const collections = window.collectionsData || window.appState?.collections || [];
+
+    if (collections.length === 0) {
+      console.warn('No collections data available yet. Please wait for ColorFlex to initialize.');
+      modal.style.display = 'flex';
+      collectionsGrid.innerHTML = '<div style="text-align: center; padding: 2rem; color: #a0aec0;">Loading collections...</div>';
+
+      setTimeout(() => {
+        const retryCollections = window.collectionsData || window.appState?.collections || [];
+        if (retryCollections.length > 0) {
+          window.openCollectionsModal();
+        }
+      }, 500);
+      return;
+    }
+
+    collectionsGrid.innerHTML = '';
+
+    const wallpaperCollections = collections.filter(c =>
+      c.name && !c.name.includes('.fur-') && !c.name.includes('-clo') && !c.name.includes('.clo-')
+    );
+
+    const sortedCollections = window.ColorFlexSortCollectionsByNumber
+      ? window.ColorFlexSortCollectionsByNumber(wallpaperCollections)
+      : [...wallpaperCollections].sort((a, b) => a.name.localeCompare(b.name));
+
+    sortedCollections.forEach(collection => {
+      const collectionCard = document.createElement('div');
+      collectionCard.style.cssText = `
+        background: #000;
+        border: 1px solid rgba(212, 175, 55, 0.25);
+        border-radius: 8px;
+        padding: 1rem;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-align: center;
+        position: relative;
+      `;
+
+      const hasColorFlexPatterns = collection.patterns && collection.patterns.some(p =>
+        p.layers && Array.isArray(p.layers) && p.layers.length > 0
+      );
+
+      let cardHTML = '';
+
+      if (hasColorFlexPatterns) {
+        cardHTML += `
+          <div style="
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 2px solid #d4af37;
+            background: rgba(212, 175, 55, 0.1);
+          ">
+            <img
+              src="/cf-data/img/camelion-sm-r.jpg"
+              style="width: 100%; height: 100%; object-fit: cover;"
+              alt="ColorFlex Enabled"
+            >
+          </div>
+        `;
+      }
+
+      cardHTML += `
+        <h3 style="
+          font-family: 'IM Fell English', serif;
+          font-size: 1.2rem;
+          color: white;
+          margin: 0 0 0.5rem 0;
+          text-transform: uppercase;
+          ${hasColorFlexPatterns ? 'padding-right: 40px;' : ''}
+        ">${collection.name}</h3>
+        <div style="
+          font-size: 0.85rem;
+          color: #a0aec0;
+        ">${collection.patterns ? collection.patterns.length : 0} patterns</div>
+        ${hasColorFlexPatterns ? `
+          <div style="
+            font-size: 0.75rem;
+            color: #d4af37;
+            margin-top: 0.5rem;
+            font-weight: bold;
+          ">🎨 ColorFlex Enabled</div>
+        ` : ''}
+      `;
+
+      collectionCard.innerHTML = cardHTML;
+
+      collectionCard.addEventListener('mouseenter', function() {
+        this.style.borderColor = 'rgba(212, 175, 55, 0.5)';
+        this.style.background = 'rgba(212, 175, 55, 0.12)';
+        this.style.transform = 'translateY(-4px)';
+        this.style.boxShadow = '0 8px 16px rgba(212, 175, 55, 0.2)';
+      });
+
+      collectionCard.addEventListener('mouseleave', function() {
+        this.style.borderColor = 'rgba(212, 175, 55, 0.25)';
+        this.style.background = '#000';
+        this.style.transform = 'translateY(0)';
+        this.style.boxShadow = 'none';
+      });
+
+      collectionCard.addEventListener('click', function() {
+        const collectionName = collection.name;
+
+        function trySwitchCollection(retryCount) {
+          if (window.switchCollection) {
+            console.log('✅ Calling window.switchCollection for:', collectionName);
+            window.switchCollection(collectionName);
+            closeCollectionsModal();
+          } else if (retryCount > 0) {
+            console.log('⏳ switchCollection not available yet, retrying... (attempts left: ' + retryCount + ')');
+            setTimeout(function() {
+              trySwitchCollection(retryCount - 1);
+            }, 200);
+          } else {
+            console.error('❌ switchCollection function not available after retries');
+            alert('ColorFlex is still loading. Please wait a moment and try again.');
+          }
+        }
+
+        trySwitchCollection(5);
+      });
+
+      collectionsGrid.appendChild(collectionCard);
+    });
+
+    modal.style.display = 'flex';
+  };
+
+  function closeCollectionsModal() {
+    modal.style.display = 'none';
+  }
+
+  closeBtn.addEventListener('click', closeCollectionsModal);
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeCollectionsModal();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      closeCollectionsModal();
+    }
+  });
+})();
+</script>
+
+<!-- Patterns Modal (mobile) — matches production -->
+<div id="patternsModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 10000; align-items: center; justify-content: center; overflow-y: auto; padding: 1rem;">
+  <div style="background: #000; border: 3px solid #d4af37; border-radius: 16px; padding: 1.5rem; max-width: 95vw; max-height: 85vh; overflow-y: auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+      <h3 style="color: #d4af37; font-family: 'Island Moments', cursive; margin: 0;">Pick a Pattern</h3>
+      <button id="closePatternsModal" style="background: transparent; border: 2px solid #d4af37; color: #d4af37; width: 36px; height: 36px; border-radius: 50%; cursor: pointer; font-size: 1.2rem;">×</button>
+    </div>
+    <div id="patternsModalContent" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 0.75rem; padding: 0.5rem 0;"></div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const patternsModal = document.getElementById('patternsModal');
+  const patternsContent = document.getElementById('patternsModalContent');
+  const closeBtn = document.getElementById('closePatternsModal');
+
+  window.openPatternsModal = function() {
+    const leftSidebar = document.getElementById('leftSidebar');
+    const collectionThumbnails = document.getElementById('collectionThumbnails');
+    if (!collectionThumbnails || !leftSidebar) return;
+    patternsContent.appendChild(collectionThumbnails);
+    patternsModal.style.display = 'flex';
+  };
+
+  window.closePatternsModal = function() {
+    const leftSidebar = document.getElementById('leftSidebar');
+    const collectionThumbnails = document.getElementById('collectionThumbnails');
+    if (!collectionThumbnails || !leftSidebar) return;
+    leftSidebar.appendChild(collectionThumbnails);
+    patternsModal.style.display = 'none';
+  };
+
+  if (closeBtn) closeBtn.addEventListener('click', window.closePatternsModal);
+  patternsModal.addEventListener('click', function(e) {
+    if (e.target === patternsModal) window.closePatternsModal();
+    if (e.target.closest && e.target.closest('.thumbnail')) {
+      setTimeout(window.closePatternsModal, 400);
+    }
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && patternsModal.style.display === 'flex') window.closePatternsModal();
+  });
+
+  function updateMobileLayout() {
+    const bar = document.getElementById('mobileCollectionBar');
+    const mobileText = document.getElementById('mobileCollectionHeaderText');
+    const mainHeader = document.getElementById('collectionHeader');
+    if (!bar) return;
+    if (window.innerWidth <= 768) {
+      bar.style.display = 'flex';
+      if (mobileText && mainHeader) mobileText.textContent = mainHeader.textContent.replace(/\s*▼\s*$/,'').trim() || 'Collection';
+    } else {
+      bar.style.display = 'none';
+    }
+  }
+  window.addEventListener('resize', updateMobileLayout);
+  setInterval(updateMobileLayout, 1000);
+  updateMobileLayout();
+})();
+</script>
+
+<!-- Main ColorFlex UI (structure from src/templates/page.colorflex.liquid) -->
+<div class="colorflex-section">
+  <div style="background: #000; color: white; padding: 0.45rem; border-radius: 8px; margin: 0.225rem 0;">
+
+    <h2 style="display: none;">ColorFlex</h2>
+
+    <div id="mainContainer" style="position: relative; min-height: 70vh;">
+
+      <div class="colorflex-main-grid" style="display: grid; grid-template-columns: 1fr 280px 1fr; gap: 1.8rem; max-width: 1500px; margin: 0 auto; margin-left: 160px; padding: 0 0.9rem; position: relative; z-index: 1;">
+
+        <div style="grid-column: 1 / -1; margin-bottom: 0;">
+          <section id="curatedColorsSection" style="width: 100%; padding: 0.1125rem 0 0 0; text-align: center;">
+            <div id="curatedColorsContainer" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 5.4px; max-width: 1300px; margin: 0 auto -13.5px auto; min-height: 27px;"></div>
+          </section>
+        </div>
+
+        <div id="mobileCollectionBar" style="grid-column: 1 / -1; display: none; flex-direction: column; align-items: center; gap: 0.5rem; margin-bottom: 1rem;">
+          <div id="mobileCollectionHeader" onclick="window.openCollectionsModal()" style="cursor: pointer; padding: 0.5rem 1rem; background: rgba(212, 175, 55, 0.15); border: 2px solid #d4af37; border-radius: 8px; text-align: center;">
+            <span id="mobileCollectionHeaderText" style="font-family: 'IM Fell English', serif; font-size: 1rem; color: white;">Collection</span>
+            <div style="font-size: 0.7rem; color: #d4af37;">Tap to switch ▼</div>
+          </div>
+          <button id="patternsModalBtn" onclick="window.openPatternsModal()" type="button" style="padding: 0.5rem 1rem; background: #1a202c; border: 2px solid #d4af37; border-radius: 8px; color: #d4af37; font-size: 0.9rem; cursor: pointer;">Patterns</button>
+        </div>
+
+        <div style="text-align: center; margin-top: -19.8px;">
+          <h3 style="margin-bottom: 1.0rem; font-size: 3rem; font-family: 'Island Moments', cursive !important;">Pattern Preview</h3>
+          <div id="preview" style="max-width: 700px; min-height: 200px; background: #000; margin: 0 auto; display: flex; justify-content: center; align-items: center;"></div>
+          <h3 id="patternName" style="margin: 0.5rem .5rem; font-size: 1.4rem; font-family: 'Special Elite', monospace !important;">Pattern Name</h3>
+          <div id="patternPreviewActions" style="display: flex; justify-content: center; gap: 0.5rem; margin-top: 0.5rem; margin-bottom: 3rem; padding-bottom: 2rem; position: relative; z-index: 150;">
+            <div id="downloadProofContainer" style="position: relative; display: inline-block;">
+              <button id="downloadProofButton" type="button" class="py-4" aria-label="Download Proof" data-tooltip="Download pattern proof" style="padding: 0.4rem 0.6rem; font-size: 1rem; background: transparent; color: #d4af37; border: 2px solid #d4af37; border-radius: 50%; position: relative; z-index: 150; pointer-events: auto !important; display: flex; align-items: center; justify-content: center; width: 36px; height: 36px;">
+                ▼
+              </button>
+
+              <div id="proofDropdownMenu" style="position: absolute; top: 100%; left: 0; background: white; border: 2px solid #d4af37; border-radius: 4px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 1000; min-width: 200px; display: none;">
+                <button id="standardProofOption" type="button" style="width: 100%; padding: 12px 16px; border: none; background: transparent; text-align: left; cursor: pointer; font-size: 0.85rem; border-bottom: 1px solid #e2e8f0; transition: background 0.2s ease;">
+                  📄 Standard Proof
+                </button>
+                <button id="infoProofOption" type="button" style="width: 100%; padding: 12px 16px; border: none; background: transparent; text-align: left; cursor: pointer; font-size: 0.85rem; transition: background 0.2s ease;">
+                  📋 With Customer Info
+                </button>
+              </div>
+            </div>
+            <button id="printButton" type="button" class="py-4" aria-label="Print Pattern" data-tooltip="Click to print this pattern" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: #e2e8f0; border: none; border-radius: 4px; position: relative; z-index: 150; pointer-events: auto !important; display: flex; align-items: center; gap: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <polyline points="6,9 6,2 18,2 18,9"></polyline>
+                <path d="m6,18 h4"></path>
+                <path d="m10,18 h4"></path>
+                <rect x="3" y="14" width="18" height="4"></rect>
+                <path d="m14,18 h4"></path>
+              </svg>
+              Print Pattern
+            </button>
+            <button id="saveToListButton" type="button" class="py-4" aria-label="Save to My Designs" data-tooltip="Save this pattern to your custom designs" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: #e2e8f0; border: none; border-radius: 4px; position: relative; z-index: 150; pointer-events: auto !important; display: flex; align-items: center; gap: 0.5rem;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M16 4h2a2 2 0 0 1 2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path>
+                <rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect>
+                <path d="M12 11h4"></path>
+                <path d="M12 16h4"></path>
+                <path d="M8 11h.01"></path>
+                <path d="M8 16h.01"></path>
+              </svg>
+              Save to My Designs
+            </button>
+            <button id="buyItNowButton" type="button" class="py-4" aria-label="Select Your Material" data-tooltip="Save and select material for this pattern" style="padding: 0.5rem 1rem; font-size: 0.85rem; background: transparent; border: 2px solid #4299e1; color: #4299e1; border-radius: 4px; position: relative; z-index: 150; pointer-events: auto !important; display: flex; align-items: center; gap: 0.5rem; transition: all 0.3s ease;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="9" cy="21" r="1"></circle>
+                <circle cx="20" cy="21" r="1"></circle>
+                <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"></path>
+              </svg>
+              Select Your Material
+            </button>
+          </div>
+        </div>
+
+        <div id="colorControls" style="display: flex; flex-direction: column; width: 100%; margin-left: -1rem;">
+          <h3 id="colorLayersHeading" style="text-align: center; color: #d4af37; font-size: 1.5rem; font-family: 'Special Elite', monospace !important;">Color Layers</h3>
+
+          <div id="colorLockToggle" style="text-align: center; margin: 8px 0 12px 0;">
+            <button id="colorLockBtn" type="button" onclick="window.toggleColorLock()" data-tooltip="Keep your colors when switching patterns. Lock on, then pick another pattern." style="
+              background: rgba(110, 110, 110, 0.2);
+              border: 1px solid #d4af37;
+              border-radius: 4px;
+              padding: 5px 14px;
+              cursor: pointer;
+              color: #d4af37;
+              font-size: 0.85rem;
+              transition: all 0.3s ease;
+              display: inline-flex;
+              align-items: center;
+              gap: 6px;
+            ">
+              <span id="colorLockIcon" style="font-size: 1rem;">🔓</span>
+              <span id="colorLockText">Unlocked</span>
+            </button>
+          </div>
+
+          <div id="layerInputsContainer" style="width: 100%; min-width: 280px;"></div>
+        </div>
+
+        <div style="text-align: center; margin-top: -15px;">
+          <h3 style="margin-bottom: 0.5rem; font-size: 3rem; font-family: 'Island Moments', cursive !important;">Room Mockup Preview</h3>
+          <div id="roomMockup" style="width: 550px; height: 400px; background: #000; margin: 0 auto;"></div>
+
+          <div id="scaleControls" style="margin-top: 0.75rem;">
+            <button type="button" data-multiplier="1" onclick="setPatternScale(1)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0 !important; color: #1a202c !important; border: none; border-radius: 4px; font-size: 0.85rem; opacity: 1 !important;">X1</button>
+            <button type="button" data-multiplier="0.5" onclick="setPatternScale(0.5)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0 !important; color: #1a202c !important; border: none; border-radius: 4px; font-size: 0.85rem; opacity: 1 !important;">2X</button>
+            <button type="button" data-multiplier="0.3333333333333333" onclick="setPatternScale(1/3)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0 !important; color: #1a202c !important; border: none; border-radius: 4px; font-size: 0.85rem; opacity: 1 !important;">3X</button>
+            <button type="button" data-multiplier="0.25" onclick="setPatternScale(0.25)" style="margin: 0 0.25rem; padding: 0.4rem 0.8rem; background: #e2e8f0 !important; color: #1a202c !important; border: none; border-radius: 4px; font-size: 0.85rem; opacity: 1 !important;">4X</button>
+          </div>
+
+          <p style="margin-top: 1rem; font-size: 1.5rem; color: #888888ff; text-align: center; font-style: italic;">Adjust pattern scale - higher numbers show more repetitions</p>
+          <div id="coordinatesSection" style="text-align: center;">
+            <h3 style="font-size: 2rem; font-family: 'Island Moments', cursive !important;">Matching Coordinates</h3>
+            <div id="coordinatesContainer" style="min-height: 100px; max-width: 550px; margin-left: auto; margin-right: auto;"></div>
+          </div>
+
+        </div>
+
+      </div>
+
+      <div id="collectionHeaderContainer" style="position: fixed; left: 0; top: 162px; width: 140px; background: #000; padding: 0.675rem 0.675rem 0.45rem 0.675rem; z-index: 26; border-radius: 8px 8px 0 0; text-align: center; margin-left: 5px; cursor: pointer; transition: background 0.3s ease;"
+           onmouseenter="this.style.background='#1a1a1a'"
+           onmouseleave="this.style.background='#000'"
+           onclick="window.openCollectionsModal()">
+        <h6 id="collectionHeader" style="background: transparent; margin: 0 0 0.225rem 0; font-family: 'IM Fell English', serif !important; font-size: 0.99rem !important; color: white !important; font-weight: normal !important; text-transform: uppercase !important;">BOMBAY</h6>
+        <div style="font-family: 'Special Elite', monospace !important; font-size: 0.72rem; color: #d4af37 !important; text-transform: uppercase; letter-spacing: 0.45px;">
+          Collection ▼
+        </div>
+      </div>
+
+      <div id="leftSidebar" style="position: fixed; left: 0; top: 144px; width: 140px; background: #000; padding: 0.675rem; z-index: 25; border-radius: 0 0 8px 8px; overflow-y: auto; overflow-x: hidden; height: 884px; max-height: calc(100vh - 150px); -webkit-overflow-scrolling: touch; overscroll-behavior-y: contain; scrollbar-width: thin; -ms-overflow-style: scrollbar;">
+        <div id="collectionThumbnails"></div>
+      </div>
+
+    </div>
+
+    <div id="colorPopup" style="display: none;">
+      <div>
+        <p>🎨 Click a curated color to set this background color.</p>
+        <label><input type="checkbox" id="disablePopup"> Don't show this message again</label>
+        <button id="popupOkButton" type="button">OK</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</main>
+
+<footer class="footer page-width" role="contentinfo">
+  <div class="footer__content">
+    <p>&copy; 2026 Saffron Cottage. All rights reserved.</p>
+  </div>
+</footer>
 
   <script src="/assets/color-flex-trade-demo.min.js"></script>
 </body>

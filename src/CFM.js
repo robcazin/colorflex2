@@ -6746,7 +6746,19 @@ function normalizePath(path) {
             }
             return resolved;
         }
-        return path;
+        // Ensure full URLs have safely-encoded path segments (some catalogs contain absolute URLs with &, spaces, etc.)
+        try {
+            var u = new URL(path);
+            var parts = u.pathname.split('/').map(function (seg) {
+                if (!seg) return seg;
+                try { return encodeURIComponent(decodeURIComponent(seg)); }
+                catch (e) { return encodeURIComponent(seg); }
+            });
+            u.pathname = parts.join('/');
+            return u.toString();
+        } catch (e) {
+            return path;
+        }
     }
     // Strip leading ./
     if (path.startsWith('./')) path = path.substring(2);

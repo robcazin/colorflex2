@@ -1,0 +1,45 @@
+{
+  "fabric": {
+    "name": "Fabric Mockup",
+    "mockup": "data/mockups/clothing/dress-mannequin.png",
+    "base": "data/mockups/clothing/dress-base.png",
+    "patternPathTemplate": "data/collections/{collection}/layers/",
+    "description": "Standard fabric mockup for non-clothing patterns"
+  },
+  "clothing": {
+    "name": "Clothing - Dress",
+    "mockup": "data/mockups/clothing/dress-mannequin.png",
+    "base": "data/mockups/clothing/dress-base.png",
+    "patternPathTemplate": "data/mockups/clothing/mockup-layers/{collection}/{patternSlug}/",
+    "description": "Clothing mockup with dress silhouette"
+  },
+  "clothing-pants": {
+    "name": "Clothing - Pants Suit",
+    "mockup": "data/mockups/clothing/pants-suit-mannequin.png",
+    "base": "data/mockups/clothing/pants-suit-base.png",
+    "patternPathTemplate": "data/mockups/clothing/mockup-layers/{collection}/{patternSlug}/",
+    "description": "Clothing mockup with pants suit silhouette"
+  },
+  "furniture": {
+    "name": "Furniture - Sofa Capitol",
+    "mockup": "data/furniture/sofa-capitol/sofa-capitol-bgNEW.png",
+    "base": "data/furniture/sofa-capitol/sofa-capitol-base-w.png",
+    "wallMask": "data/furniture/sofa-capitol/sofa-capitol-wall-mask.png",
+    "baseShadow": "data/furniture/sofa-capitol/sofa-capitol-base-shadow.png",
+    "extrasTintable": "data/furniture/sofa-capitol/sofa-capitol-extras-tintable.png",
+    "extrasFixed": "data/furniture/sofa-capitol/sofa-capitol-extras-fixed.png",
+    "patternPathTemplate": "data/furniture/sofa-capitol/patterns/{collection}/{patternSlug}/",
+    "description": "Furniture mockup with sofa"
+  },
+  "furniture-kite": {
+    "name": "Furniture - Sofa Kite",
+    "mockup": "data/furniture/sofa-kite/sofa-kite-bgNEW.png",
+    "base": "data/furniture/sofa-kite/sofa-kite-base.png",
+    "wallMask": "data/furniture/sofa-kite/sofa-kite-wall-mask.png",
+    "baseShadow": "data/furniture/sofa-kite/sofa-kite-base-shadow.png",
+    "extrasTintable": "data/furniture/sofa-kite/sofa-kite-extras-tintable.png",
+    "extrasFixed": "data/furniture/sofa-kite/sofa-kite-extras-fixed.png",
+    "patternPathTemplate": "data/furniture/sofa-kite/patterns/{collection}/{patternSlug}/",
+    "description": "Furniture mockup with Kite sofa"
+  }
+}
