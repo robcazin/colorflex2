@@ -18,8 +18,18 @@
  */
 const fs = require('fs');
 const path = require('path');
+const { spawnSync } = require('child_process');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
+
+function gitHeadShort() {
+  const r = spawnSync('git', ['rev-parse', '--short', 'HEAD'], {
+    cwd: REPO_ROOT,
+    encoding: 'utf8'
+  });
+  if (r.status !== 0 || !r.stdout) return '(unknown)';
+  return r.stdout.trim();
+}
 
 /**
  * Must match <link> / <script> hrefs in trade-show-local/index.html (same-origin /assets/…).
@@ -102,6 +112,23 @@ function main() {
     copyFile(path.join(assetsSrc, name), path.join(assetsOut, name));
   }
 
+  const buildLines = [
+    'ColorFlexTradeShow — package build stamp',
+    '',
+    'Built (UTC): ' + new Date().toISOString(),
+    'Repo git HEAD: ' + gitHeadShort(),
+    '',
+    'Bundled under src/assets/: ' + TRADE_SHOW_ASSET_FILES.join(', '),
+    '',
+    'IMPORTANT: Code fixes on the Mac do NOT reach the PC until you:',
+    '  1) git pull on the Mac (or copy latest repo),',
+    '  2) npm run package:trade-show-windows',
+    '  3) Replace the ENTIRE ColorFlexTradeShow folder on the PC (delete the old one first),',
+    '     then npm install there if needed.',
+    ''
+  ];
+  fs.writeFileSync(path.join(destRoot, 'PACKAGE_BUILD.txt'), buildLines.join('\r\n'), 'utf8');
+
   copyFile(path.join(REPO_ROOT, 'Start-Trade-Show-Demo.cmd'), path.join(destRoot, 'Start-Trade-Show-Demo.cmd'));
   copyFile(path.join(REPO_ROOT, 'OWNER_INSTRUCTIONS.txt'), path.join(destRoot, 'OWNER_INSTRUCTIONS.txt'));
   copyFile(
@@ -145,6 +172,10 @@ function main() {
       'Handoff: copy THIS FOLDER (ColorFlexTradeShow) to the PC — not the parent repo.',
       'If you used --zip, ColorFlexTradeShow.zip sits next to this folder; that is normal.',
       '',
+      'After fixes on the Mac: pull latest, run npm run package:trade-show-windows again,',
+      'then on the PC delete the old demo folder and copy this whole folder in again.',
+      'Open PACKAGE_BUILD.txt here to confirm you have the new drop (time + git hash).',
+      '',
       'This folder was built on a dev machine. Before handing it to show PCs:',
       '',
       '1. Copy this entire folder to a Windows 10/11 machine.',
@@ -165,7 +196,8 @@ function main() {
     'utf8'
   );
 
-  console.log('Done. Next: copy to Windows, npm install, add cf-data if needed, test launcher.');
+  console.log('Done. Replace the PC copy of ColorFlexTradeShow with this folder — updates are not automatic.');
+  console.log('Build stamp:', path.join(destRoot, 'PACKAGE_BUILD.txt'));
 
   if (args.zip) {
     const base = path.basename(destRoot);
