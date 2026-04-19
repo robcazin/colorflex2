@@ -60,20 +60,32 @@
       opacity: 0.45;
       pointer-events: none;
     }
-    /* Matches header section spacing (header-group.json padding ~20, margin_bottom 20) */
+    /* Trade-show handoff: strip vertical chrome (theme defaults + base.css .header__heading-link padding) */
     .trade-show-offline-frame .section-header {
       position: relative;
-      margin-bottom: 20px;
+      margin-bottom: 0;
+    }
+    .trade-show-offline-frame .header {
+      padding-top: 0;
+      padding-bottom: 0;
+      padding-left: 3rem;
+      padding-right: 3rem;
+      row-gap: 0;
     }
     @media screen and (min-width: 990px) {
       .trade-show-offline-frame .header {
-        padding-top: 20px;
-        padding-bottom: 20px;
+        padding-top: 0;
+        padding-bottom: 0;
       }
     }
-    .trade-show-offline-frame .header {
-      padding-left: 3rem;
-      padding-right: 3rem;
+    .trade-show-offline-frame .header > .header__heading-link {
+      padding: 0 !important;
+      margin: 0;
+      line-height: 0 !important;
+    }
+    .trade-show-offline-frame .header__heading-logo-wrapper {
+      line-height: 0;
+      display: block;
     }
     /* Inline nav removed: keep Sense grid (navigation | heading | icons) */
     .trade-show-offline-frame .header--middle-center > details.menu-drawer-container {
