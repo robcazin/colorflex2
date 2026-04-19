@@ -13,7 +13,7 @@ const express = require('express');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const PORT = parseInt(process.env.TRADE_SHOW_PORT || '3340', 10);
-const HOST = process.env.TRADE_SHOW_HOST || '0.0.0.0');
+const HOST = process.env.TRADE_SHOW_HOST || '0.0.0.0';
 
 const B2_BASE = 'https://s3.us-east-005.backblazeb2.com/cf-data';
 
