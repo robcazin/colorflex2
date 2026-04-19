@@ -50,3 +50,6 @@ tmp/
 
 # Assembled Windows golden-master handoff (copy to PC; npm install there)
 ColorFlexTradeShow/
+
+# Local homepage / marketing video assets (not in theme repo)
+homePageVideos/

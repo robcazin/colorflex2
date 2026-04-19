@@ -47,3 +47,4 @@ npm run backup:list
 | [README.md](./README.md) | Run locally, snapshot, package overview |
 | [WINDOWS_DEPLOY.md](./WINDOWS_DEPLOY.md) | Golden-master layout, Windows `npm install`, verification |
 | [../OWNER_INSTRUCTIONS.txt](../OWNER_INSTRUCTIONS.txt) | Owner-facing steps (copy into handoff folder) |
+| [../docs/GIT_BRANCH_WORKFLOW.md](../docs/GIT_BRANCH_WORKFLOW.md) | Clean `git switch` / stash / ignored paths |
