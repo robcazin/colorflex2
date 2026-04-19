@@ -1,21 +1,26 @@
-ColorFlex — trade show demo (offline)
+ColorFlex trade-show demo
 
-What you need on the computer first
-  • Node.js (LTS) from https://nodejs.org/ — install with “Add to PATH” enabled.
-  • This folder must include node_modules (the person who prepared the master copy should have included it). If you see an error about missing node_modules, use a complete copy of the golden master folder.
+Before first use on this computer
+  • Install Node.js (LTS): https://nodejs.org/
+  • When the installer asks, keep “Add to PATH” turned on.
 
-How to run the demo
-  1. Copy this entire folder to the PC (Desktop or Documents is fine).
+What should be in your folder
+  • Start-Trade-Show-Demo.cmd  ← use this one (at the top level of the folder)
+  • trade-show-local
+  • demo-snapshot
+  • node_modules   ← must be included; copy the whole folder you were given
+
+Run the demo
+  1. Copy the whole folder onto this PC (any location is fine, including names with spaces).
   2. Double-click:  Start-Trade-Show-Demo.cmd
-  3. Wait a moment — your browser should open to the ColorFlex demo.
-  4. If the browser does not open, go to:  http://127.0.0.1:3340/
+  3. Wait — the browser should open. If not, open a browser yourself to:  http://127.0.0.1:3340/
 
-How to stop
-  • Close the black window titled “ColorFlex Server — close this window to stop”.
-  • You can leave the browser tab open or close it; closing the server window stops the demo.
+Stop the demo
+  • Close the window whose title starts with:  ColorFlex Server
+  • Closing the browser tab does not stop the server — close that window instead.
 
-If something goes wrong
-  • Make sure no other program is using the same address — only one demo should run at a time on this PC.
-  • Try closing the server window and double-click Start-Trade-Show-Demo.cmd again.
+Problems?
+  • Only one demo at a time on this computer. Close the ColorFlex Server window, then try again.
+  • If you see a message about Node.js or node_modules, read it — it says what is missing.
 
-For technical setup of the master copy, see trade-show-local\WINDOWS_DEPLOY.md
+Technical notes (for staff): trade-show-local\WINDOWS_DEPLOY.md
