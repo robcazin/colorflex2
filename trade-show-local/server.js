@@ -18,6 +18,7 @@ const HOST = process.env.TRADE_SHOW_HOST || '0.0.0.0';
 const B2_BASE = 'https://s3.us-east-005.backblazeb2.com/cf-data';
 
 const indexHtml = path.join(__dirname, 'index.html');
+const homeHtml = path.join(__dirname, 'home.html');
 const demoSnapshotDir = path.join(REPO_ROOT, 'demo-snapshot');
 const assetsDir = path.join(REPO_ROOT, 'src', 'assets');
 /** Offline raster + JSON under deployment root: cf-data/data/collections/…, cf-data/data/mockups/… */
@@ -27,6 +28,19 @@ const app = express();
 
 app.get('/', function (req, res) {
   res.sendFile(indexHtml);
+});
+
+app.get('/index.html', function (req, res) {
+  res.sendFile(indexHtml);
+});
+
+/** Bookmarks / older snippets may use /home.html — real file avoids ENOENT on sendFile. */
+app.get(['/home', '/home.html'], function (req, res) {
+  if (fs.existsSync(homeHtml)) {
+    res.sendFile(homeHtml);
+    return;
+  }
+  res.redirect(302, '/index.html');
 });
 
 app.use('/demo-snapshot', express.static(demoSnapshotDir));

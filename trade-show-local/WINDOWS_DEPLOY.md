@@ -20,6 +20,7 @@ ColorFlexTradeShow\
   cf-data\                      ← full local data tree (must contain data\collections\…, data\mockups\…, etc.)
   trade-show-local\
     index.html
+    home.html
     server.js
     WINDOWS_DEPLOY.md
     Start-Trade-Show-Demo.cmd   ← forwards to root launcher (same as root)
