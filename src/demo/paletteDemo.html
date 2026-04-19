@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Palette engine POC</title>
+  <!-- Serve repo root over HTTP so ../color/*.js resolves (e.g. npx serve .) -->
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 16px; background: #111; color: #eee; }
+    .row { display: flex; gap: 16px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 20px; }
+    .slot { text-align: center; max-width: 100%; }
+    canvas { display: block; border: 1px solid #444; margin-top: 6px; }
+    h1 { font-size: 1.15rem; font-weight: 600; }
+    #palInfo { font-family: ui-monospace, monospace; font-size: 11px; background: #1e1e1e; padding: 10px; border-radius: 6px; line-height: 1.5; margin-bottom: 16px; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <h1>Palette engine POC</h1>
+  <p style="max-width:52rem;font-size:0.9rem;opacity:0.9;">
+    One base color drives all rows. Palette is generated once, locked, then reused for every image — swapping sources does not change colors.
+  </p>
+  <div id="palInfo"></div>
+  <div id="mount"></div>
+  <script type="module" src="./paletteDemo.js"></script>
+</body>
+</html>
