@@ -47,3 +47,6 @@ tmp/
 # Optional: uncomment if you don't want to track built/minified assets
 # src/assets/*.min.js
 # src/assets/*.min.css
+
+# Assembled Windows golden-master handoff (copy to PC; npm install there)
+ColorFlexTradeShow/
