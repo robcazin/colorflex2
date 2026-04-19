@@ -48,9 +48,21 @@ npm run build:trade-demo
 npm run build:trade-show-snapshot
 ```
 
+### A2. Assemble the handoff folder (any OS)
+
+From repo root, this writes **`ColorFlexTradeShow/`** (gitignored) with the correct layout — launcher, `trade-show-local`, `demo-snapshot`, minimal `src/assets` bundle, and **`package.json`** (Express-only runtime):
+
+```bash
+npm run package:trade-show-windows
+```
+
+- **Include rasters** (large): `npm run package:trade-show-windows -- --cf-data=/absolute/path/to/cf-data`
+- **Custom output path:** `npm run package:trade-show-windows -- "D:\Out\ColorFlexTradeShow"`
+- **Optional zip** (macOS/Linux if `zip` is installed): `npm run package:trade-show-windows -- --zip`
+
 ### B. Install `node_modules` for distribution (**Windows**, in the staging folder that will become the golden master)
 
-1. Copy into the staging folder: `trade-show-local\`, `demo-snapshot\`, `src\assets\color-flex-trade-demo.min.js`, root **`Start-Trade-Show-Demo.cmd`**, **`OWNER_INSTRUCTIONS.txt`**, **`trade-show-windows-runtime.package.json`**, and the full **`cf-data\`** tree (folder whose child is **`data\`** with `collections\`, `mockups\`, etc.).
+1. If you used **§A2**, copy the generated folder to Windows (or zip it). Otherwise copy manually: `trade-show-local\`, `demo-snapshot\`, `src\assets\color-flex-trade-demo.min.js`, root **`Start-Trade-Show-Demo.cmd`**, **`OWNER_INSTRUCTIONS.txt`**, **`trade-show-windows-runtime.package.json`** → `package.json`, and the full **`cf-data\`** tree when not bundled.
 
 2. In that folder:
 
