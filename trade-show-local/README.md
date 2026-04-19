@@ -43,3 +43,7 @@ TRADE_SHOW_HOST=127.0.0.1 TRADE_SHOW_PORT=3340 npm run serve:trade-demo
 - `/` → `trade-show-local/index.html`
 - `/demo-snapshot` → repo `demo-snapshot/` (optional; omitted if missing)
 - `/assets` → repo `src/assets/` (optional; omitted if missing)
+
+## Windows PCs (copy / trade show)
+
+See **[WINDOWS_DEPLOY.md](./WINDOWS_DEPLOY.md)** for folder layout, pre-copy builds, `npm install`, and **`Start-Trade-Show-Demo.cmd`**.
