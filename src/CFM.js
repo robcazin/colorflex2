@@ -13693,6 +13693,9 @@ function applyColorsToLayerInputs(colors, curatedColors = []) {
     updateDisplays();
 }
 
+// Palette-engine test hook (`demo/colorflexPaletteHook.js`) uses the same apply path as the UI.
+window.applyColorsToLayerInputs = applyColorsToLayerInputs;
+
 // Highlight active layer
 const highlightActiveLayer = (circle) => {
     console.log("🎯 highlightActiveLayer called for circle:", circle.id);
