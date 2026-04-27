@@ -1,0 +1,13 @@
+---
+description: Do not git-commit webpack/minified theme assets unless the user explicitly asks
+alwaysApply: true
+---
+
+# Never commit built assets by default (ColorFlex)
+
+**Do not** stage or commit regenerated build output under `src/assets/` (for example `*.min.js`, `*.min.css` produced by `npm run build` / mode builds) unless the **user explicitly** says they want those files committed—e.g. as part of an intentional release or a workflow that requires artifacts in git.
+
+- Local **`npm run build`** and **`npm run theme:push:changed:assets`** (or related theme push scripts) are **separate from git**; deploy via Shopify CLI does not require committing minified bundles.
+- If the user only asked to build, test, or push the theme, **leave built assets out of commits** unless they clearly requested otherwise.
+
+This pairs with the deploy-after-build rule: run deploy after production builds when applicable, but **do not assume** regenerated assets belong in the same git commit as source changes.

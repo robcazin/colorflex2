@@ -9,6 +9,16 @@
  */
 
 import { generatePalette, lockPalette, getLockedPalette } from '../color/paletteEngine.js';
+import {
+  matchToPaintLibrary,
+  conformPaletteToPaintLibrary,
+  normalizeMatchHex
+} from '../color/paintLibraryMatcher.js';
+import { ensureLayerContrast } from '../color/ensureLayerContrast.js';
+import {
+  SHERWIN_WILLIAMS_TEST_PALETTE,
+  SHERWIN_WILLIAMS_TEST_PALETTE_DISCLAIMER
+} from '../color/sherwinWilliamsTestPalette.js';
 import { ENGINE_HARMONY_IDS } from '../color/harmonyPalettes.js';
 import { ENGINE_STYLE_IDS, ENGINE_STYLE_LABELS, ENGINE_STYLE_DESCRIPTIONS } from '../color/paletteStyles.js';
 import { ENGINE_ARTIST_IDS, ENGINE_ARTIST_BLURBS, DEFAULT_ARTIST_STRENGTH } from '../color/artistStyles.js';
@@ -270,20 +280,18 @@ export function initColorFlexPaletteHook() {
   if (!enabledByFlag()) return;
   if (document.getElementById('paletteEngineHookRoot')) return;
 
-  const container =
-    document.getElementById('colorControls') ||
-    document.getElementById('layerInputsContainer') ||
-    document.body;
+  const colorControls = document.getElementById('colorControls');
+  const layerInputsFallback = document.getElementById('layerInputsContainer');
+  const useTabs = !!colorControls;
 
   const root = el('section', 'peh-root');
   root.id = 'paletteEngineHookRoot';
 
-  root.appendChild(el('div', 'peh-title', 'Palette Engine Test'));
   root.appendChild(
     el(
       'div',
       'peh-note',
-      'Preview only until you click Apply. Uses the same apply path as ColorFlex (applyColorsToLayerInputs). Enable with ?paletteEngineTest=1'
+      'Preview until you click Apply. Demo library conform (ΔE). Full catalog labels on layers after ColorFlex loads colors.'
     )
   );
 
@@ -338,6 +346,9 @@ export function initColorFlexPaletteHook() {
   const refreshBtn = el('button', 'peh-btn', 'Refresh layer detection');
   controls.appendChild(refreshBtn);
 
+  const baseCatalogHint = el('div', 'peh-base-hint', '');
+  controls.appendChild(baseCatalogHint);
+
   root.appendChild(controls);
 
   const styleDesc = el('div', 'peh-desc', '');
@@ -363,9 +374,18 @@ export function initColorFlexPaletteHook() {
 
   const styleEl = document.createElement('style');
   styleEl.textContent = `
-    .peh-root{margin:12px 0;padding:12px 14px;border:1px solid #3a3a3a;border-radius:10px;background:#151515;color:#eaeaea;max-width:820px}
-    .peh-title{font-weight:700;font-size:0.95rem;margin-bottom:4px;color:#d4c896}
-    .peh-note{font-size:0.8rem;color:#a0a0a0;line-height:1.4;margin-bottom:10px}
+    #colorControls.peh-color-center-host{max-width:400px;width:100%;margin-left:auto!important;margin-right:auto!important}
+    .peh-tabs{display:flex;gap:4px;margin:0 0 0 0;justify-content:stretch;align-items:flex-end}
+    .peh-tabs[role="tablist"]{outline:none}
+    .peh-tab{flex:1;min-width:0;padding:8px 6px;font-size:0.72rem;font-weight:700;font-family:inherit;cursor:pointer;background:#141414;color:#9a9a8a;border:2px solid #5c4d2a;border-radius:8px 8px 0 0;margin:0;transition:color .15s,border-color .15s,background .15s}
+    .peh-tab:hover{color:#c8c8b0}
+    .peh-tab--active{color:#d4c896;border-color:#4299e1;background:#1c1912;box-shadow:inset 0 2px 0 0 rgba(66,153,225,.35)}
+    .peh-tab:focus-visible{outline:2px solid #4299e1;outline-offset:2px}
+    .peh-engine-wrap,.peh-panel-native{padding:10px 12px 12px;border:2px solid #4299e1;border-top:none;border-radius:0 0 10px 10px;background:#121212;color:#eaeaea;box-sizing:border-box}
+    .peh-panel-native{border-color:#5c4d2a}
+    .peh-panel-hidden{display:none!important}
+    .peh-root{margin:0;padding:0;border:none;background:transparent;color:#eaeaea;max-width:100%}
+    .peh-note{font-size:0.75rem;color:#a0a0a0;line-height:1.4;margin-bottom:10px}
     .peh-controls{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin-bottom:10px}
     .peh-lab{display:flex;flex-direction:column;gap:4px;font-size:0.72rem;color:#a0a0a0;font-weight:600}
     .peh-lab input[type="color"]{width:48px;height:34px;padding:0;border:1px solid #444;background:#000}
@@ -385,10 +405,96 @@ export function initColorFlexPaletteHook() {
     .peh-btn:hover{border-color:#777}
     .peh-btn:disabled{opacity:0.45;cursor:not-allowed}
     .peh-warn{font-size:0.78rem;color:#e0b070;line-height:1.35}
+    .peh-base-hint{flex-basis:100%;font-size:0.68rem;color:#8a9aac;line-height:1.35;max-width:36rem;margin-top:2px}
+    .peh-prev-label{font-size:0.72rem;color:#a0a0a0;margin-top:8px;margin-bottom:4px}
+    .peh-map-detail{display:flex;flex-direction:column;gap:2px;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06)}
+    .peh-map-detail .peh-map-line{border:none;padding:0;margin:0}
+    .peh-map-sub{font-size:0.72rem;color:#b0b0a0;padding-left:22px;line-height:1.45}
+    .peh-map-warn{font-size:0.7rem;color:#d9a070;padding-left:22px}
   `;
   root.appendChild(styleEl);
 
-  container.prepend(root);
+  /** @type {HTMLElement | null} */
+  let engineWrap = null;
+  /** @type {HTMLElement | null} */
+  let layersPanel = null;
+  /** @type {HTMLButtonElement | null} */
+  let tabEngineBtn = null;
+  /** @type {HTMLButtonElement | null} */
+  let tabLayersBtn = null;
+
+  function setCenterTab(which) {
+    if (!engineWrap || !layersPanel || !tabEngineBtn || !tabLayersBtn) return;
+    const showEngine = which === 'engine';
+    engineWrap.classList.toggle('peh-panel-hidden', !showEngine);
+    layersPanel.classList.toggle('peh-panel-hidden', showEngine);
+    tabEngineBtn.classList.toggle('peh-tab--active', showEngine);
+    tabLayersBtn.classList.toggle('peh-tab--active', !showEngine);
+    tabEngineBtn.setAttribute('aria-selected', showEngine ? 'true' : 'false');
+    tabLayersBtn.setAttribute('aria-selected', !showEngine ? 'true' : 'false');
+  }
+
+  if (useTabs && colorControls) {
+    colorControls.classList.add('peh-color-center-host');
+
+    layersPanel = el('div', 'peh-panel-native');
+    layersPanel.id = 'peh-native-color-layers-panel';
+    layersPanel.setAttribute('role', 'tabpanel');
+    layersPanel.setAttribute('aria-label', 'Color layers');
+
+    while (colorControls.firstChild) {
+      layersPanel.appendChild(colorControls.firstChild);
+    }
+
+    const tabBar = el('div', 'peh-tabs');
+    tabBar.setAttribute('role', 'tablist');
+    tabBar.setAttribute('aria-label', 'Color tools');
+
+    tabEngineBtn = document.createElement('button');
+    tabEngineBtn.type = 'button';
+    tabEngineBtn.className = 'peh-tab peh-tab--active';
+    tabEngineBtn.textContent = 'Palette Engine';
+    tabEngineBtn.setAttribute('role', 'tab');
+    tabEngineBtn.setAttribute('aria-selected', 'true');
+    tabEngineBtn.setAttribute('aria-controls', 'peh-palette-engine-panel');
+    tabEngineBtn.id = 'peh-tab-palette-engine';
+
+    tabLayersBtn = document.createElement('button');
+    tabLayersBtn.type = 'button';
+    tabLayersBtn.className = 'peh-tab';
+    tabLayersBtn.textContent = 'Color Layers';
+    tabLayersBtn.setAttribute('role', 'tab');
+    tabLayersBtn.setAttribute('aria-selected', 'false');
+    tabLayersBtn.setAttribute('aria-controls', 'peh-native-color-layers-panel');
+    tabLayersBtn.id = 'peh-tab-color-layers';
+
+    tabBar.appendChild(tabEngineBtn);
+    tabBar.appendChild(tabLayersBtn);
+
+    engineWrap = el('div', 'peh-engine-wrap');
+    engineWrap.id = 'peh-palette-engine-panel';
+    engineWrap.setAttribute('role', 'tabpanel');
+    engineWrap.setAttribute('aria-label', 'Palette engine');
+    engineWrap.appendChild(root);
+
+    colorControls.appendChild(tabBar);
+    colorControls.appendChild(engineWrap);
+    colorControls.appendChild(layersPanel);
+
+    tabEngineBtn.addEventListener('click', () => setCenterTab('engine'));
+    tabLayersBtn.addEventListener('click', () => setCenterTab('layers'));
+
+    setCenterTab('engine');
+  } else {
+    const container = layerInputsFallback || document.body;
+    root.style.margin = '12px 0';
+    root.style.padding = '12px 14px';
+    root.style.border = '1px solid #3a3a3a';
+    root.style.borderRadius = '10px';
+    root.style.background = '#151515';
+    root.style.maxWidth = '820px';
+    container.prepend(root);
+  }
 
   let lastComputed = null;
 
@@ -416,9 +522,65 @@ export function initColorFlexPaletteHook() {
     const locked = getLockedPalette();
     if (!locked) throw new Error('palette lock failed');
 
+    let catHint = '';
+    if (typeof window.colorflexResolveHexToSWDisplay === 'function') {
+      const r = window.colorflexResolveHexToSWDisplay(hex);
+      if (r && r.display) {
+        catHint = 'Full catalog (ColorFlex): ' + r.display + ' — ' + r.circleHex;
+      }
+    }
+    baseCatalogHint.textContent =
+      catHint ||
+      'Full catalog label: appears here after ColorFlex finishes loading its color list; base field stays hex for editing.';
+
     const layerCount = getColorableLayerCount();
-    const expanded12 = expandPaletteTo12(locked);
-    const proposed = computeProposedLayerColors(expanded12, layerCount);
+    const ideal = ensureLayerContrast(locked, layerCount) || locked;
+    const expanded12 = expandPaletteTo12(ideal);
+    const demoMatchOpts = {
+      primary: { maxDeltaE: 12 },
+      secondary: { maxDeltaE: 18 },
+      accent: { maxDeltaE: 18 },
+      neutral: { maxDeltaE: 22 },
+      background: { maxDeltaE: 22 }
+    };
+    const conformedBase = conformPaletteToPaintLibrary(ideal, SHERWIN_WILLIAMS_TEST_PALETTE, demoMatchOpts);
+    const baseMeta = (conformedBase && typeof conformedBase === 'object' && conformedBase._paintLibraryMeta) || {};
+    const baseMatched5 = [
+      conformedBase.primary || ideal.primary,
+      conformedBase.secondary || ideal.secondary,
+      conformedBase.accent || ideal.accent,
+      conformedBase.neutral || ideal.neutral,
+      conformedBase.background || ideal.background
+    ];
+    const baseMatches5 = [
+      baseMeta.primary || matchToPaintLibrary(ideal.primary, SHERWIN_WILLIAMS_TEST_PALETTE),
+      baseMeta.secondary || matchToPaintLibrary(ideal.secondary, SHERWIN_WILLIAMS_TEST_PALETTE),
+      baseMeta.accent || matchToPaintLibrary(ideal.accent, SHERWIN_WILLIAMS_TEST_PALETTE),
+      baseMeta.neutral || matchToPaintLibrary(ideal.neutral, SHERWIN_WILLIAMS_TEST_PALETTE),
+      baseMeta.background || matchToPaintLibrary(ideal.background, SHERWIN_WILLIAMS_TEST_PALETTE)
+    ];
+
+    const usedLibHexes = new Set();
+    for (const k of SLOT_KEYS) {
+      const m = baseMeta[k];
+      if (m && !m.usedFallback) {
+        const hx = normalizeMatchHex(m.matchedHex);
+        if (hx) usedLibHexes.add(hx);
+      }
+    }
+    const variantMatches = expanded12.slice(5).map((h) => {
+      const m = matchToPaintLibrary(h, SHERWIN_WILLIAMS_TEST_PALETTE, {
+        avoidHexes: usedLibHexes,
+        maxDeltaE: 24
+      });
+      if (!m.usedFallback) {
+        const hx = normalizeMatchHex(m.matchedHex);
+        if (hx) usedLibHexes.add(hx);
+      }
+      return m;
+    });
+    const matchResults12 = baseMatches5.concat(variantMatches);
+    const matchedExpanded12 = baseMatched5.concat(variantMatches.map((m) => m.matchedHex));
 
     styleDesc.textContent = style === 'none' ? '' : (ENGINE_STYLE_DESCRIPTIONS[style] || '');
     styleDesc.hidden = !styleDesc.textContent;
@@ -427,46 +589,103 @@ export function initColorFlexPaletteHook() {
     artistDesc.hidden = !artistDesc.textContent;
 
     preview.innerHTML = '';
-    preview.appendChild(renderSwatches([locked.primary, locked.secondary, locked.accent, locked.neutral, locked.background]));
+    const contrastNote =
+      ideal && ideal._contrastAdjusted && (ideal._contrastAdjusted.layerCount === 2 || ideal._contrastAdjusted.layerCount === 3)
+        ? ` (contrast adjusted for ${ideal._contrastAdjusted.layerCount}-layer patterns)`
+        : '';
+    preview.appendChild(el('div', 'peh-prev-label', 'Ideal palette' + contrastNote));
+    preview.appendChild(
+      renderSwatches([ideal.primary, ideal.secondary, ideal.accent, ideal.neutral, ideal.background])
+    );
+    preview.appendChild(el('div', 'peh-prev-label', 'Matched (demo SW sample — not full catalog)'));
+    preview.appendChild(
+      renderSwatches([
+        matchedExpanded12[0],
+        matchedExpanded12[1],
+        matchedExpanded12[2],
+        matchedExpanded12[3],
+        matchedExpanded12[4]
+      ])
+    );
 
     const pname = getPatternName();
-    info.textContent =
+    let infoText =
       'Detected color layers: ' +
       layerCount +
       (pname ? ' · Pattern: ' + pname : '') +
       ' · Mapping supports up to 12 layers.';
+    infoText += ' · ' + SHERWIN_WILLIAMS_TEST_PALETTE_DISCLAIMER;
+    info.textContent = infoText;
 
     mapList.innerHTML = '';
     const max = Math.min(layerCount, 12);
+    const roleLabel = (i) =>
+      i < 5
+        ? SLOT_KEYS[i][0].toUpperCase() + SLOT_KEYS[i].slice(1)
+        : [
+            'Darker primary',
+            'Lighter primary',
+            'Darker secondary',
+            'Lighter secondary',
+            'Muted accent',
+            'Warm neutral',
+            'Cool neutral'
+          ][i - 5];
+
     for (let i = 0; i < max; i++) {
-      const line = el('div', 'peh-map-line');
+      const idealHex = expanded12[i];
+      const m = matchResults12[i];
+      const role = roleLabel(i);
+
+      const block = el('div', 'peh-map-detail');
+      const top = el('div', 'peh-map-line');
       const chip = el('span', 'peh-chip');
-      chip.style.background = proposed[i];
-      const role =
-        i < 5
-          ? SLOT_KEYS[i][0].toUpperCase() + SLOT_KEYS[i].slice(1)
-          : ['Darker primary', 'Lighter primary', 'Darker secondary', 'Lighter secondary', 'Muted accent', 'Warm neutral', 'Cool neutral'][i - 5];
-      line.appendChild(chip);
-      line.appendChild(el('span', '', 'Layer ' + (i + 1) + ' — ' + role + ' — ' + proposed[i]));
-      mapList.appendChild(line);
+      chip.style.background = m.matchedHex;
+      top.appendChild(chip);
+      top.appendChild(el('span', '', 'Layer ' + (i + 1) + ' — ' + role));
+      block.appendChild(top);
+      block.appendChild(el('div', 'peh-map-sub', 'Ideal: ' + idealHex));
+      const codePart = m.matchedCode ? m.matchedCode + ' ' : '';
+      const namePart = m.matchedName || '(library name missing)';
+      block.appendChild(
+        el(
+          'div',
+          'peh-map-sub',
+          'Matched: ' + codePart + namePart + ' — ' + m.matchedHex
+        )
+      );
+      block.appendChild(el('div', 'peh-map-sub', 'ΔE (LAB 1976): ' + String(m.distance)));
+      if (m.usedFallback && m.warning) {
+        block.appendChild(el('div', 'peh-map-warn', m.warning));
+      }
+      mapList.appendChild(block);
     }
 
-    warn.textContent = '';
+    const warnParts = [];
     if (layerCount > 12) {
-      warn.textContent =
+      warnParts.push(
         'This pattern has ' +
-        layerCount +
-        ' layers. Palette auto-fill currently supports up to 12. Please review manually.';
+          layerCount +
+          ' layers. Palette auto-fill currently supports up to 12. Please review manually.'
+      );
     }
+    if (typeof window.applyColorsToLayerInputs !== 'function') {
+      warnParts.push('applyColorsToLayerInputs is not available on window (needs CFM bridge).');
+    }
+    if (matchResults12.slice(0, max).some((r) => r.usedFallback && r.warning)) {
+      warnParts.push('Some slots used the ideal color (no library match). See per-layer notes.');
+    }
+    warn.textContent = warnParts.join(' ');
 
     applyBtn.disabled = layerCount < 1 || layerCount > 12 || typeof window.applyColorsToLayerInputs !== 'function';
-    if (typeof window.applyColorsToLayerInputs !== 'function') {
-      warn.textContent =
-        (warn.textContent ? warn.textContent + ' ' : '') +
-        'applyColorsToLayerInputs is not available on window (needs CFM bridge).';
-    }
 
-    lastComputed = { locked, layerCount, proposedForInputs: proposed };
+    lastComputed = {
+      locked,
+      layerCount,
+      expanded12,
+      matchedExpanded12,
+      matchResults12
+    };
   }
 
   function applyToLayers() {
@@ -492,7 +711,9 @@ export function initColorFlexPaletteHook() {
       return;
     }
 
-    const colorsArray = buildColorsArrayForApply(lastComputed.proposedForInputs);
+    const source12 = lastComputed.matchedExpanded12;
+    const proposed = computeProposedLayerColors(source12, layerCount);
+    const colorsArray = buildColorsArrayForApply(proposed);
     window.applyColorsToLayerInputs(colorsArray, []);
     warn.textContent = 'Applied. Use existing ColorFlex controls to tweak or undo.';
   }

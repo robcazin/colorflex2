@@ -38,7 +38,7 @@ export const ENGINE_STYLE_DESCRIPTIONS = {
   bauhaus: 'Bold planes; high saturation; strong light/dark split.',
   minimal: 'Heavy calm; neutrals lead; narrow chroma.',
   scandinavian: 'Bright, neutral, calm — cool bias, soft contrast.',
-  coastal: 'Airy blues and aquas; sandy neutrals; soft contrast.',
+  coastal: 'Coastal aquas/sand; primary stays close to your chosen base; airy, soft contrast.',
   earth: 'Warm organic clay, olive, ochre; grounded, mid saturation.',
   luxury: 'Deep darks, crisp lights; refined gold accent; no neon.',
   pastel: 'Soft, light, gentle — low saturation, airy background.'
@@ -253,10 +253,16 @@ function styleCoastal(hsl, slotKey, baseHue) {
   let { h, s, l } = hsl;
   const sea = 202;
   const sand = 78;
-  if (slotKey === 'primary' || slotKey === 'secondary') {
-    h = lerpHue(h, sea, 0.18);
-    s = clamp(s * 0.88, 0.1, 0.72);
-    l = clamp(l + 0.06, 0.38, 0.86);
+  if (slotKey === 'primary') {
+    // Preserve recognizability: keep base color as primary (only small airy lift).
+    h = lerpHue(h, baseHue, 0.06);
+    s = clamp(s * 0.96, 0.1, 0.78);
+    l = clamp(l + 0.04, 0.34, 0.84);
+  } else if (slotKey === 'secondary') {
+    // Supporting coastal sea tone can drift more than primary.
+    h = lerpHue(h, sea, 0.22);
+    s = clamp(s * 0.86, 0.1, 0.68);
+    l = clamp(l + 0.06, 0.4, 0.88);
   }
   if (slotKey === 'accent') {
     h = lerpHue(h, 188, 0.15);

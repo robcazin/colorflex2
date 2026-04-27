@@ -9441,7 +9441,13 @@ function findClosestSWColor(targetHex) {
     let bestMatch = null;
     let bestDistance = Infinity;
 
-    for (const color of colorsData) {
+    const data =
+        (typeof appState !== 'undefined' && appState && Array.isArray(appState.colorsData) && appState.colorsData.length)
+            ? appState.colorsData
+            : (typeof colorsData !== 'undefined' && Array.isArray(colorsData) ? colorsData : []);
+
+    for (const color of data) {
+        if (!color || !color.hex) continue;
         const dist = colorDistance(`#${color.hex}`, targetHex);
         if (dist < bestDistance) {
             bestDistance = dist;
@@ -9450,6 +9456,47 @@ function findClosestSWColor(targetHex) {
     }
 
     return bestMatch;
+}
+
+/** Normalize user hex to #rrggbb or null (supports #rgb). */
+function normalizeHexInput6(hexInput) {
+    if (!hexInput || typeof hexInput !== 'string') return null;
+    let h = hexInput.trim().replace(/^#/, '');
+    if (h.length === 3) {
+        h = h.split('').map((c) => c + c).join('');
+    }
+    if (!/^[0-9a-f]{6}$/i.test(h)) return null;
+    return '#' + h.toLowerCase();
+}
+
+/** e.g. sw6216 → "SW 6216", sc0001 → "SC 1" */
+function formatSwCodeForDisplay(swRaw) {
+    const s = String(swRaw || '').trim();
+    if (!s) return '';
+    const m = s.match(/^(SW|SC|sw|sc)\s*0*(\d+)$/i);
+    if (m) return `${m[1].toUpperCase()} ${parseInt(m[2], 10)}`;
+    const digits = s.match(/0*(\d+)/);
+    if (digits) return `SW ${parseInt(digits[1], 10)}`;
+    return s.toUpperCase();
+}
+
+/**
+ * Map a hex swatch to a Sherwin/ColorFlex catalog label using loaded colorsData.
+ * @returns {{ display: string, circleHex: string, cleanColor: string } | null}
+ */
+function resolveHexToSWDisplay(hexInput) {
+    const targetHex = normalizeHexInput6(hexInput);
+    if (!targetHex) return null;
+    const data = appState && Array.isArray(appState.colorsData) ? appState.colorsData : [];
+    if (!data.length) return null;
+    const closest = findClosestSWColor(targetHex);
+    if (!closest || (!closest.color_name && !closest.name)) return null;
+    const name = toColorInitialCaps(String(closest.color_name || closest.name || '').trim());
+    const swDisp = formatSwCodeForDisplay(closest.sw_number || '');
+    const display = swDisp && name ? `${swDisp} ${name}` : (name || swDisp || targetHex);
+    const circleHex = closest.hex ? `#${String(closest.hex).replace(/^#/, '')}` : targetHex;
+    const cleanColor = display.replace(/^(SW|SC)\s*\d+\s+/i, '').trim() || name;
+    return { display, circleHex, cleanColor };
 }
 
 function colorDistance(hex1, hex2) {
@@ -13680,12 +13727,26 @@ function applyColorsToLayerInputs(colors, curatedColors = []) {
             return;
         }
         const color = (colors.length > clIdx && colors[clIdx] != null) ? colors[clIdx] : (curatedColors[index] || (layer.isBackground ? "#FFFFFF" : "Snowbound"));
+        const normHex = typeof color === 'string' ? normalizeHexInput6(color) : null;
+
+        // Raw hex → catalog label (after colors.json is loaded into appState.colorsData).
+        if (normHex) {
+            const resolved = resolveHexToSWDisplay(normHex);
+            if (resolved) {
+                layer.input.value = resolved.display;
+                layer.circle.style.backgroundColor = resolved.circleHex;
+                console.log(`Applied ${resolved.display} (${resolved.circleHex}) to ${layer.label} input (currentLayers[${clIdx}]) [hex→catalog]`);
+                appState.currentLayers[clIdx].color = resolved.cleanColor;
+                return;
+            }
+        }
+
         const cleanColor = (color || "").replace(/^(SW|SC)\d+\s*/i, "").trim();
         const hex = lookupColor(color) || "#FFFFFF";
         layer.input.value = getCleanColorName(color);
         layer.circle.style.backgroundColor = hex;
         console.log(`Applied ${cleanColor} (${hex}) to ${layer.label} input (currentLayers[${clIdx}])`);
-        
+
         appState.currentLayers[clIdx].color = cleanColor;
     });
     console.log("Inputs after apply:", 
@@ -22346,6 +22407,7 @@ window.decrementFurnitureScale = function() {
 window.loadSavedPatternToUI = loadSavedPatternToUI;
 window.showMaterialSelectionModal = showMaterialSelectionModal;
 window.lookupColor = lookupColor;
+window.colorflexResolveHexToSWDisplay = resolveHexToSWDisplay;
 window.generateShareableUrl = generateShareableUrl;
 window.copyShareableUrl = copyShareableUrl;
 
