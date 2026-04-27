@@ -126,7 +126,7 @@ var _excluded=["thumbnail"],_excluded2=["thumbnail"];function _objectWithoutProp
 // Import mode configuration
 // Initialize configuration based on detected mode
 var colorFlexConfig=(0,_config_colorFlex_modes_js__WEBPACK_IMPORTED_MODULE_0__.getCurrentConfig)();var colorFlexMode=(0,_config_colorFlex_modes_js__WEBPACK_IMPORTED_MODULE_0__.detectMode)();console.log("\uD83C\uDFA8 ColorFlex Mode: ".concat(colorFlexMode),colorFlexConfig);// Make configuration available globally
-if(typeof window!=='undefined'){window.colorFlexConfig=colorFlexConfig;window.colorFlexMode=colorFlexMode;}// 🎛️ DEBUG CONTROL FLAGS - Set to false to disable console logs by category
+if(typeof window!=='undefined'){window.colorFlexConfig=colorFlexConfig;window.colorFlexMode=colorFlexMode;}/** Trade-show / localhost demo: skip Shopify cart, cloud save, and aggressive remote data fallbacks. */function isColorFlexDemoOffline(){return typeof window!=='undefined'&&(window.COLORFLEX_DEMO_OFFLINE===true||window.COLORFLEX_TRADE_SHOW===true);}// 🎛️ DEBUG CONTROL FLAGS - Set to false to disable console logs by category
 var DEBUG_FLAGS={ENABLED:false,// Master switch - set to false to disable ALL debug logs
 COLORS:false,// Color lookups and mapping (🎨 logs)
 PROOF:false,// Proof generation and downloads (🔧 📥 logs)
@@ -143,7 +143,7 @@ var logColor=function logColor(){for(var _len2=arguments.length,args=new Array(_
 var CFM_RUNTIME_MARKER='CFM-RUNTIME-2026-04-09T20:58Z-shadowdance-sync-v1';console.log('🚨 DEBUG: ColorFlex CFM.js loaded - Version with thumbnail capture!');console.log('🚨 CFM Runtime Marker:',CFM_RUNTIME_MARKER);// ✅ BUILD TIMESTAMP - Injected at build time by webpack DefinePlugin
 // Webpack replaces process.env.* with actual string values during build
 // These will be literal strings in the final bundle (e.g., "2025-01-20T12:34:56.789Z")
-var BUILD_TIMESTAMP="2026-04-14T01:58:06.400Z"||0;var BUILD_DATE="4/13/2026, 9:58:06 PM"||0;var BUILD_MODE="all"||0;console.log('📦 ========================================');console.log('📦 COLORFLEX BUILD INFORMATION');console.log('📦 ========================================');console.log('📦 Build Timestamp:',BUILD_TIMESTAMP);console.log('📦 Build Date:',BUILD_DATE);console.log('📦 Build Mode:',BUILD_MODE);console.log('📦 ========================================');// Store globally for easy access (locked so later scripts can't overwrite it).
+var BUILD_TIMESTAMP="2026-04-27T15:51:36.997Z"||0;var BUILD_DATE="4/27/2026, 11:51:36 AM"||0;var BUILD_MODE="all"||0;console.log('📦 ========================================');console.log('📦 COLORFLEX BUILD INFORMATION');console.log('📦 ========================================');console.log('📦 Build Timestamp:',BUILD_TIMESTAMP);console.log('📦 Build Date:',BUILD_DATE);console.log('📦 Build Mode:',BUILD_MODE);console.log('📦 ========================================');// Store globally for easy access (locked so later scripts can't overwrite it).
 var __COLORFLEX_BUILD_INFO={timestamp:BUILD_TIMESTAMP,date:BUILD_DATE,mode:BUILD_MODE,runtimeMarker:CFM_RUNTIME_MARKER};try{Object.defineProperty(window,'COLORFLEX_BUILD_INFO',{value:__COLORFLEX_BUILD_INFO,writable:false,configurable:false,enumerable:true});}catch(e){window.COLORFLEX_BUILD_INFO=__COLORFLEX_BUILD_INFO;}console.log('🎛️ Debug flags configured:',DEBUG_FLAGS);// Create a dimensions display element
 // const dimensionsDisplay = document.createElement('div');
 // dimensionsDisplay.id = 'dimensions-display';
@@ -272,7 +272,7 @@ var SHOW_FABRIC_CONTROLS=false;// Set to true to show controls, false to hide
 var fabricRenderTimeout;function debouncedFabricRender(){clearTimeout(fabricRenderTimeout);fabricRenderTimeout=setTimeout(function(){if(appState.isInFabricMode){renderFabricMockup();}},100);// 100ms debounce
 }// App state - Made global for save functionality
 window.appState={collections:[],colorsData:[],currentPattern:null,currentLayers:[],curatedColors:[],layerInputs:[],selectedCollection:null,cachedLayerPaths:[],lastSelectedLayer:null,currentScale:100,scaleMultiplier:1,// Initialize scale multiplier (1 = Normal/100%)
-designer_colors:[],originalPattern:null,originalCoordinates:null,originalLayerInputs:null,originalCurrentLayers:null,lastSelectedColor:null,selectedFurniture:null,isInFabricMode:false,isInFurnitureMode:false,// Furniture upholstery mode
+designer_colors:[],originalPattern:null,originalCoordinates:null,originalLayerInputs:null,originalCurrentLayers:null,/** When set, updatePreview maps coordinate pattern layer N to host layer colors starting at this index (first non-bg pattern slot replaced on click). Cleared on restore. */coordinatePreviewColorStartIndex:null,lastSelectedColor:null,selectedFurniture:null,isInFabricMode:false,isInFurnitureMode:false,// Furniture upholstery mode
 furnitureConfig:null,// Loaded from furniture-config.json
 selectedFurnitureType:null,// e.g., 'sofa-capitol', 'sofa-kite'
 colorsLocked:false,// When true, preserves colors when switching patterns
@@ -291,7 +291,9 @@ var LEGACY_STANDARD_PATTERNS_BY_COLLECTION={'farmhouse':new Set(['Laundry Daze O
 if(pattern.colorFlex===false||pattern.standard===true)return true;var col=collection||appState.selectedCollection;var colNameNorm=normalizedCollectionName(col);// 2. Legacy fallback: known standard patterns per collection (for JSON that still has colorFlex: true on standard patterns).
 var legacySet=LEGACY_STANDARD_PATTERNS_BY_COLLECTION[colNameNorm];if(legacySet){var _iterator2=_createForOfIteratorHelper(legacySet),_step2;try{for(_iterator2.s();!(_step2=_iterator2.n()).done;){var name=_step2.value;if(patternNameMatches(pattern,name))return true;}}catch(err){_iterator2.e(err);}finally{_iterator2.f();}}// 3. By structure: not explicitly ColorFlex with layers
 var byData=!(pattern.colorFlex===true&&pattern.layers&&pattern.layers.length>0);if(byData)return true;// 4. Collection-level: entirely standard collection
-if(col&&col.colorFlex===false)return true;if(col&&col.colorFlex===true)return false;var colName=col===null||col===void 0||(_col$name2=col.name)===null||_col$name2===void 0||(_col$name2$toLowerCas=_col$name2.toLowerCase)===null||_col$name2$toLowerCas===void 0?void 0:_col$name2$toLowerCas.call(_col$name2);return!!colName&&STANDARD_COLLECTION_NAMES.includes(colNameNorm||colName);}// Designer-requested order: sort collections by collection number (from tableName e.g. "22 - IKATS" -> 22)
+if(col&&col.colorFlex===false)return true;if(col&&col.colorFlex===true)return false;var colName=col===null||col===void 0||(_col$name2=col.name)===null||_col$name2===void 0||(_col$name2$toLowerCas=_col$name2.toLowerCase)===null||_col$name2$toLowerCas===void 0?void 0:_col$name2$toLowerCas.call(_col$name2);return!!colName&&STANDARD_COLLECTION_NAMES.includes(colNameNorm||colName);}// #region agent log
+function cfAgentDebug(location,message,hypothesisId,data){if(typeof fetch!=='function')return;fetch('http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0b8664'},body:JSON.stringify({sessionId:'0b8664',runId:typeof window!=='undefined'&&window.__CF_DEBUG_RUN_ID?window.__CF_DEBUG_RUN_ID:'run1',location:location,message:message,hypothesisId:hypothesisId,data:data||{},timestamp:Date.now()})})["catch"](function(){});}// #endregion
+// Designer-requested order: sort collections by collection number (from tableName e.g. "22 - IKATS" -> 22)
 function getCollectionOrderNumber(c){if(c==null)return 999;if(typeof c.collectionNumber==='number'&&!Number.isNaN(c.collectionNumber))return c.collectionNumber;var tableName=c.tableName||'';var num=parseInt(tableName.split(' - ')[0],10);return Number.isNaN(num)?999:num;}function sortCollectionsByNumber(collections){if(!Array.isArray(collections))return collections;return collections.slice().sort(function(a,b){var na=getCollectionOrderNumber(a);var nb=getCollectionOrderNumber(b);if(na!==nb)return na-nb;return(a.name||'').localeCompare(b.name||'');});}if(typeof window!=='undefined'){window.ColorFlexSortCollectionsByNumber=sortCollectionsByNumber;window.ColorFlexGetCollectionOrderNumber=getCollectionOrderNumber;}/**
  * =============================================================================
  * SECTION 2: CUSTOMER SAVE SYSTEM  
@@ -360,13 +362,17 @@ function getCollectionOrderNumber(c){if(c==null)return 999;if(typeof c.collectio
  * @see appState.scaleMultiplier - Determines tiling density
  * @see appState.currentScale - Scale percentage for display (100, 200, 300, 400)
  */function capturePatternThumbnail(){try{// Prefer the largest visible preview canvas to avoid tiny swatch captures.
-var isVisible=function isVisible(el){if(!el)return false;var rect=el.getBoundingClientRect();var style=window.getComputedStyle(el);return rect.width>80&&rect.height>80&&style.display!=='none'&&style.visibility!=='hidden';};var addUnique=function addUnique(arr,el){if(el&&arr.indexOf(el)===-1)arr.push(el);};var candidates=[];var previewRoots=['#preview','#pattern-preview','.pattern-preview','#colorflex-preview','.colorflex-preview','#pattern-display','.pattern-display','#roomMockup'];previewRoots.forEach(function(selector){var root=document.querySelector(selector);if(root){if(root.tagName==='CANVAS')addUnique(candidates,root);root.querySelectorAll('canvas').forEach(function(c){return addUnique(candidates,c);});}});// Global fallback scan (still filtered by visibility/size).
-document.querySelectorAll('canvas').forEach(function(c){return addUnique(candidates,c);});var usableCanvases=candidates.filter(isVisible);if(!usableCanvases.length){console.warn('⚠️ No usable preview canvas found for thumbnail capture');return null;}var scoreCanvas=function scoreCanvas(canvas){var rect=canvas.getBoundingClientRect();var displayArea=rect.width*rect.height;var intrinsicArea=(canvas.width||0)*(canvas.height||0);return displayArea+intrinsicArea*0.1;};var previewCanvas=usableCanvases.sort(function(a,b){return scoreCanvas(b)-scoreCanvas(a);})[0];var rect=previewCanvas.getBoundingClientRect();console.log('📸 Using preview canvas for thumbnail:',{width:previewCanvas.width,height:previewCanvas.height,displayWidth:Math.round(rect.width),displayHeight:Math.round(rect.height),className:previewCanvas.className||'(none)',id:previewCanvas.id||'(none)'});// Create a high-resolution thumbnail canvas.
-var canvas=document.createElement('canvas');var _ctx=canvas.getContext('2d');canvas.width=800;canvas.height=800;_ctx.imageSmoothingEnabled=true;_ctx.imageSmoothingQuality='high';var srcW=previewCanvas.width||1;var srcH=previewCanvas.height||1;var scale=appState.scaleMultiplier||1.0;if(scale!==1.0&&appState.currentPattern){// Tile for zoomed patterns so thumbnail reflects scale detail.
-var tileWidth=800/scale;var tileHeight=800/scale;for(var x=0;x<800;x+=tileWidth){for(var y=0;y<800;y+=tileHeight){_ctx.drawImage(previewCanvas,0,0,srcW,srcH,x,y,tileWidth,tileHeight);}}}else{// Cover-fit to avoid tiny centered preview and preserve detail.
+var isVisible=function isVisible(el){if(!el)return false;var rect=el.getBoundingClientRect();var style=window.getComputedStyle(el);return rect.width>80&&rect.height>80&&style.display!=='none'&&style.visibility!=='hidden';};var addUnique=function addUnique(arr,el){if(el&&arr.indexOf(el)===-1)arr.push(el);};var collectCanvasesUnder=function collectCanvasesUnder(root){var list=[];if(!root)return list;if(root.tagName==='CANVAS')list.push(root);root.querySelectorAll('canvas').forEach(function(c){return addUnique(list,c);});return list;};var candidates=[];// When #preview has a live canvas, it is the flat "Pattern Preview" — never prefer #roomMockup,
+// which often has a huge backing buffer and wins the area score while showing a room composite.
+var previewHost=typeof dom!=='undefined'&&dom.preview||document.getElementById('preview');var scopedPreview=collectCanvasesUnder(previewHost).filter(isVisible);if(scopedPreview.length>0){scopedPreview.forEach(function(c){return addUnique(candidates,c);});}else{var previewRoots=['#preview','#pattern-preview','.pattern-preview','#colorflex-preview','.colorflex-preview','#pattern-display','.pattern-display','#roomMockup'];previewRoots.forEach(function(selector){var root=document.querySelector(selector);if(root){if(root.tagName==='CANVAS')addUnique(candidates,root);root.querySelectorAll('canvas').forEach(function(c){return addUnique(candidates,c);});}});document.querySelectorAll('canvas').forEach(function(c){return addUnique(candidates,c);});}var usableCanvases=candidates.filter(isVisible);// #region agent log
+cfAgentDebug('CFM.js:capturePatternThumbnail','preview canvas candidates','TH-CAPTURE',{candidateCount:candidates.length,usableCount:usableCanvases.length,isStd:appState.currentPattern?patternIsStandard(appState.currentPattern,appState.selectedCollection):null,collection:appState.selectedCollection&&appState.selectedCollection.name});// #endregion
+if(!usableCanvases.length){console.warn('⚠️ No usable preview canvas found for thumbnail capture');return null;}var scoreCanvas=function scoreCanvas(canvas){var rect=canvas.getBoundingClientRect();var displayArea=rect.width*rect.height;var intrinsicArea=(canvas.width||0)*(canvas.height||0);return displayArea+intrinsicArea*0.1;};var previewCanvas=usableCanvases.sort(function(a,b){return scoreCanvas(b)-scoreCanvas(a);})[0];var rect=previewCanvas.getBoundingClientRect();console.log('📸 Using preview canvas for thumbnail:',{width:previewCanvas.width,height:previewCanvas.height,displayWidth:Math.round(rect.width),displayHeight:Math.round(rect.height),className:previewCanvas.className||'(none)',id:previewCanvas.id||'(none)'});// Create a high-resolution thumbnail canvas.
+var canvas=document.createElement('canvas');var _ctx=canvas.getContext('2d');canvas.width=800;canvas.height=800;_ctx.imageSmoothingEnabled=true;_ctx.imageSmoothingQuality='high';var srcW=previewCanvas.width||1;var srcH=previewCanvas.height||1;// Always center-crop from the live preview canvas. The on-screen preview already applies
+// currentScale / tiling; re-tiling here by scaleMultiplier broke captures when multiplier < 1
+// (e.g. 0.25 → destination tiles wider than the output canvas → clipped / off-center zoom).
 var srcAspect=srcW/srcH;var dstAspect=1;// 800x800
-var cropW=srcW;var cropH=srcH;var cropX=0;var cropY=0;if(srcAspect>dstAspect){cropW=srcH*dstAspect;cropX=(srcW-cropW)/2;}else if(srcAspect<dstAspect){cropH=srcW/dstAspect;cropY=(srcH-cropH)/2;}_ctx.drawImage(previewCanvas,cropX,cropY,cropW,cropH,0,0,800,800);}// Convert to base64 data URL at higher quality for better detail.
-var dataUrl=canvas.toDataURL('image/jpeg',0.88);console.log('📸 Captured pattern thumbnail (length:',dataUrl.length,')');return dataUrl;}catch(error){console.error('❌ Failed to capture pattern thumbnail:',error);return null;}}// 🎯 NORMALIZE COLOR TO SW FORMAT
+var cropW=srcW;var cropH=srcH;var cropX=0;var cropY=0;if(srcAspect>dstAspect){cropW=srcH*dstAspect;cropX=(srcW-cropW)/2;}else if(srcAspect<dstAspect){cropH=srcW/dstAspect;cropY=(srcH-cropH)/2;}_ctx.drawImage(previewCanvas,cropX,cropY,cropW,cropH,0,0,800,800);// Convert to base64 data URL at higher quality for better detail.
+var dataUrl=canvas.toDataURL('image/jpeg',0.88);console.log('📸 Captured pattern thumbnail (length:',dataUrl.length,')');return dataUrl;}catch(error){console.error('❌ Failed to capture pattern thumbnail:',error);return null;}}window.capturePatternThumbnail=capturePatternThumbnail;// 🎯 NORMALIZE COLOR TO SW FORMAT
 // Converts color names to consistent "SW#### COLORNAME" format for cart display
 /**
  * Normalizes color names to standardized Sherwin-Williams format
@@ -482,9 +488,11 @@ console.log("\uD83D\uDCCF Appended scale to ID: ".concat(scale,"% \u2192 ").conc
  * localStorage / line-item key for cart thumbnails. Must stay in sync with theme
  * (main-product.liquid) and ProductConfigurationFlow Thumbnail Key.
  * Uses pattern.id so changing colors changes the key (avoids stale cart images).
- */function cartThumbnailStorageKeyFromPattern(pattern){if(!pattern)return'';var rawId=pattern.id||pattern.patternId;if(rawId&&String(rawId).trim()){return'cart_thumbnail_'+String(rawId).replace(/[^a-zA-Z0-9-]/g,'_');}var pn=pattern.patternName;var cn=pattern.collectionName;if(pn&&cn){return'cart_thumbnail_'+String(pn).replace(/[^a-zA-Z0-9-]/g,'_')+'_'+String(cn).replace(/[^a-zA-Z0-9-]/g,'_');}return'';}// CFM-SEARCH: SAVED_PRESET_ENTRY_ID
+ */function cartThumbnailStorageKeyFromPattern(pattern){if(!pattern)return'';var rawId=pattern.id||pattern.patternId;if(rawId&&String(rawId).trim()){return'cart_thumbnail_'+String(rawId).replace(/[^a-zA-Z0-9-]/g,'_');}var pn=pattern.patternName;var cn=pattern.collectionName;if(pn&&cn){return'cart_thumbnail_'+String(pn).replace(/[^a-zA-Z0-9-]/g,'_')+'_'+String(cn).replace(/[^a-zA-Z0-9-]/g,'_');}return'';}/**
+ * Persist global PDP thumbnail together with pattern id so product pages can ignore stale cross-pattern data.
+ */function colorflexStoreCurrentThumbnailForPattern(pattern,dataUrl){if(!dataUrl||typeof dataUrl!=='string')return;try{localStorage.setItem('colorflexCurrentThumbnail',dataUrl);var rawId=pattern&&(pattern.id||pattern.patternId);var pid=rawId!=null&&String(rawId).trim()!==''?String(rawId).trim():'';if(pid){localStorage.setItem('colorflexCurrentThumbnailPatternId',pid);}else{localStorage.removeItem('colorflexCurrentThumbnailPatternId');}}catch(_){}}// CFM-SEARCH: SAVED_PRESET_ENTRY_ID
 // Use a per-save entry ID so duplicate pattern IDs can still be deleted individually.
-function createSavedPatternEntryId(){return'sp_'+Date.now()+'_'+Math.random().toString(36).slice(2,10);}window.saveToMyList=/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2(){var _state$selectedCollec,_state$selectedCollec2,state,thumbnailDataUrl,colorLayersForSave,currentState,customerId,customerAccessToken,_t,_t2;return _regenerator().w(function(_context2){while(1)switch(_context2.p=_context2.n){case 0:console.log('🎯 saveToMyList() function called!');_context2.p=1;// Use global appState reference
+function createSavedPatternEntryId(){return'sp_'+Date.now()+'_'+Math.random().toString(36).slice(2,10);}window.saveToMyList=/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee2(){var _state$selectedCollec,_state$selectedCollec2,state,thumbnailDataUrl,colorLayersForSave,currentState,customerId,customerAccessToken,_t,_t3;return _regenerator().w(function(_context2){while(1)switch(_context2.p=_context2.n){case 0:console.log('🎯 saveToMyList() function called!');_context2.p=1;// Use global appState reference
 state=window.appState;// Validate that we have the required data
 if(!(!state.currentPattern||!state.currentPattern.name)){_context2.n=2;break;}showSaveNotification('❌ No pattern selected to save');return _context2.a(2);case 2:if(!(!state.selectedCollection||!((_state$selectedCollec=state.selectedCollection)!==null&&_state$selectedCollec!==void 0&&_state$selectedCollec.name))){_context2.n=3;break;}showSaveNotification('❌ No collection selected');return _context2.a(2);case 3:if(!(!state.currentLayers||state.currentLayers.length===0)){_context2.n=4;break;}showSaveNotification('❌ No layers to save');return _context2.a(2);case 4:console.log('🔄 Starting pattern save process...');// Capture saved thumbnail from proof renderer first (same compositing path as proof/cart flows).
 console.log('📸 About to capture saved-pattern thumbnail...');thumbnailDataUrl=null;_context2.p=5;if(!(typeof window.generatePrintPreviewDataUrl==='function')){_context2.n=7;break;}_context2.n=6;return window.generatePrintPreviewDataUrl();case 6:thumbnailDataUrl=_context2.v;if(thumbnailDataUrl&&thumbnailDataUrl.startsWith('data:image')){console.log('✅ Save-to-My-Designs thumbnail captured via generatePrintPreviewDataUrl');}case 7:_context2.n=9;break;case 8:_context2.p=8;_t=_context2.v;console.warn('⚠️ Save-to-My-Designs proof thumbnail generation failed, falling back:',_t);case 9:if(!thumbnailDataUrl||!thumbnailDataUrl.startsWith('data:image')){thumbnailDataUrl=capturePatternThumbnail();console.log('📸 Save-to-My-Designs fallback thumbnail capture:',thumbnailDataUrl?'Success':'Failed');}// Only persist layers that actually carry a user color (skip shadow / null — avoids "Unknown Color" in cart + thumbnails)
@@ -496,9 +504,9 @@ id:generatePatternId(appState.currentPattern.name,appState.currentLayers,state.c
 currentScale:state.currentScale||100,scaleMultiplier:state.scaleMultiplier||1.0,// Also save pattern size if available (for standard patterns)
 patternSize:state.currentPattern.size||null,// Unique per-save identifier so delete removes only one preset instance.
 savedEntryId:createSavedPatternEntryId()};console.log('💾💾💾 SAVING PATTERN TO LIST 💾💾💾');console.log('  Pattern name:',currentState.patternName);console.log('  Pattern ID:',currentState.id);console.log('  Current scale:',currentState.currentScale);console.log('  Scale in appState:',state.currentScale);console.log('  Full state:',currentState);// Try to save to Shopify customer metafields (if available)
-customerId=getCustomerId();customerAccessToken=getCustomerAccessToken();if(customerId&&customerAccessToken){saveToShopifyMetafields(currentState).then(function(){console.log('✅ Saved to Shopify customer metafields');})["catch"](function(error){console.log('🔄 Shopify save failed, using localStorage fallback');saveToLocalStorageNoDuplicateCheck(currentState)["catch"](function(e){console.error('❌ localStorage save failed:',e);});});}else{// Fall back to localStorage for development/testing
-console.log('📱 Customer not authenticated, saving to localStorage');saveToLocalStorageNoDuplicateCheck(currentState)["catch"](function(e){console.error('❌ localStorage save failed:',e);});}// Show success message
-showSaveNotification('✅ Pattern saved to your list!');return _context2.a(2,currentState);case 10:_context2.p=10;_t2=_context2.v;console.error('❌ Failed to save pattern:',_t2);showSaveNotification('❌ Failed to save pattern');return _context2.a(2,null);}},_callee2,null,[[5,8],[1,10]]);}));/**
+customerId=getCustomerId();customerAccessToken=getCustomerAccessToken();if(!isColorFlexDemoOffline()&&customerId&&customerAccessToken){saveToShopifyMetafields(currentState).then(function(){console.log('✅ Saved to Shopify customer metafields');})["catch"](function(error){console.log('🔄 Shopify save failed, using localStorage fallback');saveToLocalStorageNoDuplicateCheck(currentState)["catch"](function(e){console.error('❌ localStorage save failed:',e);});});}else{// Fall back to localStorage for development/testing (and offline trade-show demo)
+console.log(isColorFlexDemoOffline()?'📱 Offline demo: saving to localStorage only':'📱 Customer not authenticated, saving to localStorage');saveToLocalStorageNoDuplicateCheck(currentState)["catch"](function(e){console.error('❌ localStorage save failed:',e);});}// Show success message
+showSaveNotification('✅ Pattern saved to your list!');return _context2.a(2,currentState);case 10:_context2.p=10;_t3=_context2.v;console.error('❌ Failed to save pattern:',_t3);showSaveNotification('❌ Failed to save pattern');return _context2.a(2,null);}},_callee2,null,[[5,8],[1,10]]);}));/**
  * Saves pattern customization to Shopify customer metafields (cloud storage)
  *
  * Attempts to save pattern data to the customer's Shopify account via the
@@ -563,10 +571,10 @@ showSaveNotification('✅ Pattern saved to your list!');return _context2.a(2,cur
  * @see saveToLocalStorageNoDuplicateCheck - Fallback storage method
  * @see getCustomerId - Retrieves customer ID from Shopify
  * @see getCustomerAccessToken - Retrieves authentication token
- */function saveToShopifyMetafields(patternData){return new Promise(function(resolve,reject){try{var customerId=getCustomerId();var customerAccessToken=getCustomerAccessToken();if(!customerId||!customerAccessToken){reject(new Error('Customer not authenticated'));return;}console.log('🔄 Saving to Shopify customer metafields...');fetch('/api/colorFlex/save-pattern',{method:'POST',headers:{'Content-Type':'application/json','X-Shopify-Customer-Access-Token':customerAccessToken},body:JSON.stringify({customerId:customerId,patternData:patternData})}).then(function(response){if(!response.ok){response.json().then(function(errorData){reject(new Error(errorData.message||'Failed to save to Shopify'));})["catch"](function(){reject(new Error('Failed to save to Shopify'));});return;}response.json().then(function(result){console.log('✅ Pattern saved to Shopify metafields:',result);resolve(result);})["catch"](function(error){reject(error);});})["catch"](function(error){console.error('❌ Shopify save failed:',error);// Fallback to localStorage
+ */function saveToShopifyMetafields(patternData){return new Promise(function(resolve,reject){try{if(isColorFlexDemoOffline()){reject(new Error('Shopify metafield save disabled in offline demo'));return;}var customerId=getCustomerId();var customerAccessToken=getCustomerAccessToken();if(!customerId||!customerAccessToken){reject(new Error('Customer not authenticated'));return;}console.log('🔄 Saving to Shopify customer metafields...');fetch('/api/colorFlex/save-pattern',{method:'POST',headers:{'Content-Type':'application/json','X-Shopify-Customer-Access-Token':customerAccessToken},body:JSON.stringify({customerId:customerId,patternData:patternData})}).then(function(response){if(!response.ok){response.json().then(function(errorData){reject(new Error(errorData.message||'Failed to save to Shopify'));})["catch"](function(){reject(new Error('Failed to save to Shopify'));});return;}response.json().then(function(result){console.log('✅ Pattern saved to Shopify metafields:',result);resolve(result);})["catch"](function(error){reject(error);});})["catch"](function(error){console.error('❌ Shopify save failed:',error);// Fallback to localStorage
 console.log('🔄 Falling back to localStorage...');saveToLocalStorageNoDuplicateCheck(patternData)["catch"](function(e){console.error('❌ localStorage fallback failed:',e);});reject(error);});}catch(error){console.error('❌ Shopify save failed:',error);// Fallback to localStorage
 console.log('🔄 Falling back to localStorage...');saveToLocalStorageNoDuplicateCheck(patternData)["catch"](function(e){console.error('❌ localStorage fallback failed:',e);});reject(error);}});}// Clean up old cart thumbnails to prevent localStorage bloat
-function cleanupOldCartThumbnails(){try{console.log('🧹 Starting cart thumbnail cleanup...');var cartThumbnails=[];var now=Date.now();var maxAge=24*60*60*1000;// 24 hours
+function cleanupOldCartThumbnails(){try{if(isColorFlexDemoOffline()){return;}console.log('🧹 Starting cart thumbnail cleanup...');var cartThumbnails=[];var now=Date.now();var maxAge=24*60*60*1000;// 24 hours
 var maxCount=10;// Keep only 10 most recent
 // Find all cart thumbnail keys
 for(var i=0;i<localStorage.length;i++){var key=localStorage.key(i);if(key&&key.startsWith('cart_thumbnail_')){try{var data=JSON.parse(localStorage.getItem(key));cartThumbnails.push({key:key,timestamp:data.timestamp||0,age:now-(data.timestamp||0),size:localStorage.getItem(key).length});}catch(e){// Invalid data, mark for deletion
@@ -647,25 +655,25 @@ if(thumb.age>maxAge||index>=maxCount){localStorage.removeItem(thumb.key);removed
  * @see aggressiveLocalStorageCleanup - Emergency cleanup strategy
  * @see updateSavedPatternsMenuIcon - Updates UI after save
  */function saveToLocalStorageNoDuplicateCheck(_x3){return _saveToLocalStorageNoDuplicateCheck.apply(this,arguments);}// Helper functions
-function _saveToLocalStorageNoDuplicateCheck(){_saveToLocalStorageNoDuplicateCheck=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee14(patternData){var compressedThumbnail,existingPatterns,limitedPatterns,emergencyPatterns,thumbnail,currentPatternNoThumb,essentialPattern,essentialPatterns,_t19,_t20,_t21,_t22,_t23,_t24;return _regenerator().w(function(_context20){while(1)switch(_context20.p=_context20.n){case 0:_context20.p=0;// 🧹 Clean up old cart thumbnails FIRST to free up space
+function _saveToLocalStorageNoDuplicateCheck(){_saveToLocalStorageNoDuplicateCheck=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee14(patternData){var compressedThumbnail,existingPatterns,limitedPatterns,emergencyPatterns,thumbnail,currentPatternNoThumb,essentialPattern,essentialPatterns,_t20,_t21,_t22,_t23,_t24,_t25;return _regenerator().w(function(_context20){while(1)switch(_context20.p=_context20.n){case 0:_context20.p=0;// 🧹 Clean up old cart thumbnails FIRST to free up space
 cleanupOldCartThumbnails();// 🎯 FIX: Compress thumbnail before saving to prevent quota errors
 if(!patternData.thumbnail){_context20.n=2;break;}_context20.n=1;return createCompressedThumbnail(patternData.thumbnail);case 1:compressedThumbnail=_context20.v;if(compressedThumbnail){console.log('🗜️ Using compressed thumbnail to save space');patternData.thumbnail=compressedThumbnail;}else{console.warn('⚠️ Thumbnail compression failed, keeping original thumbnail');// Keep the original thumbnail instead of deleting it
 // Only delete if it's too large (>500KB)
 if(patternData.thumbnail.length>500000){console.warn('⚠️ Original thumbnail too large (>500KB), removing it');delete patternData.thumbnail;}}case 2:existingPatterns=JSON.parse(localStorage.getItem('colorflexSavedPatterns')||'[]');existingPatterns.push(patternData);// 🎯 FIX: More aggressive pattern limit and cleanup
 limitedPatterns=existingPatterns.slice(-15);// Reduced from 20 to 15
-_context20.p=3;localStorage.setItem('colorflexSavedPatterns',JSON.stringify(limitedPatterns));console.log('✅ Pattern saved to localStorage successfully');_context20.n=13;break;case 4:_context20.p=4;_t19=_context20.v;console.warn('⚠️ localStorage quota exceeded, cleaning up and retrying...');// Emergency cleanup strategy: try to preserve thumbnails for most recent patterns
+_context20.p=3;localStorage.setItem('colorflexSavedPatterns',JSON.stringify(limitedPatterns));console.log('✅ Pattern saved to localStorage successfully');_context20.n=13;break;case 4:_context20.p=4;_t20=_context20.v;console.warn('⚠️ localStorage quota exceeded, cleaning up and retrying...');// Emergency cleanup strategy: try to preserve thumbnails for most recent patterns
 // Step 1: Try removing only old patterns and keep thumbnails for recent 10
 emergencyPatterns=existingPatterns.slice(-10);// Add current pattern to emergency list
-emergencyPatterns.push(patternData);_context20.p=5;localStorage.setItem('colorflexSavedPatterns',JSON.stringify(emergencyPatterns));console.log('✅ Pattern saved with emergency cleanup (thumbnails preserved)');return _context20.a(2);case 6:_context20.p=6;_t20=_context20.v;console.warn('⚠️ Still too large, removing thumbnails from older patterns...');// Step 2: Remove thumbnails only from older patterns, keep current pattern thumbnail
+emergencyPatterns.push(patternData);_context20.p=5;localStorage.setItem('colorflexSavedPatterns',JSON.stringify(emergencyPatterns));console.log('✅ Pattern saved with emergency cleanup (thumbnails preserved)');return _context20.a(2);case 6:_context20.p=6;_t21=_context20.v;console.warn('⚠️ Still too large, removing thumbnails from older patterns...');// Step 2: Remove thumbnails only from older patterns, keep current pattern thumbnail
 emergencyPatterns=emergencyPatterns.slice(0,-1).map(function(pattern,index){// Keep thumbnails for the 3 most recent patterns
 if(index>=emergencyPatterns.length-4){return pattern;}else{var thumbnail=pattern.thumbnail,patternWithoutThumbnail=_objectWithoutProperties(pattern,_excluded);return patternWithoutThumbnail;}});// Add current pattern with thumbnail preserved
-emergencyPatterns.push(patternData);_context20.p=7;localStorage.setItem('colorflexSavedPatterns',JSON.stringify(emergencyPatterns));console.log('✅ Pattern saved with selective thumbnail cleanup');_context20.n=13;break;case 8:_context20.p=8;_t21=_context20.v;console.warn('⚠️ Final fallback: removing current pattern thumbnail too');// Final fallback: Remove thumbnail from current pattern as well
-thumbnail=patternData.thumbnail,currentPatternNoThumb=_objectWithoutProperties(patternData,_excluded2);emergencyPatterns[emergencyPatterns.length-1]=currentPatternNoThumb;_context20.p=9;localStorage.setItem('colorflexSavedPatterns',JSON.stringify(emergencyPatterns));console.log('🔧 Emergency save successful (without thumbnails)');_context20.n=13;break;case 10:_context20.p=10;_t22=_context20.v;console.error('❌ Emergency save failed, trying aggressive localStorage cleanup...');// Super aggressive cleanup - remove everything except essential data
+emergencyPatterns.push(patternData);_context20.p=7;localStorage.setItem('colorflexSavedPatterns',JSON.stringify(emergencyPatterns));console.log('✅ Pattern saved with selective thumbnail cleanup');_context20.n=13;break;case 8:_context20.p=8;_t22=_context20.v;console.warn('⚠️ Final fallback: removing current pattern thumbnail too');// Final fallback: Remove thumbnail from current pattern as well
+thumbnail=patternData.thumbnail,currentPatternNoThumb=_objectWithoutProperties(patternData,_excluded2);emergencyPatterns[emergencyPatterns.length-1]=currentPatternNoThumb;_context20.p=9;localStorage.setItem('colorflexSavedPatterns',JSON.stringify(emergencyPatterns));console.log('🔧 Emergency save successful (without thumbnails)');_context20.n=13;break;case 10:_context20.p=10;_t23=_context20.v;console.error('❌ Emergency save failed, trying aggressive localStorage cleanup...');// Super aggressive cleanup - remove everything except essential data
 aggressiveLocalStorageCleanup();// Try one more time with just essential pattern data (no thumbnail)
 _context20.p=11;essentialPattern={id:patternData.id,patternName:patternData.patternName,collectionName:patternData.collectionName,colors:patternData.colors,currentScale:patternData.currentScale,scaleMultiplier:patternData.scaleMultiplier,saveDate:patternData.saveDate};essentialPatterns=[essentialPattern];// Start fresh with just this pattern
-localStorage.setItem('colorflexSavedPatterns',JSON.stringify(essentialPatterns));console.log('✅ Pattern saved with minimal data after aggressive cleanup');_context20.n=13;break;case 12:_context20.p=12;_t23=_context20.v;console.error('❌ All save attempts failed - localStorage severely limited');throw new Error('Unable to save pattern due to localStorage constraints');case 13:// Update menu icon - call both systems for comprehensive coverage
+localStorage.setItem('colorflexSavedPatterns',JSON.stringify(essentialPatterns));console.log('✅ Pattern saved with minimal data after aggressive cleanup');_context20.n=13;break;case 12:_context20.p=12;_t24=_context20.v;console.error('❌ All save attempts failed - localStorage severely limited');throw new Error('Unable to save pattern due to localStorage constraints');case 13:// Update menu icon - call both systems for comprehensive coverage
 updateSavedPatternsMenuIcon();// 🆕 CHAMELEON BUTTON: Also call global updateMenuIcon if available (from colorflex-menu-icon.js)
-if(typeof window.updateMenuIcon==='function'){console.log('🦎 Updating global chameleon menu icon');window.updateMenuIcon();}_context20.n=15;break;case 14:_context20.p=14;_t24=_context20.v;console.error('❌ Failed to save pattern to localStorage:',_t24);throw _t24;case 15:return _context20.a(2);}},_callee14,null,[[11,12],[9,10],[7,8],[5,6],[3,4],[0,14]]);}));return _saveToLocalStorageNoDuplicateCheck.apply(this,arguments);}function getShopifyMetafield(key){// In a real Shopify app, this would fetch from customer metafields
+if(typeof window.updateMenuIcon==='function'){console.log('🦎 Updating global chameleon menu icon');window.updateMenuIcon();}_context20.n=15;break;case 14:_context20.p=14;_t25=_context20.v;console.error('❌ Failed to save pattern to localStorage:',_t25);throw _t25;case 15:return _context20.a(2);}},_callee14,null,[[11,12],[9,10],[7,8],[5,6],[3,4],[0,14]]);}));return _saveToLocalStorageNoDuplicateCheck.apply(this,arguments);}function getShopifyMetafield(key){// In a real Shopify app, this would fetch from customer metafields
 return JSON.parse(localStorage.getItem('colorflexSavedPatterns')||'[]');}function getCustomerId(){// Get from Shopify customer object or URL params
 if(window.ShopifyCustomer&&window.ShopifyCustomer.id){return window.ShopifyCustomer.id;}// Check for Liquid template customer ID
 if(typeof window.customer!=='undefined'&&window.customer.id){return window.customer.id;}// Fallback to localStorage for development
@@ -1063,14 +1071,15 @@ var variantNames=["".concat(collectionName,".fur-1"),"".concat(collectionName,".
 if(!targetCollection.furnitureConfig){targetCollection.furnitureConfig=variantCollection.furnitureConfig;console.log("  \u2705 Merged furnitureConfig from variant into base collection");}// Also use variant's patterns if they exist (for multi-res support)
 if(variantCollection.patterns&&variantCollection.patterns.length>0){targetCollection.patterns=variantCollection.patterns;console.log("  \u2705 Using variant's patterns (".concat(variantCollection.patterns.length," patterns)"));}}else{console.log("  \u2139\uFE0F No furniture variant found for \"".concat(collectionName,"\" (tried: ").concat(variantNames.join(', '),")"));}}if(!targetCollection.patterns||targetCollection.patterns.length===0){console.warn("Collection \"".concat(collectionName,"\" has no patterns"));return;}// ✅ Preserve furniture scale BEFORE switching collections (for furniture mode)
 var isFurnitureMode=window.COLORFLEX_MODE==='FURNITURE'||window.location.pathname.includes('furniture');var preservedFurnitureScale=null;if(isFurnitureMode&&appState.selectedFurnitureScale){preservedFurnitureScale=appState.selectedFurnitureScale;console.log("\uD83E\uDE91 Preserving furniture scale: ".concat(preservedFurnitureScale," before collection switch"));}// Set the collection
-appState.selectedCollection=targetCollection;// Reset scale to 1X (normal) when switching collections
+appState.selectedCollection=targetCollection;clearCoordinateRestoreSnapshot();// Reset scale to 1X (normal) when switching collections
 appState.scaleMultiplier=1;appState.currentScale=100;// Reset clothing scale if this is a clothing collection
 if(targetCollection.name.includes('-clo')){appState.selectedClothingScale="1.0";console.log('👗 Reset clothing scale to 1.0X for new collection');}else{console.log('🔄 Scale reset to 1X (Normal) for new collection');}// Update scale button UI to reflect reset
 var scaleButtons=document.querySelectorAll('.scale-button');scaleButtons.forEach(function(btn,index){// Index 2 is the "Normal" (1X) button in the scale options
 if(index===2){btn.style.background='#d4af37';btn.style.color='#1a202c';}else{btn.style.background='rgba(110, 110, 110, 0.2)';btn.style.color='#d4af37';}});// Set data attribute for collection-specific styling
 document.body.setAttribute('data-current-collection',targetCollection.name);// Update collection header (match both .clo and -clo formats)
-var collectionHeader=document.getElementById('collectionHeader');if(collectionHeader){if(targetCollection.name.includes('-clo')){var collectionBaseName=targetCollection.name.split('.')[0];collectionHeader.innerHTML="".concat(collectionBaseName.toUpperCase(),"<br>CLOTHING");}else{collectionHeader.textContent=targetCollection.name.toUpperCase();}}// Update curated colors for the new collection (clear if none, else populate)
-var hasColorFlexPatterns=(_targetCollection$pat=targetCollection.patterns)===null||_targetCollection$pat===void 0?void 0:_targetCollection$pat.some(function(p){return p.colorFlex===true;});var hasCuratedColors=(targetCollection.curatedColors||[]).length>0;var isBassett=window.COLORFLEX_MODE==='BASSETT';if(!hasColorFlexPatterns&&!(isBassett&&hasCuratedColors)){console.log('🧹 Clearing curated colors for standard collection');var curatedColorsContainer=document.getElementById('curatedColorsContainer');if(curatedColorsContainer){curatedColorsContainer.innerHTML='';}appState.curatedColors=[];}else{appState.curatedColors=targetCollection.curatedColors||[];if(appState.curatedColors.length&&dom.curatedColorsContainer&&Array.isArray(appState.colorsData)&&appState.colorsData.length){populateCuratedColors(appState.curatedColors);}}// Populate thumbnails for new collection
+var collectionHeader=document.getElementById('collectionHeader');if(collectionHeader){if(targetCollection.name.includes('-clo')){var collectionBaseName=targetCollection.name.split('.')[0];collectionHeader.innerHTML="".concat(collectionBaseName.toUpperCase(),"<br>CLOTHING");}else{collectionHeader.textContent=targetCollection.name.toUpperCase();}}// Update curated colors for the new collection — always wipe the strip first so
+// we never show the previous collection's swatches when the new branch skips populateCuratedColors.
+var curatedColorsContainer=dom.curatedColorsContainer||document.getElementById("curatedColorsContainer");if(curatedColorsContainer){curatedColorsContainer.innerHTML="";}var hasColorFlexPatterns=(_targetCollection$pat=targetCollection.patterns)===null||_targetCollection$pat===void 0?void 0:_targetCollection$pat.some(function(p){return p.colorFlex===true;});var hasCuratedColors=(targetCollection.curatedColors||[]).length>0;var isBassett=window.COLORFLEX_MODE==='BASSETT';if(!hasColorFlexPatterns&&!(isBassett&&hasCuratedColors)){console.log("🧹 Curated colors cleared for collection (no ColorFlex patterns / not Bassett palette case)");appState.curatedColors=[];}else{appState.curatedColors=targetCollection.curatedColors||[];if(appState.curatedColors.length&&curatedColorsContainer&&Array.isArray(appState.colorsData)&&appState.colorsData.length){populateCuratedColors(appState.curatedColors);}}// Populate thumbnails for new collection
 populatePatternThumbnails(targetCollection.patterns);// ✅ FIX: Ensure container stays 800x600 in furniture simple mode after switching collections
 var isFurnitureSimpleModeForSize=window.COLORFLEX_SIMPLE_MODE===true&&window.COLORFLEX_MODE==='FURNITURE';if(isFurnitureSimpleModeForSize&&dom.roomMockup){dom.roomMockup.style.setProperty('width','800px','important');dom.roomMockup.style.setProperty('height','600px','important');console.log("✅ Simple mode: Forced roomMockup to 800x600 after collection switch");// Also set it after a delay to override any code that runs later
 setTimeout(function(){if(dom.roomMockup){dom.roomMockup.style.setProperty('width','800px','important');dom.roomMockup.style.setProperty('height','600px','important');console.log("✅ Simple mode: Forced roomMockup to 800x600 after collection switch (delayed)");}},100);}// ✅ Restore furniture scale after collection switch (if it was preserved)
@@ -1092,7 +1101,7 @@ if(appState.currentPattern&&appState.selectedCollection){loadPatternData(appStat
 var existingCanvas=document.querySelector('#roomMockup canvas');if(existingCanvas&&existingCanvas.dataset.zoomScale){appState.savedZoomScale=parseFloat(existingCanvas.dataset.zoomScale);console.log("\uD83D\uDD0D Zoom persistence: Saved zoom ".concat(appState.savedZoomScale*100,"% before scale decrement"));}var newScale=availableScales[currentIndex-1];appState.selectedClothingScale=newScale;// Update display
 var display=document.getElementById('currentScaleDisplay');if(display){display.textContent=newScale+'X';}console.log("\u2796 Decremented clothing scale to ".concat(newScale,"X"));// Reload current pattern with new scale
 if(appState.currentPattern&&appState.selectedCollection){loadPatternData(appState.selectedCollection,appState.currentPattern.slug||appState.currentPattern.name);}}else{console.log('⚠️ Already at minimum scale (0.5X)');}};// Fabric Specifications Database (from Airtable data)
-var FABRIC_SPECIFICATIONS={'SOFT VELVET':{pricePerYard:29.00,width:'58"',minimumYards:5,description:'Luxurious soft velvet with rich texture',material:'fabric'},'DECORATOR LINEN':{pricePerYard:29.00,width:'56"',minimumYards:5,description:'Premium decorator linen for upholstery',material:'fabric'},'DRAPERY SHEER':{pricePerYard:24.00,width:'56"',minimumYards:5,description:'Lightweight sheer fabric for window treatments',material:'fabric'},'LIGHTWEIGHT LINEN':{pricePerYard:26.00,width:'62"',minimumYards:5,description:'Versatile lightweight linen fabric',material:'fabric'},'FAUX SUEDE':{pricePerYard:36.00,width:'58"',minimumYards:5,description:'Premium faux suede with authentic texture',material:'fabric'},'DRAPERY LIGHT BLOCK':{pricePerYard:31.00,width:'56"',minimumYards:5,description:'Light-blocking drapery fabric',material:'fabric'},'WALLPAPER':{pricePerRoll:249,coverage:'~60 sq ft',minimumRolls:1,description:'Prepasted wallpaper 24" x 30\' per roll',material:'wallpaper'},'WALLPAPER-PREPASTED':{pricePerRoll:249,coverage:'~60 sq ft',minimumRolls:1,description:'Prepasted wallpaper 24" x 30\' per roll',material:'wallpaper'},'WALLPAPER-PEEL-STICK':{pricePerRoll:319,coverage:'~54 sq ft',minimumRolls:1,description:'Peel & stick wallpaper 24" x 27\' per roll',material:'wallpaper'},'WALLPAPER-UNPASTED':{pricePerRoll:180,coverage:'~60 sq ft',minimumRolls:1,description:'Unpasted wallpaper 24" x 30\' per roll',material:'wallpaper'}};/**
+var FABRIC_SPECIFICATIONS={'SOFT VELVET':{pricePerYard:29.00,width:'58"',minimumYards:5,description:'Luxurious soft velvet with rich texture',material:'fabric'},'DECORATOR LINEN':{pricePerYard:29.00,width:'56"',minimumYards:5,description:'Premium decorator linen for upholstery',material:'fabric'},'DRAPERY SHEER':{pricePerYard:24.00,width:'56"',minimumYards:5,description:'Lightweight sheer fabric for window treatments',material:'fabric'},'LIGHTWEIGHT LINEN':{pricePerYard:26.00,width:'62"',minimumYards:5,description:'Versatile lightweight linen fabric',material:'fabric'},'FAUX SUEDE':{pricePerYard:36.00,width:'58"',minimumYards:5,description:'Premium faux suede with authentic texture',material:'fabric'},'DRAPERY LIGHT BLOCK':{pricePerYard:31.00,width:'56"',minimumYards:5,description:'Light-blocking drapery fabric',material:'fabric'},'WALLPAPER':{pricePerRoll:249,coverage:'~60 sq ft',minimumRolls:1,description:'Prepasted wallpaper 24" x 30\' per roll',material:'wallpaper'},'WALLPAPER-PREPASTED':{pricePerRoll:249,coverage:'~60 sq ft',minimumRolls:1,description:'Prepasted wallpaper 24" x 30\' per roll',material:'wallpaper'},'WALLPAPER-PEEL-STICK':{pricePerRoll:319,coverage:'~54 sq ft',minimumRolls:1,description:'Peel & stick wallpaper 24" x 27\' per roll',material:'wallpaper'},'WALLPAPER-UNPASTED':{pricePerRoll:180,coverage:'~60 sq ft',minimumRolls:1,description:'Unpasted wallpaper 24" x 30\' per roll',material:'wallpaper'},'CUSTOM-SAMPLE-WALLPAPER':{pricePerRoll:12,coverage:'Sample',minimumRolls:1,description:'Sample of your specified paper type with your custom ColorFlex design',material:'wallpaper'},'CUSTOM-SAMPLE-FABRIC':{pricePerYard:12,width:'Sample',minimumYards:1,description:'Sample of your specified fabric type with your custom ColorFlex design',material:'fabric'}};/**
  * Displays material selection modal for pattern cart configuration
  *
  * Shows an interactive modal dialog allowing users to choose between
@@ -1179,8 +1188,11 @@ var FABRIC_SPECIFICATIONS={'SOFT VELVET':{pricePerYard:29.00,width:'58"',minimum
  * @see redirectToProductConfiguration - Handles redirect after selection
  * @see updateCartItemViaAPI - Updates existing cart items
  * @see getMaterialDisplayName - Gets user-friendly material names
- */function showMaterialSelectionModal(pattern){console.log('🎄 showMaterialSelectionModal called - promo section will be added');// Remove existing modal if present
-var existingModal=document.getElementById('materialSelectionModal');if(existingModal){existingModal.remove();}// Create modal overlay
+ *//** Colors for sample PDP URL (same priority as proceed-to-cart / fallback redirect). */function colorflexEffectiveColorsForProductUrl(pattern){try{var coordMapped=colorflexCoordinateMappedRuntimeColors();if(coordMapped&&coordMapped.length)return coordMapped;if(Array.isArray(appState.layerInputs)&&appState.layerInputs.length){var fromInputs=appState.layerInputs.map(function(li,i){return{label:li&&li.label||"Layer ".concat(i+1),color:normalizeColorToSwFormat(li&&li.input?li.input.value:'')};}).filter(function(c){return c.color&&c.color!=='Unknown Color';});if(fromInputs.length)return fromInputs;}if(Array.isArray(appState.currentLayers)&&appState.currentLayers.length){var fromLayers=appState.currentLayers.filter(function(l){return l&&l.isShadow!==true;}).map(function(l,i){return{label:l.label||"Layer ".concat(i+1),color:normalizeColorToSwFormat(l.color||'')};}).filter(function(c){return c.color&&c.color!=='Unknown Color';});if(fromLayers.length)return fromLayers;}}catch(e){/* ignore */}return Array.isArray(pattern.colors)?pattern.colors:[];}/**
+ * Fabric-only: physical sample PDP (custom-sample) with fabric-custom-sample + sample_for
+ * so cart / PDP show "Fabric Custom Sample — {substrate}" and the same ColorFlex URL params as proceed-to-cart.
+ */function buildColorflexFabricSampleProductUrl(pattern,fabricSubstrateId){var substrate=String(fabricSubstrateId||'').trim();if(!substrate.startsWith('fabric-')){substrate='fabric-soft-velvet';}var effectiveColors=colorflexEffectiveColorsForProductUrl(pattern);var customColorsParam=effectiveColors.filter(function(c){return c&&c.color!=null&&String(c.color).trim()!=='';}).map(function(c){return normalizeColorToSwFormat(c.color);}).filter(function(s){return s&&s!=='Unknown Color';}).join(',');var collection=pattern&&(pattern.collection||pattern.collectionName)||typeof appState!=='undefined'&&appState.selectedCollection&&appState.selectedCollection.name||'';var params=new URLSearchParams({pattern_name:pattern.name||pattern.patternName||'',collection:collection,pattern_id:pattern.id||'',custom_colors:customColorsParam,scale:pattern.currentScale||100,source:'colorflex_saved_patterns',preferred_material:'fabric-custom-sample',sample_for:substrate,save_date:pattern.timestamp||pattern.saveDate||new Date().toISOString()});var sm=pattern.scaleMultiplier!=null?Number(pattern.scaleMultiplier):NaN;if(!isNaN(sm)&&sm>0&&sm!==1){params.set('scale_multiplier',String(sm));}var productUrl='/products/custom-sample?'+params.toString();var promoCode=sessionStorage.getItem('cfm_promo_code');var promoUsed=sessionStorage.getItem('cfm_promo_used')==='true';if(promoCode&&promoUsed&&String(promoCode).toUpperCase()==='FIRSTROLL25'){return'/discount/'+promoCode+'?redirect='+encodeURIComponent(productUrl);}return productUrl;}function showMaterialSelectionModal(pattern){console.log('🎄 showMaterialSelectionModal called - promo section will be added');// Remove existing modal if present
+var existingModal=document.getElementById('materialSelectionModal');if(existingModal){existingModal.remove();}ensureCollectionThumbnailsInLeftSidebar();resetStandardSidebarThumbnailStripLayout();// Create modal overlay
 var modal=document.createElement('div');modal.id='materialSelectionModal';modal.style.cssText="\n        position: fixed;\n        top: 0;\n        left: 0;\n        width: 100%;\n        height: 100%;\n        background: rgba(0, 0, 0, 0.8);\n        display: flex;\n        justify-content: center;\n        align-items: center;\n        z-index: 10000;\n        font-family: 'Special Elite', monospace;\n    ";// Create modal content
 var modalContent=document.createElement('div');modalContent.style.cssText="\n        background: #1a202c;\n        color: #e2e8f0;\n        padding: 30px;\n        border-radius: 12px;\n        width: 90%;\n        max-width: 500px;\n        max-height: 80vh;\n        overflow-y: auto;\n        border: 2px solid #4a5568;\n        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);\n    ";// Modal header
 var header=document.createElement('div');header.style.cssText='margin-bottom: 20px; text-align: center;';header.innerHTML="\n        <h3 style=\"margin: 0 0 10px 0; color: #d4af37; font-size: 18px;\">\uD83D\uDED2 Proceed to Cart</h3>\n        <p style=\"margin: 0; color: #a0aec0; font-size: 14px;\">\n            Choose material and configure options for: <strong style=\"color: #e2e8f0;\">".concat(pattern.patternName,"</strong><br>\n            <span style=\"font-size: 12px; color: #718096;\">You'll be able to select quantity, dimensions, and other options on the product page.</span>\n        </p>\n    ");// Material selection section with accordion
@@ -1239,47 +1251,52 @@ if(!promoInput||!promoBtn||!promoFeedback){console.log('🎄 Promo section not a
 }console.log('🎄 Looking for promo elements:',{input:promoInput?'Found':'Missing',button:promoBtn?'Found':'Missing',feedback:promoFeedback?'Found':'Missing'});if(promoBtn&&promoInput&&promoFeedback){promoBtn.addEventListener('click',function(){var code=promoInput.value.trim().toUpperCase();console.log('🎫 Validating promo code:',code);// Check if already used
 if(sessionStorage.getItem('cfm_promo_used')==='true'){promoFeedback.textContent='⚠️ Promo code already used this session';promoFeedback.style.display='block';promoFeedback.style.background='#fff3cd';promoFeedback.style.color='#856404';promoFeedback.style.border='1px solid #ffeaa7';return;}// Validate code
 if(code==='FIRSTROLL25'){sessionStorage.setItem('cfm_promo_code',code);sessionStorage.setItem('cfm_promo_used','true');promoFeedback.textContent='✅ 25% discount applied! Proceed to cart to complete your order.';promoFeedback.style.display='block';promoFeedback.style.background='#d4edda';promoFeedback.style.color='#155724';promoFeedback.style.border='1px solid #c3e6cb';promoInput.disabled=true;promoInput.style.background='#e6f7ed';promoBtn.disabled=true;promoBtn.style.opacity='0.6';promoBtn.style.cursor='not-allowed';console.log('✅ Promo code applied successfully');}else if(code===''){promoFeedback.textContent='⚠️ Please enter a promo code';promoFeedback.style.display='block';promoFeedback.style.background='#fff3cd';promoFeedback.style.color='#856404';promoFeedback.style.border='1px solid #ffeaa7';}else{promoFeedback.textContent='❌ Invalid promo code';promoFeedback.style.display='block';promoFeedback.style.background='#f8d7da';promoFeedback.style.color='#721c24';promoFeedback.style.border='1px solid #f5c6cb';}});// Check if promo already applied
-if(sessionStorage.getItem('cfm_promo_used')==='true'){promoInput.value=sessionStorage.getItem('cfm_promo_code')||'FIRSTROLL25';promoInput.disabled=true;promoInput.style.background='#e6f7ed';promoBtn.disabled=true;promoBtn.style.opacity='0.6';promoFeedback.textContent='✅ 25% discount applied!';promoFeedback.style.display='block';promoFeedback.style.background='#d4edda';promoFeedback.style.color='#155724';promoFeedback.style.border='1px solid #c3e6cb';}}},100);// Group materials by category
-var wallpaperOptions=[{value:'wallpaper-prepasted',label:'Prepasted Wallpaper',price:'$249/roll',description:'Finest quality paper 24" wide x 30\' long • Custom-printed • 2-week turnaround'},{value:'wallpaper-peel-stick',label:'Peel & Stick Wallpaper',price:'$319/roll',description:'24" wide x 27\' long • Easily removable • Perfect for apartments'},{value:'wallpaper-unpasted',label:'Unpasted Wallpaper',price:'$180/roll',description:'Highest quality • 24" wide x 30\' long • NO ADHESIVE • Preferred by professionals'},{value:'wallpaper-grasscloth',label:'Grasscloth Wallpaper',price:'Contact for pricing',description:'Natural Grass Cloth • 24" wide x 27\' long • Quietly elevates any space'}];var fabricOptions=[{value:'fabric-soft-velvet',label:'Soft Velvet',price:'$29/yard',description:'Luxurious soft velvet with rich texture • 58" width • 5-yard minimum'},{value:'fabric-decorator-linen',label:'Decorator Linen',price:'$29/yard',description:'Premium decorator linen for upholstery • 56" width • 5-yard minimum'},{value:'fabric-drapery-sheer',label:'Drapery Sheer',price:'$24/yard',description:'Lightweight sheer fabric for window treatments • 56" width • 5-yard minimum'},{value:'fabric-lightweight-linen',label:'Lightweight Linen',price:'$26/yard',description:'Versatile lightweight linen fabric • 62" width • 5-yard minimum'},{value:'fabric-faux-suede',label:'Faux Suede',price:'$36/yard',description:'Premium faux suede with authentic texture • 58" width • 5-yard minimum'},{value:'fabric-drapery-light-block',label:'Drapery Light Block',price:'$31/yard',description:'Light-blocking drapery fabric • 56" width • 5-yard minimum'}];// Create accordion container
-var accordionContainer=document.createElement('div');accordionContainer.style.cssText='display: flex; flex-direction: column; gap: 10px;';// Helper function to create accordion section (scrollContainer: modal content to autoscroll after choice)
-function createAccordionSection(title,icon,options,isOpen,scrollContainer){var section=document.createElement('div');section.style.cssText='border: 2px solid #4a5568; border-radius: 8px; overflow: hidden;';// Accordion header
+if(sessionStorage.getItem('cfm_promo_used')==='true'){promoInput.value=sessionStorage.getItem('cfm_promo_code')||'FIRSTROLL25';promoInput.disabled=true;promoInput.style.background='#e6f7ed';promoBtn.disabled=true;promoBtn.style.opacity='0.6';promoFeedback.textContent='✅ 25% discount applied!';promoFeedback.style.display='block';promoFeedback.style.background='#d4edda';promoFeedback.style.color='#155724';promoFeedback.style.border='1px solid #c3e6cb';}}},100);// Wallpaper: rolls + wallpaper sample radio. Fabric: each variant has roll radio + separate sample radio (small text, not a link).
+var wallpaperOptions=[{value:'wallpaper-prepasted',label:'Prepasted Wallpaper',price:'$249/roll',description:'Finest quality paper 24" wide x 30\' long • Custom-printed • 2-week turnaround'},{value:'wallpaper-peel-stick',label:'Peel & Stick Wallpaper',price:'$319/roll',description:'24" wide x 27\' long • Easily removable • Perfect for apartments'},{value:'wallpaper-unpasted',label:'Unpasted Wallpaper',price:'$180/roll',description:'Highest quality • 24" wide x 30\' long • NO ADHESIVE • Preferred by professionals'},{value:'wallpaper-grasscloth',label:'Grasscloth Wallpaper',price:'Contact for pricing',description:'Natural Grass Cloth • 24" wide x 27\' long • Quietly elevates any space'},{value:'wallpaper-custom-sample',label:'Wallpaper Custom Sample',price:'$12/sample',description:'Physical sample of your pattern • Confirm color and scale before ordering rolls'}];var fabricOptions=[{value:'fabric-soft-velvet',label:'Soft Velvet',price:'$29/yard',description:'Luxurious soft velvet with rich texture • 58" width • 5-yard minimum'},{value:'fabric-decorator-linen',label:'Decorator Linen',price:'$29/yard',description:'Premium decorator linen for upholstery • 56" width • 5-yard minimum'},{value:'fabric-drapery-sheer',label:'Drapery Sheer',price:'$24/yard',description:'Lightweight sheer fabric for window treatments • 56" width • 5-yard minimum'},{value:'fabric-lightweight-linen',label:'Lightweight Linen',price:'$26/yard',description:'Versatile lightweight linen fabric • 62" width • 5-yard minimum'},{value:'fabric-faux-suede',label:'Faux Suede',price:'$36/yard',description:'Premium faux suede with authentic texture • 58" width • 5-yard minimum'},{value:'fabric-drapery-light-block',label:'Drapery Light Block',price:'$31/yard',description:'Light-blocking drapery fabric • 56" width • 5-yard minimum'}];// Create accordion container
+var accordionContainer=document.createElement('div');accordionContainer.style.cssText='display: flex; flex-direction: column; gap: 10px;';function createAccordionSection(title,icon,options,isOpen,scrollContainer,patternForSamples){var section=document.createElement('div');section.style.cssText='border: 2px solid #4a5568; border-radius: 8px; overflow: hidden;';// Accordion header
 var header=document.createElement('div');header.style.cssText="\n            background: #2d3748;\n            padding: 15px;\n            cursor: pointer;\n            display: flex;\n            justify-content: space-between;\n            align-items: center;\n            transition: background 0.3s ease;\n        ";var headerText=document.createElement('span');headerText.style.cssText='color: #d4af37; font-weight: bold; font-size: 16px;';headerText.textContent=icon+' '+title;var arrow=document.createElement('span');arrow.style.cssText='color: #d4af37; transition: transform 0.3s ease;';arrow.textContent=isOpen?'▼':'▶';header.appendChild(headerText);header.appendChild(arrow);// Accordion content
 var content=document.createElement('div');content.style.cssText="\n            max-height: ".concat(isOpen?'1000px':'0',";\n            overflow: hidden;\n            transition: max-height 0.3s ease;\n            background: #1a202c;\n        ");var optionsContainer=document.createElement('div');optionsContainer.style.cssText='padding: 10px; display: flex; flex-direction: column; gap: 8px;';// Add options
-options.forEach(function(option,index){var optionDiv=document.createElement('div');optionDiv.style.cssText="\n                border: 1px solid #4a5568;\n                border-radius: 6px;\n                padding: 12px;\n                cursor: pointer;\n                transition: all 0.3s ease;\n                background: #2d3748;\n            ";var radio=document.createElement('input');radio.type='radio';radio.name='material';radio.value=option.value;radio.id='material_'+option.value;radio.style.cssText='margin-right: 10px;';// Default to first wallpaper option
-if(title==='Wallpaper'&&index===0){radio.checked=true;}var label=document.createElement('label');label.htmlFor='material_'+option.value;label.style.cssText='cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%;';label.innerHTML="\n                <span style=\"font-weight: bold; color: #e2e8f0;\">".concat(option.label,"</span>\n                <span style=\"color: #d4af37; font-size: 14px;\">").concat(option.price,"</span>\n            ");optionDiv.appendChild(radio);optionDiv.appendChild(label);// Hover effects
-optionDiv.addEventListener('mouseenter',function(){optionDiv.style.borderColor='#d4af37';optionDiv.style.background='#374151';});optionDiv.addEventListener('mouseleave',function(){if(!radio.checked){optionDiv.style.borderColor='#4a5568';optionDiv.style.background='#2d3748';}});// Click to select
-optionDiv.addEventListener('click',function(e){if(e.target!==radio){radio.checked=true;}// Update all option styles
+options.forEach(function(option,index){var radioSample=null;var optionDiv=document.createElement('div');optionDiv.style.cssText="\n                border: 1px solid #4a5568;\n                border-radius: 6px;\n                padding: 12px;\n                cursor: pointer;\n                transition: all 0.3s ease;\n                background: #2d3748;\n            ";var radio=document.createElement('input');radio.type='radio';radio.name='material';radio.value=option.value;radio.id='material_'+option.value;radio.style.cssText='margin-top: 4px; flex-shrink: 0;';// Default: Prepasted Wallpaper
+if(title==='Wallpaper'&&option.value==='wallpaper-prepasted'){radio.checked=true;}var label=document.createElement('label');label.htmlFor='material_'+option.value;label.style.cssText='cursor: pointer; display: flex; justify-content: space-between; align-items: center; width: 100%;';label.innerHTML="\n                <span style=\"font-weight: bold; color: #e2e8f0;\">".concat(option.label,"</span>\n                <span style=\"color: #d4af37; font-size: 14px;\">").concat(option.price,"</span>\n            ");var row=document.createElement('div');row.style.cssText='display: flex; align-items: flex-start; gap: 10px; width: 100%;';var col=document.createElement('div');col.style.cssText='flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;';col.appendChild(label);if(title==='Fabric'){var sampleSubRow=document.createElement('div');sampleSubRow.className='colorflex-modal-fabric-sample-subrow';sampleSubRow.style.cssText='margin-top: 8px; padding-left: 28px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; cursor: pointer;';radioSample=document.createElement('input');radioSample.type='radio';radioSample.name='material';radioSample.value='fabric-sample:'+option.value;radioSample.id='material_fabric_sample_'+String(option.value).replace(/[^a-zA-Z0-9-]/g,'_');radioSample.style.cssText='flex-shrink: 0; margin-top: 0;';var sampleHint=document.createElement('span');sampleHint.textContent='Order a physical sample (this material)';sampleHint.style.cssText='font-size: 11px; color: #a0aec0; line-height: 1.35; user-select: none;';sampleSubRow.appendChild(sampleHint);sampleSubRow.appendChild(radioSample);col.appendChild(sampleSubRow);}row.appendChild(radio);row.appendChild(col);optionDiv.appendChild(row);// Hover effects
+optionDiv.addEventListener('mouseenter',function(){optionDiv.style.borderColor='#d4af37';optionDiv.style.background='#374151';});optionDiv.addEventListener('mouseleave',function(){var any=radio.checked;if(radioSample){any=any||radioSample.checked;}if(!any){optionDiv.style.borderColor='#4a5568';optionDiv.style.background='#2d3748';}});// Click: fabric sample sub-row selects sample radio only; rest of card selects roll/wallpaper radio
+optionDiv.addEventListener('click',function(e){if(radioSample&&e.target&&e.target.closest&&e.target.closest('.colorflex-modal-fabric-sample-subrow')){if(e.target!==radioSample){radioSample.checked=true;}accordionContainer.querySelectorAll('input[type="radio"]').forEach(function(r){var container=r.closest('div[style*="border: 1px"]');if(container){if(r.checked){container.style.borderColor='#d4af37';container.style.background='#374151';}else{container.style.borderColor='#4a5568';container.style.background='#2d3748';}}});if(scrollContainer){setTimeout(function(){scrollContainer.scrollTo({top:scrollContainer.scrollHeight,behavior:'smooth'});},200);}return;}if(e.target!==radio){radio.checked=true;}// Update all option styles
 accordionContainer.querySelectorAll('input[type="radio"]').forEach(function(r){var container=r.closest('div[style*="border: 1px"]');if(container){if(r.checked){container.style.borderColor='#d4af37';container.style.background='#374151';}else{container.style.borderColor='#4a5568';container.style.background='#2d3748';}}});// Autoscroll modal down so "Proceed to Cart" is visible
 if(scrollContainer){setTimeout(function(){scrollContainer.scrollTo({top:scrollContainer.scrollHeight,behavior:'smooth'});},200);}});optionsContainer.appendChild(optionDiv);});content.appendChild(optionsContainer);// Toggle accordion
-header.addEventListener('click',function(){var isCurrentlyOpen=content.style.maxHeight!=='0px';if(isCurrentlyOpen){content.style.maxHeight='0';arrow.textContent='▶';}else{content.style.maxHeight='1000px';arrow.textContent='▼';}});header.addEventListener('mouseenter',function(){header.style.background='#374151';});header.addEventListener('mouseleave',function(){header.style.background='#2d3748';});section.appendChild(header);section.appendChild(content);return section;}// Create wallpaper and fabric sections (both collapsed by default); pass modalContent for autoscroll after choice
-var wallpaperSection=createAccordionSection('Wallpaper','🗂️',wallpaperOptions,false,modalContent);var fabricSection=createAccordionSection('Fabric','🧵',fabricOptions,false,modalContent);accordionContainer.appendChild(wallpaperSection);accordionContainer.appendChild(fabricSection);materialSection.appendChild(materialLabel);// ✅ FIX: promoSection is commented out, so don't try to append it
+header.addEventListener('click',function(){var isCurrentlyOpen=content.style.maxHeight!=='0px';if(isCurrentlyOpen){content.style.maxHeight='0';arrow.textContent='▶';}else{content.style.maxHeight='1000px';arrow.textContent='▼';}});header.addEventListener('mouseenter',function(){header.style.background='#374151';});header.addEventListener('mouseleave',function(){header.style.background='#2d3748';});section.appendChild(header);section.appendChild(content);return section;}// Wallpaper open by default so prepasted is visible.
+var wallpaperSection=createAccordionSection('Wallpaper','🗂️',wallpaperOptions,true,modalContent,pattern);var fabricSection=createAccordionSection('Fabric','🧵',fabricOptions,false,modalContent,pattern);accordionContainer.appendChild(wallpaperSection);accordionContainer.appendChild(fabricSection);materialSection.appendChild(materialLabel);// ✅ FIX: promoSection is commented out, so don't try to append it
 // materialSection.appendChild(promoSection);
 materialSection.appendChild(materialGuide);materialSection.appendChild(accordionContainer);// Button section
 var buttonSection=document.createElement('div');buttonSection.style.cssText='display: flex; gap: 12px; justify-content: flex-end; margin-top: 25px;';// Cancel button
 var cancelBtn=document.createElement('button');cancelBtn.textContent='❌ Cancel';cancelBtn.style.cssText="\n        background: transparent;\n        color: #f56565;\n        border: 2px solid #f56565;\n        padding: 10px 16px;\n        border-radius: 6px;\n        cursor: pointer;\n        font-family: 'Special Elite', monospace;\n        font-weight: bold;\n        transition: all 0.3s ease;\n    ";cancelBtn.addEventListener('mouseenter',function(){cancelBtn.style.background='#f56565';cancelBtn.style.color='white';});cancelBtn.addEventListener('mouseleave',function(){cancelBtn.style.background='transparent';cancelBtn.style.color='#f56565';});cancelBtn.addEventListener('click',function(){modal.remove();});// Check if we came from cart editing
 var urlParams=new URLSearchParams(window.location.search);var isFromCartEdit=urlParams.get('source')==='cart_edit'||urlParams.get('source')==='cart_restore';// Proceed to Cart button (replaces direct cart add)
-var configureBtn=document.createElement('button');configureBtn.textContent=isFromCartEdit?'🔄 Update Cart Item':'🛒 Proceed to Cart';configureBtn.style.cssText="\n        background: linear-gradient(135deg, ".concat(isFromCartEdit?'#d4af37 0%, #b8941f 100%':'#667eea 0%, #764ba2 100%',");\n        color: white;\n        border: none;\n        padding: 10px 16px;\n        border-radius: 6px;\n        cursor: pointer;\n        font-family: 'Special Elite', monospace;\n        font-weight: bold;\n        transition: all 0.3s ease;\n    ");configureBtn.addEventListener('mouseenter',function(){configureBtn.style.transform='translateY(-2px)';configureBtn.style.boxShadow="0 4px 12px rgba(".concat(isFromCartEdit?'212, 175, 55':'102, 126, 234',", 0.4)");});configureBtn.addEventListener('mouseleave',function(){configureBtn.style.transform='translateY(0)';configureBtn.style.boxShadow='none';});configureBtn.addEventListener('click',/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4(){var selectedMaterialInput,selectedMaterial,_appState$selectedCol3,_appState$currentPatt3,runtimeColors,runtimeProofDataUrl,_appState$currentPatt,_appState$selectedCol,lockedColors,lockedProofMeta,runtimeThumb,_appState$currentPatt2,_appState$selectedCol2,_lockedColors,_lockedProofMeta,_window$appState,_window$appState2,cartPatternKey,cartSavedPattern,updatedItemData,cartUpdateResult,updatedPattern,thumbnailKey,thumbnailInfo,smallerThumbnail,_t3,_t4,_t5;return _regenerator().w(function(_context4){while(1)switch(_context4.p=_context4.n){case 0:console.log('🛒 Proceed to Cart clicked');// Check if material is selected
-selectedMaterialInput=accordionContainer.querySelector('input[name="material"]:checked');if(selectedMaterialInput){_context4.n=1;break;}alert('⚠️ Please select a material type first');return _context4.a(2);case 1:selectedMaterial=selectedMaterialInput.value;console.log('✅ Selected material:',selectedMaterial);// Rebuild pattern payload from live runtime state at click-time.
+var configureBtn=document.createElement('button');configureBtn.textContent=isFromCartEdit?'🔄 Update Cart Item':'🛒 Proceed to Cart';configureBtn.style.cssText="\n        background: linear-gradient(135deg, ".concat(isFromCartEdit?'#d4af37 0%, #b8941f 100%':'#667eea 0%, #764ba2 100%',");\n        color: white;\n        border: none;\n        padding: 10px 16px;\n        border-radius: 6px;\n        cursor: pointer;\n        font-family: 'Special Elite', monospace;\n        font-weight: bold;\n        transition: all 0.3s ease;\n    ");configureBtn.addEventListener('mouseenter',function(){configureBtn.style.transform='translateY(-2px)';configureBtn.style.boxShadow="0 4px 12px rgba(".concat(isFromCartEdit?'212, 175, 55':'102, 126, 234',", 0.4)");});configureBtn.addEventListener('mouseleave',function(){configureBtn.style.transform='translateY(0)';configureBtn.style.boxShadow='none';});configureBtn.addEventListener('click',/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee4(){var selectedMaterialInput,selectedMaterial,_tn,_sameCur,_sameCat,_appState$selectedCol3,_appState$currentPatt4,mappedCoord,runtimeColors,_appState$currentPatt,pName,scale,newId,runtimeProofDataUrl,_appState$currentPatt2,_appState$selectedCol,lockedColors,lockedProofMeta,runtimeThumb,_appState$currentPatt3,_appState$selectedCol2,_lockedColors,_lockedProofMeta,_t2,_sameCat2,fabricSampleSub,fabricSampleRe,fabricSampleM,_window$appState,_window$appState2,cartPatternKey,cartSavedPattern,updatedItemData,cartUpdateResult,updatedPattern,thumbnailKey,thumbnailInfo,smallerThumbnail,_ls,_ct,_lsW,_ctDisp,_t4,_t5,_t6;return _regenerator().w(function(_context4){while(1)switch(_context4.p=_context4.n){case 0:console.log('🛒 Proceed to Cart clicked');// Check if material is selected
+selectedMaterialInput=accordionContainer.querySelector('input[name="material"]:checked');if(selectedMaterialInput){_context4.n=1;break;}alert('⚠️ Please select a material type first');return _context4.a(2);case 1:selectedMaterial=selectedMaterialInput.value;console.log('✅ Selected material:',selectedMaterial);// #region agent log
+try{_tn=pattern&&pattern.thumbnail?String(pattern.thumbnail):"";_sameCur=pattern===appState.currentPattern;_sameCat=!!(appState.selectedCollection&&Array.isArray(appState.selectedCollection.patterns)&&appState.selectedCollection.patterns.some(function(p){return p===pattern;}));fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"0b8664"},body:JSON.stringify({sessionId:"0b8664",runId:"pre",hypothesisId:"H1-H5",location:"CFM.js:proceed-to-cart:start",message:"Proceed to cart click",data:{stdFromCurrent:!!(appState.currentPattern&&patternIsStandard(appState.currentPattern,appState.selectedCollection)),thumbPrefix:_tn.slice(0,16),thumbLen:_tn.length,sameRefAsCurrentPattern:_sameCur,sameRefAsCatalogPattern:_sameCat,patternName:pattern&&(pattern.name||pattern.patternName),collection:appState.selectedCollection&&appState.selectedCollection.name},timestamp:Date.now()})})["catch"](function(){});}catch(_e){}// #endregion
+// Rebuild pattern payload from live runtime state at click-time.
 // This prevents stale saved-pattern data (colors/thumbnail) from overriding correct preview output.
-_context4.p=2;if(Array.isArray(appState.currentLayers)&&appState.currentLayers.length){runtimeColors=appState.currentLayers.filter(function(l){return l&&l.isShadow!==true&&l.color!=null&&String(l.color).trim()!=='';}).map(function(l,idx){return{label:l.label||"Layer ".concat(idx+1),color:normalizeColorToSwFormat(l.color)};}).filter(function(c){return c.color&&c.color!=='Unknown Color';});if(runtimeColors.length){pattern.colors=runtimeColors;console.log('✅ Proceed-to-cart runtime colors applied:',runtimeColors);}}// Use the same proof-render pipeline users trust (not DOM screenshot capture).
-if(!(typeof window.generatePrintPreviewDataUrl==='function')){_context4.n=4;break;}_context4.n=3;return window.generatePrintPreviewDataUrl();case 3:runtimeProofDataUrl=_context4.v;if(runtimeProofDataUrl&&typeof runtimeProofDataUrl==='string'&&runtimeProofDataUrl.startsWith('data:image')){pattern.thumbnail=runtimeProofDataUrl;try{localStorage.setItem('colorflexCurrentThumbnail',runtimeProofDataUrl);}catch(_){}try{lockedColors=Array.isArray(pattern.colors)?pattern.colors.map(function(c){return c&&c.color?String(c.color):'';}).filter(Boolean):[];lockedProofMeta={at:new Date().toISOString(),pattern:pattern.name||pattern.patternName||((_appState$currentPatt=appState.currentPattern)===null||_appState$currentPatt===void 0?void 0:_appState$currentPatt.name)||'',collection:pattern.collection||pattern.collectionName||((_appState$selectedCol=appState.selectedCollection)===null||_appState$selectedCol===void 0?void 0:_appState$selectedCol.name)||'',colors:lockedColors};sessionStorage.setItem('colorflexProceedProofDataUrl',runtimeProofDataUrl);sessionStorage.setItem('colorflexProceedProofMeta',JSON.stringify(lockedProofMeta));localStorage.setItem('colorflexProceedProofDataUrl',runtimeProofDataUrl);localStorage.setItem('colorflexProceedProofMeta',JSON.stringify(lockedProofMeta));console.log('🔒 Proceed-to-cart proof locked for product-form upload');}catch(_){}console.log('✅ Proceed-to-cart runtime proof captured via generatePrintPreviewDataUrl');}_context4.n=5;break;case 4:if(typeof window.capturePatternThumbnail==='function'){// Fallback only when proof helper is unavailable.
-runtimeThumb=window.capturePatternThumbnail();if(runtimeThumb&&typeof runtimeThumb==='string'&&runtimeThumb.startsWith('data:image')){pattern.thumbnail=runtimeThumb;try{localStorage.setItem('colorflexCurrentThumbnail',runtimeThumb);}catch(_){}try{_lockedColors=Array.isArray(pattern.colors)?pattern.colors.map(function(c){return c&&c.color?String(c.color):'';}).filter(Boolean):[];_lockedProofMeta={at:new Date().toISOString(),pattern:pattern.name||pattern.patternName||((_appState$currentPatt2=appState.currentPattern)===null||_appState$currentPatt2===void 0?void 0:_appState$currentPatt2.name)||'',collection:pattern.collection||pattern.collectionName||((_appState$selectedCol2=appState.selectedCollection)===null||_appState$selectedCol2===void 0?void 0:_appState$selectedCol2.name)||'',colors:_lockedColors};sessionStorage.setItem('colorflexProceedProofDataUrl',runtimeThumb);sessionStorage.setItem('colorflexProceedProofMeta',JSON.stringify(_lockedProofMeta));localStorage.setItem('colorflexProceedProofDataUrl',runtimeThumb);localStorage.setItem('colorflexProceedProofMeta',JSON.stringify(_lockedProofMeta));console.log('🔒 Proceed-to-cart fallback thumbnail locked for product-form upload');}catch(_){}console.log('✅ Proceed-to-cart runtime thumbnail captured (fallback)');}}case 5:if(typeof appState.currentScale==='number'&&appState.currentScale>0){pattern.currentScale=appState.currentScale;}if(typeof appState.scaleMultiplier==='number'&&appState.scaleMultiplier>0){pattern.scaleMultiplier=appState.scaleMultiplier;}if(!pattern.collection&&(_appState$selectedCol3=appState.selectedCollection)!==null&&_appState$selectedCol3!==void 0&&_appState$selectedCol3.name){pattern.collection=appState.selectedCollection.name;}if(!pattern.name&&(_appState$currentPatt3=appState.currentPattern)!==null&&_appState$currentPatt3!==void 0&&_appState$currentPatt3.name){pattern.name=appState.currentPattern.name;}_context4.n=7;break;case 6:_context4.p=6;_t3=_context4.v;console.warn('⚠️ Proceed-to-cart runtime sync failed, continuing with existing pattern payload:',_t3);case 7:if(!isFromCartEdit){_context4.n=15;break;}// Handle cart item update
-console.log('🔄 Updating cart item with new pattern configuration...');_context4.p=8;// Show loading state
+_context4.p=2;try{localStorage.removeItem('colorflexCurrentThumbnail');localStorage.removeItem('colorflexCurrentThumbnailPatternId');sessionStorage.removeItem('colorflexProceedProofDataUrl');sessionStorage.removeItem('colorflexProceedProofMeta');localStorage.removeItem('colorflexProceedProofDataUrl');localStorage.removeItem('colorflexProceedProofMeta');}catch(_clearStale){}if(Array.isArray(appState.currentLayers)&&appState.currentLayers.length){mappedCoord=colorflexCoordinateMappedRuntimeColors();runtimeColors=mappedCoord&&mappedCoord.length?mappedCoord:appState.currentLayers.filter(function(l){return l&&l.isShadow!==true&&l.color!=null&&String(l.color).trim()!=='';}).map(function(l,idx){return{label:l.label||"Layer ".concat(idx+1),color:normalizeColorToSwFormat(l.color)};}).filter(function(c){return c.color&&c.color!=='Unknown Color';});if(runtimeColors.length){pattern.colors=runtimeColors;if(mappedCoord&&mappedCoord.length){pName=pattern.name||pattern.patternName||((_appState$currentPatt=appState.currentPattern)===null||_appState$currentPatt===void 0?void 0:_appState$currentPatt.name)||'';if(pName){scale=typeof appState.currentScale==='number'&&appState.currentScale>0?appState.currentScale:pattern.currentScale||100;newId=generatePatternId(pName,runtimeColors,scale);pattern.id=newId;pattern.patternId=newId;}}console.log('✅ Proceed-to-cart runtime colors applied:',runtimeColors);}}// Use the same proof-render pipeline users trust (not DOM screenshot capture).
+if(!(typeof window.generatePrintPreviewDataUrl==='function')){_context4.n=4;break;}_context4.n=3;return window.generatePrintPreviewDataUrl();case 3:runtimeProofDataUrl=_context4.v;if(runtimeProofDataUrl&&typeof runtimeProofDataUrl==='string'&&runtimeProofDataUrl.startsWith('data:image')){pattern.thumbnail=runtimeProofDataUrl;colorflexStoreCurrentThumbnailForPattern(pattern,runtimeProofDataUrl);try{lockedColors=Array.isArray(pattern.colors)?pattern.colors.map(function(c){return c&&c.color?String(c.color):'';}).filter(Boolean):[];lockedProofMeta={at:new Date().toISOString(),pattern:pattern.name||pattern.patternName||((_appState$currentPatt2=appState.currentPattern)===null||_appState$currentPatt2===void 0?void 0:_appState$currentPatt2.name)||'',collection:pattern.collection||pattern.collectionName||((_appState$selectedCol=appState.selectedCollection)===null||_appState$selectedCol===void 0?void 0:_appState$selectedCol.name)||'',colors:lockedColors};sessionStorage.setItem('colorflexProceedProofDataUrl',runtimeProofDataUrl);sessionStorage.setItem('colorflexProceedProofMeta',JSON.stringify(lockedProofMeta));localStorage.setItem('colorflexProceedProofDataUrl',runtimeProofDataUrl);localStorage.setItem('colorflexProceedProofMeta',JSON.stringify(lockedProofMeta));console.log('🔒 Proceed-to-cart proof locked for product-form upload');}catch(_){}console.log('✅ Proceed-to-cart runtime proof captured via generatePrintPreviewDataUrl');}_context4.n=5;break;case 4:if(typeof capturePatternThumbnail==='function'){// Fallback only when proof helper is unavailable.
+runtimeThumb=capturePatternThumbnail();if(runtimeThumb&&typeof runtimeThumb==='string'&&runtimeThumb.startsWith('data:image')){pattern.thumbnail=runtimeThumb;colorflexStoreCurrentThumbnailForPattern(pattern,runtimeThumb);try{_lockedColors=Array.isArray(pattern.colors)?pattern.colors.map(function(c){return c&&c.color?String(c.color):'';}).filter(Boolean):[];_lockedProofMeta={at:new Date().toISOString(),pattern:pattern.name||pattern.patternName||((_appState$currentPatt3=appState.currentPattern)===null||_appState$currentPatt3===void 0?void 0:_appState$currentPatt3.name)||'',collection:pattern.collection||pattern.collectionName||((_appState$selectedCol2=appState.selectedCollection)===null||_appState$selectedCol2===void 0?void 0:_appState$selectedCol2.name)||'',colors:_lockedColors};sessionStorage.setItem('colorflexProceedProofDataUrl',runtimeThumb);sessionStorage.setItem('colorflexProceedProofMeta',JSON.stringify(_lockedProofMeta));localStorage.setItem('colorflexProceedProofDataUrl',runtimeThumb);localStorage.setItem('colorflexProceedProofMeta',JSON.stringify(_lockedProofMeta));console.log('🔒 Proceed-to-cart fallback thumbnail locked for product-form upload');}catch(_){}console.log('✅ Proceed-to-cart runtime thumbnail captured (fallback)');}}case 5:if(typeof appState.currentScale==='number'&&appState.currentScale>0){pattern.currentScale=appState.currentScale;}if(typeof appState.scaleMultiplier==='number'&&appState.scaleMultiplier>0){pattern.scaleMultiplier=appState.scaleMultiplier;}if(!pattern.collection&&(_appState$selectedCol3=appState.selectedCollection)!==null&&_appState$selectedCol3!==void 0&&_appState$selectedCol3.name){pattern.collection=appState.selectedCollection.name;}if(!pattern.name&&(_appState$currentPatt4=appState.currentPattern)!==null&&_appState$currentPatt4!==void 0&&_appState$currentPatt4.name){pattern.name=appState.currentPattern.name;}_context4.n=7;break;case 6:_context4.p=6;_t4=_context4.v;console.warn('⚠️ Proceed-to-cart runtime sync failed, continuing with existing pattern payload:',_t4);case 7:// #region agent log
+try{_t2=pattern&&pattern.thumbnail?String(pattern.thumbnail):"";_sameCat2=!!(appState.selectedCollection&&Array.isArray(appState.selectedCollection.patterns)&&appState.selectedCollection.patterns.some(function(p){return p===pattern;}));fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"0b8664"},body:JSON.stringify({sessionId:"0b8664",runId:"pre",hypothesisId:"H1-H5",location:"CFM.js:proceed-to-cart:after-runtime-sync",message:"After proceed runtime thumbnail sync",data:{thumbIsDataUrl:_t2.startsWith("data:"),thumbLen:_t2.length,sameRefAsCatalogPattern:_sameCat2},timestamp:Date.now()})})["catch"](function(){});}catch(_e2){}// #endregion
+fabricSampleSub=null;fabricSampleRe=/^fabric-sample:(.+)$/;fabricSampleM=fabricSampleRe.exec(selectedMaterial);if(fabricSampleM){fabricSampleSub=fabricSampleM[1];}if(!fabricSampleSub){_context4.n=9;break;}if(!isFromCartEdit){_context4.n=8;break;}alert('Sample options cannot be updated from this dialog. Remove the line item and add a new sample from ColorFlex if needed.');return _context4.a(2);case 8:modal.remove();window.location.href=buildColorflexFabricSampleProductUrl(pattern,fabricSampleSub);return _context4.a(2);case 9:if(!isFromCartEdit){_context4.n=18;break;}// Handle cart item update
+console.log('🔄 Updating cart item with new pattern configuration...');_context4.p=10;if(!isColorFlexDemoOffline()){_context4.n=11;break;}showErrorNotification('Cart updates are disabled in the offline trade-show demo.');return _context4.a(2);case 11:// Show loading state
 configureBtn.disabled=true;configureBtn.textContent='🔄 Updating...';// Get cart item data from localStorage (stored by cart restoration)
-cartPatternKey="cart_saved_".concat(pattern.patternName,"_").concat(pattern.collectionName);cartSavedPattern=localStorage.getItem(cartPatternKey);if(cartSavedPattern){_context4.n=9;break;}throw new Error('Could not find original cart item data');case 9:// Build updated item data
+cartPatternKey="cart_saved_".concat(pattern.patternName,"_").concat(pattern.collectionName);cartSavedPattern=localStorage.getItem(cartPatternKey);if(cartSavedPattern){_context4.n=12;break;}throw new Error('Could not find original cart item data');case 12:// Build updated item data
 updatedItemData={pattern:pattern.patternName,collectionName:pattern.collectionName,patternId:pattern.id,colors:pattern.colors||[],productType:selectedMaterial,productTypeName:getMaterialDisplayName(selectedMaterial),productPrice:getMaterialPrice(selectedMaterial),currentScale:pattern.currentScale||((_window$appState=window.appState)===null||_window$appState===void 0?void 0:_window$appState.currentScale)||100,scaleMultiplier:pattern.scaleMultiplier||((_window$appState2=window.appState)===null||_window$appState2===void 0?void 0:_window$appState2.scaleMultiplier)||1.0};// Update via Shopify cart API (simplified version)
-_context4.n=10;return updateCartItemViaAPI(updatedItemData);case 10:cartUpdateResult=_context4.v;if(!cartUpdateResult.success){_context4.n=11;break;}// Update localStorage with new pattern
+_context4.n=13;return updateCartItemViaAPI(updatedItemData);case 13:cartUpdateResult=_context4.v;if(!cartUpdateResult.success){_context4.n=14;break;}// Update localStorage with new pattern
 updatedPattern=_objectSpread(_objectSpread({},pattern),{},{source:'cart_update',timestamp:new Date().toISOString(),productType:selectedMaterial,currentScale:updatedItemData.currentScale,scaleMultiplier:updatedItemData.scaleMultiplier});// Store updated pattern
 localStorage.setItem(cartPatternKey,JSON.stringify(updatedPattern));// Store thumbnail for cart display
 if(pattern.thumbnail){thumbnailKey=cartThumbnailStorageKeyFromPattern(pattern);thumbnailInfo={thumbnail:pattern.thumbnail,colors:pattern.colors,timestamp:new Date().toISOString(),source:'cart_update'};localStorage.setItem(thumbnailKey,JSON.stringify(thumbnailInfo));}// Show success message and redirect to cart
-modal.remove();showSuccessNotification('✅ Cart item updated successfully! Redirecting to cart...');setTimeout(function(){window.location.href='/cart';},1500);_context4.n=12;break;case 11:throw new Error(cartUpdateResult.error||'Cart update failed');case 12:_context4.n=14;break;case 13:_context4.p=13;_t4=_context4.v;console.error('❌ Error updating cart item:',_t4);showErrorNotification('❌ Failed to update cart item. Please try again.');// Reset button
-configureBtn.disabled=false;configureBtn.textContent='🔄 Update Cart Item';case 14:_context4.n=20;break;case 15:// Handle normal "Proceed to Cart" flow
+modal.remove();showSuccessNotification('✅ Cart item updated successfully! Redirecting to cart...');setTimeout(function(){window.location.href='/cart';},1500);_context4.n=15;break;case 14:throw new Error(cartUpdateResult.error||'Cart update failed');case 15:_context4.n=17;break;case 16:_context4.p=16;_t5=_context4.v;console.error('❌ Error updating cart item:',_t5);showErrorNotification('❌ Failed to update cart item. Please try again.');// Reset button
+configureBtn.disabled=false;configureBtn.textContent='🔄 Update Cart Item';case 17:_context4.n=23;break;case 18:// Handle normal "Proceed to Cart" flow
 console.log('🎯 Starting redirect flow for pattern:',pattern);// Store thumbnail in localStorage for the product page to use
-if(!pattern.thumbnail){_context4.n=19;break;}_context4.p=16;// Clean up old saved patterns to free up space
+if(!pattern.thumbnail){_context4.n=22;break;}_context4.p=19;// Clean up old saved patterns to free up space
 cleanupLocalStorage();// Try to store the thumbnail
-localStorage.setItem('colorflexCurrentThumbnail',pattern.thumbnail);console.log('🖼️ Stored thumbnail in localStorage for product page');_context4.n=19;break;case 17:_context4.p=17;_t5=_context4.v;console.warn('⚠️ localStorage quota exceeded, trying with smaller thumbnail...');// Create a smaller, more compressed thumbnail as fallback
-_context4.n=18;return createCompressedThumbnail(pattern.thumbnail);case 18:smallerThumbnail=_context4.v;if(smallerThumbnail){try{localStorage.setItem('colorflexCurrentThumbnail',smallerThumbnail);console.log('🖼️ Stored compressed thumbnail in localStorage');}catch(stillTooLarge){console.error('❌ Even compressed thumbnail too large for localStorage');// Continue without thumbnail
-}}case 19:try{console.log('📍 About to call redirectToProductConfiguration...');redirectToProductConfiguration(pattern,selectedMaterial);console.log('✅ redirectToProductConfiguration called successfully');modal.remove();}catch(error){console.error('❌ Error during redirect:',error);alert('Error redirecting to product page. Check console for details.');}case 20:return _context4.a(2);}},_callee4,null,[[16,17],[8,13],[2,6]]);})));buttonSection.appendChild(cancelBtn);buttonSection.appendChild(configureBtn);// Assemble modal
+colorflexStoreCurrentThumbnailForPattern(pattern,pattern.thumbnail);console.log('🖼️ Stored thumbnail in localStorage for product page');_context4.n=22;break;case 20:_context4.p=20;_t6=_context4.v;console.warn('⚠️ localStorage quota exceeded, trying with smaller thumbnail...');// Create a smaller, more compressed thumbnail as fallback
+_context4.n=21;return createCompressedThumbnail(pattern.thumbnail);case 21:smallerThumbnail=_context4.v;if(smallerThumbnail){try{colorflexStoreCurrentThumbnailForPattern(pattern,smallerThumbnail);console.log('🖼️ Stored compressed thumbnail in localStorage');}catch(stillTooLarge){console.error('❌ Even compressed thumbnail too large for localStorage');// Continue without thumbnail
+}}case 22:try{console.log('📍 About to call redirectToProductConfiguration...');ensureCollectionThumbnailsInLeftSidebar();resetStandardSidebarThumbnailStripLayout();redirectToProductConfiguration(pattern,selectedMaterial);console.log('✅ redirectToProductConfiguration called successfully');// #region agent log
+try{_ls=document.getElementById("leftSidebar");_ct=document.getElementById("collectionThumbnails");_lsW=null;_ctDisp=null;if(_ls&&typeof getComputedStyle==="function")_lsW=getComputedStyle(_ls).width;if(_ct&&typeof getComputedStyle==="function")_ctDisp=getComputedStyle(_ct).display+"/"+getComputedStyle(_ct).flexDirection;fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"0b8664"},body:JSON.stringify({sessionId:"0b8664",runId:"pre",hypothesisId:"H3",location:"CFM.js:proceed-to-cart:before-modal-remove",message:"Layout snapshot before modal.remove",data:{bodyOverflow:document.body&&document.body.style.overflow,docElOverflow:document.documentElement&&document.documentElement.style.overflow,leftSidebarWidth:_lsW,collectionThumbnailsDisplayFlexDir:_ctDisp},timestamp:Date.now()})})["catch"](function(){});}catch(_e3){}// #endregion
+modal.remove();}catch(error){console.error('❌ Error during redirect:',error);alert('Error redirecting to product page. Check console for details.');}case 23:return _context4.a(2);}},_callee4,null,[[19,20],[10,16],[2,6]]);})));buttonSection.appendChild(cancelBtn);buttonSection.appendChild(configureBtn);// Assemble modal
 modalContent.appendChild(header);// ✅ FIX: promoSection is commented out, so don't try to append it
 // modalContent.appendChild(promoSection);  // 🎄 ADD PROMO SECTION
 modalContent.appendChild(materialGuide);// Add material guide link
@@ -1418,10 +1435,10 @@ localStorage.removeItem('colorflexSavedPatterns');var afterSize=JSON.stringify(l
  * @see getMaterialDisplayName - Gets user-friendly material names
  * @see getMaterialPrice - Gets material pricing information
  * @see window.ProductConfigurationFlow - External configuration flow system
- */function _createCompressedThumbnail(){_createCompressedThumbnail=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee15(originalThumbnail){var img,canvas,_ctx4,MAX_DIMENSION,MIN_DIMENSION,sourceW,sourceH,largestSide,scale,targetW,targetH,floorScale,compressedDataUrl,_t25,_t26;return _regenerator().w(function(_context21){while(1)switch(_context21.p=_context21.n){case 0:_context21.p=0;if(!(!originalThumbnail||!originalThumbnail.startsWith('data:image/'))){_context21.n=1;break;}console.log('🗜️ Invalid thumbnail format, skipping compression');return _context21.a(2,null);case 1:img=new Image();canvas=document.createElement('canvas');_ctx4=canvas.getContext('2d');img.src=originalThumbnail;_context21.p=2;if(!(typeof img.decode==='function')){_context21.n=4;break;}_context21.n=3;return img.decode();case 3:_context21.n=5;break;case 4:if(img.complete){_context21.n=5;break;}_context21.n=5;return new Promise(function(resolve,reject){img.onload=function(){return resolve();};img.onerror=function(){return reject(new Error('Image load failed'));};});case 5:_context21.n=7;break;case 6:_context21.p=6;_t25=_context21.v;console.warn('🗜️ Image decode failed, skipping compression');return _context21.a(2,null);case 7:if(img.naturalWidth){_context21.n=8;break;}return _context21.a(2,null);case 8:// Preserve enough detail for My Designs and downstream cart/proof handoff.
+ */function _createCompressedThumbnail(){_createCompressedThumbnail=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee15(originalThumbnail){var img,canvas,_ctx4,MAX_DIMENSION,MIN_DIMENSION,sourceW,sourceH,largestSide,scale,targetW,targetH,floorScale,compressedDataUrl,_t26,_t27;return _regenerator().w(function(_context21){while(1)switch(_context21.p=_context21.n){case 0:_context21.p=0;if(!(!originalThumbnail||!originalThumbnail.startsWith('data:image/'))){_context21.n=1;break;}console.log('🗜️ Invalid thumbnail format, skipping compression');return _context21.a(2,null);case 1:img=new Image();canvas=document.createElement('canvas');_ctx4=canvas.getContext('2d');img.src=originalThumbnail;_context21.p=2;if(!(typeof img.decode==='function')){_context21.n=4;break;}_context21.n=3;return img.decode();case 3:_context21.n=5;break;case 4:if(img.complete){_context21.n=5;break;}_context21.n=5;return new Promise(function(resolve,reject){img.onload=function(){return resolve();};img.onerror=function(){return reject(new Error('Image load failed'));};});case 5:_context21.n=7;break;case 6:_context21.p=6;_t26=_context21.v;console.warn('🗜️ Image decode failed, skipping compression');return _context21.a(2,null);case 7:if(img.naturalWidth){_context21.n=8;break;}return _context21.a(2,null);case 8:// Preserve enough detail for My Designs and downstream cart/proof handoff.
 // Old behavior (100x100 @ q=0.1) caused unusable pixelated thumbnails.
 MAX_DIMENSION=900;MIN_DIMENSION=600;sourceW=img.naturalWidth||img.width;sourceH=img.naturalHeight||img.height;largestSide=Math.max(sourceW,sourceH);scale=largestSide>MAX_DIMENSION?MAX_DIMENSION/largestSide:1;targetW=Math.max(1,Math.round(sourceW*scale));targetH=Math.max(1,Math.round(sourceH*scale));// Keep a floor so "compressed" thumbnails are never tiny.
-if(targetW<MIN_DIMENSION||targetH<MIN_DIMENSION){floorScale=Math.max(MIN_DIMENSION/targetW,MIN_DIMENSION/targetH);targetW=Math.round(targetW*floorScale);targetH=Math.round(targetH*floorScale);}canvas.width=targetW;canvas.height=targetH;_ctx4.drawImage(img,0,0,targetW,targetH);compressedDataUrl=canvas.toDataURL('image/jpeg',0.82);console.log('🗜️ Original size:',originalThumbnail.length,'Compressed size:',compressedDataUrl.length);if(!(compressedDataUrl.length<originalThumbnail.length*0.98)){_context21.n=9;break;}return _context21.a(2,compressedDataUrl);case 9:console.log('🗜️ Compression did not reduce size significantly, returning null');return _context21.a(2,null);case 10:_context21.p=10;_t26=_context21.v;console.error('❌ Failed to create compressed thumbnail:',_t26);return _context21.a(2,null);}},_callee15,null,[[2,6],[0,10]]);}));return _createCompressedThumbnail.apply(this,arguments);}function redirectToProductConfiguration(pattern,material){try{console.log('⚙️ Starting ProductConfigurationFlow for:',pattern.patternName,'Material:',material);var getRuntimeCartColors=function getRuntimeCartColors(){try{if(Array.isArray(appState.layerInputs)&&appState.layerInputs.length){var fromInputs=appState.layerInputs.map(function(li,i){return{label:li&&li.label||"Layer ".concat(i+1),color:normalizeColorToSwFormat(li&&li.input?li.input.value:'')};}).filter(function(c){return c.color&&c.color!=='Unknown Color';});if(fromInputs.length)return fromInputs;}if(Array.isArray(appState.currentLayers)&&appState.currentLayers.length){var fromLayers=appState.currentLayers.filter(function(l){return l&&l.isShadow!==true;}).map(function(l,i){return{label:l.label||"Layer ".concat(i+1),color:normalizeColorToSwFormat(l.color||'')};}).filter(function(c){return c.color&&c.color!=='Unknown Color';});if(fromLayers.length)return fromLayers;}}catch(e){}return Array.isArray(pattern.colors)?pattern.colors:[];};var effectiveColors=getRuntimeCartColors();if(effectiveColors.length){pattern.colors=effectiveColors;}// Show loading notification
+if(targetW<MIN_DIMENSION||targetH<MIN_DIMENSION){floorScale=Math.max(MIN_DIMENSION/targetW,MIN_DIMENSION/targetH);targetW=Math.round(targetW*floorScale);targetH=Math.round(targetH*floorScale);}canvas.width=targetW;canvas.height=targetH;_ctx4.drawImage(img,0,0,targetW,targetH);compressedDataUrl=canvas.toDataURL('image/jpeg',0.82);console.log('🗜️ Original size:',originalThumbnail.length,'Compressed size:',compressedDataUrl.length);if(!(compressedDataUrl.length<originalThumbnail.length*0.98)){_context21.n=9;break;}return _context21.a(2,compressedDataUrl);case 9:console.log('🗜️ Compression did not reduce size significantly, returning null');return _context21.a(2,null);case 10:_context21.p=10;_t27=_context21.v;console.error('❌ Failed to create compressed thumbnail:',_t27);return _context21.a(2,null);}},_callee15,null,[[2,6],[0,10]]);}));return _createCompressedThumbnail.apply(this,arguments);}function redirectToProductConfiguration(pattern,material){try{if(isColorFlexDemoOffline()){console.log('[ColorFlex demo] Product configuration / checkout flow disabled');showSaveNotification('Checkout is disabled in the offline trade-show demo.');return;}console.log('⚙️ Starting ProductConfigurationFlow for:',pattern.patternName,'Material:',material);var effectiveColors=colorflexEffectiveColorsForProductUrl(pattern);if(effectiveColors.length){pattern.colors=effectiveColors;}// Show loading notification
 showSaveNotification('🔄 Starting configuration flow...');// Check if ProductConfigurationFlow is available
 if(typeof window.ProductConfigurationFlow==='undefined'){console.error('❌ ProductConfigurationFlow not found - falling back to direct redirect');return fallbackDirectRedirect(pattern,material);}// 🎄 CHECK FOR PROMO CODE IN SESSIONSTORAGE
 var promoCode=sessionStorage.getItem('cfm_promo_code');var promoUsed=sessionStorage.getItem('cfm_promo_used')==='true';var hasPromo=false;console.log('🎫 Checking for promo code:',{promoCode:promoCode,promoUsed:promoUsed});if(promoCode&&promoUsed&&promoCode.toUpperCase()==='FIRSTROLL25'){hasPromo=true;console.log('🎉 PROMO: Found valid promo code in sessionStorage');showSaveNotification('🎉 25% discount will be applied!');}// Use ProductConfigurationFlow for proper multi-step flow
@@ -1437,22 +1454,22 @@ thumbnail:pattern.thumbnail,// Already base64 image data
 saveDate:pattern.timestamp||pattern.saveDate||new Date().toISOString(),patternSize:pattern.patternSize||'',tilingType:pattern.tilingType||'',// Include scaling data if available
 currentScale:pattern.currentScale||100,scaleMultiplier:pattern.scaleMultiplier||1.0},category:material,// 'wallpaper' or 'fabric'
 preferredMaterial:material,materialInfo:{materialId:material,displayName:materialDisplayName,price:materialPrice,unit:(materialSpec===null||materialSpec===void 0?void 0:materialSpec.material)==='fabric'?'yards':'rolls',minimum:(materialSpec===null||materialSpec===void 0?void 0:materialSpec.material)==='fabric'?materialSpec.minimumYards:(materialSpec===null||materialSpec===void 0?void 0:materialSpec.minimumRolls)||1,pricePerUnit:(materialSpec===null||materialSpec===void 0?void 0:materialSpec.pricePerYard)||(materialSpec===null||materialSpec===void 0?void 0:materialSpec.pricePerRoll)||89.99,width:(materialSpec===null||materialSpec===void 0?void 0:materialSpec.width)||'',coverage:(materialSpec===null||materialSpec===void 0?void 0:materialSpec.coverage)||'',description:(materialSpec===null||materialSpec===void 0?void 0:materialSpec.description)||''}};// Store thumbnail in localStorage for product page display
-if(pattern.thumbnail){try{console.log('🖼️ Storing pattern thumbnail for product page display');localStorage.setItem('colorflexCurrentThumbnail',pattern.thumbnail);}catch(error){console.warn('⚠️ Failed to store thumbnail in localStorage:',error);}}// Initialize ProductConfigurationFlow if needed
+if(pattern.thumbnail){try{console.log('🖼️ Storing pattern thumbnail for product page display');colorflexStoreCurrentThumbnailForPattern(pattern,pattern.thumbnail);}catch(error){console.warn('⚠️ Failed to store thumbnail in localStorage:',error);}}// Initialize ProductConfigurationFlow if needed
 if(!window.configFlow){console.log('🔧 Initializing ProductConfigurationFlow...');window.configFlow=new window.ProductConfigurationFlow();}// 🎄 APPLY PROMO CODE TO PRODUCTCONFIGURATIONFLOW STATE
 if(hasPromo){console.log('🎉 PROMO: Setting promo code on ProductConfigurationFlow state');window.configFlow.state.promoCode=promoCode;window.configFlow.state.promoApplied=true;window.configFlow.state.promoUsed=true;console.log('✅ PROMO: State updated with FIRSTROLL25 discount');}// Start the configuration flow
 console.log('🚀 Starting configuration flow with data:',cartItem);window.configFlow.interceptAddToCart(cartItem);}catch(error){console.error('❌ Error starting ProductConfigurationFlow:',error);showSaveNotification('❌ Error starting configuration');// Fallback: direct redirect to Custom Wallpaper/Custom Fabric
 fallbackDirectRedirect(pattern,material);}}/**
  * Fallback function for direct redirect when ProductConfigurationFlow fails
- */function fallbackDirectRedirect(pattern,material){console.log('🔄 Using fallback direct redirect to Custom Wallpaper/Custom Fabric');console.log('📦 Pattern data received:',{name:pattern.name,patternName:pattern.patternName,collection:pattern.collection,collectionName:pattern.collectionName,id:pattern.id,colors:pattern.colors,currentScale:pattern.currentScale});console.log('🎨 Material:',material);var getRuntimeCartColors=function getRuntimeCartColors(){try{if(Array.isArray(appState.layerInputs)&&appState.layerInputs.length){var fromInputs=appState.layerInputs.map(function(li,i){return{label:li&&li.label||"Layer ".concat(i+1),color:normalizeColorToSwFormat(li&&li.input?li.input.value:'')};}).filter(function(c){return c.color&&c.color!=='Unknown Color';});if(fromInputs.length)return fromInputs;}if(Array.isArray(appState.currentLayers)&&appState.currentLayers.length){var fromLayers=appState.currentLayers.filter(function(l){return l&&l.isShadow!==true;}).map(function(l,i){return{label:l.label||"Layer ".concat(i+1),color:normalizeColorToSwFormat(l.color||'')};}).filter(function(c){return c.color&&c.color!=='Unknown Color';});if(fromLayers.length)return fromLayers;}}catch(e){}return Array.isArray(pattern.colors)?pattern.colors:[];};var effectiveColors=getRuntimeCartColors();if(effectiveColors.length){pattern.colors=effectiveColors;}// Store thumbnail in localStorage for product page display
-if(pattern.thumbnail){try{console.log('🖼️ Storing pattern thumbnail for product page display (fallback)');localStorage.setItem('colorflexCurrentThumbnail',pattern.thumbnail);}catch(error){console.warn('⚠️ Failed to store thumbnail in localStorage:',error);}}// 🎄 CHECK FOR PROMO CODE
+ */function fallbackDirectRedirect(pattern,material){if(isColorFlexDemoOffline()){console.log('[ColorFlex demo] Product redirect disabled');showSaveNotification('Product pages are disabled in the offline trade-show demo.');return;}console.log('🔄 Using fallback direct redirect to Custom Wallpaper/Custom Fabric');console.log('📦 Pattern data received:',{name:pattern.name,patternName:pattern.patternName,collection:pattern.collection,collectionName:pattern.collectionName,id:pattern.id,colors:pattern.colors,currentScale:pattern.currentScale});console.log('🎨 Material:',material);var effectiveColors=colorflexEffectiveColorsForProductUrl(pattern);if(effectiveColors.length){pattern.colors=effectiveColors;if(colorflexCoordinateMappedRuntimeColors()){var _appState$currentPatt5;var pName=pattern.name||pattern.patternName||((_appState$currentPatt5=appState.currentPattern)===null||_appState$currentPatt5===void 0?void 0:_appState$currentPatt5.name)||'';if(pName){var scale=typeof appState.currentScale==='number'&&appState.currentScale>0?appState.currentScale:pattern.currentScale||100;pattern.id=generatePatternId(pName,effectiveColors,scale);pattern.patternId=pattern.id;}}}// Store thumbnail in localStorage for product page display
+if(pattern.thumbnail){try{console.log('🖼️ Storing pattern thumbnail for product page display (fallback)');colorflexStoreCurrentThumbnailForPattern(pattern,pattern.thumbnail);}catch(error){console.warn('⚠️ Failed to store thumbnail in localStorage:',error);}}// 🎄 CHECK FOR PROMO CODE
 var promoCode=sessionStorage.getItem('cfm_promo_code');var promoUsed=sessionStorage.getItem('cfm_promo_used')==='true';var hasPromo=false;var promoDiscount=0;console.log('🎫 Checking promo code:',{promoCode:promoCode,promoUsed:promoUsed});if(promoCode&&promoUsed&&promoCode.toUpperCase()==='FIRSTROLL25'){hasPromo=true;promoDiscount=25;// 25% off
-console.log('🎉 PROMO: Applying 25% discount to cart redirect');}// Determine product handle based on material (check if material starts with 'wallpaper-' or 'fabric-')
-var productHandle=material.startsWith('wallpaper-')?'custom-wallpaper':'custom-fabric';console.log('🏷️ Product handle:',productHandle);// Build URL parameters using saved pattern structure
+console.log('🎉 PROMO: Applying 25% discount to cart redirect');}// Sample SKUs use the unified custom-sample product; rolls use custom-wallpaper / custom-fabric.
+var productHandle='custom-fabric';if(material==='wallpaper-custom-sample'||material==='fabric-custom-sample'){productHandle='custom-sample';}else if(material.startsWith('wallpaper-')){productHandle='custom-wallpaper';}console.log('🏷️ Product handle:',productHandle);// Build URL parameters using saved pattern structure
 var customColorsParam=effectiveColors?effectiveColors.filter(function(c){return c&&c.color!=null&&String(c.color).trim()!=='';}).map(function(c){return normalizeColorToSwFormat(c.color);}).filter(function(s){return s&&s!=='Unknown Color';}).join(','):'';var params=new URLSearchParams({'pattern_name':pattern.name||pattern.patternName,// Saved patterns use 'name'
 'collection':pattern.collection||pattern.collectionName||'',// Saved patterns use 'collection'
 'pattern_id':pattern.id,// Already correct format with SW numbers
 'custom_colors':customColorsParam,'scale':pattern.currentScale||100,// Include scale information
-'source':'colorflex_saved_patterns','preferred_material':material,'save_date':pattern.timestamp||pattern.saveDate||new Date().toISOString()});// 🎄 USE SHOPIFY'S DISCOUNT URL TO AUTO-APPLY THE CODE
+'source':'colorflex_saved_patterns','preferred_material':material,'save_date':pattern.timestamp||pattern.saveDate||new Date().toISOString()});var sm=pattern.scaleMultiplier!=null?Number(pattern.scaleMultiplier):NaN;if(!isNaN(sm)&&sm>0&&sm!==1){params.set('scale_multiplier',String(sm));}if(material==='wallpaper-custom-sample'){params.set('sample_for','wallpaper-prepasted');}// 🎄 USE SHOPIFY'S DISCOUNT URL TO AUTO-APPLY THE CODE
 // This requires creating the discount code in Shopify Admin first:
 // Admin → Discounts → Create "FIRSTROLL25" at 25% off
 var finalUrl;if(hasPromo){var productUrl="/products/".concat(productHandle,"?").concat(params.toString());finalUrl="/discount/".concat(promoCode,"?redirect=").concat(encodeURIComponent(productUrl));console.log('🎉 PROMO: Auto-applying Shopify discount code:',promoCode);console.log('🎯 Discount URL:',finalUrl);}else{finalUrl="/products/".concat(productHandle,"?").concat(params.toString());console.log('🎯 Regular product URL:',finalUrl);}showSaveNotification(hasPromo?'🎉 25% discount applied! Redirecting...':'🔄 Redirecting to product page...');console.log('🚀 Executing redirect...');window.location.href=finalUrl;}/**
@@ -1462,7 +1479,7 @@ var finalUrl;if(hasPromo){var productUrl="/products/".concat(productHandle,"?").
  * @param {Object} pattern - Pattern data
  * @param {string} material - Material type
  * @param {number} index - Current handle index
- */function tryProductHandles(handles,urlParams,pattern,material,index){if(index>=handles.length){console.warn('❌ No valid product page found for any handle');showSaveNotification('❌ Product page not found');showProductSearchInstructions(pattern,material);return;}var handle=handles[index];var testUrl='/products/'+handle+'.js';// Use .js endpoint to test if product exists
+ */function tryProductHandles(handles,urlParams,pattern,material,index){if(isColorFlexDemoOffline()){console.log('[ColorFlex demo] tryProductHandles skipped');showSaveNotification('Product lookup is disabled in the offline trade-show demo.');return;}if(index>=handles.length){console.warn('❌ No valid product page found for any handle');showSaveNotification('❌ Product page not found');showProductSearchInstructions(pattern,material);return;}var handle=handles[index];var testUrl='/products/'+handle+'.js';// Use .js endpoint to test if product exists
 console.log("\uD83D\uDD0D Testing handle ".concat(index+1,"/").concat(handles.length,": ").concat(handle));fetch(testUrl).then(function(response){if(response.ok){// Product exists! Redirect to it
 var fullUrl='/products/'+handle+'?'+urlParams;console.log('✅ Found product! Redirecting to:',fullUrl);showSaveNotification('✅ Product found! Opening...');window.location.href=fullUrl;}else{// Try next handle
 console.log('❌ Handle not found:',handle);tryProductHandles(handles,urlParams,pattern,material,index+1);}})["catch"](function(error){console.log('❌ Error testing handle:',handle,error);// Try next handle
@@ -1602,7 +1619,7 @@ modal.addEventListener('click',function(e){if(e.target===modal){modal.remove();}
  * @see showManualCartInstructions - Fallback instructions modal
  */function addPatternToCart(pattern,material){try{// Format scale for user-friendly display
 var formatScaleForCart=function formatScaleForCart(scaleValue){var scale=parseInt(scaleValue)||100;switch(scale){case 50:return'0.5X';case 100:return'1X';case 200:return'2X';case 300:return'3X';case 400:return'4X';default:return"".concat(scale,"%");}};// Create cart item data
-console.log('🛒 Adding pattern to cart:',pattern.patternName,'Material:',material);// Generate Shopify product handle from pattern data
+if(isColorFlexDemoOffline()){console.log('[ColorFlex demo] addPatternToCart skipped');showSaveNotification('Cart is disabled in the offline trade-show demo.');return;}console.log('🛒 Adding pattern to cart:',pattern.patternName,'Material:',material);// Generate Shopify product handle from pattern data
 var productHandle=generateProductHandle(pattern,material);var cartItem={id:productHandle,// This will need to be the actual Shopify variant ID
 quantity:1,properties:{'Pattern Name':pattern.patternName,'Collection':pattern.collectionName,'Material':material==='wallpaper'?'Wallpaper':'Fabric','Custom Colors':pattern.colors?pattern.colors.map(function(c){return c.color.replace(/^(SW|SC)\d+\s*/i,'').trim();}).join(', '):'Default','ColorFlex Design':'Yes','Save Date':pattern.saveDate||new Date().toLocaleDateString(),'Pattern ID':pattern.id,'Pattern Scale':formatScaleForCart(appState.currentScale||100)}};// Show loading state
 showSaveNotification('🔄 Adding to cart...');// Add to Shopify cart using AJAX API
@@ -1630,7 +1647,7 @@ return _toConsumableArray(new Set(possibleHandles));}/**
  * @param {Object} cartItem - Cart item data
  * @param {string} material - Material type for error handling
  * @returns {Promise} Cart API response
- */function addToShopifyCart(cartItem,material){return new Promise(function(resolve,reject){// First, try to find the product by handle
+ */function addToShopifyCart(cartItem,material){return new Promise(function(resolve,reject){if(isColorFlexDemoOffline()){resolve({success:false,demoOffline:true,message:'Cart disabled in offline demo'});return;}// First, try to find the product by handle
 var productHandle=cartItem.id;// In a real implementation, you'd need to:
 // 1. Look up the product by handle using Storefront API
 // 2. Get the variant ID for the specific material
@@ -1646,7 +1663,7 @@ console.log('📝 Simulated cart addition (development mode)');resolve({product_
  * @param {Object} cartItem - Cart item data
  * @param {Function} resolve - Promise resolve
  * @param {Function} reject - Promise reject
- */function tryRealShopifyCartAdd(cartItem,resolve,reject){try{console.log('🔍 Looking up product for cart addition:',cartItem.id);// First, look up the product by handle to get the variant ID
+ */function tryRealShopifyCartAdd(cartItem,resolve,reject){try{if(isColorFlexDemoOffline()){reject(new Error('Cart add disabled in offline demo'));return;}console.log('🔍 Looking up product for cart addition:',cartItem.id);// First, look up the product by handle to get the variant ID
 lookupProductByHandle(cartItem.id).then(function(productData){if(!productData||!productData.variants||productData.variants.length===0){throw new Error('Product not found or has no variants');}// Find the best matching variant based on material type
 var variant=findBestVariantForMaterial(productData.variants,cartItem.properties.Material);console.log('✅ Found variant:',variant.id,variant.title);// Add to cart using Shopify AJAX Cart API
 return fetch('/cart/add.js',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify({items:[{id:variant.id,quantity:cartItem.quantity,properties:cartItem.properties}]})});}).then(function(response){if(!response.ok){throw new Error('Cart add failed: '+response.status+' '+response.statusText);}return response.json();}).then(function(data){console.log('✅ Successfully added to Shopify cart:',data);resolve({success:true,cartData:data,message:'Successfully added to cart'});})["catch"](function(error){console.error('❌ Cart addition failed:',error);reject(error);});}catch(error){console.error('❌ Error in tryRealShopifyCartAdd:',error);reject(error);}}/**
@@ -1663,7 +1680,7 @@ console.log('⚠️ Using first variant as fallback:',variants[0].title);return 
  * Look up product by handle using Shopify's product JSON endpoint
  * @param {string} productHandle - Product handle
  * @returns {Promise} Product data
- */function lookupProductByHandle(productHandle){return new Promise(function(resolve,reject){console.log('🔍 Looking up product by handle:',productHandle);// Try to fetch product data from Shopify's product JSON endpoint
+ */function lookupProductByHandle(productHandle){return new Promise(function(resolve,reject){if(isColorFlexDemoOffline()){reject(new Error('Product lookup disabled in offline demo'));return;}console.log('🔍 Looking up product by handle:',productHandle);// Try to fetch product data from Shopify's product JSON endpoint
 var productUrl='/products/'+productHandle+'.js';fetch(productUrl).then(function(response){if(!response.ok){// If exact handle doesn't work, try some variations
 if(response.status===404){console.log('📝 Product not found, trying handle variations...');return tryProductHandleVariations(productHandle);}throw new Error('Product lookup failed: '+response.status);}return response.json();}).then(function(product){console.log('✅ Product found:',product.title,'Variants:',product.variants.length);resolve(product);})["catch"](function(error){console.error('❌ Product lookup failed:',error);reject(error);});});}/**
  * Try different variations of the product handle
@@ -1682,7 +1699,7 @@ var _tryNext=function tryNext(index){if(index>=variations.length){reject(new Err
  * @param {string} material - Material type
  */function showManualCartInstructions(pattern,material){var instructions="\n        To manually add this pattern to your cart:\n        \n        1. Search for: \"".concat(pattern.patternName,"\"\n        2. Select material: ").concat(material==='wallpaper'?'Wallpaper':'Fabric',"\n        3. Add your custom colors in the notes: ").concat(pattern.colors?pattern.colors.map(function(c){return c.color.replace(/^(SW|SC)\d+\s*/i,'').trim();}).join(', '):'Default colors',"\n    ");alert('Manual Cart Instructions:\n'+instructions);}/**
  * Update cart badge/counter if it exists
- */function updateCartBadge(){// Fetch current cart data to get accurate count
+ */function updateCartBadge(){if(isColorFlexDemoOffline()){return;}// Fetch current cart data to get accurate count
 fetch('/cart.js').then(function(response){if(response.ok){return response.json();}throw new Error('Cart fetch failed');}).then(function(cart){var itemCount=cart.item_count;console.log('🛒 Updated cart count:',itemCount);// Look for common cart badge selectors
 var cartBadges=['#cart-count','.cart-count','.cart-counter','[data-cart-count]','.header-cart-count','[data-cart-item-count]','.cart-item-count'];cartBadges.forEach(function(selector){var badge=document.querySelector(selector);if(badge){console.log('📊 Updating cart badge:',selector,itemCount);// Update the count
 if(badge.hasAttribute('data-cart-count')||badge.hasAttribute('data-cart-item-count')){badge.setAttribute('data-cart-count',itemCount);badge.setAttribute('data-cart-item-count',itemCount);}// Update text content
@@ -1701,7 +1718,7 @@ function previewSavedPattern(pattern){try{console.log('👁️ Previewing saved 
 // Check if we have a persistent modal source (from unified modal or theme.liquid)
 var modal=document.getElementById('savedPatternsModal');var unifiedModal=document.getElementById('unifiedSavedPatternsModal');var isPersistentContext=unifiedModal||modal&&modal.dataset&&modal.dataset.persistent;if(modal&&!isPersistentContext){console.log('🔄 Closing non-persistent modal');modal.remove();}else if(modal&&isPersistentContext){console.log('🔒 Keeping persistent modal open for continued browsing');}// Find the collection and pattern
 var targetCollection=appState.collections.find(function(c){return c&&typeof c.name==='string'&&c.name.toLowerCase()===pattern.collectionName.toLowerCase();});if(!targetCollection){showSaveNotification('❌ Collection "'+pattern.collectionName+'" not found');return;}var targetPattern=targetCollection.patterns.find(function(p){return p&&typeof p.name==='string'&&p.name.toLowerCase()===pattern.patternName.toLowerCase();});if(!targetPattern){showSaveNotification('❌ Pattern "'+pattern.patternName+'" not found');return;}// Set the collection and pattern
-appState.selectedCollection=targetCollection;appState.currentPattern=targetPattern;// Set data attribute for collection-specific styling
+appState.selectedCollection=targetCollection;appState.currentPattern=targetPattern;clearCoordinateRestoreSnapshot();// Set data attribute for collection-specific styling
 document.body.setAttribute('data-current-collection',targetCollection.name);// Update collection header
 var collectionHeader=document.getElementById('collectionHeader');if(collectionHeader){// Check if this is a clothing collection
 if(targetCollection.name.includes('-clo')){var collectionBaseName=targetCollection.name.split('.')[0];collectionHeader.innerHTML="".concat(collectionBaseName.toUpperCase(),"<br>CLOTHING");}else{collectionHeader.textContent=targetCollection.name.toUpperCase();}}// Populate layer inputs with saved colors
@@ -1802,7 +1819,7 @@ showSaveNotification('✅ Pattern "'+pattern.patternName+'" loaded successfully!
 // Check if we have a persistent modal source (from unified modal or theme.liquid)
 var modal=document.getElementById('savedPatternsModal');var unifiedModal=document.getElementById('unifiedSavedPatternsModal');var isPersistentContext=unifiedModal||modal&&modal.dataset&&modal.dataset.persistent;if(modal&&!isPersistentContext){console.log('🔄 Closing non-persistent modal');modal.remove();}else if(modal&&isPersistentContext){console.log('🔒 Keeping persistent modal open for continued browsing');}// Find the collection and pattern
 var targetCollection=appState.collections.find(function(c){return c&&typeof c.name==='string'&&c.name.toLowerCase()===pattern.collectionName.toLowerCase();});if(!targetCollection){showSaveNotification('❌ Collection "'+pattern.collectionName+'" not found');return;}var targetPattern=targetCollection.patterns.find(function(p){return p&&typeof p.name==='string'&&p.name.toLowerCase()===pattern.patternName.toLowerCase();});if(!targetPattern){showSaveNotification('❌ Pattern "'+pattern.patternName+'" not found');return;}// Set the collection and pattern
-appState.selectedCollection=targetCollection;appState.currentPattern=targetPattern;// Set data attribute for collection-specific styling
+appState.selectedCollection=targetCollection;appState.currentPattern=targetPattern;clearCoordinateRestoreSnapshot();// Set data attribute for collection-specific styling
 document.body.setAttribute('data-current-collection',targetCollection.name);// Update collection header
 var collectionHeader=document.getElementById('collectionHeader');if(collectionHeader){// Check if this is a clothing collection
 if(targetCollection.name.includes('-clo')){var collectionBaseName=targetCollection.name.split('.')[0];collectionHeader.innerHTML="".concat(collectionBaseName.toUpperCase(),"<br>CLOTHING");}else{collectionHeader.textContent=targetCollection.name.toUpperCase();}}// Update pattern name display
@@ -1830,12 +1847,7 @@ showSaveNotification('✅ Pattern "'+pattern.patternName+'" loaded successfully!
 function getColorFlexDataBaseUrl(){var base=typeof window!=='undefined'&&window.COLORFLEX_DATA_BASE_URL?String(window.COLORFLEX_DATA_BASE_URL).trim().replace(/\/$/,''):'https://s3.us-east-005.backblazeb2.com/cf-data';if(base&&!/^https?:\/\//i.test(base)){base='https://'+base;}return base;}// Canonical Backblaze base (known-good CORS). Used as fallback when theme points at a proxy/worker without CORS.
 var _COLORFLEX_CANONICAL_B2_BASE='https://s3.us-east-005.backblazeb2.com/cf-data';// Path normalization: use theme data base URL (Backblaze); no so-animation on main site
 var _colorFlexBaseUrlLogged=false;var _colorFlexLayerUrlLogCount=0;var _colorFlexThumbUrlLogCount=0;var _COLORFLEX_MAX_RESOLVED_LOGS=8;// log first N layer/thumb URLs so you can verify Backblaze
-/** Use when loading an image with crossOrigin for canvas: avoids reusing a cached response that lacked CORS headers. */function urlForCorsFetch(url){if(!url||typeof url!=='string')return url;var sep=url.indexOf('?')>=0?'&':'?';return url+sep+'_cf=cors';}/**
- * B2 S3-compatible GETs often return Access-Control-Allow-Credentials: true together with a reflected
- * Access-Control-Allow-Origin. Per Fetch CORS, a credentialed response is not allowed when the request
- * uses credentials mode "omit" (HTML crossOrigin="anonymous"), so the image fails before drawImage.
- * Omit crossOrigin for these URLs so the bitmap loads; canvas may be tainted (on-screen display is fine).
- */function colorFlexB2OmitImgCrossOrigin(url){return!!(url&&typeof url==='string'&&url.toLowerCase().includes('backblazeb2.com'));}/** Same paths as mockups.json `white-dresser`; used when mockups.json cannot be loaded. */var WHITE_DRESSER_FALLBACK_MAP_ENTRY={id:'white-dresser',name:'White Dresser',image:'./data/mockups/white-dresser-W72H72.png',shadow:'./data/mockups/white-dresser-shadow-W72H72.jpg',widthInches:72,heightInches:72};/** Airtable / legacy ids that do not match mockups.json object keys or inner `id` (normalize before lookup). */var MOCKUP_ID_ALIASES={'dresser-green':'green-dresser','dresser-w100h80':'dresser'};function canonicalMockupId(rawId){if(rawId==null||rawId==='')return rawId;var s=String(rawId).trim();var lower=s.toLowerCase();if(MOCKUP_ID_ALIASES[s])return MOCKUP_ID_ALIASES[s];if(MOCKUP_ID_ALIASES[lower])return MOCKUP_ID_ALIASES[lower];return s;}/**
+/** Use when loading an image with crossOrigin for canvas: avoids reusing a cached response that lacked CORS headers. */function urlForCorsFetch(url){if(!url||typeof url!=='string')return url;var sep=url.indexOf('?')>=0?'&':'?';return url+sep+'_cf=cors';}/** Same paths as mockups.json `white-dresser`; used when mockups.json cannot be loaded. */var WHITE_DRESSER_FALLBACK_MAP_ENTRY={id:'white-dresser',name:'White Dresser',image:'./data/mockups/white-dresser-W72H72.png',shadow:'./data/mockups/white-dresser-shadow-W72H72.jpg',widthInches:72,heightInches:72};/** Airtable / legacy ids that do not match mockups.json object keys or inner `id` (normalize before lookup). */var MOCKUP_ID_ALIASES={'dresser-green':'green-dresser','dresser-w100h80':'dresser'};function canonicalMockupId(rawId){if(rawId==null||rawId==='')return rawId;var s=String(rawId).trim();var lower=s.toLowerCase();if(MOCKUP_ID_ALIASES[s])return MOCKUP_ID_ALIASES[s];if(MOCKUP_ID_ALIASES[lower])return MOCKUP_ID_ALIASES[lower];return s;}/**
  * Resolve a mockup entry from the mockups map by key, internal `id`, or canonical alias.
  */function resolveMockupFromMap(mockupsMap,rawId){if(!rawId||!mockupsMap||_typeof(mockupsMap)!=='object')return null;var id=canonicalMockupId(rawId);if(mockupsMap[rawId])return mockupsMap[rawId];if(mockupsMap[id])return mockupsMap[id];var lower=String(id).toLowerCase();if(mockupsMap[lower])return mockupsMap[lower];var rawLower=String(rawId).toLowerCase();if(mockupsMap[rawLower])return mockupsMap[rawLower];return Object.values(mockupsMap).find(function(m){if(!m||!m.id)return false;var mid=String(m.id);return mid===id||mid===rawId||mid.toLowerCase()===lower||mid.toLowerCase()===rawLower;})||null;}function mockupEntryImagePath(mockup){var _mockup$image,_mockup$image2;if(!mockup)return'';return typeof mockup.image==='string'?mockup.image:((_mockup$image=mockup.image)===null||_mockup$image===void 0?void 0:_mockup$image.path)||((_mockup$image2=mockup.image)===null||_mockup$image2===void 0?void 0:_mockup$image2.url)||mockup.path||'';}function _mockupSlugFromPath(p){if(!p||typeof p!=='string')return'';var s=String(p).split('?')[0].split('#')[0];// basename
 var parts=s.split('/');var base=parts[parts.length-1]||s;// strip extension
@@ -1860,7 +1872,8 @@ var found=Object.values(mockupsMap).find(function(m){var img=mockupEntryImagePat
  */function ensureRoomMockupDropdown(){if(!dom.roomMockup||!window.ColorFlexMockups)return;closeRoomMockupCustomMenu();var existing=document.getElementById('roomMockupDropdown');if(existing)existing.remove();var mockups=window.ColorFlexMockups;var wrap=document.createElement('div');wrap.id='roomMockupDropdown';wrap.className='room-mockup-dd-wrap';var trigger=document.createElement('button');trigger.type='button';trigger.id='roomMockupDropdownTrigger';trigger.className='room-mockup-dd-trigger';trigger.setAttribute('aria-haspopup','listbox');trigger.setAttribute('aria-expanded','false');trigger.title='Change room preview';var menu=document.createElement('div');menu.id='roomMockupDropdownMenu';menu.className='room-mockup-dd-menu';menu.setAttribute('role','listbox');menu.hidden=true;var defaultLabel=getCollectionDefaultMockupLabel(appState.selectedCollection,mockups);var topLabel=appState.roomMockupHasSeenAlt?defaultLabel:'More Views';var entries=[{value:'',label:topLabel}];Object.keys(mockups).forEach(function(id){var m=mockups[id];entries.push({value:id,label:m&&m.name||id});});function labelForValue(v){var found=entries.find(function(x){return x.value===(v||'');});return found?found.label:defaultLabel;}function syncTriggerAndSelection(){var v=appState.selectedMockupId||'';trigger.textContent=labelForValue(v);menu.querySelectorAll('.room-mockup-dd-item').forEach(function(btn){btn.setAttribute('aria-selected',btn.dataset.value===v?'true':'false');});}entries.forEach(function(ent){var btn=document.createElement('button');btn.type='button';btn.className='room-mockup-dd-item';btn.setAttribute('role','option');btn.dataset.value=ent.value;btn.textContent=ent.label;btn.addEventListener('click',function(ev){ev.stopPropagation();if(ent.value)appState.roomMockupHasSeenAlt=true;appState.selectedMockupId=ent.value||null;syncTriggerAndSelection();closeRoomMockupCustomMenu();if(typeof updateRoomMockup==='function')updateRoomMockup();});menu.appendChild(btn);});trigger.addEventListener('click',function(e){e.stopPropagation();if(menu.hidden)openRoomMockupCustomMenu();else closeRoomMockupCustomMenu();});wrap.appendChild(trigger);wrap.appendChild(menu);if(getComputedStyle(dom.roomMockup).position==='static')dom.roomMockup.style.position='relative';dom.roomMockup.appendChild(wrap);syncTriggerAndSelection();requestAnimationFrame(function(){setRoomMockupCustomDropdownWidth(wrap,entries.map(function(e){return e.label;}));});}function normalizePath(path){if(!path||typeof path!=='string')return path;var base=getColorFlexDataBaseUrl();if(!_colorFlexBaseUrlLogged){_colorFlexBaseUrlLogged=true;console.log('[ColorFlex] Data base URL:',base,base.indexOf('backblazeb2.com')!==-1?'(Backblaze ✓)':'(other)');}// Correct known wrong server filenames (e.g. old collections.json on Shopify)
 if(path.includes('shadow-dance_shadow_layer-1')){path=path.replace(/shadow-dance_shadow_layer-1/g,'shadow-dance_isshadow_layer-1');}// If path is an absolute filesystem path (e.g. /Volumes/jobs/cf-data/collections/... or .../mockups/...), convert to relative data/... so base URL applies correctly
 if(path.startsWith('/')&&!path.startsWith('//')){if(path.indexOf('/data/collections/')!==-1){path=path.substring(path.indexOf('/data/collections/')+1);}else if(path.indexOf('/data/mockups/')!==-1){path=path.substring(path.indexOf('/data/mockups/')+1);}else if(path.indexOf('/collections/')!==-1){path='data/'+path.substring(path.indexOf('/collections/')+1);}else if(path.indexOf('/mockups/')!==-1){path='data/'+path.substring(path.indexOf('/mockups/')+1);}}var resolved;// If it's already a full URL, rewrite so-animation to current data base (Backblaze)
-if(path.startsWith('http://')||path.startsWith('https://')){if(path.startsWith('https://so-animation.com/colorflex/')){var rest=path.slice(26);var encodedRest=rest.split('/').map(function(seg){return encodeURIComponent(seg);}).join('/');resolved=base+'/'+encodedRest;if(window.COLORFLEX_DEBUG_URLS||_colorFlexLayerUrlLogCount+_colorFlexThumbUrlLogCount<_COLORFLEX_MAX_RESOLVED_LOGS&&(path.indexOf('layers/')!==-1||path.indexOf('thumbnails/')!==-1)){console.log('[ColorFlex] resolved (rewritten):',path,'→',resolved);if(path.indexOf('layers/')!==-1)_colorFlexLayerUrlLogCount++;else if(path.indexOf('thumbnails/')!==-1)_colorFlexThumbUrlLogCount++;}return resolved;}return path;}// Strip leading ./
+if(path.startsWith('http://')||path.startsWith('https://')){if(path.startsWith('https://so-animation.com/colorflex/')){var rest=path.slice(26);var encodedRest=rest.split('/').map(function(seg){return encodeURIComponent(seg);}).join('/');resolved=base+'/'+encodedRest;if(window.COLORFLEX_DEBUG_URLS||_colorFlexLayerUrlLogCount+_colorFlexThumbUrlLogCount<_COLORFLEX_MAX_RESOLVED_LOGS&&(path.indexOf('layers/')!==-1||path.indexOf('thumbnails/')!==-1)){console.log('[ColorFlex] resolved (rewritten):',path,'→',resolved);if(path.indexOf('layers/')!==-1)_colorFlexLayerUrlLogCount++;else if(path.indexOf('thumbnails/')!==-1)_colorFlexThumbUrlLogCount++;}return resolved;}// Ensure full URLs have safely-encoded path segments (some catalogs contain absolute URLs with &, spaces, etc.)
+try{var u=new URL(path);var parts=u.pathname.split('/').map(function(seg){if(!seg)return seg;try{return encodeURIComponent(decodeURIComponent(seg));}catch(e){return encodeURIComponent(seg);}});u.pathname=parts.join('/');return u.toString();}catch(e){return path;}}// Strip leading ./
 if(path.startsWith('./'))path=path.substring(2);// Chameleon: B2 has camelion-sm-r.jpg; app also references camelion-sm-black.jpg — use -r when base is B2 so one file works
 if(path.startsWith('img/')&&base.indexOf('backblazeb2.com')!==-1&&path==='img/camelion-sm-black.jpg'){path='img/camelion-sm-r.jpg';}// Encode path segments so filenames with &, #, ?, etc. (e.g. stag-&-white-moth.jpg) work in URLs
 var encodedPath=path.split('/').map(function(seg){return encodeURIComponent(seg);}).join('/');// Single format: base URL + path (bucket has top-level data/ so path is data/collections/... or img/...)
@@ -1939,10 +1952,10 @@ var dom={patternName:document.getElementById("patternName"),collectionHeader:doc
 // Validate DOM elements and report missing ones
 function validateDOMElements(){var isBassett=typeof window!=="undefined"&&window.COLORFLEX_MODE==="BASSETT";console.log("🔍 DOM Validation:");Object.entries(dom).forEach(function(_ref5){var _ref6=_slicedToArray(_ref5,2),key=_ref6[0],element=_ref6[1];if(element){console.log("  \u2705 ".concat(key,": found"));}else{if(key==="coordinatesContainer"&&isBassett){console.log("  ℹ️ coordinatesContainer: not in DOM (optional for Bassett)");}else{console.error("  \u274C ".concat(key,": NOT FOUND - missing element with id \"").concat(key,"\""));}}});}// Watch changes to patternName
 var patternNameElement=document.getElementById("patternName");Object.defineProperty(dom,'patternName',{get:function get(){return patternNameElement;},set:function set(value){console.log("Setting #patternName to:",value,"Caller:",new Error().stack.split('\n')[2].trim());patternNameElement.innerHTML=value;},configurable:true});// Debug function to check what's happening with collection names
-window.debugCollectionName=function(){var _appState$selectedCol4,_appState$currentPatt4,_appState$selectedCol7,_appState$currentPatt5,_appState$originalCol4;console.log("\uD83D\uDD0D COLLECTION NAME DEBUG:");console.log("========================");console.log("Current collection name: \"".concat((_appState$selectedCol4=appState.selectedCollection)===null||_appState$selectedCol4===void 0?void 0:_appState$selectedCol4.name,"\""));console.log("Current pattern name: \"".concat((_appState$currentPatt4=appState.currentPattern)===null||_appState$currentPatt4===void 0?void 0:_appState$currentPatt4.name,"\""));console.log("Furniture mode: ".concat(appState.furnitureMode));if(appState.furnitureMode){var _appState$originalCol,_appState$originalCol2,_appState$selectedCol5;console.log("Original collection: \"".concat((_appState$originalCol=appState.originalCollection)===null||_appState$originalCol===void 0?void 0:_appState$originalCol.name,"\""));console.log("Original collection exists: ".concat(!!((_appState$originalCol2=appState.originalCollection)!==null&&_appState$originalCol2!==void 0&&_appState$originalCol2.fullCollection)));// Check if we can get the original collection name from the furniture collection
+window.debugCollectionName=function(){var _appState$selectedCol4,_appState$currentPatt6,_appState$selectedCol7,_appState$currentPatt7,_appState$originalCol4;console.log("\uD83D\uDD0D COLLECTION NAME DEBUG:");console.log("========================");console.log("Current collection name: \"".concat((_appState$selectedCol4=appState.selectedCollection)===null||_appState$selectedCol4===void 0?void 0:_appState$selectedCol4.name,"\""));console.log("Current pattern name: \"".concat((_appState$currentPatt6=appState.currentPattern)===null||_appState$currentPatt6===void 0?void 0:_appState$currentPatt6.name,"\""));console.log("Furniture mode: ".concat(appState.furnitureMode));if(appState.furnitureMode){var _appState$originalCol,_appState$originalCol2,_appState$selectedCol5;console.log("Original collection: \"".concat((_appState$originalCol=appState.originalCollection)===null||_appState$originalCol===void 0?void 0:_appState$originalCol.name,"\""));console.log("Original collection exists: ".concat(!!((_appState$originalCol2=appState.originalCollection)!==null&&_appState$originalCol2!==void 0&&_appState$originalCol2.fullCollection)));// Check if we can get the original collection name from the furniture collection
 var originalFromFurniture=(_appState$selectedCol5=appState.selectedCollection)===null||_appState$selectedCol5===void 0?void 0:_appState$selectedCol5.originalCollectionName;console.log("Original collection from furniture collection: \"".concat(originalFromFurniture,"\""));}// Test what the path should be
 if(appState.selectedCollection&&appState.currentPattern){var collectionNameForPaths;if(appState.furnitureMode){var _appState$originalCol3,_appState$selectedCol6;// Try multiple ways to get the original collection name
-collectionNameForPaths=((_appState$originalCol3=appState.originalCollection)===null||_appState$originalCol3===void 0?void 0:_appState$originalCol3.name)||((_appState$selectedCol6=appState.selectedCollection)===null||_appState$selectedCol6===void 0?void 0:_appState$selectedCol6.originalCollectionName)||"UNKNOWN";}else{collectionNameForPaths=appState.selectedCollection.name;}var patternName=appState.currentPattern.name;var slug=createPatternSlug(patternName);console.log("Expected path structure:");console.log("  Collection for paths: \"".concat(collectionNameForPaths,"\""));console.log("  Pattern: \"".concat(patternName,"\""));console.log("  Slug: \"".concat(slug,"\""));console.log("  Should be: data/furniture/sofa-capitol/patterns/".concat(collectionNameForPaths,"/").concat(slug,"/"));if(collectionNameForPaths==="UNKNOWN"){console.error("\u274C Cannot determine original collection name!");console.error("   This is why paths are broken.");}}return{selectedCollection:(_appState$selectedCol7=appState.selectedCollection)===null||_appState$selectedCol7===void 0?void 0:_appState$selectedCol7.name,currentPattern:(_appState$currentPatt5=appState.currentPattern)===null||_appState$currentPatt5===void 0?void 0:_appState$currentPatt5.name,furnitureMode:appState.furnitureMode,originalCollection:(_appState$originalCol4=appState.originalCollection)===null||_appState$originalCol4===void 0?void 0:_appState$originalCol4.name};};window.getAppState=function(){var _appState$selectedCol8,_appState$currentPatt6,_appState$originalCol5,_appState$collections2;return{selectedCollection:(_appState$selectedCol8=appState.selectedCollection)===null||_appState$selectedCol8===void 0?void 0:_appState$selectedCol8.name,currentPattern:(_appState$currentPatt6=appState.currentPattern)===null||_appState$currentPatt6===void 0?void 0:_appState$currentPatt6.name,furnitureMode:appState.furnitureMode,originalCollection:(_appState$originalCol5=appState.originalCollection)===null||_appState$originalCol5===void 0?void 0:_appState$originalCol5.name,collections:(_appState$collections2=appState.collections)===null||_appState$collections2===void 0?void 0:_appState$collections2.map(function(c){return c.name;}),furnitureConfigLoaded:!!furnitureConfig};};window.fixOriginalCollection=function(originalCollectionName){var _appState$selectedCol9;console.log("\uD83D\uDD27 QUICK FIX: Setting original collection to \"".concat(originalCollectionName,"\""));if(!appState.originalCollection){appState.originalCollection={};}appState.originalCollection.name=originalCollectionName;// Also store it in the furniture collection for future reference
+collectionNameForPaths=((_appState$originalCol3=appState.originalCollection)===null||_appState$originalCol3===void 0?void 0:_appState$originalCol3.name)||((_appState$selectedCol6=appState.selectedCollection)===null||_appState$selectedCol6===void 0?void 0:_appState$selectedCol6.originalCollectionName)||"UNKNOWN";}else{collectionNameForPaths=appState.selectedCollection.name;}var patternName=appState.currentPattern.name;var slug=createPatternSlug(patternName);console.log("Expected path structure:");console.log("  Collection for paths: \"".concat(collectionNameForPaths,"\""));console.log("  Pattern: \"".concat(patternName,"\""));console.log("  Slug: \"".concat(slug,"\""));console.log("  Should be: data/furniture/sofa-capitol/patterns/".concat(collectionNameForPaths,"/").concat(slug,"/"));if(collectionNameForPaths==="UNKNOWN"){console.error("\u274C Cannot determine original collection name!");console.error("   This is why paths are broken.");}}return{selectedCollection:(_appState$selectedCol7=appState.selectedCollection)===null||_appState$selectedCol7===void 0?void 0:_appState$selectedCol7.name,currentPattern:(_appState$currentPatt7=appState.currentPattern)===null||_appState$currentPatt7===void 0?void 0:_appState$currentPatt7.name,furnitureMode:appState.furnitureMode,originalCollection:(_appState$originalCol4=appState.originalCollection)===null||_appState$originalCol4===void 0?void 0:_appState$originalCol4.name};};window.getAppState=function(){var _appState$selectedCol8,_appState$currentPatt8,_appState$originalCol5,_appState$collections2;return{selectedCollection:(_appState$selectedCol8=appState.selectedCollection)===null||_appState$selectedCol8===void 0?void 0:_appState$selectedCol8.name,currentPattern:(_appState$currentPatt8=appState.currentPattern)===null||_appState$currentPatt8===void 0?void 0:_appState$currentPatt8.name,furnitureMode:appState.furnitureMode,originalCollection:(_appState$originalCol5=appState.originalCollection)===null||_appState$originalCol5===void 0?void 0:_appState$originalCol5.name,collections:(_appState$collections2=appState.collections)===null||_appState$collections2===void 0?void 0:_appState$collections2.map(function(c){return c.name;}),furnitureConfigLoaded:!!furnitureConfig};};window.fixOriginalCollection=function(originalCollectionName){var _appState$selectedCol9;console.log("\uD83D\uDD27 QUICK FIX: Setting original collection to \"".concat(originalCollectionName,"\""));if(!appState.originalCollection){appState.originalCollection={};}appState.originalCollection.name=originalCollectionName;// Also store it in the furniture collection for future reference
 if(appState.selectedCollection){appState.selectedCollection.originalCollectionName=originalCollectionName;}console.log("\u2705 Fixed! Original collection name is now: \"".concat(appState.originalCollection.name,"\""));console.log("Run debugCollectionName() to verify the fix.");return{originalCollection:appState.originalCollection.name,furnitureCollection:(_appState$selectedCol9=appState.selectedCollection)===null||_appState$selectedCol9===void 0?void 0:_appState$selectedCol9.originalCollectionName};};// Status check accessible from console
 window.checkStatus=function(){var _appState$selectedCol0,_appState$collections3,_appState$originalCol6;console.log("\uD83D\uDD0D FURNITURE IMPLEMENTATION STATUS CHECK:");console.log("======================================");// Check if furniture config is loaded
 if(!furnitureConfig){console.log("\u274C furnitureConfig not loaded");return{error:"furnitureConfig not loaded"};}console.log("\u2705 furnitureConfig loaded: ".concat(Object.keys(furnitureConfig).length," furniture pieces"));// Check collections
@@ -1952,13 +1965,13 @@ var compatible=getCompatibleFurniture(currentCollection);console.log("\u2705 Com
 var tryButton=document.getElementById('tryFurnitureBtn');var backButton=document.getElementById('backToPatternsBtn');if(appState.furnitureMode){console.log("\uD83E\uDE91 Currently in FURNITURE MODE");console.log("   Back button present: ".concat(!!backButton));}else{console.log("\uD83C\uDFA8 Currently in PATTERN MODE");console.log("   Try Furniture button present: ".concat(!!tryButton));if(!tryButton&&compatible.length>0){console.log("\u26A0\uFE0F  Try Furniture button should be visible but isn't!");}}return{furnitureConfigLoaded:!!furnitureConfig,collectionsLoaded:((_appState$collections3=appState.collections)===null||_appState$collections3===void 0?void 0:_appState$collections3.length)>0,currentCollection:currentCollection,compatibleFurniture:compatible.length,furnitureMode:appState.furnitureMode,tryButtonPresent:!!tryButton,backButtonPresent:!!backButton,originalCollection:(_appState$originalCol6=appState.originalCollection)===null||_appState$originalCol6===void 0?void 0:_appState$originalCol6.name};};function ensureButtonsAfterUpdate(){// Small delay to ensure DOM update is complete
 setTimeout(function(){if(!appState.furnitureMode&&!document.getElementById('tryFurnitureBtn')){if(window.COLORFLEX_DEBUG){console.log("🔄 Re-adding Try Fabric button after room mockup update");}addTryFurnitureButton();}if(appState.furnitureMode&&!document.getElementById('backToPatternsBtn')){if(window.COLORFLEX_DEBUG){console.log("🔄 Re-adding Back to Patterns button after room mockup update");}addBackToPatternsButton();}},50);}// Test pattern slug generation
 window.testSlug=function(patternName){var slug=createPatternSlug(patternName);console.log("Pattern: \"".concat(patternName,"\" \u2192 Slug: \"").concat(slug,"\""));return slug;};// Simple state viewer
-window.viewState=function(){var _appState$selectedCol1,_appState$currentPatt7,_appState$originalCol7,_appState$selectedCol10;var state={selectedCollection:(_appState$selectedCol1=appState.selectedCollection)===null||_appState$selectedCol1===void 0?void 0:_appState$selectedCol1.name,currentPattern:(_appState$currentPatt7=appState.currentPattern)===null||_appState$currentPatt7===void 0?void 0:_appState$currentPatt7.name,furnitureMode:appState.furnitureMode,originalCollection:(_appState$originalCol7=appState.originalCollection)===null||_appState$originalCol7===void 0?void 0:_appState$originalCol7.name,patterns:(_appState$selectedCol10=appState.selectedCollection)===null||_appState$selectedCol10===void 0||(_appState$selectedCol10=_appState$selectedCol10.patterns)===null||_appState$selectedCol10===void 0?void 0:_appState$selectedCol10.length,furnitureConfig:Object.keys(furnitureConfig||{})};console.table(state);return state;};// Debug functions available in development mode only
+window.viewState=function(){var _appState$selectedCol1,_appState$currentPatt9,_appState$originalCol7,_appState$selectedCol10;var state={selectedCollection:(_appState$selectedCol1=appState.selectedCollection)===null||_appState$selectedCol1===void 0?void 0:_appState$selectedCol1.name,currentPattern:(_appState$currentPatt9=appState.currentPattern)===null||_appState$currentPatt9===void 0?void 0:_appState$currentPatt9.name,furnitureMode:appState.furnitureMode,originalCollection:(_appState$originalCol7=appState.originalCollection)===null||_appState$originalCol7===void 0?void 0:_appState$originalCol7.name,patterns:(_appState$selectedCol10=appState.selectedCollection)===null||_appState$selectedCol10===void 0||(_appState$selectedCol10=_appState$selectedCol10.patterns)===null||_appState$selectedCol10===void 0?void 0:_appState$selectedCol10.length,furnitureConfig:Object.keys(furnitureConfig||{})};console.table(state);return state;};// Debug functions available in development mode only
 if(window.location.hostname==='localhost'||window.location.hostname.includes('dev')){console.log("\n\uD83D\uDD27 DEBUG FUNCTIONS LOADED!\n=========================\n\nAvailable console commands:\n\u2022 debugCollectionName() - Debug collection name issues\n\u2022 fixOriginalCollection(\"botanicals\") - Quick fix for collection name\n\u2022 checkStatus() - Check implementation status  \n\u2022 viewState() - View current app state\n\u2022 testSlug(\"Pattern Name\") - Test slug conversion\n\u2022 getAppState() - Get simplified app state\n\nTry running: debugCollectionName()\n");}// Create pattern slug from pattern name
 function createPatternSlug(patternName){if(!patternName||typeof patternName!=='string'){return'';}return patternName.toLowerCase().replace(/[^a-z0-9\s-]/g,'')// Remove special characters
 .replace(/\s+/g,'-')// Replace spaces with hyphens
 .replace(/-+/g,'-')// Remove multiple consecutive hyphens
 .replace(/^-|-$/g,'')// Remove leading/trailing hyphens
-.trim();}window.simpleDebug=function(){console.log("\uD83D\uDD0D SIMPLE DEBUG:");console.log("================");if(appState.furnitureMode){var _appState$selectedCol11,_appState$selectedCol12,_appState$currentPatt8,_appState$selectedCol13;console.log("In furniture mode: YES");console.log("Current collection: \"".concat((_appState$selectedCol11=appState.selectedCollection)===null||_appState$selectedCol11===void 0?void 0:_appState$selectedCol11.name,"\""));console.log("Stored original collection: \"".concat((_appState$selectedCol12=appState.selectedCollection)===null||_appState$selectedCol12===void 0?void 0:_appState$selectedCol12.originalCollectionName,"\""));console.log("Current pattern: \"".concat((_appState$currentPatt8=appState.currentPattern)===null||_appState$currentPatt8===void 0?void 0:_appState$currentPatt8.name,"\""));if((_appState$selectedCol13=appState.selectedCollection)!==null&&_appState$selectedCol13!==void 0&&_appState$selectedCol13.originalCollectionName){var _appState$currentPatt9;var slug=createPatternSlug(((_appState$currentPatt9=appState.currentPattern)===null||_appState$currentPatt9===void 0?void 0:_appState$currentPatt9.name)||"test");console.log("\u2705 Path should be: data/furniture/sofa-capitol/patterns/".concat(appState.selectedCollection.originalCollectionName,"/").concat(slug,"/"));}else{console.log("\u274C No original collection name stored!");}}else{var _appState$selectedCol14;console.log("In furniture mode: NO");console.log("Current collection: \"".concat((_appState$selectedCol14=appState.selectedCollection)===null||_appState$selectedCol14===void 0?void 0:_appState$selectedCol14.name,"\""));}};// Quick fix function:
+.trim();}window.simpleDebug=function(){console.log("\uD83D\uDD0D SIMPLE DEBUG:");console.log("================");if(appState.furnitureMode){var _appState$selectedCol11,_appState$selectedCol12,_appState$currentPatt0,_appState$selectedCol13;console.log("In furniture mode: YES");console.log("Current collection: \"".concat((_appState$selectedCol11=appState.selectedCollection)===null||_appState$selectedCol11===void 0?void 0:_appState$selectedCol11.name,"\""));console.log("Stored original collection: \"".concat((_appState$selectedCol12=appState.selectedCollection)===null||_appState$selectedCol12===void 0?void 0:_appState$selectedCol12.originalCollectionName,"\""));console.log("Current pattern: \"".concat((_appState$currentPatt0=appState.currentPattern)===null||_appState$currentPatt0===void 0?void 0:_appState$currentPatt0.name,"\""));if((_appState$selectedCol13=appState.selectedCollection)!==null&&_appState$selectedCol13!==void 0&&_appState$selectedCol13.originalCollectionName){var _appState$currentPatt1;var slug=createPatternSlug(((_appState$currentPatt1=appState.currentPattern)===null||_appState$currentPatt1===void 0?void 0:_appState$currentPatt1.name)||"test");console.log("\u2705 Path should be: data/furniture/sofa-capitol/patterns/".concat(appState.selectedCollection.originalCollectionName,"/").concat(slug,"/"));}else{console.log("\u274C No original collection name stored!");}}else{var _appState$selectedCol14;console.log("In furniture mode: NO");console.log("Current collection: \"".concat((_appState$selectedCol14=appState.selectedCollection)===null||_appState$selectedCol14===void 0?void 0:_appState$selectedCol14.name,"\""));}};// Quick fix function:
 window.quickFix=function(){var _appState$selectedCol15;if(appState.furnitureMode&&!((_appState$selectedCol15=appState.selectedCollection)!==null&&_appState$selectedCol15!==void 0&&_appState$selectedCol15.originalCollectionName)){var _appState$selectedCol16;// Try to guess the original collection from the furniture collection name
 var furnitureCollectionName=(_appState$selectedCol16=appState.selectedCollection)===null||_appState$selectedCol16===void 0?void 0:_appState$selectedCol16.name;if(furnitureCollectionName&&furnitureCollectionName.includes("BOTANICAL")){appState.selectedCollection.originalCollectionName="botanicals";console.log("\uD83D\uDD27 Quick fix: Set original collection to \"botanicals\"");return true;}}return false;};window.fixPatternPaths=function(){if(appState.furnitureMode&&appState.currentPattern){var originalCollectionName=appState.selectedCollection.originalCollectionName;var _furnitureConfig=appState.selectedCollection.furnitureConfig;console.log("\uD83D\uDD27 Regenerating pattern paths:");console.log("   Collection: ".concat(originalCollectionName));console.log("   Pattern: ".concat(appState.currentPattern.name));// Re-create the furniture pattern with correct paths
 var correctedPattern=createFurniturePattern(appState.currentPattern.originalPattern||appState.currentPattern,_furnitureConfig,originalCollectionName);// Update the current pattern
@@ -2082,8 +2095,8 @@ document.addEventListener('DOMContentLoaded',function(){// Wait a bit for everyt
 if(window.COLORFLEX_MODE==='FURNITURE'){setTimeout(function(){console.log("\uD83D\uDD0D Running furniture integration check...");checkFurnitureImplementationStatus();},2000);}});// Load furniture config on app init
 var furnitureConfig=null;function loadFurnitureConfig(){return _loadFurnitureConfig.apply(this,arguments);}// Switch furniture type (for furniture mode UI)
 // furnitureType: 'Sofa-Capitol' or 'Sofa-Kite' (matches mockupLayers keys)
-function _loadFurnitureConfig(){_loadFurnitureConfig=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee16(){var _window$ColorFlexAsse,response,furnitureConfigUrl,missingKeys,localResp,localConfig,_t27,_t28;return _regenerator().w(function(_context22){while(1)switch(_context22.p=_context22.n){case 0:_context22.p=0;console.log("🪑 Loading furniture configuration...");furnitureConfigUrl=((_window$ColorFlexAsse=window.ColorFlexAssets)===null||_window$ColorFlexAsse===void 0?void 0:_window$ColorFlexAsse.furnitureConfigUrl)||'/assets/furniture-config.json';_context22.n=1;return fetch(furnitureConfigUrl,{method:'GET',cache:'no-cache',headers:{'Content-Type':'application/json'}});case 1:response=_context22.v;if(!response.ok){_context22.n=9;break;}_context22.n=2;return response.json();case 2:furnitureConfig=_context22.v;_context22.p=3;missingKeys=[];if(!(!furnitureConfig.clothing||!furnitureConfig['clothing-pants'])){_context22.n=6;break;}_context22.n=4;return fetch('/assets/furniture-config.json',{method:'GET',cache:'no-cache'});case 4:localResp=_context22.v;if(!localResp.ok){_context22.n=6;break;}_context22.n=5;return localResp.json();case 5:localConfig=_context22.v;Object.keys(localConfig).forEach(function(key){if(!furnitureConfig[key]){furnitureConfig[key]=localConfig[key];missingKeys.push(key);}});if(missingKeys.length>0){console.log('🔁 Merged missing furnitureConfig keys from local asset:',missingKeys);}case 6:_context22.n=8;break;case 7:_context22.p=7;_t27=_context22.v;console.warn('⚠️ Failed to merge local furniture-config.json:',_t27);case 8:appState.furnitureConfig=furnitureConfig;console.log('✅ Furniture config loaded with',Object.keys(furnitureConfig).length,'types:',Object.keys(furnitureConfig));// Default to template-specified type or 'Sofa-Capitol' for furniture mode
-if(!appState.selectedFurnitureType){appState.selectedFurnitureType=window.FURNITURE_DEFAULT_TYPE||'Sofa-Capitol';console.log("\uD83E\uDE91 Default furniture type: ".concat(appState.selectedFurnitureType));}return _context22.a(2,furnitureConfig);case 9:if(!(response.status===0||response.status===403)){_context22.n=10;break;}throw new Error('CORS Error: Cross-origin request blocked');case 10:console.error("❌ Furniture config response not ok:",response.status);case 11:_context22.n=13;break;case 12:_context22.p=12;_t28=_context22.v;if(_t28.name==='TypeError'&&_t28.message.includes('fetch')){console.error('❌ Network/CORS Error loading furniture config:',_t28);}else{console.error("❌ Error loading furniture config:",_t28);}console.warn("⚠️ Furniture mode will be unavailable");return _context22.a(2,null);case 13:return _context22.a(2);}},_callee16,null,[[3,7],[0,12]]);}));return _loadFurnitureConfig.apply(this,arguments);}function switchFurniture(_x6){return _switchFurniture.apply(this,arguments);}// Expose switchFurniture globally for furniture selector UI
+function _loadFurnitureConfig(){_loadFurnitureConfig=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee16(){var _window$ColorFlexAsse,response,furnitureConfigUrl,missingKeys,localResp,localConfig,_t28,_t29;return _regenerator().w(function(_context22){while(1)switch(_context22.p=_context22.n){case 0:_context22.p=0;console.log("🪑 Loading furniture configuration...");furnitureConfigUrl=((_window$ColorFlexAsse=window.ColorFlexAssets)===null||_window$ColorFlexAsse===void 0?void 0:_window$ColorFlexAsse.furnitureConfigUrl)||'/assets/furniture-config.json';_context22.n=1;return fetch(furnitureConfigUrl,{method:'GET',cache:'no-cache',headers:{'Content-Type':'application/json'}});case 1:response=_context22.v;if(!response.ok){_context22.n=9;break;}_context22.n=2;return response.json();case 2:furnitureConfig=_context22.v;_context22.p=3;missingKeys=[];if(!(!furnitureConfig.clothing||!furnitureConfig['clothing-pants'])){_context22.n=6;break;}_context22.n=4;return fetch('/assets/furniture-config.json',{method:'GET',cache:'no-cache'});case 4:localResp=_context22.v;if(!localResp.ok){_context22.n=6;break;}_context22.n=5;return localResp.json();case 5:localConfig=_context22.v;Object.keys(localConfig).forEach(function(key){if(!furnitureConfig[key]){furnitureConfig[key]=localConfig[key];missingKeys.push(key);}});if(missingKeys.length>0){console.log('🔁 Merged missing furnitureConfig keys from local asset:',missingKeys);}case 6:_context22.n=8;break;case 7:_context22.p=7;_t28=_context22.v;console.warn('⚠️ Failed to merge local furniture-config.json:',_t28);case 8:appState.furnitureConfig=furnitureConfig;console.log('✅ Furniture config loaded with',Object.keys(furnitureConfig).length,'types:',Object.keys(furnitureConfig));// Default to template-specified type or 'Sofa-Capitol' for furniture mode
+if(!appState.selectedFurnitureType){appState.selectedFurnitureType=window.FURNITURE_DEFAULT_TYPE||'Sofa-Capitol';console.log("\uD83E\uDE91 Default furniture type: ".concat(appState.selectedFurnitureType));}return _context22.a(2,furnitureConfig);case 9:if(!(response.status===0||response.status===403)){_context22.n=10;break;}throw new Error('CORS Error: Cross-origin request blocked');case 10:console.error("❌ Furniture config response not ok:",response.status);case 11:_context22.n=13;break;case 12:_context22.p=12;_t29=_context22.v;if(_t29.name==='TypeError'&&_t29.message.includes('fetch')){console.error('❌ Network/CORS Error loading furniture config:',_t29);}else{console.error("❌ Error loading furniture config:",_t29);}console.warn("⚠️ Furniture mode will be unavailable");return _context22.a(2,null);case 13:return _context22.a(2);}},_callee16,null,[[3,7],[0,12]]);}));return _loadFurnitureConfig.apply(this,arguments);}function switchFurniture(_x6){return _switchFurniture.apply(this,arguments);}// Expose switchFurniture globally for furniture selector UI
 function _switchFurniture(){_switchFurniture=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee17(furnitureType){var furnitureTypeToConfigKey,configKey;return _regenerator().w(function(_context23){while(1)switch(_context23.n){case 0:console.log('🪑 Switching furniture to:',furnitureType);if(appState.isInFurnitureMode){_context23.n=1;break;}console.warn('⚠️ Not in furniture mode');return _context23.a(2);case 1:// Map furniture type to config key
 furnitureTypeToConfigKey={'Sofa-Capitol':'furniture','Sofa-Kite':'furniture-kite'};configKey=furnitureTypeToConfigKey[furnitureType]||'furniture';if(!(!appState.furnitureConfig||!appState.furnitureConfig[configKey])){_context23.n=2;break;}console.error('❌ Furniture config not found for:',furnitureType,'-> config key:',configKey);console.log('Available furniture configs:',Object.keys(appState.furnitureConfig||{}));return _context23.a(2);case 2:// Update selected furniture type (store the mockupLayers key, not config key)
 appState.selectedFurnitureType=furnitureType;console.log('✅ Furniture type updated to:',furnitureType,'(config:',configKey,')');// Trigger re-render
@@ -2096,7 +2109,7 @@ function loadColors(){return _loadColors.apply(this,arguments);}// =============
 // curated palettes, and ticket system integration.
 // ============================================================================
 // Helper function to get clean color name without SW/SC codes for display
-function _loadColors(){_loadColors=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee19(){var _window$ColorFlexAsse2,_appState$curatedColo2,isValidColorsPayload,fetchColors,_appState$curatedColo,themeColorsUrl,base,cfDataColorsUrl,canonicalB2ColorsUrl,candidates,data,_i10,_candidates,c,_t29,_t30;return _regenerator().w(function(_context25){while(1)switch(_context25.p=_context25.n){case 0:_context25.p=0;isValidColorsPayload=function isValidColorsPayload(d){return Array.isArray(d)&&d.length>0;};fetchColors=/*#__PURE__*/function(){var _ref29=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee18(url,label){var res,d;return _regenerator().w(function(_context24){while(1)switch(_context24.n){case 0:_context24.n=1;return fetch(url,{method:'GET',cache:'no-store',headers:{'Content-Type':'application/json'}});case 1:res=_context24.v;if(res.ok){_context24.n=3;break;}if(!(res.status===0||res.status===403)){_context24.n=2;break;}throw new Error("CORS Error (".concat(label,"): Cross-origin request blocked"));case 2:throw new Error("HTTP ".concat(res.status," (").concat(label,")"));case 3:_context24.n=4;return res.json();case 4:d=_context24.v;if(isValidColorsPayload(d)){_context24.n=5;break;}throw new Error("Invalid/empty colors payload (".concat(label,")"));case 5:return _context24.a(2,d);}},_callee18);}));return function fetchColors(_x43,_x44){return _ref29.apply(this,arguments);};}();if(!(window.ColorFlexData&&window.ColorFlexData.colors)){_context25.n=1;break;}console.log("🎯 Using embedded Sherwin-Williams colors");appState.colorsData=window.ColorFlexData.colors;console.log("✅ Colors loaded:",appState.colorsData.length);if((_appState$curatedColo=appState.curatedColors)!==null&&_appState$curatedColo!==void 0&&_appState$curatedColo.length&&typeof populateCuratedColors==='function'){populateCuratedColors(appState.curatedColors);}return _context25.a(2);case 1:themeColorsUrl=((_window$ColorFlexAsse2=window.ColorFlexAssets)===null||_window$ColorFlexAsse2===void 0?void 0:_window$ColorFlexAsse2.colorsUrl)||"/assets/colors.json";base=typeof getColorFlexDataBaseUrl==='function'?getColorFlexDataBaseUrl():'';cfDataColorsUrl=base?"".concat(String(base).replace(/\/$/,''),"/data/colors.json"):'';canonicalB2ColorsUrl="".concat(String(_COLORFLEX_CANONICAL_B2_BASE).replace(/\/$/,''),"/data/colors.json");candidates=[];if(cfDataColorsUrl)candidates.push({label:'cf-data',url:cfDataColorsUrl});if(!cfDataColorsUrl||cfDataColorsUrl!==canonicalB2ColorsUrl){candidates.push({label:'backblaze',url:canonicalB2ColorsUrl});}candidates.push({label:'theme-asset',url:themeColorsUrl});data=null;_i10=0,_candidates=candidates;case 2:if(!(_i10<_candidates.length)){_context25.n=7;break;}c=_candidates[_i10];_context25.p=3;console.log("\uD83C\uDFA8 Loading colors from ".concat(c.label,":"),c.url);_context25.n=4;return fetchColors(c.url,c.label);case 4:data=_context25.v;console.log("\u2705 Colors loaded from ".concat(c.label,":"),data.length);return _context25.a(3,7);case 5:_context25.p=5;_t29=_context25.v;console.warn("\u26A0\uFE0F Colors fetch failed from ".concat(c.label,":"),c.url,_t29&&_t29.message?_t29.message:_t29);case 6:_i10++;_context25.n=2;break;case 7:if(data){_context25.n=8;break;}throw new Error("Failed to load colors from all sources");case 8:appState.colorsData=data;console.log("✅ Colors loaded:",appState.colorsData.length);if((_appState$curatedColo2=appState.curatedColors)!==null&&_appState$curatedColo2!==void 0&&_appState$curatedColo2.length&&typeof populateCuratedColors==='function'){populateCuratedColors(appState.curatedColors);}_context25.n=10;break;case 9:_context25.p=9;_t30=_context25.v;console.error("âŒ Error loading colors:",_t30);alert("Failed to load Sherwin-Williams colors.");case 10:return _context25.a(2);}},_callee19,null,[[3,5],[0,9]]);}));return _loadColors.apply(this,arguments);}function getCleanColorName(colorName){if(!colorName||typeof colorName!=="string"){return colorName;}var cleaned=colorName.replace(/^(SW|SC)\d+\s*/i,"").trim();return toColorInitialCaps(cleaned);}// Color-specific initial caps (avoid filename/pattern heuristics in toInitialCaps)
+function _loadColors(){_loadColors=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee19(){var _window$ColorFlexAsse2,_appState$curatedColo2,isValidColorsPayload,fetchColors,_appState$curatedColo,themeColorsUrl,base,cfDataColorsUrl,canonicalB2ColorsUrl,candidates,data,_i10,_candidates,c,_t30,_t31;return _regenerator().w(function(_context25){while(1)switch(_context25.p=_context25.n){case 0:_context25.p=0;isValidColorsPayload=function isValidColorsPayload(d){return Array.isArray(d)&&d.length>0;};fetchColors=/*#__PURE__*/function(){var _ref29=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee18(url,label){var res,d;return _regenerator().w(function(_context24){while(1)switch(_context24.n){case 0:_context24.n=1;return fetch(url,{method:'GET',cache:'no-store',headers:{'Content-Type':'application/json'}});case 1:res=_context24.v;if(res.ok){_context24.n=3;break;}if(!(res.status===0||res.status===403)){_context24.n=2;break;}throw new Error("CORS Error (".concat(label,"): Cross-origin request blocked"));case 2:throw new Error("HTTP ".concat(res.status," (").concat(label,")"));case 3:_context24.n=4;return res.json();case 4:d=_context24.v;if(isValidColorsPayload(d)){_context24.n=5;break;}throw new Error("Invalid/empty colors payload (".concat(label,")"));case 5:return _context24.a(2,d);}},_callee18);}));return function fetchColors(_x43,_x44){return _ref29.apply(this,arguments);};}();if(!(window.ColorFlexData&&window.ColorFlexData.colors)){_context25.n=1;break;}console.log("🎯 Using embedded Sherwin-Williams colors");appState.colorsData=window.ColorFlexData.colors;console.log("✅ Colors loaded:",appState.colorsData.length);if((_appState$curatedColo=appState.curatedColors)!==null&&_appState$curatedColo!==void 0&&_appState$curatedColo.length&&typeof populateCuratedColors==="function"){populateCuratedColors(appState.curatedColors);}return _context25.a(2);case 1:themeColorsUrl=((_window$ColorFlexAsse2=window.ColorFlexAssets)===null||_window$ColorFlexAsse2===void 0?void 0:_window$ColorFlexAsse2.colorsUrl)||"/assets/colors.json";base=typeof getColorFlexDataBaseUrl==='function'?getColorFlexDataBaseUrl():'';cfDataColorsUrl=base?"".concat(String(base).replace(/\/$/,''),"/data/colors.json"):'';canonicalB2ColorsUrl="".concat(String(_COLORFLEX_CANONICAL_B2_BASE).replace(/\/$/,''),"/data/colors.json");candidates=[];if(cfDataColorsUrl)candidates.push({label:'cf-data',url:cfDataColorsUrl});if(!isColorFlexDemoOffline()&&(!cfDataColorsUrl||cfDataColorsUrl!==canonicalB2ColorsUrl)){candidates.push({label:'backblaze',url:canonicalB2ColorsUrl});}candidates.push({label:'theme-asset',url:themeColorsUrl});data=null;_i10=0,_candidates=candidates;case 2:if(!(_i10<_candidates.length)){_context25.n=7;break;}c=_candidates[_i10];_context25.p=3;console.log("\uD83C\uDFA8 Loading colors from ".concat(c.label,":"),c.url);_context25.n=4;return fetchColors(c.url,c.label);case 4:data=_context25.v;console.log("\u2705 Colors loaded from ".concat(c.label,":"),data.length);return _context25.a(3,7);case 5:_context25.p=5;_t30=_context25.v;console.warn("\u26A0\uFE0F Colors fetch failed from ".concat(c.label,":"),c.url,_t30&&_t30.message?_t30.message:_t30);case 6:_i10++;_context25.n=2;break;case 7:if(data){_context25.n=8;break;}throw new Error("Failed to load colors from all sources");case 8:appState.colorsData=data;console.log("✅ Colors loaded:",appState.colorsData.length);if((_appState$curatedColo2=appState.curatedColors)!==null&&_appState$curatedColo2!==void 0&&_appState$curatedColo2.length&&typeof populateCuratedColors==='function'){populateCuratedColors(appState.curatedColors);}_context25.n=10;break;case 9:_context25.p=9;_t31=_context25.v;console.error("âŒ Error loading colors:",_t31);alert("Failed to load Sherwin-Williams colors.");case 10:return _context25.a(2);}},_callee19,null,[[3,5],[0,9]]);}));return _loadColors.apply(this,arguments);}function getCleanColorName(colorName){if(!colorName||typeof colorName!=="string"){return colorName;}var cleaned=colorName.replace(/^(SW|SC)\d+\s*/i,"").trim();return toColorInitialCaps(cleaned);}// Color-specific initial caps (avoid filename/pattern heuristics in toInitialCaps)
 function toColorInitialCaps(str){if(!str||typeof str!=='string')return'';return str.toLowerCase().trim().split(/\s+/).filter(Boolean).map(function(word){return word.charAt(0).toUpperCase()+word.slice(1);}).join(' ');}function buildCuratedDragPayload(found){if(!found)return null;var sw=found.sw_number?String(found.sw_number).toUpperCase().replace(/\s+/g,''):'';var name=toColorInitialCaps(String(found.color_name||found.name||'').trim());var hex=found.hex?String(found.hex).replace(/^#/,'').toUpperCase():'';return{sw_number:sw,color_name:name,hex:hex,display:sw&&name?"".concat(sw," ").concat(name):name||sw||''};}function parseCuratedDragPayload(dt){if(!dt)return null;var tryJson=function tryJson(){try{var raw=dt.getData('application/colorflex-color')||dt.getData('application/json');if(!raw)return null;var obj=JSON.parse(raw);if(!obj)return null;var _sw=obj.sw_number?String(obj.sw_number).toUpperCase().replace(/\s+/g,''):'';var _name=obj.color_name?toColorInitialCaps(String(obj.color_name).trim()):'';var hex=obj.hex?String(obj.hex).replace(/^#/,'').toUpperCase():'';var display=obj.display?String(obj.display):_sw&&_name?"".concat(_sw," ").concat(_name):_name||_sw||'';if(!_sw&&!_name&&!hex&&!display)return null;return{sw_number:_sw,color_name:_name,hex:hex,display:display};}catch(_unused){return null;}};var fromJson=tryJson();if(fromJson)return fromJson;// Fallback: plain text like "SW7006 Eider White" or "Eider White"
 var txt=(dt.getData('text/plain')||'').trim();if(!txt)return null;var m=txt.match(/\b(SW|SC)\s*(\d{3,6})\b/i);var sw=m?"".concat(m[1].toUpperCase()).concat(m[2]):'';var name=toColorInitialCaps(txt.replace(/\b(SW|SC)\s*\d+\b/i,'').trim());return{sw_number:sw,color_name:name,hex:'',display:sw&&name?"".concat(sw," ").concat(name):name||sw||txt};}// Helper function to format colors consistently with SW numbers for display
 function formatColorWithSW(colorName){if(!colorName||typeof colorName!=='string'){return'Unknown Color';}// If it already has SW format, normalize it
@@ -2129,15 +2142,15 @@ document.addEventListener('DOMContentLoaded',function(){// Add saved patterns me
 updateSavedPatternsMenuIcon();// Hamburger menu functionality
 var hamburgerBtn=document.getElementById('hamburgerBtn');var sidebar=document.getElementById('leftSidebar');if(hamburgerBtn&&sidebar){hamburgerBtn.addEventListener('click',function(){hamburgerBtn.classList.toggle('active');sidebar.classList.toggle('open');});// Close sidebar when clicking outside on mobile
 document.addEventListener('click',function(e){if(window.innerWidth<=1023&&!sidebar.contains(e.target)&&!hamburgerBtn.contains(e.target)&&sidebar.classList.contains('open')){hamburgerBtn.classList.remove('active');sidebar.classList.remove('open');}});}// Buy It Now button functionality
-var buyItNowBtn=document.getElementById('buyItNowButton');if(buyItNowBtn){buyItNowBtn.addEventListener('click',/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee5(){var state,justSavedPattern,savedPattern,_t6;return _regenerator().w(function(_context5){while(1)switch(_context5.p=_context5.n){case 0:console.log('🛒 Buy It Now clicked - starting auto-save and purchase flow...');_context5.p=1;state=window.appState;// Validate we have a pattern loaded
+var buyItNowBtn=document.getElementById('buyItNowButton');if(buyItNowBtn){buyItNowBtn.addEventListener('click',/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee5(){var state,justSavedPattern,savedPattern,_t7;return _regenerator().w(function(_context5){while(1)switch(_context5.p=_context5.n){case 0:console.log('🛒 Buy It Now clicked - starting auto-save and purchase flow...');_context5.p=1;state=window.appState;// Validate we have a pattern loaded
 if(!(!state.currentPattern||!state.currentPattern.name)){_context5.n=2;break;}showSaveNotification('❌ No pattern selected');return _context5.a(2);case 2:console.log('🎨 Current pattern:',state.currentPattern.name);console.log('🔄 Step 1: Ensuring pattern is fully rendered...');// Force a canvas update to ensure we're capturing the current pattern
 // Look for the render/update function
 if(!(window.render&&typeof window.render==='function')){_context5.n=4;break;}console.log('🔄 Calling render() to update canvas...');_context5.n=3;return window.render();case 3:_context5.n=7;break;case 4:if(!(window.updateCanvas&&typeof window.updateCanvas==='function')){_context5.n=6;break;}console.log('🔄 Calling updateCanvas() to update canvas...');_context5.n=5;return window.updateCanvas();case 5:_context5.n=7;break;case 6:if(!(window.drawPattern&&typeof window.drawPattern==='function')){_context5.n=7;break;}console.log('🔄 Calling drawPattern() to update canvas...');_context5.n=7;return window.drawPattern();case 7:_context5.n=8;return new Promise(function(resolve){return setTimeout(resolve,800);});case 8:// First, save the pattern to My List and use the exact runtime object returned.
 console.log('💾 Step 2: Saving pattern with thumbnail...');_context5.n=9;return window.saveToMyList();case 9:justSavedPattern=_context5.v;if(justSavedPattern){_context5.n=10;break;}console.error('❌ Failed to retrieve just-saved runtime pattern');showSaveNotification('❌ Failed to load saved pattern');return _context5.a(2);case 10:console.log('📸 Retrieved just-saved pattern with thumbnail:',{name:justSavedPattern.patternName,hasThumbnail:!!justSavedPattern.thumbnail,thumbnailLength:justSavedPattern.thumbnail?justSavedPattern.thumbnail.length:0});// Use the just-saved pattern data (includes fresh thumbnail)
 savedPattern=_objectSpread(_objectSpread({},justSavedPattern),{},{triggerPurchase:true});console.log('🛒 Step 3: Triggering material selection modal with fresh thumbnail...');// Trigger the material selection modal
-if(window.showMaterialSelectionModal&&typeof window.showMaterialSelectionModal==='function'){window.showMaterialSelectionModal(savedPattern);}else{console.error('❌ Material selection modal not available');showSaveNotification('❌ Unable to start purchase flow');}_context5.n=12;break;case 11:_context5.p=11;_t6=_context5.v;console.error('❌ Error in Buy It Now flow:',_t6);showSaveNotification('❌ Failed to process purchase');case 12:return _context5.a(2);}},_callee5,null,[[1,11]]);})));console.log('✅ Buy It Now button initialized');}});// Check if a specific pattern has furniture renders
+if(window.showMaterialSelectionModal&&typeof window.showMaterialSelectionModal==='function'){window.showMaterialSelectionModal(savedPattern);}else{console.error('❌ Material selection modal not available');showSaveNotification('❌ Unable to start purchase flow');}_context5.n=12;break;case 11:_context5.p=11;_t7=_context5.v;console.error('❌ Error in Buy It Now flow:',_t7);showSaveNotification('❌ Failed to process purchase');case 12:return _context5.a(2);}},_callee5,null,[[1,11]]);})));console.log('✅ Buy It Now button initialized');}});// Check if a specific pattern has furniture renders
 function checkFurnitureAvailability(_x7){return _checkFurnitureAvailability.apply(this,arguments);}// Call loadFurnitureConfig when your app initializes
-function _checkFurnitureAvailability(){_checkFurnitureAvailability=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee20(patternName){var patternSlug,manifestUrl,response,manifest,_t31;return _regenerator().w(function(_context26){while(1)switch(_context26.p=_context26.n){case 0:if(!(!patternName||typeof patternName!=='string')){_context26.n=1;break;}console.warn('checkFurnitureAvailability: Invalid patternName provided');return _context26.a(2,{available:false});case 1:patternSlug=patternName.toLowerCase().replace(/ /g,'-');manifestUrl="data/furniture/sofa-capitol/patterns/".concat(patternSlug,"/manifest.json");_context26.p=2;_context26.n=3;return fetch(manifestUrl,{method:'GET',mode:'cors',cache:'no-cache',headers:{'Content-Type':'application/json'}});case 3:response=_context26.v;if(!response.ok){_context26.n=5;break;}_context26.n=4;return response.json();case 4:manifest=_context26.v;return _context26.a(2,{available:true,manifest:manifest,furnitureType:'sofa-capitol'});case 5:_context26.n=7;break;case 6:_context26.p=6;_t31=_context26.v;case 7:return _context26.a(2,{available:false});}},_callee20,null,[[2,6]]);}));return _checkFurnitureAvailability.apply(this,arguments);}loadFurnitureConfig();/**
+function _checkFurnitureAvailability(){_checkFurnitureAvailability=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee20(patternName){var patternSlug,manifestUrl,response,manifest,_t32;return _regenerator().w(function(_context26){while(1)switch(_context26.p=_context26.n){case 0:if(!(!patternName||typeof patternName!=='string')){_context26.n=1;break;}console.warn('checkFurnitureAvailability: Invalid patternName provided');return _context26.a(2,{available:false});case 1:patternSlug=patternName.toLowerCase().replace(/ /g,'-');manifestUrl="data/furniture/sofa-capitol/patterns/".concat(patternSlug,"/manifest.json");_context26.p=2;_context26.n=3;return fetch(manifestUrl,{method:'GET',mode:'cors',cache:'no-cache',headers:{'Content-Type':'application/json'}});case 3:response=_context26.v;if(!response.ok){_context26.n=5;break;}_context26.n=4;return response.json();case 4:manifest=_context26.v;return _context26.a(2,{available:true,manifest:manifest,furnitureType:'sofa-capitol'});case 5:_context26.n=7;break;case 6:_context26.p=6;_t32=_context26.v;case 7:return _context26.a(2,{available:false});}},_callee20,null,[[2,6]]);}));return _checkFurnitureAvailability.apply(this,arguments);}loadFurnitureConfig();/**
  * =============================================================================
  * SECTION 4: FABRIC RENDERING ENGINE
  * =============================================================================
@@ -2161,11 +2174,11 @@ function _checkFurnitureAvailability(){_checkFurnitureAvailability=_asyncToGener
 function getCorrectAspectRatio(img,pattern){var imageAspectRatio=img.width/img.height;if(!pattern||!pattern.size){console.log("🔍 No pattern size data, using image aspect ratio:",imageAspectRatio.toFixed(3));return imageAspectRatio;}var patternSize=pattern.size;var declaredAspectRatio=patternSize[0]/patternSize[1];var aspectRatioDifference=Math.abs(imageAspectRatio-declaredAspectRatio);var isRotated=aspectRatioDifference>0.1;// More than 10% difference suggests rotation
 console.log("🔍 ASPECT RATIO CORRECTION:");console.log("  Pattern:",pattern.name);console.log("  📏 Image aspect ratio:",imageAspectRatio.toFixed(3));console.log("  📋 Declared aspect ratio:",declaredAspectRatio.toFixed(3));console.log("  🔄 Appears rotated:",isRotated?"❌ YES":"✅ NO");var correctAspectRatio=isRotated?declaredAspectRatio:imageAspectRatio;console.log("  🎯 Using aspect ratio:",correctAspectRatio.toFixed(3));return correctAspectRatio;}function scaleToFit(img,targetWidth,targetHeight){var aspectRatio=img.width/img.height;var drawWidth=targetWidth;var drawHeight=targetHeight;if(aspectRatio>targetWidth/targetHeight){drawHeight=drawWidth/aspectRatio;}else{drawWidth=drawHeight*aspectRatio;}var x=(targetWidth-drawWidth)/2;var y=(targetHeight-drawHeight)/2;return{width:drawWidth,height:drawHeight,x:x,y:y};}// ✅ Enhanced scaleToFit that uses correct aspect ratio for patterns
 function scaleToFitWithCorrectAspectRatio(img,targetWidth,targetHeight,pattern){var correctAspectRatio=getCorrectAspectRatio(img,pattern);var drawWidth=targetWidth;var drawHeight=targetHeight;if(correctAspectRatio>targetWidth/targetHeight){drawHeight=drawWidth/correctAspectRatio;}else{drawWidth=drawHeight*correctAspectRatio;}var x=(targetWidth-drawWidth)/2;var y=(targetHeight-drawHeight)/2;return{width:drawWidth,height:drawHeight,x:x,y:y};}// Shared helper for loading and tinting a masked image
-function drawMaskedLayer(_x8,_x9,_x0){return _drawMaskedLayer.apply(this,arguments);}function _drawMaskedLayer(){_drawMaskedLayer=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee21(imgPath,tintColor,label){var isWallPanel,originalUrl,img,offscreen,offCtx,imageData,_imageData,data,i,r,g,b,luminance,tintLayer,tintCtx,_t32;return _regenerator().w(function(_context27){while(1)switch(_context27.p=_context27.n){case 0:// Check if this is a wall panel image
+function drawMaskedLayer(_x8,_x9,_x0){return _drawMaskedLayer.apply(this,arguments);}function _drawMaskedLayer(){_drawMaskedLayer=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee21(imgPath,tintColor,label){var isWallPanel,originalUrl,img,offscreen,offCtx,imageData,_imageData,data,i,r,g,b,luminance,tintLayer,tintCtx,_t33;return _regenerator().w(function(_context27){while(1)switch(_context27.p=_context27.n){case 0:// Check if this is a wall panel image
 isWallPanel=imgPath.includes('wall-panels');// Get the original, untinted grayscale image for alpha calculation
 _context27.n=1;return new Promise(function(resolve){return processImage(imgPath,resolve,null,2.2,false,false,false);});case 1:originalUrl=_context27.v;_context27.n=2;return loadImage(originalUrl);case 2:img=_context27.v;// Draw the original image centered on an offscreen canvas
 offscreen=document.createElement("canvas");offscreen.width=1080;offscreen.height=1080;offCtx=offscreen.getContext("2d");drawCenteredImage(offCtx,img,1080,1080);// Get pixel data
-_context27.p=3;imageData=offCtx.getImageData(0,0,1080,1080);_context27.n=5;break;case 4:_context27.p=4;_t32=_context27.v;console.warn("⚠️ Canvas tainted, skipping masked layer processing:",_t32.message);return _context27.a(2);case 5:_imageData=imageData,data=_imageData.data;// Invert luminance for alpha: white (255) â†’ alpha 0, black (0) â†’ alpha 255
+_context27.p=3;imageData=offCtx.getImageData(0,0,1080,1080);_context27.n=5;break;case 4:_context27.p=4;_t33=_context27.v;console.warn("⚠️ Canvas tainted, skipping masked layer processing:",_t33.message);return _context27.a(2);case 5:_imageData=imageData,data=_imageData.data;// Invert luminance for alpha: white (255) â†’ alpha 0, black (0) â†’ alpha 255
 for(i=0;i<data.length;i+=4){r=data[i];g=data[i+1];b=data[i+2];luminance=0.299*r+0.587*g+0.114*b;data[i+3]=255-luminance;// INVERTED for correct alpha
 }offCtx.putImageData(imageData,0,0);// Prepare the colored (tint) layer and mask it with the alpha
 tintLayer=document.createElement("canvas");tintLayer.width=1080;tintLayer.height=1080;tintCtx=tintLayer.getContext("2d");tintCtx.fillStyle=tintColor;tintCtx.fillRect(0,0,1080,1080);tintCtx.globalCompositeOperation="destination-in";tintCtx.drawImage(offscreen,0,0);// Composite result onto main canvas
@@ -2173,7 +2186,10 @@ ctx.globalAlpha=1.0;ctx.globalCompositeOperation="source-over";ctx.drawImage(tin
 var minLuminance=255,maxLuminance=0;for(var i=0;i<data.length;i+=4){var luminance=0.299*data[i]+0.587*data[i+1]+0.114*data[i+2];minLuminance=Math.min(minLuminance,luminance);maxLuminance=Math.max(maxLuminance,luminance);}var range=maxLuminance-minLuminance||1;console.log("Min Luminance:",minLuminance,"Max Luminance:",maxLuminance);for(var _i2=0;_i2<data.length;_i2+=4){var _luminance=0.299*data[_i2]+0.587*data[_i2+1]+0.114*data[_i2+2];var normalized=(_luminance-minLuminance)/range;normalized=Math.max(0,Math.min(1,normalized));var alpha=1-normalized;if(alpha>0.8){alpha=1;}else if(alpha>0.5){alpha=0.8+(alpha-0.5)*0.67;}else if(alpha>0.2){alpha=alpha*1.6;}else{alpha=alpha*0.5;}alpha=Math.min(1,Math.max(0,alpha));if(alpha>0.05){data[_i2]=rLayer;data[_i2+1]=gLayer;data[_i2+2]=bLayer;}else{data[_i2]=0;data[_i2+1]=0;data[_i2+2]=0;}data[_i2+3]=Math.round(alpha*255);}}function resolveColor(raw){var color=!raw||typeof raw!=="string"?"Snowbound":raw.trim().toUpperCase();var resolved=lookupColor(color);if(!resolved)console.warn("\xE2\u0161 \xEF\xB8\x8F [resolveColor] Could not resolve color: '".concat(color,"', using Snowbound"));return resolved||lookupColor("Snowbound")||"#DDDDDD";}function drawCenteredImage(ctx,img,canvasWidth,canvasHeight){var aspect=img.width/img.height;var drawWidth=canvasWidth;var drawHeight=drawWidth/aspect;if(drawHeight>canvasHeight){drawHeight=canvasHeight;drawWidth=drawHeight*aspect;}var offsetX=Math.round((canvasWidth-drawWidth)/2);var offsetY=Math.round((canvasHeight-drawHeight)/2);ctx.drawImage(img,offsetX,offsetY,drawWidth,drawHeight);}function hexToHSL(hex){// Remove # if present
 hex=hex.replace(/^#/,'');// Convert 3-digit to 6-digit hex
 if(hex.length===3){hex=hex.split('').map(function(x){return x+x;}).join('');}if(hex.length!==6){console.error("âŒ Invalid HEX color:",hex);return null;}var r=parseInt(hex.substr(0,2),16)/255;var g=parseInt(hex.substr(2,2),16)/255;var b=parseInt(hex.substr(4,2),16)/255;var max=Math.max(r,g,b);var min=Math.min(r,g,b);var h,s,l=(max+min)/2;if(max===min){h=s=0;// achromatic
-}else{var d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h*=60;}return{h:Math.round(h),s:Math.round(s*100),l:Math.round(l*100)};}function hslToHex(h,s,l){s/=100;l/=100;var k=function k(n){return(n+h/30)%12;};var a=s*Math.min(l,1-l);var f=function f(n){return Math.round(255*(l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)))));};return"#".concat([f(0),f(8),f(4)].map(function(x){return x.toString(16).padStart(2,'0');}).join(''));}function clamp(value,min,max){return Math.min(max,Math.max(min,value));}function findClosestSWColor(targetHex){var bestMatch=null;var bestDistance=Infinity;var _iterator3=_createForOfIteratorHelper(colorsData),_step3;try{for(_iterator3.s();!(_step3=_iterator3.n()).done;){var color=_step3.value;var dist=colorDistance("#".concat(color.hex),targetHex);if(dist<bestDistance){bestDistance=dist;bestMatch=color;}}}catch(err){_iterator3.e(err);}finally{_iterator3.f();}return bestMatch;}function colorDistance(hex1,hex2){var rgb1=hexToRGB(hex1);var rgb2=hexToRGB(hex2);return Math.sqrt(Math.pow(rgb1.r-rgb2.r,2)+Math.pow(rgb1.g-rgb2.g,2)+Math.pow(rgb1.b-rgb2.b,2));}function hexToRGB(hex){hex=hex.replace(/^#/,"");if(hex.length===3)hex=hex.split('').map(function(c){return c+c;}).join('');var bigint=parseInt(hex,16);return{r:bigint>>16&255,g:bigint>>8&255,b:bigint&255};}/**
+}else{var d=max-min;s=l>0.5?d/(2-max-min):d/(max+min);switch(max){case r:h=(g-b)/d+(g<b?6:0);break;case g:h=(b-r)/d+2;break;case b:h=(r-g)/d+4;break;}h*=60;}return{h:Math.round(h),s:Math.round(s*100),l:Math.round(l*100)};}function hslToHex(h,s,l){s/=100;l/=100;var k=function k(n){return(n+h/30)%12;};var a=s*Math.min(l,1-l);var f=function f(n){return Math.round(255*(l-a*Math.max(-1,Math.min(k(n)-3,Math.min(9-k(n),1)))));};return"#".concat([f(0),f(8),f(4)].map(function(x){return x.toString(16).padStart(2,'0');}).join(''));}function clamp(value,min,max){return Math.min(max,Math.max(min,value));}function findClosestSWColor(targetHex){var bestMatch=null;var bestDistance=Infinity;var data=typeof appState!=='undefined'&&appState&&Array.isArray(appState.colorsData)&&appState.colorsData.length?appState.colorsData:typeof colorsData!=='undefined'&&Array.isArray(colorsData)?colorsData:[];var _iterator3=_createForOfIteratorHelper(data),_step3;try{for(_iterator3.s();!(_step3=_iterator3.n()).done;){var color=_step3.value;if(!color||!color.hex)continue;var dist=colorDistance("#".concat(color.hex),targetHex);if(dist<bestDistance){bestDistance=dist;bestMatch=color;}}}catch(err){_iterator3.e(err);}finally{_iterator3.f();}return bestMatch;}/** Normalize user hex to #rrggbb or null (supports #rgb). */function normalizeHexInput6(hexInput){if(!hexInput||typeof hexInput!=='string')return null;var h=hexInput.trim().replace(/^#/,'');if(h.length===3){h=h.split('').map(function(c){return c+c;}).join('');}if(!/^[0-9a-f]{6}$/i.test(h))return null;return'#'+h.toLowerCase();}/** e.g. sw6216 → "SW 6216", sc0001 → "SC 1" */function formatSwCodeForDisplay(swRaw){var s=String(swRaw||'').trim();if(!s)return'';var m=s.match(/^(SW|SC|sw|sc)\s*0*(\d+)$/i);if(m)return"".concat(m[1].toUpperCase()," ").concat(parseInt(m[2],10));var digits=s.match(/0*(\d+)/);if(digits)return"SW ".concat(parseInt(digits[1],10));return s.toUpperCase();}/**
+ * Map a hex swatch to a Sherwin/ColorFlex catalog label using loaded colorsData.
+ * @returns {{ display: string, circleHex: string, cleanColor: string } | null}
+ */function resolveHexToSWDisplay(hexInput){var targetHex=normalizeHexInput6(hexInput);if(!targetHex)return null;var data=appState&&Array.isArray(appState.colorsData)?appState.colorsData:[];if(!data.length)return null;var closest=findClosestSWColor(targetHex);if(!closest||!closest.color_name&&!closest.name)return null;var name=toColorInitialCaps(String(closest.color_name||closest.name||'').trim());var swDisp=formatSwCodeForDisplay(closest.sw_number||'');var display=swDisp&&name?"".concat(swDisp," ").concat(name):name||swDisp||targetHex;var circleHex=closest.hex?"#".concat(String(closest.hex).replace(/^#/,'')):targetHex;var cleanColor=display.replace(/^(SW|SC)\s*\d+\s+/i,'').trim()||name;return{display:display,circleHex:circleHex,cleanColor:cleanColor};}function colorDistance(hex1,hex2){var rgb1=hexToRGB(hex1);var rgb2=hexToRGB(hex2);return Math.sqrt(Math.pow(rgb1.r-rgb2.r,2)+Math.pow(rgb1.g-rgb2.g,2)+Math.pow(rgb1.b-rgb2.b,2));}function hexToRGB(hex){hex=hex.replace(/^#/,"");if(hex.length===3)hex=hex.split('').map(function(c){return c+c;}).join('');var bigint=parseInt(hex,16);return{r:bigint>>16&255,g:bigint>>8&255,b:bigint&255};}/**
  * Find color in ticket by position offset
  *
  * @param {string} currentColorName - Current color name
@@ -2221,7 +2237,7 @@ console.log("ℹ️ Print button not found - feature not available on this page"
 };var getContrastClass=function getContrastClass(hex){// console.trace("getContrastClass received:", hex);
 if(typeof hex!=="string"||!hex.startsWith("#")||hex.length<7){console.warn("⚠️ Invalid hex value in getContrastClass:",hex);return"text-black";// or choose a safe default
 }var r=parseInt(hex.slice(1,3),16);var g=parseInt(hex.slice(3,5),16);var b=parseInt(hex.slice(5,7),16);var brightness=(r*299+g*587+b*114)/1000;return brightness>128?"text-black":"text-white";};function drawFurnitureLayer(_x1,_x10){return _drawFurnitureLayer.apply(this,arguments);}// Create a color input UI element
-function _drawFurnitureLayer(){_drawFurnitureLayer=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee22(ctx,imagePath){var options,_options$tintColor,tintColor,_options$isMask,isMask,_options$opacity,opacity,_options$blendMode,blendMode,_options$zoomState,zoomState,_options$highRes,highRes,width,height,renderScale,renderWidth,renderHeight,isSimpleModeRender,activeZoomState,scale,offsetX,offsetY,img,scaledWidth,scaledHeight,drawX,verticalOffset,drawY,tempCanvas,tempCtx,maskProcessCanvas,maskProcessCtx,maskImageData,maskData,outputImageData,outputData,hex,r,g,b,i,maskR,maskG,maskB,maskA,maskIntensity,alpha,isExtrasLayer,isPatternLayer,useLuminanceLogic,processCanvas,processCtx,imageData,data,_hex,rLayer,gLayer,bLayer,_i11,_r,_g,_b,brightness,_alpha,_processCanvas,_processCtx,_imageData2,_data,_hex2,rTint,gTint,bTint,_i12,originalAlpha,_r2,_g2,_b2,_brightness,shadeFactor,_args28=arguments,_t33,_t34,_t35,_t36;return _regenerator().w(function(_context28){while(1)switch(_context28.p=_context28.n){case 0:options=_args28.length>2&&_args28[2]!==undefined?_args28[2]:{};console.log("🔍 drawFurnitureLayer ENTRY:");console.log("  imagePath received:",imagePath);console.log("  Is sofa base?",imagePath===null||imagePath===void 0?void 0:imagePath.includes('sofa-capitol-base'));console.log("  Is ferns pattern?",imagePath===null||imagePath===void 0?void 0:imagePath.includes('ferns'));_options$tintColor=options.tintColor,tintColor=_options$tintColor===void 0?null:_options$tintColor,_options$isMask=options.isMask,isMask=_options$isMask===void 0?false:_options$isMask,_options$opacity=options.opacity,opacity=_options$opacity===void 0?1.0:_options$opacity,_options$blendMode=options.blendMode,blendMode=_options$blendMode===void 0?"source-over":_options$blendMode,_options$zoomState=options.zoomState,zoomState=_options$zoomState===void 0?null:_options$zoomState,_options$highRes=options.highRes,highRes=_options$highRes===void 0?false:_options$highRes;// Use canvas dimensions instead of hardcoded values
+function _drawFurnitureLayer(){_drawFurnitureLayer=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee22(ctx,imagePath){var options,_options$tintColor,tintColor,_options$isMask,isMask,_options$opacity,opacity,_options$blendMode,blendMode,_options$zoomState,zoomState,_options$highRes,highRes,width,height,renderScale,renderWidth,renderHeight,isSimpleModeRender,activeZoomState,scale,offsetX,offsetY,img,scaledWidth,scaledHeight,drawX,verticalOffset,drawY,tempCanvas,tempCtx,maskProcessCanvas,maskProcessCtx,maskImageData,maskData,outputImageData,outputData,hex,r,g,b,i,maskR,maskG,maskB,maskA,maskIntensity,alpha,isExtrasLayer,isPatternLayer,useLuminanceLogic,processCanvas,processCtx,imageData,data,_hex,rLayer,gLayer,bLayer,_i11,_r,_g,_b,brightness,_alpha,_processCanvas,_processCtx,_imageData2,_data,_hex2,rTint,gTint,bTint,_i12,originalAlpha,_r2,_g2,_b2,_brightness,shadeFactor,_args28=arguments,_t34,_t35,_t36,_t37;return _regenerator().w(function(_context28){while(1)switch(_context28.p=_context28.n){case 0:options=_args28.length>2&&_args28[2]!==undefined?_args28[2]:{};console.log("🔍 drawFurnitureLayer ENTRY:");console.log("  imagePath received:",imagePath);console.log("  Is sofa base?",imagePath===null||imagePath===void 0?void 0:imagePath.includes('sofa-capitol-base'));console.log("  Is ferns pattern?",imagePath===null||imagePath===void 0?void 0:imagePath.includes('ferns'));_options$tintColor=options.tintColor,tintColor=_options$tintColor===void 0?null:_options$tintColor,_options$isMask=options.isMask,isMask=_options$isMask===void 0?false:_options$isMask,_options$opacity=options.opacity,opacity=_options$opacity===void 0?1.0:_options$opacity,_options$blendMode=options.blendMode,blendMode=_options$blendMode===void 0?"source-over":_options$blendMode,_options$zoomState=options.zoomState,zoomState=_options$zoomState===void 0?null:_options$zoomState,_options$highRes=options.highRes,highRes=_options$highRes===void 0?false:_options$highRes;// Use canvas dimensions instead of hardcoded values
 width=ctx.canvas.width;height=ctx.canvas.height;// ✅ Scale up for high resolution pattern rendering
 renderScale=highRes?2:1;renderWidth=width*renderScale;renderHeight=height*renderScale;// ✅ Use passed zoom state if provided, otherwise fall back to global
 // Simple mode: use scale 1.0 (no zoom reduction) for full-size rendering
@@ -2238,7 +2254,7 @@ console.log("   \uD83C\uDFAD Processing wall mask with color ".concat(tintColor)
 maskProcessCanvas=document.createElement("canvas");maskProcessCanvas.width=Math.ceil(scaledWidth);maskProcessCanvas.height=Math.ceil(scaledHeight);maskProcessCtx=maskProcessCanvas.getContext("2d");// ✅ FIX: Enable image smoothing to prevent aliasing
 maskProcessCtx.imageSmoothingEnabled=true;maskProcessCtx.imageSmoothingQuality="high";// Draw the scaled mask image at (0,0) on processing canvas
 maskProcessCtx.drawImage(img,0,0,scaledWidth,scaledHeight);// Get the mask pixel data from processing canvas (only image area)
-_context28.p=5;maskImageData=maskProcessCtx.getImageData(0,0,Math.ceil(scaledWidth),Math.ceil(scaledHeight));_context28.n=7;break;case 6:_context28.p=6;_t33=_context28.v;console.warn("⚠️ Canvas tainted, falling back to simple draw for mask processing:",_t33.message);tempCtx.drawImage(img,drawX,drawY,scaledWidth,scaledHeight);ctx.drawImage(tempCanvas,0,0);return _context28.a(2);case 7:maskData=maskImageData.data;// Create output canvas with the tint color (same size as image)
+_context28.p=5;maskImageData=maskProcessCtx.getImageData(0,0,Math.ceil(scaledWidth),Math.ceil(scaledHeight));_context28.n=7;break;case 6:_context28.p=6;_t34=_context28.v;console.warn("⚠️ Canvas tainted, falling back to simple draw for mask processing:",_t34.message);tempCtx.drawImage(img,drawX,drawY,scaledWidth,scaledHeight);ctx.drawImage(tempCanvas,0,0);return _context28.a(2);case 7:maskData=maskImageData.data;// Create output canvas with the tint color (same size as image)
 outputImageData=maskProcessCtx.createImageData(Math.ceil(scaledWidth),Math.ceil(scaledHeight));outputData=outputImageData.data;console.log("🎨 TINTING DEBUG:");console.log("  Image being tinted:",imagePath===null||imagePath===void 0?void 0:imagePath.split('/').pop());console.log("  tintColor parameter:",tintColor);console.log("  Is sofa base:",imagePath===null||imagePath===void 0?void 0:imagePath.includes('sofa-capitol-base'));// Parse tint color
 hex=tintColor.replace("#","");r=parseInt(hex.substring(0,2),16);g=parseInt(hex.substring(2,4),16);b=parseInt(hex.substring(4,6),16);console.log("  Parsed RGB:",r,g,b);console.log("  Should be Cottage Linen RGB: 240, 240, 233");console.log("   \uD83C\uDFA8 Tint color RGB: (".concat(r,", ").concat(g,", ").concat(b,")"));// ✅ FIX: Apply mask with smooth alpha transition to prevent aliasing
 // White areas in mask = wall color, black areas = transparent
@@ -2261,7 +2277,7 @@ isPatternLayer=options.isPatternLayer===true;useLuminanceLogic=!isExtrasLayer&&(
 // Create a processing canvas exactly the size of the scaled image
 processCanvas=document.createElement("canvas");processCanvas.width=Math.ceil(scaledWidth);processCanvas.height=Math.ceil(scaledHeight);processCtx=processCanvas.getContext("2d");// Draw image at (0,0) on processing canvas
 processCtx.drawImage(img,0,0,scaledWidth,scaledHeight);console.log("   ✅ Image drawn to processing canvas, now processing luminance...");// Get image data from processing canvas (only the image area, not full canvas)
-_context28.p=9;imageData=processCtx.getImageData(0,0,Math.ceil(scaledWidth),Math.ceil(scaledHeight));_context28.n=11;break;case 10:_context28.p=10;_t34=_context28.v;console.warn("⚠️ Canvas tainted, falling back to simple tinting for luminance processing:",_t34.message);// Fall back to simple tinting
+_context28.p=9;imageData=processCtx.getImageData(0,0,Math.ceil(scaledWidth),Math.ceil(scaledHeight));_context28.n=11;break;case 10:_context28.p=10;_t35=_context28.v;console.warn("⚠️ Canvas tainted, falling back to simple tinting for luminance processing:",_t35.message);// Fall back to simple tinting
 tempCtx.fillStyle=tintColor;tempCtx.fillRect(drawX,drawY,scaledWidth,scaledHeight);tempCtx.globalCompositeOperation="destination-in";tempCtx.drawImage(img,drawX,drawY,scaledWidth,scaledHeight);tempCtx.globalCompositeOperation="source-over";ctx.drawImage(tempCanvas,0,0);return _context28.a(2);case 11:data=imageData.data;// Parse tint color
 _hex=tintColor.replace("#","");rLayer=parseInt(_hex.substring(0,2),16);gLayer=parseInt(_hex.substring(2,4),16);bLayer=parseInt(_hex.substring(4,6),16);// ✅ USE LUMINANCE for both sofa base AND patterns
 for(_i11=0;_i11<data.length;_i11+=4){_r=data[_i11];_g=data[_i11+1];_b=data[_i11+2];brightness=(_r+_g+_b)/3;if(brightness<=5){// Pure black - transparent
@@ -2273,7 +2289,7 @@ tempCtx.drawImage(processCanvas,drawX,drawY);_context28.n=21;break;case 12:if(!i
 console.log("🛋️ Using EXTRAS tinting logic for:",imagePath===null||imagePath===void 0?void 0:imagePath.split('/').pop());// ✅ FIX: Process image on separate canvas to avoid misalignment from alpha channel processing
 // Create a processing canvas exactly the size of the scaled image
 _processCanvas=document.createElement("canvas");_processCanvas.width=Math.ceil(scaledWidth);_processCanvas.height=Math.ceil(scaledHeight);_processCtx=_processCanvas.getContext("2d");// Draw image at (0,0) on processing canvas
-_processCtx.drawImage(img,0,0,scaledWidth,scaledHeight);_context28.p=13;_imageData2=_processCtx.getImageData(0,0,Math.ceil(scaledWidth),Math.ceil(scaledHeight));_context28.n=15;break;case 14:_context28.p=14;_t35=_context28.v;console.warn("⚠️ Canvas tainted for extras, falling back to simple draw:",_t35.message);// Fall back to drawing directly at position
+_processCtx.drawImage(img,0,0,scaledWidth,scaledHeight);_context28.p=13;_imageData2=_processCtx.getImageData(0,0,Math.ceil(scaledWidth),Math.ceil(scaledHeight));_context28.n=15;break;case 14:_context28.p=14;_t36=_context28.v;console.warn("⚠️ Canvas tainted for extras, falling back to simple draw:",_t36.message);// Fall back to drawing directly at position
 tempCtx.drawImage(img,drawX,drawY,scaledWidth,scaledHeight);ctx.drawImage(tempCanvas,0,0);return _context28.a(2);case 15:_data=_imageData2.data;// Parse tint color
 _hex2=tintColor.replace("#","");rTint=parseInt(_hex2.substring(0,2),16);gTint=parseInt(_hex2.substring(2,4),16);bTint=parseInt(_hex2.substring(4,6),16);// Process each pixel - multiply UI color by pixel brightness, preserve alpha
 // White pixels (255,255,255) → 100% UI color
@@ -2293,7 +2309,7 @@ tempCtx.drawImage(_processCanvas,drawX,drawY);console.log("✅ Extras tinting ap
 tempCtx.fillStyle=tintColor;tempCtx.fillRect(0,0,width,height);tempCtx.globalCompositeOperation="destination-in";tempCtx.drawImage(img,drawX,drawY,scaledWidth,scaledHeight);tempCtx.globalCompositeOperation="source-over";case 21:_context28.n=23;break;case 22:// Direct images - draw at calculated position and size
 tempCtx.drawImage(img,drawX,drawY,scaledWidth,scaledHeight);console.log("   \u2705 Direct image drawn at (".concat(drawX.toFixed(1),", ").concat(drawY.toFixed(1),")"));case 23:// Draw to main canvas
 ctx.save();ctx.globalAlpha=opacity;console.log("   \uD83C\uDFA8 Using ".concat(blendMode.toUpperCase()," blend for"),imagePath===null||imagePath===void 0?void 0:imagePath.split('/').pop());ctx.globalCompositeOperation=blendMode;if(highRes){// Scale down from high-res to normal resolution
-ctx.drawImage(tempCanvas,0,0,renderWidth,renderHeight,0,0,width,height);console.log("   \u2705 High-res layer scaled down and composited");}else{ctx.drawImage(tempCanvas,0,0);}ctx.restore();console.log("   \u2705 Layer composited to main canvas");_context28.n=25;break;case 24:_context28.p=24;_t36=_context28.v;console.error("❌ Error in drawFurnitureLayer:",_t36);case 25:return _context28.a(2);}},_callee22,null,[[13,14],[9,10],[5,6],[1,24]]);}));return _drawFurnitureLayer.apply(this,arguments);}var createColorInput=function createColorInput(label,id,initialColor){var isBackground=arguments.length>3&&arguments[3]!==undefined?arguments[3]:false;console.log("Creating ".concat(label," input, ID: ").concat(id,", initialColor: ").concat(initialColor));var container=document.createElement("div");container.className="layer-input-container";var labelEl=document.createElement("div");labelEl.className="layer-label";labelEl.textContent=label||"Unknown Layer";// Create wrapper for color circle with +/- buttons
+ctx.drawImage(tempCanvas,0,0,renderWidth,renderHeight,0,0,width,height);console.log("   \u2705 High-res layer scaled down and composited");}else{ctx.drawImage(tempCanvas,0,0);}ctx.restore();console.log("   \u2705 Layer composited to main canvas");_context28.n=25;break;case 24:_context28.p=24;_t37=_context28.v;console.error("❌ Error in drawFurnitureLayer:",_t37);case 25:return _context28.a(2);}},_callee22,null,[[13,14],[9,10],[5,6],[1,24]]);}));return _drawFurnitureLayer.apply(this,arguments);}var createColorInput=function createColorInput(label,id,initialColor){var isBackground=arguments.length>3&&arguments[3]!==undefined?arguments[3]:false;console.log("Creating ".concat(label," input, ID: ").concat(id,", initialColor: ").concat(initialColor));var container=document.createElement("div");container.className="layer-input-container";var labelEl=document.createElement("div");labelEl.className="layer-label";labelEl.textContent=label||"Unknown Layer";// Create wrapper for color circle with +/- buttons
 var colorControlsWrapper=document.createElement("div");colorControlsWrapper.style.cssText="\n        position: relative;\n        display: inline-block;\n    ";// Create darker button (left side, minus)
 var darkerButton=document.createElement("button");darkerButton.className="lightness-adjust-btn";darkerButton.textContent="−";darkerButton.title="Find darker color";darkerButton.style.cssText="\n        position: absolute;\n        left: -16px;\n        top: 50%;\n        transform: translateY(-50%);\n        width: 20px;\n        height: 20px;\n        border-radius: 50%;\n        background: rgba(0, 0, 0, 0.7);\n        color: white;\n        border: 1px solid rgba(255, 255, 255, 0.3);\n        font-size: 16px;\n        font-weight: bold;\n        cursor: pointer;\n        display: flex;\n        align-items: center;\n        justify-content: center;\n        padding: 0;\n        line-height: 1;\n        z-index: 10;\n        opacity: 0;\n        pointer-events: none;\n        transition: all 0.2s ease;\n    ";// Create lighter button (right side, plus)
 var lighterButton=document.createElement("button");lighterButton.className="lightness-adjust-btn";lighterButton.textContent="+";lighterButton.title="Find lighter color";lighterButton.style.cssText="\n        position: absolute;\n        right: -8px;\n        top: 50%;\n        transform: translateY(-50%);\n        width: 20px;\n        height: 20px;\n        border-radius: 50%;\n        background: rgba(255, 255, 255, 0.9);\n        color: black;\n        border: 1px solid rgba(0, 0, 0, 0.3);\n        font-size: 16px;\n        font-weight: bold;\n        cursor: pointer;\n        display: flex;\n        align-items: center;\n        justify-content: center;\n        padding: 0;\n        line-height: 1;\n        z-index: 10;\n        opacity: 0;\n        pointer-events: none;\n        transition: all 0.2s ease;\n    ";var colorCircle=document.createElement("div");colorCircle.className="circle-input";colorCircle.id="".concat(id,"Circle");var cleanInitialColor=(initialColor||"Snowbound").replace(/^(SW|SC)\d+\s*/i,"").trim();var colorValue=lookupColor(cleanInitialColor);console.log("Setting ".concat(label," circle background to: ").concat(colorValue));colorCircle.style.backgroundColor=colorValue;// Drop target: allow dragging curated colors onto this layer's circle.
@@ -2302,11 +2318,11 @@ colorCircle.addEventListener('dragover',function(e){e.preventDefault();e.dataTra
 input.value=displayName||input.value;colorCircle.style.backgroundColor=hex;previousValue=input.value.trim().toLowerCase();// Update appState (store SW+Name if present; otherwise name)
 var i=appState.currentLayers.findIndex(function(l){return l.label===label;});if(i!==-1)appState.currentLayers[i].color=stored;var j=appState.layerInputs.findIndex(function(li){return li.label===label;});if(j!==-1){appState.layerInputs[j].input.value=input.value;appState.layerInputs[j].circle.style.backgroundColor=hex;}// Make it the selected layer so subsequent curated clicks affect it
 appState.lastSelectedLayer={input:input,circle:colorCircle,label:label};appState.lastSelectedColor={name:stored,hex:hex};// Re-render (same mode routing as other changes)
-var isFurnitureMode=window.COLORFLEX_MODE==='FURNITURE'||appState.isInFurnitureMode;var isClothingMode=window.COLORFLEX_MODE==='CLOTHING'||window.COLORFLEX_SIMPLE_MODE===true&&window.location.pathname.includes('clothing');if(isFurnitureMode){updatePreview();if(typeof updateFurniturePreview==='function')updateFurniturePreview();}else if(appState.isInFabricMode||isClothingMode){updatePreview();renderFabricMockup();}else{updatePreview();updateRoomMockup();}populateCoordinates();if(typeof updateDisplays==='function')updateDisplays();});// Assemble color controls (darker button + circle + lighter button)
+var isFurnitureMode=window.COLORFLEX_MODE==='FURNITURE'||appState.isInFurnitureMode;var isClothingMode=window.COLORFLEX_MODE==='CLOTHING'||window.COLORFLEX_SIMPLE_MODE===true&&window.location.pathname.includes('clothing');if(isFurnitureMode){updatePreview();if(typeof updateFurniturePreview==='function')updateFurniturePreview();}else if(appState.isInFabricMode||isClothingMode){updatePreview();renderFabricMockup();}else{updatePreview();updateRoomMockup();}if(typeof updateDisplays==='function')updateDisplays();});// Assemble color controls (darker button + circle + lighter button)
 colorControlsWrapper.appendChild(darkerButton);colorControlsWrapper.appendChild(colorCircle);colorControlsWrapper.appendChild(lighterButton);// Show/hide buttons on hover
 colorControlsWrapper.addEventListener("mouseenter",function(){darkerButton.style.opacity="1";darkerButton.style.pointerEvents="auto";lighterButton.style.opacity="1";lighterButton.style.pointerEvents="auto";});colorControlsWrapper.addEventListener("mouseleave",function(){darkerButton.style.opacity="0";darkerButton.style.pointerEvents="none";lighterButton.style.opacity="0";lighterButton.style.pointerEvents="none";});var input=document.createElement("input");input.type="text";input.className="layer-input";input.id=id;input.placeholder="Enter ".concat(label?label.toLowerCase():'layer'," color");input.value=getCleanColorName(cleanInitialColor);input.title="Enter color name (e.g., Snowbound) or SW number (e.g., SW7006)";console.log("Setting ".concat(label," input value to: ").concat(input.value));container.append(labelEl,colorControlsWrapper,input);// ✅ Track previous value to only update on actual changes
 // Normalize initial value for comparison (case-insensitive, trimmed)
-var previousValue=input.value.trim().toLowerCase();var updateColor=function updateColor(){var _appState$currentPatt0;var userInput=input.value.trim();var normalizedInput=userInput.toLowerCase();// ✅ FIX: Only update if value actually changed (case-insensitive comparison)
+var previousValue=input.value.trim().toLowerCase();var updateColor=function updateColor(){var _appState$currentPatt10;var userInput=input.value.trim();var normalizedInput=userInput.toLowerCase();// ✅ FIX: Only update if value actually changed (case-insensitive comparison)
 if(normalizedInput===previousValue){console.log("updateColor skipped for ".concat(label," - no change (value: ").concat(userInput,", previous: ").concat(previousValue,")"));return;}console.log("updateColor called for ".concat(label,", input value changed from \"").concat(previousValue,"\" to \"").concat(userInput,"\""));previousValue=normalizedInput;// If user entered a pure SW/SC number (e.g. "SW7006"), expand input to the color name.
 // We keep the stored value as "SW#### Name" for downstream IDs/exports, but show the human name in the field.
 var expandedStoredValue=null;var swOnlyMatch=userInput.match(/^(SW|SC)\s*(\d+)$/i);if(swOnlyMatch&&Array.isArray(appState.colorsData)&&appState.colorsData.length){var swKey=(swOnlyMatch[1]+swOnlyMatch[2]).toLowerCase().replace(/\s+/g,'');var hit=appState.colorsData.find(function(c){return c&&c.sw_number&&String(c.sw_number).toLowerCase().replace(/\s+/g,'')===swKey;});if(hit&&(hit.color_name||hit.name)){var displayName=toColorInitialCaps(String(hit.color_name||hit.name).trim());var swNum=String(hit.sw_number).toUpperCase().replace(/\s+/g,'');input.value=displayName;expandedStoredValue="".concat(swNum," ").concat(displayName).trim();previousValue=input.value.trim().toLowerCase();console.log("\u2705 Expanded ".concat(userInput," \u2192 \"").concat(displayName,"\" (stored: \"").concat(expandedStoredValue,"\")"));}else{console.warn("\u26A0\uFE0F SW/SC number entered but not found in colorsData: ".concat(userInput));}}// Try to lookup the color (lookupColor handles SW/SC prefixes internally)
@@ -2315,7 +2331,7 @@ input.value=getCleanColorName(cleanInitialColor);colorCircle.style.backgroundCol
 console.log("".concat(label," input restored to initial color: ").concat(colorValue));}else{// Valid color - keep user's input format unless we expanded a pure SW/SC number to a name
 if(!expandedStoredValue)input.value=userInput;colorCircle.style.backgroundColor=hex;console.log("".concat(label," input updated to: ").concat(hex," (kept user format: ").concat(userInput,")"));// previousValue already updated above
 }var layerIndex=appState.currentLayers.findIndex(function(layer){return layer.label===label;});if(layerIndex!==-1){// Store SW+Name when known, but keep field human-readable.
-appState.currentLayers[layerIndex].color=expandedStoredValue||input.value;console.log("🎯 COLOR UPDATE DEBUG:");console.log("  Changed input: ".concat(label," (index ").concat(layerIndex,")"));console.log("  New value: ".concat(input.value));console.log("  Current layer structure after update:");appState.currentLayers.forEach(function(layer,i){console.log("    ".concat(i,": ").concat(layer.label," = \"").concat(layer.color,"\""));});console.log("Updated appState.currentLayers[".concat(layerIndex,"].color to: ").concat(input.value));}var isFurniturePattern=((_appState$currentPatt0=appState.currentPattern)===null||_appState$currentPatt0===void 0?void 0:_appState$currentPatt0.isFurniture)||false;// ✅ CRITICAL: Check mode and call appropriate render function
+appState.currentLayers[layerIndex].color=expandedStoredValue||input.value;console.log("🎯 COLOR UPDATE DEBUG:");console.log("  Changed input: ".concat(label," (index ").concat(layerIndex,")"));console.log("  New value: ".concat(input.value));console.log("  Current layer structure after update:");appState.currentLayers.forEach(function(layer,i){console.log("    ".concat(i,": ").concat(layer.label," = \"").concat(layer.color,"\""));});console.log("Updated appState.currentLayers[".concat(layerIndex,"].color to: ").concat(input.value));}var isFurniturePattern=((_appState$currentPatt10=appState.currentPattern)===null||_appState$currentPatt10===void 0?void 0:_appState$currentPatt10.isFurniture)||false;// ✅ CRITICAL: Check mode and call appropriate render function
 var isFurnitureMode=window.COLORFLEX_MODE==='FURNITURE'||appState.isInFurnitureMode;var isClothingMode=window.COLORFLEX_MODE==='CLOTHING'||window.COLORFLEX_SIMPLE_MODE===true&&window.COLORFLEX_MODE!=='FURNITURE';// Check if we're in fabric mode - render both fabric mockup and pattern preview
 if(appState.isInFabricMode){console.log("🧵 Color changed in fabric mode - calling both renderFabricMockup() and updatePreview()");renderFabricMockup();updatePreview();// Also update the pattern preview on the left
 }else if(isFurnitureMode){// ✅ FURNITURE MODE: Use updateFurniturePreview() (NOT updateRoomMockup or renderFabricMockup)
@@ -2324,7 +2340,7 @@ if(typeof updateFurniturePreview==='function'){updateFurniturePreview();}else{co
 console.log("👗 Color changed in clothing mode - calling renderFabricMockup()");updatePreview();// Update pattern preview
 renderFabricMockup();}else{// ✅ BASSETT: clear room cache so next updateRoomMockup re-requests render with new colors
 if(window.COLORFLEX_MODE==='BASSETT'){appState.bassettResultUrl=null;appState.bassettResultPatternId=null;appState.bassettResultBlanketColor=null;appState.bassettResultScale=null;appState.bassettResultSofaColor=null;appState.bassettResultLayerColorsSig=null;}// ✅ WALLPAPER / BASSETT: update preview; room mockup is triggered by updatePreview when it finishes (BASSETT)
-console.log("🖼️ Color changed in wallpaper mode - calling updatePreview()");updatePreview();if(window.COLORFLEX_MODE!=='BASSETT')updateRoomMockup();}populateCoordinates();};// Restore original event listeners
+console.log("🖼️ Color changed in wallpaper mode - calling updatePreview()");updatePreview();if(window.COLORFLEX_MODE!=='BASSETT')updateRoomMockup();}};// Restore original event listeners
 input.addEventListener("blur",updateColor);input.addEventListener("keydown",function(e){if(e.key==="Enter")updateColor();});// Restore original click handler
 console.log("Attaching click handler to ".concat(label," color circle, ID: ").concat(colorCircle.id));colorCircle.addEventListener("click",function(){// Check if we're in coordinate mode (back button exists) - exit coordinate mode
 var coordinateBackButton=document.getElementById('backToPatternLink');if(coordinateBackButton){console.log("\uD83D\uDD04 Color circle clicked in coordinate mode - triggering back to pattern then selecting layer");coordinateBackButton.click();// Trigger the coordinate back button
@@ -2346,10 +2362,10 @@ input.value=newColor.color_name;var newHex="#".concat(newColor.hex);colorCircle.
 var layerIndex=appState.currentLayers.findIndex(function(layer){return layer.label===label;});if(layerIndex!==-1){appState.currentLayers[layerIndex].color=newColor.color_name;console.log("\u2705 Updated ".concat(label," to lighter color: ").concat(newColor.color_name));}// Re-render previews
 // ✅ MODE CHECK: Use correct render function based on mode
 var isFurnitureMode=window.COLORFLEX_MODE==='FURNITURE'||appState.isInFurnitureMode;var isClothingMode=window.COLORFLEX_MODE==='CLOTHING'||window.COLORFLEX_SIMPLE_MODE===true&&window.location.pathname.includes('clothing');if(isFurnitureMode){updateFurniturePreview();updatePreview();}else if(appState.isInFabricMode||isClothingMode){renderFabricMockup();updatePreview();}else{updatePreview();updateRoomMockup();}populateCoordinates();}else{console.log("\u26A0\uFE0F No lighter color found for ".concat(currentColorName));}});return{container:container,input:input,circle:colorCircle,label:label,isBackground:isBackground};};// Populate curated colors in header
-function populateCuratedColors(colors){var _appState$currentPatt1,_appState$currentPatt10,_appState$currentPatt11;console.log("🎨 populateCuratedColors called with colors:",colors===null||colors===void 0?void 0:colors.length);// Use live lookup so we find container even when dom was initialized before DOM ready (e.g. first load Bassett)
+function populateCuratedColors(colors){var _appState$currentPatt11,_appState$currentPatt12,_appState$currentPatt13;console.log("🎨 populateCuratedColors called with colors:",colors===null||colors===void 0?void 0:colors.length);// Use live lookup so we find container even when dom was initialized before DOM ready (e.g. first load Bassett)
 var container=dom.curatedColorsContainer||document.getElementById("curatedColorsContainer");console.log("🔍 curatedColorsContainer element:",container);if(!container){console.log("ℹ️ curatedColorsContainer not in DOM (expected for simple mode pages)");return;}// 🎨 SIMPLE MODE: Skip curated colors entirely if in simple mode
 var isSimpleMode=window.COLORFLEX_SIMPLE_MODE===true;if(isSimpleMode){console.log("🎨 Simple mode detected - skipping curated colors");return;}// ⚠️ Standard = not ColorFlex by data, or in a standard-only collection. BASSETT: always show collection curated colors on load.
-var isStandardPattern=patternIsStandard(appState.currentPattern,appState.selectedCollection);var isBassett=window.COLORFLEX_MODE==='BASSETT';console.log("🔍 CURATED COLORS CHECK:");console.log("  Pattern:",(_appState$currentPatt1=appState.currentPattern)===null||_appState$currentPatt1===void 0?void 0:_appState$currentPatt1.name);console.log("  Has layers:",((_appState$currentPatt10=appState.currentPattern)===null||_appState$currentPatt10===void 0||(_appState$currentPatt10=_appState$currentPatt10.layers)===null||_appState$currentPatt10===void 0?void 0:_appState$currentPatt10.length)||0);console.log("  Is standard pattern:",isStandardPattern);if(isStandardPattern&&!isBassett){console.log("⏭️ Standard pattern: leaving curated colors in place (not used for this pattern)");return;}if(isStandardPattern&&isBassett){console.log("🎨 BASSETT: showing collection curated colors even for standard pattern (so they're visible on initial load)");}console.log("✅ SHOWING CURATED COLORS: This is a ColorFlex pattern with",((_appState$currentPatt11=appState.currentPattern)===null||_appState$currentPatt11===void 0||(_appState$currentPatt11=_appState$currentPatt11.layers)===null||_appState$currentPatt11===void 0?void 0:_appState$currentPatt11.length)||0,"layers");if(!colors||!colors.length){console.warn("⚠️ No curated colors provided, colors array:",colors);return;}console.log("✅ About to populate",colors.length,"curated colors");container.innerHTML="";// 🎟️ Run The Ticket Button - Only show for ColorFlex patterns
+var isStandardPattern=patternIsStandard(appState.currentPattern,appState.selectedCollection);var isBassett=window.COLORFLEX_MODE==='BASSETT';console.log("🔍 CURATED COLORS CHECK:");console.log("  Pattern:",(_appState$currentPatt11=appState.currentPattern)===null||_appState$currentPatt11===void 0?void 0:_appState$currentPatt11.name);console.log("  Has layers:",((_appState$currentPatt12=appState.currentPattern)===null||_appState$currentPatt12===void 0||(_appState$currentPatt12=_appState$currentPatt12.layers)===null||_appState$currentPatt12===void 0?void 0:_appState$currentPatt12.length)||0);console.log("  Is standard pattern:",isStandardPattern);if(isStandardPattern&&!isBassett){console.log("🧹 Standard pattern (non-Bassett): clearing curated colors strip");container.innerHTML="";return;}if(isStandardPattern&&isBassett){console.log("🎨 BASSETT: showing collection curated colors even for standard pattern (so they're visible on initial load)");}console.log("✅ SHOWING CURATED COLORS: This is a ColorFlex pattern with",((_appState$currentPatt13=appState.currentPattern)===null||_appState$currentPatt13===void 0||(_appState$currentPatt13=_appState$currentPatt13.layers)===null||_appState$currentPatt13===void 0?void 0:_appState$currentPatt13.length)||0,"layers");if(!colors||!colors.length){console.warn("⚠️ No curated colors provided, colors array:",colors);return;}console.log("✅ About to populate",colors.length,"curated colors");container.innerHTML="";// 🎟️ Run The Ticket Button - Only show for ColorFlex patterns
 if(true){var ticketCircle=document.createElement("div");ticketCircle.id="runTheTicketCircle";ticketCircle.className="curated-color-circle cursor-pointer border-2";ticketCircle.style.backgroundColor="black";ticketCircle.setAttribute("data-tooltip","Load a Sherwin-Williams ticket number to apply its colors to this pattern");var ticketLabel=document.createElement("span");ticketLabel.className="text-xs font-bold text-white text-center whitespace-pre-line font-special-elite";ticketLabel.textContent=appState.activeTicketNumber?"TICKET\n".concat(appState.activeTicketNumber):"RUN\nTHE\nTICKET";ticketCircle.appendChild(ticketLabel);ticketCircle.addEventListener("click",function(){var ticketNumber=prompt("🎟️ Enter the Sherwin-Williams Ticket Number:");if(ticketNumber)runStaticTicket(ticketNumber.trim());});container.appendChild(ticketCircle);}// 🎨 Add curated color swatches
 colors.forEach(function(label){var _found$sw_number;if(!Array.isArray(appState.colorsData)){console.error("❌ appState.colorsData is not available or not an array");return;}console.log("\uD83D\uDD0D Finding curated color for label: \"".concat(label,"\""));// Parse label to extract SW number and color name
 // Expected format: "SW6248 Cherries Jubilee" or "SC0001 Cottage Linen"
@@ -2364,7 +2380,19 @@ backgroundIndex:1// Sofa base = second input (index 1) - the background/base col
 };}else{return{type:'standard',patternStartIndex:1,// Pattern layers start at index 1
 backgroundIndex:0,// True background
 wallIndex:null// No wall color
-};}}function validateLayerMapping(){var isFurnitureCollection=false;// Removed furniture logic
+};}}/**
+ * Ordered host currentLayers indices (non-shadow) from anchor through end — one step per coordinate tint layer.
+ */function buildCoordinateEligibleHostIndices(layersArr,anchor){var eligible=[];var len=layersArr?layersArr.length:0;if(!layersArr||len===0||anchor==null||typeof anchor!=='number'||anchor<0||anchor>=len){return eligible;}for(var i=anchor;i<len;i++){var _layersArr$i;if(!((_layersArr$i=layersArr[i])!==null&&_layersArr$i!==void 0&&_layersArr$i.isShadow))eligible.push(i);}if(eligible.length===0){eligible.push(Math.min(Math.max(0,anchor),len-1));}return eligible;}/**
+ * Map pattern JSON layer index (same index as updatePreview's layer loop) to appState.currentLayers index for tint color.
+ * When coordinatePreviewColorStartIndex is set: walk forward through non-shadow host slots from the anchor; when the
+ * coordinate has more tint layers than that chain, cycle (modulo) so extra layers reuse the palette in order.
+ */function resolveCurrentLayersIndexForPatternLayer(layerIx,patternStartIndex){var layersArr=appState.currentLayers;var len=layersArr?layersArr.length:0;var defaultIdx=patternStartIndex+layerIx;var anchor=appState.coordinatePreviewColorStartIndex;if(anchor==null||typeof anchor!=='number'||!layersArr){return Math.min(Math.max(0,defaultIdx),Math.max(0,len-1));}var eligible=buildCoordinateEligibleHostIndices(layersArr,anchor);if(!eligible.length){return Math.min(Math.max(0,defaultIdx),Math.max(0,len-1));}return eligible[layerIx%eligible.length];}/** Same furniture detection as updatePreview so coordinate color mapping matches the canvas. */function colorflexIsFurnitureCollectionForLayerMapping(){var _appState$selectedCol22,_appState$selectedCol23;var hasFurSuffix=((_appState$selectedCol22=appState.selectedCollection)===null||_appState$selectedCol22===void 0||(_appState$selectedCol22=_appState$selectedCol22.name)===null||_appState$selectedCol22===void 0?void 0:_appState$selectedCol22.includes('.fur'))||((_appState$selectedCol23=appState.selectedCollection)===null||_appState$selectedCol23===void 0||(_appState$selectedCol23=_appState$selectedCol23.name)===null||_appState$selectedCol23===void 0?void 0:_appState$selectedCol23.includes('-fur'));var isFurnitureMode=appState.isInFurnitureMode||window.COLORFLEX_MODE==='FURNITURE'||typeof window!=='undefined'&&window.location&&typeof window.location.pathname==='string'&&window.location.pathname.includes('furniture');return hasFurSuffix||isFurnitureMode&&appState.furnitureConfig&&appState.selectedFurnitureType;}/**
+ * When a matching coordinate is active: wall (furniture) + background layer, then only the
+ * host layer colors that tint each coordinate pattern layer (same indices as updatePreview).
+ * Avoids sending unused host pattern colors to cart/PDP while keeping the canvas background.
+ * @returns {Array<{label:string,color:string}>|null} null if not in coordinate preview mode
+ */function colorflexCoordinateMappedRuntimeColors(){var layers=appState.currentLayers;var anchor=appState.coordinatePreviewColorStartIndex;var coordPatternLayers=appState.currentPattern&&Array.isArray(appState.currentPattern.layers)?appState.currentPattern.layers:null;if(anchor==null||typeof anchor!=='number'||!coordPatternLayers||coordPatternLayers.length===0){return null;}if(!Array.isArray(layers)||!layers.length)return null;var mapping=getLayerMappingForPreview(colorflexIsFurnitureCollectionForLayerMapping());var out=[];var seen=new Set();function pushLayerAtIndexOnce(idx){if(typeof idx!=='number'||idx<0||seen.has(idx))return;var l=layers[idx];if(!l||l.isShadow===true)return;if(l.color==null||String(l.color).trim()==='')return;var color=normalizeColorToSwFormat(l.color);if(!color||color==='Unknown Color')return;seen.add(idx);out.push({label:l.label||"Layer ".concat(idx+1),color:color});}function pushLayerColorForCoordinateSlot(idx){if(typeof idx!=='number'||idx<0)return;var l=layers[idx];if(!l||l.isShadow===true)return;if(l.color==null||String(l.color).trim()==='')return;var color=normalizeColorToSwFormat(l.color);if(!color||color==='Unknown Color')return;out.push({label:l.label||"Layer ".concat(idx+1),color:color});}// Preview still uses wall (furniture) + background behind the coordinate art; cart must keep them.
+if(mapping.wallIndex!=null&&typeof mapping.wallIndex==='number'){pushLayerAtIndexOnce(mapping.wallIndex);}if(typeof mapping.backgroundIndex==='number'){pushLayerAtIndexOnce(mapping.backgroundIndex);}for(var i=0;i<coordPatternLayers.length;i++){var idx=resolveCurrentLayersIndexForPatternLayer(i,mapping.patternStartIndex);pushLayerColorForCoordinateSlot(idx);}return out.length?out:null;}function validateLayerMapping(){var isFurnitureCollection=false;// Removed furniture logic
 var mapping=getLayerMappingForPreview(isFurnitureCollection);console.log("🔍 LAYER MAPPING VALIDATION (WITH WALL COLOR):");console.log("  Collection type:",isFurnitureCollection?"furniture":"standard");console.log("  Total inputs:",appState.currentLayers.length);console.log("  Pattern start index:",mapping.patternStartIndex);console.log("  Background/Sofa base index:",mapping.backgroundIndex);console.log("  Wall index:",mapping.wallIndex);console.log("  Layer assignments:");appState.currentLayers.forEach(function(layer,index){var usage="unused";if(index===mapping.wallIndex){usage="wall color (via mask)";}else if(index===mapping.backgroundIndex){if(isFurnitureCollection){usage="sofa base + pattern background";}else{usage="pattern background";}}else if(index>=mapping.patternStartIndex){usage="pattern layer ".concat(index-mapping.patternStartIndex);}console.log("    ".concat(index,": ").concat(layer.label," = \"").concat(layer.color,"\" (").concat(usage,")"));});// Show the mapping clearly
 if(isFurnitureCollection){var _appState$currentLaye,_appState$currentLaye2,_appState$currentLaye3;console.log("🔄 FURNITURE COLLECTION MAPPING (WITH WALL MASK):");console.log("  Pattern Preview:");console.log("    Background \u2190 Input ".concat(mapping.backgroundIndex," (").concat((_appState$currentLaye=appState.currentLayers[mapping.backgroundIndex])===null||_appState$currentLaye===void 0?void 0:_appState$currentLaye.label,")"));for(var i=0;i<appState.currentLayers.length-mapping.patternStartIndex;i++){var inputIndex=mapping.patternStartIndex+i;if(appState.currentLayers[inputIndex]){console.log("    Pattern Layer ".concat(i," \u2190 Input ").concat(inputIndex," (").concat(appState.currentLayers[inputIndex].label,")"));}}console.log("  Furniture Mockup:");console.log("    Room Scene ← sofa-capitol.png");console.log("    Wall Areas \u2190 Input ".concat(mapping.wallIndex," (").concat((_appState$currentLaye2=appState.currentLayers[mapping.wallIndex])===null||_appState$currentLaye2===void 0?void 0:_appState$currentLaye2.label,") via wall mask"));console.log("    Sofa Base \u2190 Input ".concat(mapping.backgroundIndex," (").concat((_appState$currentLaye3=appState.currentLayers[mapping.backgroundIndex])===null||_appState$currentLaye3===void 0?void 0:_appState$currentLaye3.label,")"));for(var _i3=0;_i3<appState.currentLayers.length-mapping.patternStartIndex;_i3++){var _inputIndex=mapping.patternStartIndex+_i3;if(appState.currentLayers[_inputIndex]){console.log("    Pattern Layer ".concat(_i3," \u2190 Input ").concat(_inputIndex," (").concat(appState.currentLayers[_inputIndex].label,")"));}}}}function insertTicketIndicator(ticketNumber){var existing=document.getElementById("ticketIndicator");if(existing){existing.innerHTML="TICKET<br>".concat(ticketNumber);return;}var indicator=document.createElement("div");indicator.id="ticketIndicator";indicator.className="w-20 h-20 rounded-full flex items-center justify-center text-center text-xs font-bold text-gray-800";indicator.style.backgroundColor="#e5e7eb";// Tailwind gray-200
 indicator.style.marginRight="8px";indicator.innerHTML="TICKET<br>".concat(ticketNumber);container.prepend(indicator);}function promptTicketNumber(){var input=prompt("Enter Sherwin-Williams ticket number (e.g., 280):");var ticketNum=parseInt(input===null||input===void 0?void 0:input.trim());if(isNaN(ticketNum)){alert("Please enter a valid numeric ticket number.");return;}runStaticTicket(ticketNum);}function runTheTicket(baseColor){console.log("ðŸŽŸï¸ Running the Ticket for:",baseColor);if(!isAppReady){console.warn("⚠️ App is not ready yet. Ignoring runTheTicket call.");alert("Please wait while the app finishes loading.");return;}if(!baseColor||!baseColor.hex){console.warn("âŒ No base color provided to runTheTicket.");return;}if(!Array.isArray(appState.colorsData)||appState.colorsData.length===0){console.warn("X¸ Sherwin-Williams colors not loaded yet.");alert("Color data is still loading. Please try again shortly.");return;}var baseHSL=hexToHSL(baseColor.hex);if(!baseHSL){console.error("X Failed to convert base HEX to HSL.");return;}console.log("+ Base color HSL:",baseHSL);var swColors=appState.colorsData.filter(function(c){return c.hex&&c.name;}).map(function(c){return{name:c.name,hex:c.hex,hsl:hexToHSL(c.hex)};});console.log("** Total SW Colors to search:",swColors.length);var scored=swColors.map(function(c){var hueDiff=Math.abs(baseHSL.h-c.hsl.h);var satDiff=Math.abs(baseHSL.s-c.hsl.s);var lightDiff=Math.abs(baseHSL.l-c.hsl.l);return _objectSpread(_objectSpread({},c),{},{score:hueDiff+satDiff*0.5+lightDiff*0.8});}).sort(function(a,b){return a.score-b.score;}).slice(0,appState.currentLayers.length);console.log("ðŸŽ¯ Top Ticket matches:",scored);if(!Array.isArray(appState.layerInputs)||appState.layerInputs.length===0){console.warn("âŒ No layer inputs available. Cannot apply ticket.");return;}scored.forEach(function(ticketColor,idx){if(!appState.currentLayers[idx])return;var layerLabel=appState.currentLayers[idx].label;var inputSet=appState.layerInputs.find(function(li){return li.label===layerLabel;});if(!inputSet||!inputSet.input||!inputSet.circle){console.warn("\xE2\x9D\u0152 Missing input or circle at index ".concat(idx));return;}var formatted=toInitialCaps(ticketColor.name);inputSet.input.value=formatted;inputSet.circle.style.backgroundColor=ticketColor.hex;appState.currentLayers[idx].color=formatted;console.log("\xF0\u0178\u017D\xAF Layer ".concat(idx+1," set to ").concat(formatted," (").concat(ticketColor.hex,")"));});insertTicketIndicator(ticketNumber);updateDisplays();console.log("✅ Ticket run complete.");}function runStaticTicket(ticketNumber){console.log("\xF0\u0178\u017D\xAB Static Ticket Requested: ".concat(ticketNumber));if(!Array.isArray(appState.colorsData)||appState.colorsData.length===0){alert("Color data not loaded yet.");return;}var ticketColors=[];var _loop3=function _loop3(){var locatorId="".concat(ticketNumber,"-C").concat(i);var color=appState.colorsData.find(function(c){var _c$locator_id2;return((_c$locator_id2=c.locator_id)===null||_c$locator_id2===void 0?void 0:_c$locator_id2.toUpperCase())===locatorId.toUpperCase();});if(color){var _color$sw_number;var displayName="".concat(((_color$sw_number=color.sw_number)===null||_color$sw_number===void 0?void 0:_color$sw_number.toUpperCase())||""," ").concat(toInitialCaps(color.color_name));ticketColors.push(displayName.trim());}};for(var i=1;i<=7;i++){_loop3();}if(ticketColors.length===0){alert("No colors found for ticket ".concat(ticketNumber));return;}appState.curatedColors=ticketColors;appState.activeTicketNumber=ticketNumber;// ðŸ†• Track it for label update
@@ -2376,7 +2404,7 @@ populateCuratedColors(ticketColors);console.log("\xF0\u0178\u017D\xAF Loaded tic
 // This is the entry point when the ColorFlex page loads.
 // ============================================================================
 function initializeApp(){return _initializeApp.apply(this,arguments);}// Apply URL parameters for colors and scale
-function _initializeApp(){_initializeApp=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee24(){var initTimestamp,_data$collections,_urlParams$get,_window$appState3,_window$appState4,_window$appState5,_window$appState6,_selectedCollection3,_urlParams$get2,_window$appState7,_initialPattern4,_initialPattern5,_appState$collections0,initializeInteractiveZoom,data,dataBase,remoteUrl,remoteRes,raw,_window$ColorFlexAsse3,collectionsUrl,response,farmhouseCollection,_window$ColorFlexAsse4,fetchJson,themeMockupsUrl,base,cfDataMockupsUrl,canonicalB2MockupsUrl,mockupsData,candidates,_i13,_candidates2,c,d,mockupsMap,FALLBACK_MOCKUP_ID,urlParams,urlCollectionName,isDirectCollectionAccess,totalCollections,isClothingMode,isFurnitureMode,beforeBaseFilter,baseFilteredCount,beforeBassett,beforeColorFlexFilter,colorFlexFilteredCount,_beforeColorFlexFilter,excludedCollections,_colorFlexFilteredCount,beforeFilterCount,filteredCount,isActuallyFurnitureMode,isActuallyClothingMode,beforeFinalCheck,excludedInFinalCheck,finalFiltered,_beforeFinalCheck,_finalFiltered,sampleNames,isActuallyFurnitureModeFinal,isActuallyClothingModeFinal,_beforeFinalCheck2,_excludedInFinalCheck,_finalFiltered2,autoLoadCollectionName,autoLoadPatternData,autoLoadJson,i,key,_localStorage$getItem,_data2,pattern,timestamp,age,pendingPurchaseJson,purchaseData,_timestamp,_age,modeDefaultCollection,collectionName,selectedCollection,want,baseName,_appState$collections8,_isFurnitureMode3,_isClothingMode2,firstColorFlexCollection,_appState$collections9,_selectedCollection,bassettDefault,_isFurnitureMode4,_isClothingMode3,_selectedCollection2,_firstColorFlexCollection,launchName,finalCollection,selectedCollectionName,isVariantCollection,baseNameCandidates,nameParts,_i14,candidate,baseCollection,_loop0,_i15,_baseNameCandidates,_isFurnitureMode5,isFurnitureSimpleMode,_baseName,variantNames,variantCollection,isSimpleMode,collectionBaseName,_collectionBaseName3,initialPattern,urlPatternName,autoLoadPatternName,targetPatternName,_initialPattern,_selectedCollection4,normalizedTargetPattern,_iterator7,_step7,_loop1,_initialPattern2,_initialPattern3,initialPatternId,_appState$curatedColo3,_selectedCollection$c,_waitForAppAndAutoLoad,_pattern,_t37,_t38,_t39,_t40;return _regenerator().w(function(_context32){while(1)switch(_context32.p=_context32.n){case 0:initTimestamp=Date.now();console.log("🚀 Starting app...",initTimestamp);console.log("🔍 SessionStorage at app start:",sessionStorage.getItem('pendingDirectPatternLoad')?'EXISTS':'NULL');// 🧹 Clean up old cart thumbnails on app startup to prevent localStorage bloat
+function _initializeApp(){_initializeApp=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee24(){var initTimestamp,_data$collections,_urlParams$get,_window$appState3,_window$appState4,_window$appState5,_window$appState6,_selectedCollection3,_urlParams$get2,_window$appState7,_initialPattern4,_initialPattern5,_appState$collections0,initializeInteractiveZoom,data,dataBase,skipCfDataCollectionsFetch,remoteUrl,remoteRes,raw,_window$ColorFlexAsse3,collectionsUrl,response,farmhouseCollection,_window$ColorFlexAsse4,fetchJson,themeMockupsUrl,base,cfDataMockupsUrl,canonicalB2MockupsUrl,mockupsData,candidates,_i13,_candidates2,c,d,mockupsMap,FALLBACK_MOCKUP_ID,urlParams,urlCollectionName,isDirectCollectionAccess,totalCollections,isClothingMode,isFurnitureMode,beforeBaseFilter,baseFilteredCount,beforeBassett,beforeColorFlexFilter,colorFlexFilteredCount,_beforeColorFlexFilter,excludedCollections,_colorFlexFilteredCount,beforeFilterCount,filteredCount,isActuallyFurnitureMode,isActuallyClothingMode,beforeFinalCheck,excludedInFinalCheck,finalFiltered,_beforeFinalCheck,_finalFiltered,sampleNames,isActuallyFurnitureModeFinal,isActuallyClothingModeFinal,_beforeFinalCheck2,_excludedInFinalCheck,_finalFiltered2,autoLoadCollectionName,autoLoadPatternData,autoLoadJson,i,key,_localStorage$getItem,_data2,pattern,timestamp,age,pendingPurchaseJson,purchaseData,_timestamp,_age,modeDefaultCollection,collectionName,selectedCollection,want,baseName,_appState$collections8,_isFurnitureMode3,_isClothingMode2,firstColorFlexCollection,_appState$collections9,_selectedCollection,bassettDefault,_isFurnitureMode4,_isClothingMode3,_selectedCollection2,_firstColorFlexCollection,launchName,finalCollection,selectedCollectionName,isVariantCollection,baseNameCandidates,nameParts,_i14,candidate,baseCollection,_loop0,_i15,_baseNameCandidates,_isFurnitureMode5,isFurnitureSimpleMode,_baseName,variantNames,variantCollection,isSimpleMode,collectionBaseName,_collectionBaseName3,initialPattern,urlPatternName,autoLoadPatternName,targetPatternName,_initialPattern,_selectedCollection4,normalizedTargetPattern,_iterator7,_step7,_loop1,_initialPattern2,_initialPattern3,initialPatternId,_appState$curatedColo3,_selectedCollection$c,_waitForAppAndAutoLoad,_pattern,_t38,_t39,_t40,_t41;return _regenerator().w(function(_context32){while(1)switch(_context32.p=_context32.n){case 0:initTimestamp=Date.now();console.log("🚀 Starting app...",initTimestamp);console.log("🔍 SessionStorage at app start:",sessionStorage.getItem('pendingDirectPatternLoad')?'EXISTS':'NULL');if(isColorFlexDemoOffline()){try{sessionStorage.removeItem('pendingDirectPatternLoad');}catch(_){}}// 🧹 Clean up old cart thumbnails on app startup to prevent localStorage bloat
 cleanupOldCartThumbnails();// Validate DOM elements first
 validateDOMElements();// ✅ Step 1: Load Sherwin-Williams Colors
 _context32.n=1;return loadColors();case 1:console.log("✅ Colors loaded:",appState.colorsData.length);_context32.p=2;initializeInteractiveZoom=function initializeInteractiveZoom(){// Set up interactive zoom when app is ready
@@ -2384,12 +2412,12 @@ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded'
 // ✅ Step 2: Load Collections
 // Prefer centralized cf-data collections.json first so Shopify does not require asset pushes for every data change.
 // Fallback order: embedded metafield -> Shopify asset.
-dataBase=getColorFlexDataBaseUrl();if(!dataBase){_context32.n=6;break;}remoteUrl=dataBase.replace(/\/$/,'')+'/data/collections.json';_context32.n=3;return fetch(remoteUrl,{method:'GET',cache:'no-store'})["catch"](function(){return null;});case 3:remoteRes=_context32.v;if(!(remoteRes&&remoteRes.ok)){_context32.n=5;break;}console.log("📁 Loading collections from data base:",remoteUrl);_context32.n=4;return remoteRes.json();case 4:raw=_context32.v;data=Array.isArray(raw)?{collections:raw}:raw&&raw.collections?raw:{collections:[]};_context32.n=6;break;case 5:console.warn("⚠️ Could not load collections from data base URL, falling back");case 6:if((!data||!data.collections)&&window.ColorFlexData&&window.ColorFlexData.collections){console.log("🎯 Using embedded ColorFlex data (fallback)");data={collections:window.ColorFlexData.collections};}if(!(!data||!data.collections)){_context32.n=10;break;}collectionsUrl=((_window$ColorFlexAsse3=window.ColorFlexAssets)===null||_window$ColorFlexAsse3===void 0?void 0:_window$ColorFlexAsse3.collectionsUrl)||"/assets/collections.json";console.log("📁 Loading collections from Shopify assets (fallback):",collectionsUrl);_context32.n=7;return fetch(collectionsUrl,{method:'GET',cache:"no-store",headers:{'Content-Type':'application/json'}});case 7:response=_context32.v;if(response.ok){_context32.n=8;break;}throw new Error("Failed to fetch collections: ".concat(response.status));case 8:_context32.n=9;return response.json();case 9:data=_context32.v;case 10:// ADD THIS DEBUG:
+dataBase=getColorFlexDataBaseUrl();skipCfDataCollectionsFetch=isColorFlexDemoOffline()&&window.ColorFlexData&&window.ColorFlexData.collections;if(!(dataBase&&!skipCfDataCollectionsFetch)){_context32.n=6;break;}remoteUrl=dataBase.replace(/\/$/,'')+'/data/collections.json';_context32.n=3;return fetch(remoteUrl,{method:'GET',cache:'no-store'})["catch"](function(){return null;});case 3:remoteRes=_context32.v;if(!(remoteRes&&remoteRes.ok)){_context32.n=5;break;}console.log("📁 Loading collections from data base:",remoteUrl);_context32.n=4;return remoteRes.json();case 4:raw=_context32.v;data=Array.isArray(raw)?{collections:raw}:raw&&raw.collections?raw:{collections:[]};_context32.n=6;break;case 5:console.warn("⚠️ Could not load collections from data base URL, falling back");case 6:if((!data||!data.collections)&&window.ColorFlexData&&window.ColorFlexData.collections){console.log("🎯 Using embedded ColorFlex data (fallback)");data={collections:window.ColorFlexData.collections};}if(!(!data||!data.collections)){_context32.n=10;break;}collectionsUrl=((_window$ColorFlexAsse3=window.ColorFlexAssets)===null||_window$ColorFlexAsse3===void 0?void 0:_window$ColorFlexAsse3.collectionsUrl)||"/assets/collections.json";console.log("📁 Loading collections from Shopify assets (fallback):",collectionsUrl);_context32.n=7;return fetch(collectionsUrl,{method:'GET',cache:"no-store",headers:{'Content-Type':'application/json'}});case 7:response=_context32.v;if(response.ok){_context32.n=8;break;}throw new Error("Failed to fetch collections: ".concat(response.status));case 8:_context32.n=9;return response.json();case 9:data=_context32.v;case 10:// ADD THIS DEBUG:
 console.log("🔍 Raw JSON collections loaded:",data.collections.length);farmhouseCollection=data.collections.find(function(c){return c&&typeof c.name==='string'&&c.name==="farmhouse";});console.log("🔍 Raw farmhouse collection:",farmhouseCollection);console.log("🔍 Raw farmhouse elements:",farmhouseCollection===null||farmhouseCollection===void 0?void 0:farmhouseCollection.elements);if((_data$collections=data.collections)!==null&&_data$collections!==void 0&&_data$collections.length){_context32.n=11;break;}console.error("X No collections found in collections.json");dom.collectionHeader.textContent="No Collections Available";dom.preview.innerHTML="<p>No collections available. Please run the data import script.</p>";return _context32.a(2);case 11:// ✅ Step 2.5: Load Mockups Data and merge with collections
 console.log("📦 Loading centralized mockups data...");_context32.p=12;fetchJson=/*#__PURE__*/function(){var _ref30=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee23(url){var res;return _regenerator().w(function(_context29){while(1)switch(_context29.n){case 0:if(url){_context29.n=1;break;}return _context29.a(2,null);case 1:_context29.n=2;return fetch(url,{method:'GET',cache:"no-store",headers:{'Content-Type':'application/json'}});case 2:res=_context29.v;if(res.ok){_context29.n=3;break;}throw new Error("HTTP ".concat(res.status));case 3:_context29.n=4;return res.json();case 4:return _context29.a(2,_context29.v);}},_callee23);}));return function fetchJson(_x45){return _ref30.apply(this,arguments);};}();themeMockupsUrl=((_window$ColorFlexAsse4=window.ColorFlexAssets)===null||_window$ColorFlexAsse4===void 0?void 0:_window$ColorFlexAsse4.mockupsUrl)||"/assets/mockups.json";base=typeof getColorFlexDataBaseUrl==='function'?getColorFlexDataBaseUrl():'';cfDataMockupsUrl=base?"".concat(String(base).replace(/\/$/,''),"/data/mockups.json"):'';canonicalB2MockupsUrl="".concat(String(_COLORFLEX_CANONICAL_B2_BASE).replace(/\/$/,''),"/data/mockups.json");mockupsData=null;candidates=[];if(cfDataMockupsUrl)candidates.push({label:'cf-data',url:cfDataMockupsUrl});// If theme base points at a proxy/worker without CORS, canonical B2 still works in-browser.
-if(!cfDataMockupsUrl||cfDataMockupsUrl!==canonicalB2MockupsUrl){candidates.push({label:'backblaze',url:canonicalB2MockupsUrl});}candidates.push({label:'theme-asset',url:themeMockupsUrl});_i13=0,_candidates2=candidates;case 13:if(!(_i13<_candidates2.length)){_context32.n=18;break;}c=_candidates2[_i13];if(!mockupsData){_context32.n=14;break;}return _context32.a(3,18);case 14:_context32.p=14;_context32.n=15;return fetchJson(c.url);case 15:d=_context32.v;if(isValidMockupsPayload(d)){mockupsData=d;console.log("\u2705 Mockups loaded from ".concat(c.label,":"),c.url);}else{console.warn("\u26A0\uFE0F ".concat(c.label," mockups.json missing or empty `mockups`:"),c.url);}_context32.n=17;break;case 16:_context32.p=16;_t37=_context32.v;console.warn("\u26A0\uFE0F ".concat(c.label," mockups.json fetch failed:"),c.url,_t37&&_t37.message?_t37.message:_t37);case 17:_i13++;_context32.n=13;break;case 18:if(mockupsData&&isValidMockupsPayload(mockupsData)){console.log("✅ Mockups data loaded:",Object.keys(mockupsData.mockups||{}).length,"mockups");// Store mockups globally for reference
+if(!isColorFlexDemoOffline()&&(!cfDataMockupsUrl||cfDataMockupsUrl!==canonicalB2MockupsUrl)){candidates.push({label:'backblaze',url:canonicalB2MockupsUrl});}candidates.push({label:'theme-asset',url:themeMockupsUrl});_i13=0,_candidates2=candidates;case 13:if(!(_i13<_candidates2.length)){_context32.n=18;break;}c=_candidates2[_i13];if(!mockupsData){_context32.n=14;break;}return _context32.a(3,18);case 14:_context32.p=14;_context32.n=15;return fetchJson(c.url);case 15:d=_context32.v;if(isValidMockupsPayload(d)){mockupsData=d;console.log("\u2705 Mockups loaded from ".concat(c.label,":"),c.url);}else{console.warn("\u26A0\uFE0F ".concat(c.label," mockups.json missing or empty `mockups`:"),c.url);}_context32.n=17;break;case 16:_context32.p=16;_t38=_context32.v;console.warn("\u26A0\uFE0F ".concat(c.label," mockups.json fetch failed:"),c.url,_t38&&_t38.message?_t38.message:_t38);case 17:_i13++;_context32.n=13;break;case 18:if(mockupsData&&isValidMockupsPayload(mockupsData)){console.log("✅ Mockups data loaded:",Object.keys(mockupsData.mockups||{}).length,"mockups");// Store mockups globally for reference
 window.ColorFlexMockups=mockupsData.mockups;// Merge mockup data into collections that reference mockupId
-mockupsMap=mockupsData.mockups||{};/** Only allowed mockup fallback id when data is missing (see mockups.json). */FALLBACK_MOCKUP_ID='white-dresser';data.collections.forEach(function(collection){var inferredId=!collection.mockupId&&collection.mockup?inferMockupIdFromLegacyCollectionMockupPath(collection.mockup,mockupsMap):null;var effectiveMockupId=collection.mockupId||inferredId;var mockup=resolveMockupFromMap(mockupsMap,effectiveMockupId);var mockupImagePath=mockup?mockupEntryImagePath(mockup):'';if(!mockup||!mockupImagePath){mockup=resolveMockupFromMap(mockupsMap,FALLBACK_MOCKUP_ID);mockupImagePath=mockup?mockupEntryImagePath(mockup):'';if(mockup&&mockupImagePath){console.warn("\u26A0\uFE0F Collection \"".concat(collection.name,"\" using fallback mockup \"").concat(FALLBACK_MOCKUP_ID,"\" (invalid/missing mockupId from Airtable)"));}}if(mockup&&mockupImagePath){var _mockup$shadow,_mockup$shadow2,_mockup$tintMask,_mockup$tintMask2;if(!collection.mockupId&&inferredId){collection.mockupId=inferredId;console.log("  \uD83E\uDDE9 Inferred mockupId \"".concat(inferredId,"\" for collection \"").concat(collection.name,"\" from legacy mockup path"));}collection.mockup=mockupImagePath;collection.mockupShadow=typeof mockup.shadow==='string'?mockup.shadow:((_mockup$shadow=mockup.shadow)===null||_mockup$shadow===void 0?void 0:_mockup$shadow.path)||((_mockup$shadow2=mockup.shadow)===null||_mockup$shadow2===void 0?void 0:_mockup$shadow2.url)||'';collection.tintMask=typeof mockup.tintMask==='string'?mockup.tintMask:((_mockup$tintMask=mockup.tintMask)===null||_mockup$tintMask===void 0?void 0:_mockup$tintMask.path)||((_mockup$tintMask2=mockup.tintMask)===null||_mockup$tintMask2===void 0?void 0:_mockup$tintMask2.url)||'';collection.mockupWidthInches=mockup.widthInches;collection.mockupHeightInches=mockup.heightInches;console.log("  \uD83D\uDD17 Merged mockup \"".concat(mockup.name,"\" into collection \"").concat(collection.name,"\" (path: ").concat(mockupImagePath,")"));}});applyWhiteDresserMockupToCollectionsMissingPath(data.collections);}else{console.warn("⚠️ Mockups.json missing or empty — applying white-dresser paths where collection has no mockup image");applyWhiteDresserMockupToCollectionsMissingPath(data.collections);}_context32.n=20;break;case 19:_context32.p=19;_t38=_context32.v;console.warn("⚠️ Failed to load mockups.json:",_t38.message);console.warn("   Applying white-dresser fallback for collections without mockup paths");applyWhiteDresserMockupToCollectionsMissingPath(data.collections);case 20:// Check if a specific collection is being requested via URL (e.g., from product page)
+mockupsMap=mockupsData.mockups||{};/** Only allowed mockup fallback id when data is missing (see mockups.json). */FALLBACK_MOCKUP_ID='white-dresser';data.collections.forEach(function(collection){var inferredId=!collection.mockupId&&collection.mockup?inferMockupIdFromLegacyCollectionMockupPath(collection.mockup,mockupsMap):null;var effectiveMockupId=collection.mockupId||inferredId;var mockup=resolveMockupFromMap(mockupsMap,effectiveMockupId);var mockupImagePath=mockup?mockupEntryImagePath(mockup):'';if(!mockup||!mockupImagePath){mockup=resolveMockupFromMap(mockupsMap,FALLBACK_MOCKUP_ID);mockupImagePath=mockup?mockupEntryImagePath(mockup):'';if(mockup&&mockupImagePath){console.warn("\u26A0\uFE0F Collection \"".concat(collection.name,"\" using fallback mockup \"").concat(FALLBACK_MOCKUP_ID,"\" (invalid/missing mockupId from Airtable)"));}}if(mockup&&mockupImagePath){var _mockup$shadow,_mockup$shadow2,_mockup$tintMask,_mockup$tintMask2;if(!collection.mockupId&&inferredId){collection.mockupId=inferredId;console.log("  \uD83E\uDDE9 Inferred mockupId \"".concat(inferredId,"\" for collection \"").concat(collection.name,"\" from legacy mockup path"));}collection.mockup=mockupImagePath;collection.mockupShadow=typeof mockup.shadow==='string'?mockup.shadow:((_mockup$shadow=mockup.shadow)===null||_mockup$shadow===void 0?void 0:_mockup$shadow.path)||((_mockup$shadow2=mockup.shadow)===null||_mockup$shadow2===void 0?void 0:_mockup$shadow2.url)||'';collection.tintMask=typeof mockup.tintMask==='string'?mockup.tintMask:((_mockup$tintMask=mockup.tintMask)===null||_mockup$tintMask===void 0?void 0:_mockup$tintMask.path)||((_mockup$tintMask2=mockup.tintMask)===null||_mockup$tintMask2===void 0?void 0:_mockup$tintMask2.url)||'';collection.mockupWidthInches=mockup.widthInches;collection.mockupHeightInches=mockup.heightInches;console.log("  \uD83D\uDD17 Merged mockup \"".concat(mockup.name,"\" into collection \"").concat(collection.name,"\" (path: ").concat(mockupImagePath,")"));}});applyWhiteDresserMockupToCollectionsMissingPath(data.collections);}else{console.warn("⚠️ Mockups.json missing or empty — applying white-dresser paths where collection has no mockup image");applyWhiteDresserMockupToCollectionsMissingPath(data.collections);}_context32.n=20;break;case 19:_context32.p=19;_t39=_context32.v;console.warn("⚠️ Failed to load mockups.json:",_t39.message);console.warn("   Applying white-dresser fallback for collections without mockup paths");applyWhiteDresserMockupToCollectionsMissingPath(data.collections);case 20:// Check if a specific collection is being requested via URL (e.g., from product page)
 // Declare these BEFORE the collections loading block so they're available throughout
 urlParams=new URLSearchParams(window.location.search);urlCollectionName=(_urlParams$get=urlParams.get("collection"))===null||_urlParams$get===void 0?void 0:_urlParams$get.trim();isDirectCollectionAccess=urlCollectionName&&urlCollectionName.includes('-clo');// ✅ Step 3: Save collections once
 if(appState.collections.length){_context32.n=24;break;}// Filter out any invalid collections that might cause toLowerCase errors
@@ -2442,12 +2470,12 @@ var _hasColorFlexPatterns2=(_c$patterns10=c.patterns)===null||_c$patterns10===vo
 appState.collections=sortCollectionsByNumber(appState.collections);window.collectionsData=appState.collections;console.log("\uD83D\uDCE4 Updated window.collectionsData: ".concat(appState.collections.length," ColorFlex collections"));}else{console.log("\u2705 FINAL SAFETY CHECK: All ".concat(appState.collections.length," collections are ColorFlex"));}}// ✅ Step 4: Select collection via Shopify integration, URL param, sessionStorage, or fallback
 // Note: urlCollectionName is already declared above for clothing filter logic
 // Check for auto-load pattern data using localStorage (more reliable than sessionStorage)
-autoLoadCollectionName=null;autoLoadPatternData=null;// Always check for auto-load pattern data in localStorage (more reliable)
+autoLoadCollectionName=null;autoLoadPatternData=null;if(!isColorFlexDemoOffline()){// Always check for auto-load pattern data in localStorage (more reliable)
 autoLoadJson=localStorage.getItem('colorflexAutoLoad');console.log("🔍 DEBUG: Checking localStorage for colorflexAutoLoad");console.log("  Raw localStorage data:",autoLoadJson?"EXISTS":"NULL");console.log("  All localStorage keys:",Object.keys(localStorage));console.log("  Looking for any colorflex keys...");for(i=0;i<localStorage.length;i++){key=localStorage.key(i);if(key&&key.toLowerCase().includes('colorflex')){console.log("    Found: ".concat(key," = ").concat((_localStorage$getItem=localStorage.getItem(key))===null||_localStorage$getItem===void 0?void 0:_localStorage$getItem.substring(0,100),"..."));}}if(autoLoadJson){console.log("🎯 Auto-load pattern data found in localStorage");try{_data2=JSON.parse(autoLoadJson);pattern=_data2.pattern;timestamp=_data2.timestamp;// Check if data is recent (within 5 minutes)
 age=Date.now()-timestamp;if(age<5*60*1000){autoLoadCollectionName=pattern.collectionName;autoLoadPatternData=_data2;console.log("🎯 Found valid auto-load pattern from localStorage:",pattern.patternName);console.log("  Collection:",autoLoadCollectionName);console.log("  Data age:",Math.round(age/1000),"seconds");}else{console.log("⏰ Auto-load data too old, ignoring");localStorage.removeItem('colorflexAutoLoad');}}catch(error){console.error("❌ Error parsing localStorage auto-load data:",error);localStorage.removeItem('colorflexAutoLoad');}}else{console.log("🔍 No auto-load pattern data found in localStorage");}// 🛒 Check for pending purchase pattern (from "Buy It" on non-ColorFlex pages)
 pendingPurchaseJson=localStorage.getItem('pendingPurchasePattern');if(pendingPurchaseJson){console.log("🛒 Pending purchase pattern found");try{purchaseData=JSON.parse(pendingPurchaseJson);_timestamp=purchaseData.timestamp;_age=Date.now()-_timestamp;// Check if data is recent (within 2 minutes)
 if(_age<2*60*1000){console.log("🛒 Processing pending purchase for:",purchaseData.patternName);autoLoadCollectionName=purchaseData.collectionName;autoLoadPatternData={pattern:purchaseData,timestamp:_timestamp};// Clear the pending purchase flag
-localStorage.removeItem('pendingPurchasePattern');}else{console.log("⏰ Pending purchase data too old, ignoring");localStorage.removeItem('pendingPurchasePattern');}}catch(error){console.error("❌ Error parsing pending purchase data:",error);localStorage.removeItem('pendingPurchasePattern');}}console.log("🔍 COLLECTION SELECTION DEBUG:");console.log("  URL collection param:",urlCollectionName);console.log("  Auto-load collection:",autoLoadCollectionName);console.log("  Shopify target collection:",(_window$appState3=window.appState)===null||_window$appState3===void 0?void 0:_window$appState3.selectedCollection);console.log("  Shopify target pattern:",(_window$appState4=window.appState)===null||_window$appState4===void 0||(_window$appState4=_window$appState4.targetPattern)===null||_window$appState4===void 0?void 0:_window$appState4.name);console.log("  Available collections:",appState.collections.map(function(c){return c.name;}));console.log("  Total collections loaded:",appState.collections.length);// Priority 1: Use Shopify-detected collection (from product page integration)
+localStorage.removeItem('pendingPurchasePattern');}else{console.log("⏰ Pending purchase data too old, ignoring");localStorage.removeItem('pendingPurchasePattern');}}catch(error){console.error("❌ Error parsing pending purchase data:",error);localStorage.removeItem('pendingPurchasePattern');}}}else{console.log("[ColorFlex demo] Skipping colorflexAutoLoad / pendingPurchasePattern restore");}console.log("🔍 COLLECTION SELECTION DEBUG:");console.log("  URL collection param:",urlCollectionName);console.log("  Auto-load collection:",autoLoadCollectionName);console.log("  Shopify target collection:",(_window$appState3=window.appState)===null||_window$appState3===void 0?void 0:_window$appState3.selectedCollection);console.log("  Shopify target pattern:",(_window$appState4=window.appState)===null||_window$appState4===void 0||(_window$appState4=_window$appState4.targetPattern)===null||_window$appState4===void 0?void 0:_window$appState4.name);console.log("  Available collections:",appState.collections.map(function(c){return c.name;}));console.log("  Total collections loaded:",appState.collections.length);// Priority 1: Use Shopify-detected collection (from product page integration)
 // Priority 2: Use URL collection parameter
 // Priority 3: Use auto-load collection (for saved pattern loading)
 // Priority 4: Use mode-specific default (Bassett, clothing, or furniture page)
@@ -2484,7 +2512,7 @@ for(_i14=nameParts.length-1;_i14>0;_i14--){candidate=nameParts.slice(0,_i14).joi
 baseCollection=null;_loop0=/*#__PURE__*/_regenerator().m(function _loop0(){var candidate;return _regenerator().w(function(_context30){while(1)switch(_context30.n){case 0:candidate=_baseNameCandidates[_i15];baseCollection=appState.collections.find(function(c){return c.name===candidate||c.name.toLowerCase()===candidate.toLowerCase();});if(!baseCollection){_context30.n=1;break;}console.log("\uD83D\uDD04 Found base collection \"".concat(baseCollection.name,"\" from variant \"").concat(selectedCollectionName,"\" (matched: \"").concat(candidate,"\")"));return _context30.a(2,1);case 1:return _context30.a(2);}},_loop0);});_i15=0,_baseNameCandidates=baseNameCandidates;case 26:if(!(_i15<_baseNameCandidates.length)){_context32.n=29;break;}return _context32.d(_regeneratorValues(_loop0()),27);case 27:if(!_context32.v){_context32.n=28;break;}return _context32.a(3,29);case 28:_i15++;_context32.n=26;break;case 29:if(baseCollection){finalCollection=baseCollection;// Store variant collection reference for mockupLayers lookup
 finalCollection._variantCollection=selectedCollection;// Determine variant type from current page mode (not filename)
 _isFurnitureMode5=window.COLORFLEX_MODE==='FURNITURE'||appState.isInFurnitureMode;finalCollection._variantType=_isFurnitureMode5?'furniture':'clothing';console.log("  Variant type determined from page mode: ".concat(finalCollection._variantType," (not from filename)"));}else{console.warn("\u26A0\uFE0F Could not find base collection for variant \"".concat(selectedCollectionName,"\""));console.warn("  Tried candidates: ".concat(baseNameCandidates.join(', ')));console.warn("  Using variant as-is");}case 30:// ✅ FIX: In furniture simple mode, ensure furnitureConfig is available from variant
-isFurnitureSimpleMode=window.COLORFLEX_SIMPLE_MODE===true&&window.COLORFLEX_MODE==='FURNITURE';if(isFurnitureSimpleMode&&appState.allCollections&&!finalCollection.furnitureConfig){_baseName=finalCollection.name;variantNames=["".concat(_baseName,".fur-1"),"".concat(_baseName,".fur"),"".concat(_baseName,"-fur-1"),"".concat(_baseName,"-fur")];variantCollection=appState.allCollections.find(function(c){return c&&c.name&&variantNames.includes(c.name);});if(variantCollection&&variantCollection.furnitureConfig){console.log("\u2705 Found furniture variant \"".concat(variantCollection.name,"\" with furnitureConfig for initial load"));finalCollection.furnitureConfig=variantCollection.furnitureConfig;console.log("  \u2705 Merged furnitureConfig from variant into base collection");}}appState.selectedCollection=finalCollection;appState.lockedCollection=true;// ✅ Skip curated colors entirely in simple mode. Use finalCollection so curated colors match the collection we just set.
+isFurnitureSimpleMode=window.COLORFLEX_SIMPLE_MODE===true&&window.COLORFLEX_MODE==='FURNITURE';if(isFurnitureSimpleMode&&appState.allCollections&&!finalCollection.furnitureConfig){_baseName=finalCollection.name;variantNames=["".concat(_baseName,".fur-1"),"".concat(_baseName,".fur"),"".concat(_baseName,"-fur-1"),"".concat(_baseName,"-fur")];variantCollection=appState.allCollections.find(function(c){return c&&c.name&&variantNames.includes(c.name);});if(variantCollection&&variantCollection.furnitureConfig){console.log("\u2705 Found furniture variant \"".concat(variantCollection.name,"\" with furnitureConfig for initial load"));finalCollection.furnitureConfig=variantCollection.furnitureConfig;console.log("  \u2705 Merged furnitureConfig from variant into base collection");}}appState.selectedCollection=finalCollection;clearCoordinateRestoreSnapshot();appState.lockedCollection=true;// ✅ Skip curated colors entirely in simple mode. Use finalCollection so curated colors match the collection we just set.
 isSimpleMode=window.COLORFLEX_SIMPLE_MODE===true;if(!isSimpleMode){appState.curatedColors=finalCollection.curatedColors||[];console.log("@ Selected Collection:",selectedCollection.name);console.log("@ Curated colors:",appState.curatedColors.length);}else{appState.curatedColors=[];console.log("@ Selected Collection:",selectedCollection.name);console.log("@ Simple mode - skipping curated colors");}// ✅ Step 6: Update UI header
 if(dom.collectionHeader){// Check if this is a clothing collection (has -clo or .clo- suffix)
 if(selectedCollection.name.includes('-clo')||selectedCollection.name.includes('.clo-')){// Extract collection name before suffix (e.g., "botanicals" from "botanicals.clo-1" or "botanicals-clo1")
@@ -2506,7 +2534,7 @@ if(patternName===searchName||patternId===searchName){console.log("    \u2705 EXA
 if(patternName.includes(searchName)||searchName.includes(patternName))return true;// Handle special cases for known patterns
 if(searchName==='constantinople'&&patternName.includes('constantinople'))return true;if(searchName==='istanbul'&&patternName.includes('istanbul'))return true;return false;});if(!foundPattern){_context31.n=1;break;}console.log("\uD83C\uDFAF FOUND: Pattern \"".concat(targetPatternName,"\" \u2192 \"").concat(foundPattern.name,"\" in collection \"").concat(collection.name,"\""));console.log("\uD83D\uDD04 Switching from collection \"".concat(selectedCollection.name,"\" to \"").concat(collection.name,"\""));selectedCollection=collection;appState.selectedCollection=selectedCollection;appState.curatedColors=selectedCollection.curatedColors||[];initialPattern=foundPattern;// Update UI to reflect correct collection
 if(dom.collectionHeader){// Check if this is a clothing collection
-if(selectedCollection.name.includes('-clo')){_collectionBaseName4=selectedCollection.name.split('.')[0];dom.collectionHeader.innerHTML="".concat(_collectionBaseName4.toUpperCase(),"<br>CLOTHING");}else{dom.collectionHeader.textContent=toInitialCaps(selectedCollection.name);}}populateCuratedColors(appState.curatedColors);return _context31.a(2,1);case 1:return _context31.a(2);}},_loop1);});_iterator7.s();case 32:if((_step7=_iterator7.n()).done){_context32.n=35;break;}return _context32.d(_regeneratorValues(_loop1()),33);case 33:if(!_context32.v){_context32.n=34;break;}return _context32.a(3,35);case 34:_context32.n=32;break;case 35:_context32.n=37;break;case 36:_context32.p=36;_t39=_context32.v;_iterator7.e(_t39);case 37:_context32.p=37;_iterator7.f();return _context32.f(37);case 38:if(!initialPattern){console.warn("\u274C Pattern \"".concat(urlPatternName,"\" not found in any collection"));}case 39:console.log("🎯 Using URL pattern parameter:",urlPatternName,"→",(_initialPattern=initialPattern)===null||_initialPattern===void 0?void 0:_initialPattern.name,"in collection:",(_selectedCollection4=selectedCollection)===null||_selectedCollection4===void 0?void 0:_selectedCollection4.name);case 40:// Priority 2: Use Shopify-detected target pattern
+if(selectedCollection.name.includes('-clo')){_collectionBaseName4=selectedCollection.name.split('.')[0];dom.collectionHeader.innerHTML="".concat(_collectionBaseName4.toUpperCase(),"<br>CLOTHING");}else{dom.collectionHeader.textContent=toInitialCaps(selectedCollection.name);}}populateCuratedColors(appState.curatedColors);return _context31.a(2,1);case 1:return _context31.a(2);}},_loop1);});_iterator7.s();case 32:if((_step7=_iterator7.n()).done){_context32.n=35;break;}return _context32.d(_regeneratorValues(_loop1()),33);case 33:if(!_context32.v){_context32.n=34;break;}return _context32.a(3,35);case 34:_context32.n=32;break;case 35:_context32.n=37;break;case 36:_context32.p=36;_t40=_context32.v;_iterator7.e(_t40);case 37:_context32.p=37;_iterator7.f();return _context32.f(37);case 38:if(!initialPattern){console.warn("\u274C Pattern \"".concat(urlPatternName,"\" not found in any collection"));}case 39:console.log("🎯 Using URL pattern parameter:",urlPatternName,"→",(_initialPattern=initialPattern)===null||_initialPattern===void 0?void 0:_initialPattern.name,"in collection:",(_selectedCollection4=selectedCollection)===null||_selectedCollection4===void 0?void 0:_selectedCollection4.name);case 40:// Priority 2: Use Shopify-detected target pattern
 if(!initialPattern&&(_window$appState7=window.appState)!==null&&_window$appState7!==void 0&&_window$appState7.targetPattern){initialPattern=selectedCollection.patterns.find(function(p){return p&&_typeof(p)==='object'&&(p.slug===window.appState.targetPattern.slug||p.id===window.appState.targetPattern.id||p.name===window.appState.targetPattern.name);});console.log("🎯 Using Shopify target pattern:",(_initialPattern2=initialPattern)===null||_initialPattern2===void 0?void 0:_initialPattern2.name);}// Priority 3: Use first pattern as fallback
 if(!initialPattern){initialPattern=selectedCollection.patterns[0];console.log("📍 Using first pattern as fallback:",(_initialPattern3=initialPattern)===null||_initialPattern3===void 0?void 0:_initialPattern3.name);}// Use slug for clothing patterns, id for regular patterns
 initialPatternId=((_initialPattern4=initialPattern)===null||_initialPattern4===void 0?void 0:_initialPattern4.slug)||((_initialPattern5=initialPattern)===null||_initialPattern5===void 0?void 0:_initialPattern5.id);if(initialPatternId){// Check if auto-load has already completed to prevent override
@@ -2518,7 +2546,7 @@ setTimeout(function(){applyURLParameters(urlParams);},500);// Don't clear localS
 if(autoLoadPatternName){console.log('🔄 Initial pattern loaded from auto-load data, auto-load will complete the process');}}}else{console.warn("âš ï¸ No patterns found for",selectedCollection.name);}// ✅ Step 9: Load thumbnails + setup print
 populatePatternThumbnails(selectedCollection.patterns);setupPrintListener();isAppReady=true;console.log("✅ App is now fully ready.");// Check for auto-load pattern from saved patterns modal
 if(autoLoadPatternData){console.log('🔍 Found pattern for auto-loading from saved patterns modal');try{// Wait for app to be fully ready before auto-loading
-_waitForAppAndAutoLoad=function waitForAppAndAutoLoad(){var _appState$layerInputs5,_appState$currentLaye17;console.log('⏳ Checking if app is ready for auto-loading...');console.log('  layerInputs length:',(_appState$layerInputs5=appState.layerInputs)===null||_appState$layerInputs5===void 0?void 0:_appState$layerInputs5.length);console.log('  currentLayers length:',(_appState$currentLaye17=appState.currentLayers)===null||_appState$currentLaye17===void 0?void 0:_appState$currentLaye17.length);console.log('  currentPattern loaded:',!!appState.currentPattern);console.log('  loadSavedPatternToUI available:',!!window.loadSavedPatternToUI);// More robust readiness check - ensure we have UI and the function available
+_waitForAppAndAutoLoad=function waitForAppAndAutoLoad(){var _appState$layerInputs5,_appState$currentLaye18;console.log('⏳ Checking if app is ready for auto-loading...');console.log('  layerInputs length:',(_appState$layerInputs5=appState.layerInputs)===null||_appState$layerInputs5===void 0?void 0:_appState$layerInputs5.length);console.log('  currentLayers length:',(_appState$currentLaye18=appState.currentLayers)===null||_appState$currentLaye18===void 0?void 0:_appState$currentLaye18.length);console.log('  currentPattern loaded:',!!appState.currentPattern);console.log('  loadSavedPatternToUI available:',!!window.loadSavedPatternToUI);// More robust readiness check - ensure we have UI and the function available
 if(appState.layerInputs&&appState.layerInputs.length>0&&appState.currentLayers&&appState.currentLayers.length>0&&appState.currentPattern&&window.loadSavedPatternToUI){console.log('✅ App fully ready - auto-loading saved pattern');// Use the same method that works perfectly in ColorFlex page
 loadSavedPatternToUI(_pattern);// Set flag to prevent other initialization from overriding this pattern
 window.autoLoadPatternCompleted=true;window.autoLoadedPatternName=_pattern.patternName;// 🛒 If this pattern came from "Buy It" button, auto-trigger material modal
@@ -2528,7 +2556,7 @@ localStorage.removeItem('colorflexAutoLoad');console.log('🧹 Cleaned up auto-l
 // Use longer delay to ensure all other initialization completes first
 _pattern=autoLoadPatternData.pattern;console.log('🎨 Auto-loading saved pattern using loadSavedPatternToUI:',_pattern.patternName);setTimeout(_waitForAppAndAutoLoad,2000);// Longer delay to prevent race conditions
 }catch(error){console.error('❌ Error auto-loading pattern:',error);localStorage.removeItem('colorflexAutoLoad');}}initializeInteractiveZoom();// ← Add this line right here
-initializeTryFurnitureFeature();console.log("Current state during app init:");console.log("  furnitureConfig loaded:",!!furnitureConfig);console.log("  appState.selectedCollection:",!!appState.selectedCollection);console.log("  appState.collections:",!!((_appState$collections0=appState.collections)!==null&&_appState$collections0!==void 0&&_appState$collections0.length));console.log("  DOM ready:",document.readyState);_context32.n=42;break;case 41:_context32.p=41;_t40=_context32.v;console.error("X Error loading collections:",_t40);dom.collectionHeader.textContent="Error Loading Collection";dom.preview.innerHTML="<p>Error loading data. Please try refreshing.</p>";case 42:return _context32.a(2);}},_callee24,null,[[31,36,37,38],[14,16],[12,19],[2,41]]);}));return _initializeApp.apply(this,arguments);}function applyURLParameters(urlParams){console.log('🔗 Applying URL parameters...');var sourceParam=urlParams.get("source");var savedLayersParam=urlParams.get("saved_layers");var savedPatternId=urlParams.get("saved_pattern_id");// Apply custom colors from URL
+initializeTryFurnitureFeature();console.log("Current state during app init:");console.log("  furnitureConfig loaded:",!!furnitureConfig);console.log("  appState.selectedCollection:",!!appState.selectedCollection);console.log("  appState.collections:",!!((_appState$collections0=appState.collections)!==null&&_appState$collections0!==void 0&&_appState$collections0.length));console.log("  DOM ready:",document.readyState);_context32.n=42;break;case 41:_context32.p=41;_t41=_context32.v;console.error("X Error loading collections:",_t41);dom.collectionHeader.textContent="Error Loading Collection";dom.preview.innerHTML="<p>Error loading data. Please try refreshing.</p>";case 42:return _context32.a(2);}},_callee24,null,[[31,36,37,38],[14,16],[12,19],[2,41]]);}));return _initializeApp.apply(this,arguments);}function applyURLParameters(urlParams){console.log('🔗 Applying URL parameters...');var sourceParam=urlParams.get("source");if(isColorFlexDemoOffline()&&sourceParam&&(sourceParam==='cart_saved_pattern'||sourceParam==='cart_edit'||sourceParam==='cart_restore')){console.log('[ColorFlex demo] Skipping cart-related URL parameter handling');return;}var savedLayersParam=urlParams.get("saved_layers");var savedPatternId=urlParams.get("saved_pattern_id");// Apply custom colors from URL
 var urlColorsRaw=urlParams.get('colors')||urlParams.get('custom_colors');var LEGACY_DIRECT_URL_COLOR_APPLY_ENABLED=false;if(LEGACY_DIRECT_URL_COLOR_APPLY_ENABLED&&urlColorsRaw&&sourceParam!=='cart_saved_pattern'){console.log('🎨 Applying colors from URL:',urlColorsRaw);try{var decodedColors=decodeURIComponent(urlColorsRaw);var colorList=decodedColors.split(',').map(function(color){return color.trim();}).filter(Boolean).map(function(color){return normalizeColorToSwFormat(color);});var _applyColorsOnceReady=function applyColorsOnceReady(){var attempt=arguments.length>0&&arguments[0]!==undefined?arguments[0]:0;var maxAttempts=10;var hasLayers=Array.isArray(appState.currentLayers)&&appState.currentLayers.length>0;if(!hasLayers){if(attempt<maxAttempts){setTimeout(function(){return _applyColorsOnceReady(attempt+1);},250);}else{console.warn('⚠️ URL color restore timed out waiting for layers');}return;}// Map URL colors to non-shadow layers only (prevents shadow-index drift).
 var nonShadowLayers=appState.currentLayers.filter(function(layer){return layer&&layer.isShadow!==true;});colorList.forEach(function(colorName,index){if(nonShadowLayers[index]){nonShadowLayers[index].color=colorName;console.log("\uD83C\uDFA8 Applied color ".concat(index+1," to non-shadow layer: ").concat(colorName));}});// Update UI and preview
 populateLayerInputs(appState.currentPattern);updatePreview();// ✅ MODE CHECK: Use correct render function based on mode
@@ -2545,7 +2573,7 @@ if((savedLayersParam||urlColorsRaw)&&sourceParam==='cart_saved_pattern'){console
 // use the same input-event path as manual user edits to ensure UI/state sync.
 if((savedLayersParam||urlColorsRaw)&&sourceParam!=='cart_saved_pattern'){[700,1800,3200].forEach(function(delay){setTimeout(function(){restoreCartColors(savedLayersParam,urlColorsRaw);},delay);});}console.log('✅ URL parameters applied');}/**
  * Restore colors from cart link navigation
- */function restoreCartColors(savedLayersParam,urlColors){console.log('🎨 restoreCartColors called with:');console.log('  savedLayersParam:',savedLayersParam);console.log('  urlColors:',urlColors);try{var colorsToApply=[];// Try to parse saved layers first (more complete data)
+ */function restoreCartColors(savedLayersParam,urlColors){if(isColorFlexDemoOffline()){return;}console.log('🎨 restoreCartColors called with:');console.log('  savedLayersParam:',savedLayersParam);console.log('  urlColors:',urlColors);try{var colorsToApply=[];// Try to parse saved layers first (more complete data)
 if(savedLayersParam){var savedLayers=JSON.parse(savedLayersParam);console.log('  Parsed saved layers:',savedLayers);colorsToApply=savedLayers.map(function(layer){return{color:layer.color,label:layer.label||"Layer ".concat(layer.index+1)};});}else if(urlColors){// Fallback to URL colors
 var colorArray=urlColors.split(',').map(function(c){return c.trim();});colorsToApply=colorArray.map(function(color,index){return{color:color,label:"Layer ".concat(index+1)};});}if(colorsToApply.length===0){console.log('⚠️ No colors to restore');return;}var normalizedColors=colorsToApply.map(function(item){return{color:normalizeColorToSwFormat(item&&item.color?String(item.color).trim():''),label:item&&item.label?item.label:''};}).filter(function(item){return item.color;});if(!normalizedColors.length){console.log('⚠️ No normalized colors to apply');return;}console.log("\uD83C\uDFA8 Applying ".concat(normalizedColors.length," normalized colors from cart:"),normalizedColors);// Latest-call-wins token to avoid overlapping async restores fighting each other.
 window.__colorflexRestoreToken=(window.__colorflexRestoreToken||0)+1;var token=window.__colorflexRestoreToken;var maxAttempts=24;var _applyWhenReady=function applyWhenReady(attempt){if(token!==window.__colorflexRestoreToken)return;var inputNodes=Array.from(document.querySelectorAll('.layer-input-container input[type="text"]'));var hasModel=Array.isArray(appState.layerInputs)&&appState.layerInputs.length>0;var readyCount=Math.min(inputNodes.length,hasModel?appState.layerInputs.length:0);if(readyCount===0){if(attempt<maxAttempts){setTimeout(function(){return _applyWhenReady(attempt+1);},180);}else{console.warn('⚠️ Cart color restore timed out waiting for inputs');}return;}for(var i=0;i<readyCount;i++){var colorToApply=normalizedColors[i];if(!colorToApply||!colorToApply.color)continue;var input=inputNodes[i];input.value=colorToApply.color;// Keep UI chip in sync immediately.
@@ -2561,21 +2589,31 @@ var thumbnailObserver=null;/**
  */function initThumbnailLazyLoading(){if(thumbnailObserver)return;// Already initialized
 thumbnailObserver=new IntersectionObserver(function(entries){entries.forEach(function(entry){if(entry.isIntersecting){var img=entry.target;var dataSrc=img.dataset.src;if(dataSrc&&!img.src.includes(dataSrc)){console.log("\uD83D\uDC41\uFE0F Lazy loading thumbnail: ".concat(dataSrc.split('/').pop()));img.src=dataSrc;img.removeAttribute('data-src');thumbnailObserver.unobserve(img);}}});},{root:null,// Use viewport as root
 rootMargin:'100px',// Start loading 100px before image enters viewport
-threshold:0.01});console.log('👁️ Thumbnail lazy loading initialized');}// Populate pattern thumbnails in sidebar with lazy loading
-function populatePatternThumbnails(patterns){console.log("populatePatternThumbnails called with patterns:",patterns);if(!dom.collectionThumbnails){console.error("collectionThumbnails not found in DOM");return;}if(!Array.isArray(patterns)){console.error("Patterns is not an array:",patterns);return;}var validPatterns=patterns.filter(function(p){return p&&_typeof(p)==='object'&&p.name;});if(!validPatterns.length){console.warn("No valid patterns to display");dom.collectionThumbnails.innerHTML="<p>No patterns available.</p>";return;}// Use data order (Airtable row order after sync) — no client-side re-sort
+threshold:0.01});console.log('👁️ Thumbnail lazy loading initialized');}/**
+ * page.colorflex.liquid moves #collectionThumbnails into #patternsModalContent for mobile.
+ * If that modal is left open or bypassed, the strip can stay detached from #leftSidebar.
+ * Restoring uses the page's closePatternsModal when present.
+ */function ensureCollectionThumbnailsInLeftSidebar(){try{if(typeof window.closePatternsModal==='function'){window.closePatternsModal();}}catch(e){console.warn('ensureCollectionThumbnailsInLeftSidebar:',e);}}/** Strip JS-applied simple-mode flex overrides so stylesheet column layout applies again. */function resetStandardSidebarThumbnailStripLayout(){if(window.COLORFLEX_SIMPLE_MODE===true)return;var el=document.getElementById('collectionThumbnails');if(!el)return;var containerProps=['display','flex-direction','flex-wrap','justify-content','gap','width','max-width','position','left','top','padding'];containerProps.forEach(function(p){try{el.style.removeProperty(p);}catch(_){}});el.querySelectorAll('.thumbnail').forEach(function(thumb){['display','float','position'].forEach(function(p){try{thumb.style.removeProperty(p);}catch(_){}});});}// Populate pattern thumbnails in sidebar with lazy loading
+function populatePatternThumbnails(patterns){console.log("populatePatternThumbnails called with patterns:",patterns);if(!dom.collectionThumbnails){console.error("collectionThumbnails not found in DOM");return;}ensureCollectionThumbnailsInLeftSidebar();if(!Array.isArray(patterns)){console.error("Patterns is not an array:",patterns);return;}var validPatterns=patterns.filter(function(p){return p&&_typeof(p)==='object'&&p.name;});if(!validPatterns.length){console.warn("No valid patterns to display");dom.collectionThumbnails.innerHTML="<p>No patterns available.</p>";return;}// Use data order (Airtable row order after sync) — no client-side re-sort
 function cleanPatternName(str){if(!str||typeof str!=='string'){return'';}return str.toLowerCase().replace(/\.\w+$/,'').replace(/-\d+x\d+$|-variant$/i,'').replace(/^\d+[a-z]+-|-.*$/i,'').replace(/\s+/g,' ').trim().split(' ').map(function(word){return word.charAt(0).toUpperCase()+word.slice(1);}).join(" ");}// Initialize lazy loading observer
-initThumbnailLazyLoading();dom.collectionThumbnails.innerHTML="";console.log("Cleared existing thumbnails");// 🎨 SIMPLE MODE: Force horizontal layout
+initThumbnailLazyLoading();dom.collectionThumbnails.innerHTML="";console.log("Cleared existing thumbnails");resetStandardSidebarThumbnailStripLayout();// #region agent log
+try{var _cs=dom.collectionThumbnails&&typeof getComputedStyle==="function"?getComputedStyle(dom.collectionThumbnails):null;var _ls0=document.getElementById("leftSidebar");var _lsS=_ls0&&typeof getComputedStyle==="function"?getComputedStyle(_ls0):null;fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"0b8664"},body:JSON.stringify({sessionId:"0b8664",runId:"pre",hypothesisId:"H2-H4",location:"CFM.js:populatePatternThumbnails:entry",message:"populatePatternThumbnails start",data:{nPatterns:validPatterns.length,simpleMode:window.COLORFLEX_SIMPLE_MODE===true,collection:appState.selectedCollection&&appState.selectedCollection.name,ctDisplay:_cs&&_cs.display,ctFlexDir:_cs&&_cs.flexDirection,leftSidebarWidth:_lsS&&_lsS.width},timestamp:Date.now()})})["catch"](function(){});}catch(_e4){}// #endregion
+// 🎨 SIMPLE MODE: Force horizontal layout
 var isSimpleMode=window.COLORFLEX_SIMPLE_MODE===true;console.log("🔍 DEBUG: window.COLORFLEX_SIMPLE_MODE =",window.COLORFLEX_SIMPLE_MODE,"| isSimpleMode =",isSimpleMode);if(isSimpleMode){console.log("🎨 Simple mode - applying horizontal thumbnail layout");dom.collectionThumbnails.style.display='flex';dom.collectionThumbnails.style.flexWrap='wrap';dom.collectionThumbnails.style.justifyContent='center';dom.collectionThumbnails.style.gap='0.75rem';dom.collectionThumbnails.style.padding='1rem 0';}else{console.log("❌ Simple mode NOT detected in populatePatternThumbnails");}validPatterns.forEach(function(pattern,index){console.log("Processing pattern:",pattern);pattern.displayName=cleanPatternName(pattern.name);var thumb=document.createElement("div");thumb.className="thumbnail cursor-pointer border-1 border-transparent";// Prioritize slug for clothing collections, fall back to id, then name-based ID
 thumb.dataset.patternId=pattern.slug||pattern.id||(typeof pattern.name==='string'?pattern.name.toLowerCase().replace(/\s+/g,'-'):'unknown-pattern');thumb.style.width="120px";thumb.style.boxSizing="border-box";var img=document.createElement("img");// Lazy loading: Load first 3 thumbnails immediately, rest on scroll
-var thumbnailUrl=normalizePath(pattern.thumbnail)||normalizePath("data/collections/fallback.jpg");if(index<3){// Load first 3 immediately for instant display
+var thumbnailUrl=normalizePath(pattern.thumbnail)||normalizePath("data/collections/fallback.jpg");// #region agent log
+(function(){var cn=appState.selectedCollection&&appState.selectedCollection.name;if(cn==='abundance'&&(index===0||index===5)){cfAgentDebug('CFM.js:populatePatternThumbnails','collection thumb url','TH-UI',{index:index,lazy:index>=3,pathTail:String(thumbnailUrl).slice(-120),rawThumb:pattern.thumbnail});}})();// #endregion
+if(index<3){// Load first 3 immediately for instant display
 img.src=thumbnailUrl;console.log("\u26A1 Eager loading thumbnail ".concat(index+1,": ").concat(thumbnailUrl.split('/').pop()));}else{// Lazy load the rest
 img.dataset.src=thumbnailUrl;img.src='data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120"%3E%3Crect fill="%23e0e0e0" width="120" height="120"/%3E%3Ctext x="50%25" y="50%25" text-anchor="middle" dominant-baseline="middle" font-family="sans-serif" font-size="12" fill="%23999"%3ELoading...%3C/text%3E%3C/svg%3E';thumbnailObserver.observe(img);}img.alt=pattern.displayName;img.className="w-full h-auto";img.onerror=function(){console.warn("Failed to load thumbnail for ".concat(pattern.displayName,": ").concat(img.src));if(img.src!==normalizePath("data/collections/fallback.jpg")){img.src=normalizePath("data/collections/fallback.jpg");img.onerror=function(){console.warn("Failed to load fallback for ".concat(pattern.displayName));var placeholder=document.createElement("div");placeholder.textContent=pattern.displayName||"Thumbnail Unavailable";placeholder.style.width="100%";placeholder.style.height="80px";placeholder.style.backgroundColor="#e0e0e0";placeholder.style.border="1px solid #ccc";placeholder.style.display="flex";placeholder.style.alignItems="center";placeholder.style.justifyContent="center";placeholder.style.fontSize="12px";placeholder.style.textAlign="center";placeholder.style.padding="5px";placeholder.style.boxSizing="border-box";thumb.replaceChild(placeholder,img);img.onerror=null;console.log("Replaced failed thumbnail for ".concat(pattern.displayName," with placeholder div"));};}else{var placeholder=document.createElement("div");placeholder.textContent=pattern.displayName||"Thumbnail Unavailable";placeholder.style.width="100%";placeholder.style.height="80px";placeholder.style.backgroundColor="#e0e0e0";placeholder.style.border="1px solid #ccc";placeholder.style.display="flex";placeholder.style.alignItems="center";placeholder.style.justifyContent="center";placeholder.style.fontSize="12px";placeholder.style.textAlign="center";placeholder.style.padding="5px";placeholder.style.boxSizing="border-box";thumb.replaceChild(placeholder,img);img.onerror=null;console.log("Replaced failed thumbnail for ".concat(pattern.displayName," with placeholder div"));}};thumb.appendChild(img);var label=document.createElement("p");label.textContent=pattern.displayName;label.className="text-center";thumb.appendChild(label);if(appState.currentPattern&&String(appState.currentPattern.id)===String(pattern.id)){thumb.classList.add("selected");console.log("Applied 'selected' class to ".concat(pattern.displayName));}thumb.addEventListener("click",function(e){console.log("Thumbnail clicked: ".concat(pattern.displayName,", ID: ").concat(thumb.dataset.patternId));handleThumbnailClick(thumb.dataset.patternId);document.querySelectorAll(".thumbnail").forEach(function(t){return t.classList.remove("selected");});thumb.classList.add("selected");});dom.collectionThumbnails.appendChild(thumb);});console.log("Pattern thumbnails populated:",validPatterns.length);// 🎨 SIMPLE MODE REDESIGN: Also populate sidebar if present
 populatePatternSidebar(validPatterns);// 🎨 SIMPLE MODE: Force horizontal layout AFTER all thumbnails created
 if(window.COLORFLEX_SIMPLE_MODE===true){console.log("🎨 SIMPLE MODE: Forcing horizontal thumbnail layout with aggressive styles");// Force container to horizontal flex
 dom.collectionThumbnails.style.setProperty('display','flex','important');dom.collectionThumbnails.style.setProperty('flex-direction','row','important');dom.collectionThumbnails.style.setProperty('flex-wrap','wrap','important');dom.collectionThumbnails.style.setProperty('justify-content','center','important');dom.collectionThumbnails.style.setProperty('gap','1rem','important');dom.collectionThumbnails.style.setProperty('width','100%','important');dom.collectionThumbnails.style.setProperty('max-width','100%','important');dom.collectionThumbnails.style.setProperty('position','relative','important');dom.collectionThumbnails.style.setProperty('left','auto','important');dom.collectionThumbnails.style.setProperty('top','auto','important');// Force each thumbnail to inline-block
-var thumbnails=dom.collectionThumbnails.querySelectorAll('.thumbnail');thumbnails.forEach(function(thumb){thumb.style.setProperty('display','inline-block','important');thumb.style.setProperty('float','none','important');thumb.style.setProperty('position','relative','important');});console.log("✅ Horizontal layout forced on",thumbnails.length,"thumbnails");}// Update collection header
+var thumbnails=dom.collectionThumbnails.querySelectorAll('.thumbnail');thumbnails.forEach(function(thumb){thumb.style.setProperty('display','inline-block','important');thumb.style.setProperty('float','none','important');thumb.style.setProperty('position','relative','important');});console.log("✅ Horizontal layout forced on",thumbnails.length,"thumbnails");}// #region agent log
+try{var _dataUrlN=0;validPatterns.forEach(function(p){var u=p&&p.thumbnail?String(p.thumbnail):"";if(u.startsWith("data:"))_dataUrlN++;});var _cs2=dom.collectionThumbnails&&typeof getComputedStyle==="function"?getComputedStyle(dom.collectionThumbnails):null;var _ls1=document.getElementById("leftSidebar");var _lsS2=_ls1&&typeof getComputedStyle==="function"?getComputedStyle(_ls1):null;fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa",{method:"POST",headers:{"Content-Type":"application/json","X-Debug-Session-Id":"0b8664"},body:JSON.stringify({sessionId:"0b8664",runId:"pre",hypothesisId:"H2-H5",location:"CFM.js:populatePatternThumbnails:after-layout",message:"populatePatternThumbnails end layout",data:{dataUrlThumbnailCount:_dataUrlN,simpleMode:window.COLORFLEX_SIMPLE_MODE===true,ctDisplay:_cs2&&_cs2.display,ctJustify:_cs2&&_cs2.justifyContent,leftSidebarWidth:_lsS2&&_lsS2.width},timestamp:Date.now()})})["catch"](function(){});}catch(_e5){}// #endregion
+// Update collection header
 // ✅ FIX: Support both standard furniture page format (h6 element) and simple mode format
-var collectionHeader=dom.collectionHeader||document.getElementById('collectionHeader');if(collectionHeader){var _appState$selectedCol22;var collectionName=((_appState$selectedCol22=appState.selectedCollection)===null||_appState$selectedCol22===void 0?void 0:_appState$selectedCol22.name)||"Unknown";var displayName="";// Check if this is a clothing collection (match both -clo and .clo- patterns)
+var collectionHeader=dom.collectionHeader||document.getElementById('collectionHeader');if(collectionHeader){var _appState$selectedCol24;var collectionName=((_appState$selectedCol24=appState.selectedCollection)===null||_appState$selectedCol24===void 0?void 0:_appState$selectedCol24.name)||"Unknown";var displayName="";// Check if this is a clothing collection (match both -clo and .clo- patterns)
 if(collectionName.includes('-clo')||collectionName.includes('.clo-')){var collectionBaseName=collectionName.split(/[-.]clo/)[0];displayName=toInitialCaps(collectionBaseName);console.log("Updated collectionHeader (clothing):",displayName);}else if(collectionName.includes('.fur')||collectionName.endsWith('.fur')){// Furniture collection: strip .fur suffix
 // ✅ Standard format: .fur (not .fur-1) - all furniture pieces go under .fur collection
 var _collectionBaseName=collectionName.replace(/\.fur$/i,'');// Remove .fur (standard)
@@ -2583,21 +2621,26 @@ if(_collectionBaseName===collectionName){_collectionBaseName=collectionName.repl
 }displayName=toInitialCaps(_collectionBaseName);console.log("Updated collectionHeader (furniture):",displayName);}else{displayName=toInitialCaps(collectionName);console.log("Updated collectionHeader:",displayName);}// ✅ FIX: Check if collectionHeader is an h6 (standard furniture page) or button/div (simple mode)
 if(collectionHeader.tagName==='H6'){// Standard furniture page format: h6 element with uppercase text
 collectionHeader.textContent=displayName.toUpperCase();}else{// Simple mode or other formats: use the display name as-is
-collectionHeader.textContent=displayName;}}}/** Per-pattern `coordinates` only; no fallback to collection master (-000) row (blank when none). */function getCoordinateListForCurrentUI(){var p=appState.currentPattern;if(!p||!Array.isArray(p.coordinates))return[];return p.coordinates.length>0?p.coordinates:[];}// Populate coordinates thumbnails in #coordinatesContainer
+collectionHeader.textContent=displayName;}}}/**
+ * Matching coordinate wallpapers for the coordinates strip: pattern row **COORDINATES** if set,
+ * else collection **coordinates** from master (-000) (Airtable COORDINATES on the placeholder row).
+ */function getCoordinateListForCurrentUI(){var p=appState.currentPattern;var col=appState.selectedCollection;if(p&&Array.isArray(p.coordinates)&&p.coordinates.length>0){return p.coordinates;}if(col&&Array.isArray(col.coordinates)&&col.coordinates.length>0){return col.coordinates;}return[];}/**
+ * Match a coordinate thumbnail slug to the Coordinates catalog pattern (module scope — used by thumbnails + click).
+ */function findCoordinatesPatternByFilename(filenameNoExt){if(!appState.collections||!filenameNoExt)return null;var lower=String(filenameNoExt).toLowerCase();var matchInCollection=function matchInCollection(collection){if(!collection||!Array.isArray(collection.patterns))return null;return collection.patterns.find(function(p){var thumb=(p.thumbnail||'').toLowerCase();return thumb&&(thumb.includes("/".concat(lower,"."))||thumb.endsWith("/".concat(lower))||thumb.includes("/".concat(lower,".jpg")));})||null;};var coordsColl=appState.collections.find(function(c){return c&&typeof c.name==='string'&&c.name.toLowerCase()==='coordinates';});var fromCoords=matchInCollection(coordsColl);if(fromCoords)return fromCoords;var _iterator5=_createForOfIteratorHelper(appState.collections),_step5;try{for(_iterator5.s();!(_step5=_iterator5.n()).done;){var c=_step5.value;if(!c||typeof c.name!=='string')continue;if(c.name.toLowerCase()==='coordinates')continue;var hit=matchInCollection(c);if(hit)return hit;}}catch(err){_iterator5.e(err);}finally{_iterator5.f();}return null;}/** Canonical layer paths for a coordinate row (fixes bad 21-COORDINATES filenames when catalog has truth). */function coordinateLayerPathsFromCollectionPattern(coordinate){var fromRecord=coordinate.layerPaths||(coordinate.layerPath?[coordinate.layerPath]:[]);var slug=String(coordinate.filename||'').replace(/\.jpg$/i,'').trim();if(!slug)return fromRecord;var coordsPattern=findCoordinatesPatternByFilename(slug);if(!coordsPattern||!Array.isArray(coordsPattern.layers)||coordsPattern.layers.length===0){return fromRecord;}var fromPattern=coordsPattern.layers.map(function(ly){return typeof ly==='string'?ly:ly&&ly.path;}).filter(Boolean);if(fromPattern.length===0)return fromRecord;var underCoordsLayers=function underCoordsLayers(p){var s=String(p).replace(/\\/g,'/').toLowerCase();return s.includes('coordinates')&&s.includes('/layers/');};if(!fromPattern.every(underCoordsLayers))return fromRecord;if(fromRecord.join('|')!==fromPattern.join('|')){console.log('[ColorFlex] Coordinate layerPaths: using Coordinates collection pattern (canonical)',{slug:slug,fromRecord:fromRecord,fromPattern:fromPattern});}return fromPattern.slice();}/** Clears "Back to pattern" restore state — must run when user picks a new pattern/collection so restore targets the current base pattern. */function clearCoordinateRestoreSnapshot(){appState.originalPattern=null;appState.originalCoordinates=null;appState.originalLayerInputs=null;appState.originalCurrentLayers=null;appState.coordinatePreviewColorStartIndex=null;}var backToPatternLinkResizeObserver=null;function disconnectBackToPatternLinkResizeObserver(){if(backToPatternLinkResizeObserver){backToPatternLinkResizeObserver.disconnect();backToPatternLinkResizeObserver=null;}}/** Place #backToPatternLink ~30px left of the first .coordinate-item, vertically centered to that item. */function positionBackToPatternLink(container,linkEl){if(!container||!linkEl)return;var first=container.querySelector(".coordinate-item");if(!first)return;var cr=container.getBoundingClientRect();var fr=first.getBoundingClientRect();var lw=linkEl.getBoundingClientRect().width||linkEl.offsetWidth||1;var gap=30;var left=fr.left-cr.left-gap-lw;var centerY=fr.top-cr.top+fr.height/2;linkEl.style.setProperty("position","absolute","important");linkEl.style.setProperty("left","".concat(Math.round(left),"px"),"important");linkEl.style.setProperty("top","".concat(Math.round(centerY),"px"),"important");linkEl.style.setProperty("transform","translateY(-50%)","important");linkEl.style.setProperty("margin","0","important");linkEl.style.setProperty("text-align","left","important");linkEl.style.setProperty("white-space","nowrap","important");linkEl.style.setProperty("z-index","1001","important");}function scheduleBackToPatternLinkPosition(container,linkEl){var run=function run(){return positionBackToPatternLink(container,linkEl);};requestAnimationFrame(function(){run();requestAnimationFrame(run);});}// Populate coordinates thumbnails in #coordinatesContainer
 var populateCoordinates=function populateCoordinates(){// ✅ Skip coordinates for fabric, clothing, furniture, and Bassett modes
-if(appState.isInFabricMode){return;}if(window.COLORFLEX_MODE==='CLOTHING'){return;}if(window.COLORFLEX_MODE==='FURNITURE'){return;}if(window.COLORFLEX_MODE==='BASSETT'){return;}if(!dom.coordinatesContainer){console.error("coordinatesContainer not found in DOM");return;}dom.coordinatesContainer.innerHTML="";var coordinates=getCoordinateListForCurrentUI();console.log("Effective coordinates data:",coordinates);if(!coordinates.length){var _appState$currentPatt12,_appState$selectedCol23;console.log("No matching coordinates for pattern/collection:",((_appState$currentPatt12=appState.currentPattern)===null||_appState$currentPatt12===void 0?void 0:_appState$currentPatt12.name)||((_appState$selectedCol23=appState.selectedCollection)===null||_appState$selectedCol23===void 0?void 0:_appState$selectedCol23.name));return;}var numCoordinates=coordinates.length;var xStep=80;var yStep=60;// Get actual container dimensions
+if(appState.isInFabricMode){return;}if(window.COLORFLEX_MODE==='CLOTHING'){return;}if(window.COLORFLEX_MODE==='FURNITURE'){return;}if(window.COLORFLEX_MODE==='BASSETT'){return;}if(!dom.coordinatesContainer){console.error("coordinatesContainer not found in DOM");return;}disconnectBackToPatternLinkResizeObserver();dom.coordinatesContainer.innerHTML="";var coordinates=getCoordinateListForCurrentUI();console.log("Effective coordinates data:",coordinates);if(!coordinates.length){var _appState$currentPatt14,_appState$selectedCol25;console.log("No matching coordinates for pattern/collection:",((_appState$currentPatt14=appState.currentPattern)===null||_appState$currentPatt14===void 0?void 0:_appState$currentPatt14.name)||((_appState$selectedCol25=appState.selectedCollection)===null||_appState$selectedCol25===void 0?void 0:_appState$selectedCol25.name));return;}var numCoordinates=coordinates.length;var xStep=80;var yStep=60;// Get actual container dimensions
 var containerWidth=dom.coordinatesContainer.offsetWidth||600;var containerHeight=dom.coordinatesContainer.offsetHeight||300;// Calculate total span and center the layout
 var totalXSpan=(numCoordinates-1)*xStep;var totalYSpan=numCoordinates>1?yStep:0;var xStart=containerWidth/2-totalXSpan/2;var yStart=containerHeight/2-totalYSpan/2;coordinates.forEach(function(coord,index){var div=document.createElement("div");div.className="coordinate-item";var xOffset=xStart+index*xStep;var yOffset=yStart+(index%2===0?0:yStep);div.style.setProperty("--x-offset","".concat(xOffset,"px"));div.style.setProperty("--y-offset","".concat(yOffset,"px"));var img=document.createElement("img");var normalizedPath=normalizePath(coord.path);console.log("\uD83D\uDD0D Coordinate path: \"".concat(coord.path,"\" \u2192 normalized: \"").concat(normalizedPath,"\""));img.src=normalizedPath||normalizePath("data/collections/default-coordinate.jpg");img.alt=coord.pattern||"Coordinate ".concat(index+1);img.className="coordinate-image";img.dataset.filename=coord.path||"fallback";img.onerror=function(){console.warn("Failed to load coordinate image: ".concat(img.src));var placeholder=document.createElement("div");placeholder.className="coordinate-placeholder";placeholder.textContent=coord.pattern||"Coordinate Unavailable";div.replaceChild(placeholder,img);};div.appendChild(img);dom.coordinatesContainer.appendChild(div);});console.log("Coordinates populated:",coordinates.length);setupCoordinateImageHandlers();};// SIMPLE MODE REDESIGN: Populate sidebar with vertical pattern thumbnails
 function populatePatternSidebar(patterns){var sidebar=document.getElementById('patternThumbnailsSidebar');if(!sidebar)return;// Not on simple mode page
 console.log("📋 Populating pattern sidebar with",patterns.length,"patterns");sidebar.innerHTML="";// Capture collection object for click handlers (loadPatternData needs the object, not just the name)
 var collection=appState.selectedCollection;if(!collection){console.error("❌ Cannot populate sidebar: no collection selected");return;}patterns.forEach(function(pattern,index){var container=document.createElement("div");container.style.cssText="\n            margin-bottom: 0.75rem;\n            cursor: pointer;\n            transition: transform 0.2s;\n        ";var img=document.createElement("img");var thumbnailUrl=normalizePath(pattern.thumbnail)||normalizePath("data/collections/fallback.jpg");img.src=thumbnailUrl;img.alt=pattern.name;img.style.cssText="\n            width: 100%;\n            height: auto;\n            border: 2px solid #4a5568;\n            border-radius: 4px;\n            display: block;\n            margin-bottom: 0.25rem;\n        ";img.onerror=function(){img.src=normalizePath("data/collections/fallback.jpg");};var label=document.createElement("div");label.textContent=pattern.name.split(/[-_]/).map(function(w){return w.charAt(0).toUpperCase()+w.slice(1);}).join(' ');label.style.cssText="\n            font-family: 'Special Elite', monospace;\n            font-size: 0.75rem;\n            color: #a0aec0;\n            text-align: center;\n        ";container.appendChild(img);container.appendChild(label);container.addEventListener('mouseenter',function(){img.style.borderColor='#d4af37';container.style.transform='scale(1.05)';});container.addEventListener('mouseleave',function(){img.style.borderColor='#4a5568';container.style.transform='scale(1)';});container.addEventListener('click',function(){loadPatternData(collection,pattern.slug||pattern.name);});sidebar.appendChild(container);});}// REMOVED: populateLayerThumbnails - now handled directly in populateLayerInputs for simple mode
 /** Plain text → safe HTML paragraphs; leave Airtable HTML-ish content as-is */function formatStandardPatternSidebarHtml(text){if(text==null||!String(text).trim())return"";var raw=String(text).trim();if(/<[a-z][\s\S]*>/i.test(raw))return raw;var esc=function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");};return raw.split(/\n\n+/).map(function(block){return"<p>".concat(esc(block).replace(/\n/g,"<br>"),"</p>");}).join("");}// Populate the layer inputs UI
-function populateLayerInputs(){var pattern=arguments.length>0&&arguments[0]!==undefined?arguments[0]:appState.currentPattern;try{var _pattern$layers,_appState$selectedCol27;if(!pattern){console.error("❌ No pattern provided or set in appState.");return;}// ⚡ Standard = not ColorFlex by data, or in a standard-only collection (farmhouse, oceana, abundance). Pass through — no layer inputs.
-var isStandard=patternIsStandard(pattern,appState.selectedCollection);if(isStandard){appState.layerInputs=[];appState.currentLayers=[];if(dom.layerInputsContainer){dom.layerInputsContainer.innerHTML="";dom.layerInputsContainer.style.display="block";}var _colorLayersHeading=document.getElementById("colorLayersHeading");if(_colorLayersHeading)_colorLayersHeading.style.display="none";var _colorLockBtn=document.getElementById("colorLockBtn");if(_colorLockBtn)_colorLockBtn.style.display="none";if(dom.layerInputsContainer){var _appState$selectedCol24;var patternDesc=pattern.description&&String(pattern.description).trim();var collectionDesc=((_appState$selectedCol24=appState.selectedCollection)===null||_appState$selectedCol24===void 0?void 0:_appState$selectedCol24.description)&&String(appState.selectedCollection.description).trim();var primarySource=patternDesc||collectionDesc;var primaryHtml=primarySource?formatStandardPatternSidebarHtml(primarySource):"";var sizeIn=pattern.size&&Array.isArray(pattern.size)&&pattern.size.length>=2?pattern.size:[24,24];var sizeStr="".concat(sizeIn[0],"\xD7").concat(sizeIn[1]);var fallbackHtml="<p>Each pattern repeat is ".concat(sizeStr," inches and can be scaled to suit your need.</p>");var inner=primaryHtml||fallbackHtml;dom.layerInputsContainer.style.gridTemplateColumns="repeat(1, 1fr)";dom.layerInputsContainer.innerHTML="<div style=\"text-align:center;padding:30px 20px;color:#d4af37;font-family:'IM Fell English',serif;font-size:1.1rem;line-height:1.8;max-width:800px;margin:0 auto;\">".concat(inner,"</div>");}handlePatternSelection(pattern.name,appState.colorsLocked);addSaveButton();console.log("📋 Standard pattern: passed through (no color layer inputs):",pattern.name);return;}// 🎨 SIMPLE MODE: Render into layerThumbnailsContainer with thumbnail images
-var thumbnailContainer=document.getElementById('layerThumbnailsContainer');var isSimpleMode=!!thumbnailContainer;if(isSimpleMode){var _appState$selectedCol25,_appState$selectedCol26;console.log("🎨 Simple mode detected - rendering into layerThumbnailsContainer");// Get default colors from designer colors or curated colors
-var _designerColors=pattern.designer_colors||pattern.colors||[];var _curatedColors=((_appState$selectedCol25=appState.selectedCollection)===null||_appState$selectedCol25===void 0?void 0:_appState$selectedCol25.curatedColors)||[];var defaultColors=_designerColors.length>0?_designerColors:_curatedColors;console.log("🎨 SIMPLE MODE COLOR FALLBACK:");console.log("  pattern.designer_colors:",pattern.designer_colors);console.log("  pattern.colors:",pattern.colors);console.log("  designerColors (merged):",_designerColors);console.log("  curatedColors:",_curatedColors);console.log("  defaultColors (final):",defaultColors);console.log("  Using",defaultColors.length,"colors from",_designerColors.length>0?"pattern":"collection");// Initialize state and setup
+function populateLayerInputs(){var pattern=arguments.length>0&&arguments[0]!==undefined?arguments[0]:appState.currentPattern;try{var _pattern$layers,_appState$selectedCol29;if(!pattern){console.error("❌ No pattern provided or set in appState.");return;}var colorControlsEl=document.getElementById("colorControls");if(colorControlsEl){colorControlsEl.classList.remove("colorControls--standard");}if(dom.layerInputsContainer){dom.layerInputsContainer.classList.remove("layerInputsContainer--standard");}// ⚡ Standard = not ColorFlex by data, or in a standard-only collection (farmhouse, oceana, abundance). Pass through — no layer inputs.
+var isStandard=patternIsStandard(pattern,appState.selectedCollection);if(isStandard){appState.layerInputs=[];appState.currentLayers=[];if(dom.layerInputsContainer){dom.layerInputsContainer.innerHTML="";dom.layerInputsContainer.style.display="block";}var _colorLayersHeading=document.getElementById("colorLayersHeading");if(_colorLayersHeading)_colorLayersHeading.style.display="none";var _colorLockBtn=document.getElementById("colorLockBtn");if(_colorLockBtn)_colorLockBtn.style.display="none";if(dom.layerInputsContainer){var _appState$selectedCol26;var patternDesc=pattern.description&&String(pattern.description).trim();var collectionDesc=((_appState$selectedCol26=appState.selectedCollection)===null||_appState$selectedCol26===void 0?void 0:_appState$selectedCol26.description)&&String(appState.selectedCollection.description).trim();var primarySource=patternDesc||collectionDesc;var primaryHtml=primarySource?formatStandardPatternSidebarHtml(primarySource):"";var sizeIn=pattern.size&&Array.isArray(pattern.size)&&pattern.size.length>=2?pattern.size:[24,24];var sizeStr="".concat(sizeIn[0],"\xD7").concat(sizeIn[1]);var fallbackHtml="<p>Each pattern repeat is ".concat(sizeStr," inches and can be scaled to suit your need.</p>");var inner=primaryHtml||fallbackHtml;dom.layerInputsContainer.classList.add("layerInputsContainer--standard");if(colorControlsEl){colorControlsEl.classList.add("colorControls--standard");}dom.layerInputsContainer.innerHTML="<div class=\"cf-standard-blurb\">".concat(inner,"</div>");}handlePatternSelection(pattern.name,appState.colorsLocked);addSaveButton();console.log("📋 Standard pattern: passed through (no color layer inputs):",pattern.name);return;}// 🎨 SIMPLE MODE: Render into layerThumbnailsContainer with thumbnail images
+var thumbnailContainer=document.getElementById('layerThumbnailsContainer');var isSimpleMode=!!thumbnailContainer;if(isSimpleMode){var _appState$selectedCol27,_appState$selectedCol28;console.log("🎨 Simple mode detected - rendering into layerThumbnailsContainer");// Get default colors from designer colors or curated colors
+var _designerColors=pattern.designer_colors||pattern.colors||[];var _curatedColors=((_appState$selectedCol27=appState.selectedCollection)===null||_appState$selectedCol27===void 0?void 0:_appState$selectedCol27.curatedColors)||[];var defaultColors=_designerColors.length>0?_designerColors:_curatedColors;console.log("🎨 SIMPLE MODE COLOR FALLBACK:");console.log("  pattern.designer_colors:",pattern.designer_colors);console.log("  pattern.colors:",pattern.colors);console.log("  designerColors (merged):",_designerColors);console.log("  curatedColors:",_curatedColors);console.log("  defaultColors (final):",defaultColors);console.log("  Using",defaultColors.length,"colors from",_designerColors.length>0?"pattern":"collection");// Initialize state and setup
 handlePatternSelection(pattern.name,appState.colorsLocked);appState.layerInputs=[];appState.currentLayers=[];thumbnailContainer.innerHTML="";// Get all layers
-var _allLayers=buildLayerModel(pattern,defaultColors,{isWallPanel:((_appState$selectedCol26=appState.selectedCollection)===null||_appState$selectedCol26===void 0?void 0:_appState$selectedCol26.name)==="wall-panels",tintWhite:appState.tintWhite||false});appState.currentLayers=_allLayers;var inputLayers=_allLayers.filter(function(layer){return!layer.isShadow;});// Create inputs with thumbnails instead of circles
+var _allLayers=buildLayerModel(pattern,defaultColors,{isWallPanel:((_appState$selectedCol28=appState.selectedCollection)===null||_appState$selectedCol28===void 0?void 0:_appState$selectedCol28.name)==="wall-panels",tintWhite:appState.tintWhite||false});appState.currentLayers=_allLayers;var inputLayers=_allLayers.filter(function(layer){return!layer.isShadow;});// Create inputs with thumbnails instead of circles
 var layerImageIndex=0;// Track index for accessing pattern.layers
 inputLayers.forEach(function(layer,index){var container=document.createElement("div");container.className="layer-thumbnail-container";// Create thumbnail image or colored square
 var visualElement;var isColoredSquare=layer.isBackground||layer.label.toLowerCase().includes('extra');if(isColoredSquare){// Colored square for wall/background/extras
@@ -2624,10 +2667,10 @@ console.log("🔍 COLOR LOCK BUTTON CHECK (ColorFlex Pattern):");console.log("  
 // a pattern with fewer layers keeps the extra colors for when user switches back.
 var colorLockBuffer=null;if(appState.colorsLocked&&appState.layerInputs&&appState.layerInputs.length>0){var currentValues=appState.layerInputs.map(function(layer){return layer.input.value;});var prev=appState.colorLockFullBuffer;var maxLen=Math.max(currentValues.length,prev&&prev.length||0);colorLockBuffer=[];for(var i=0;i<maxLen;i++){colorLockBuffer[i]=i<currentValues.length?currentValues[i]:prev&&prev[i]||"";}appState.colorLockFullBuffer=colorLockBuffer;console.log('🔒 Pre-selection: Full color lock buffer (length '+colorLockBuffer.length+'):',colorLockBuffer);}// Call handlePatternSelection with color lock buffer
 // This sets up appState.currentPattern and appState.currentLayers correctly (with restored colors when lock is on)
-handlePatternSelection(pattern.name,appState.colorsLocked,colorLockBuffer);appState.layerInputs=[];if(!dom.layerInputsContainer){console.error("❌ layerInputsContainer not found in DOM");console.log("🔍 Available DOM elements:",Object.keys(dom));return;}console.log("✅ layerInputsContainer found:",dom.layerInputsContainer);var designerColors=pattern.designer_colors||[];var curatedColors=((_appState$selectedCol27=appState.selectedCollection)===null||_appState$selectedCol27===void 0?void 0:_appState$selectedCol27.curatedColors)||[];// Use curated colors as fallback if no designer colors
+handlePatternSelection(pattern.name,appState.colorsLocked,colorLockBuffer);appState.layerInputs=[];if(!dom.layerInputsContainer){console.error("❌ layerInputsContainer not found in DOM");console.log("🔍 Available DOM elements:",Object.keys(dom));return;}console.log("✅ layerInputsContainer found:",dom.layerInputsContainer);var designerColors=pattern.designer_colors||[];var curatedColors=((_appState$selectedCol29=appState.selectedCollection)===null||_appState$selectedCol29===void 0?void 0:_appState$selectedCol29.curatedColors)||[];// Use curated colors as fallback if no designer colors
 var effectiveColors=designerColors.length>0?designerColors:curatedColors;console.log("🎨 COLOR FALLBACK DEBUG:");console.log("  - designerColors:",designerColors.length,designerColors);console.log("  - curatedColors:",curatedColors.length,curatedColors);console.log("  - effectiveColors:",effectiveColors.length,effectiveColors);// When color lock had a buffer, keep currentLayers as set by handlePatternSelection (restored colors).
 // Otherwise build from scratch so we don't overwrite restored colors and corrupt the full buffer on next click.
-var allLayers;if(appState.colorsLocked&&colorLockBuffer&&colorLockBuffer.length>0){allLayers=appState.currentLayers;}else{var _appState$selectedCol28;appState.currentLayers=[];allLayers=buildLayerModel(pattern,effectiveColors,{isWallPanel:((_appState$selectedCol28=appState.selectedCollection)===null||_appState$selectedCol28===void 0?void 0:_appState$selectedCol28.name)==="wall-panels",tintWhite:appState.tintWhite||false});appState.currentLayers=allLayers;}dom.layerInputsContainer.innerHTML="";if(isStandardPattern){// For standard patterns, hide the color controls container and don't create inputs
+var allLayers;if(appState.colorsLocked&&colorLockBuffer&&colorLockBuffer.length>0){allLayers=appState.currentLayers;}else{var _appState$selectedCol30;appState.currentLayers=[];allLayers=buildLayerModel(pattern,effectiveColors,{isWallPanel:((_appState$selectedCol30=appState.selectedCollection)===null||_appState$selectedCol30===void 0?void 0:_appState$selectedCol30.name)==="wall-panels",tintWhite:appState.tintWhite||false});appState.currentLayers=allLayers;}dom.layerInputsContainer.innerHTML="";if(isStandardPattern){// For standard patterns, hide the color controls container and don't create inputs
 if(dom.layerInputsContainer){dom.layerInputsContainer.style.display='none';}appState.layerInputs=[];console.log("📋 Color controls hidden for standard pattern:",pattern.name);}else{// For ColorFlex patterns, show the color controls container and create inputs
 if(dom.layerInputsContainer){dom.layerInputsContainer.style.display='';}// Create inputs ONLY for non-shadow layers
 var _inputLayers=allLayers.filter(function(layer){return!layer.isShadow;});// Add inputs directly to container (no row wrappers)
@@ -2641,15 +2684,15 @@ if(appState.layerInputs&&appState.layerInputs.length>0){setTimeout(function(){ru
 // Pattern click handling, layer model construction, color application.
 // Includes scale persistence and color lock integration.
 // ============================================================================
-function handlePatternSelection(patternName){var _appState$selectedCol29,_appState$selectedCol30,_appState$currentLaye4;var preserveColors=arguments.length>1&&arguments[1]!==undefined?arguments[1]:false;var colorLockBuffer=arguments.length>2&&arguments[2]!==undefined?arguments[2]:null;if(!appState.selectedCollection||!appState.selectedCollection.patterns||!appState.selectedCollection.patterns.length){console.warn('handlePatternSelection: no collection or patterns');return;}// Check if colors are locked - if so, force preserveColors to true
-if(appState.colorsLocked){preserveColors=true;console.log('🔒 Color lock enabled - preserving current color selections');if(colorLockBuffer){console.log('🔒 Using color lock buffer:',colorLockBuffer);}}console.log("handlePatternSelection: pattern=".concat(patternName,", lockedCollection=").concat(appState.lockedCollection,", currentCollection=").concat((_appState$selectedCol29=appState.selectedCollection)===null||_appState$selectedCol29===void 0?void 0:_appState$selectedCol29.name));var normalizedPatternRef=String(patternName||'').trim();var normalizedPatternRefLower=normalizedPatternRef.toLowerCase();var scorePatternCandidate=function scorePatternCandidate(p){var layers=Array.isArray(p&&p.layers)?p.layers:[];var hasId=!!(p&&p.id);var hasNumber=!!(p&&p.number);var hasTextureLayer=layers.some(function(l){var path=String(l&&(l.path||l.proofPath)||'').toLowerCase();return path.includes('_texture_')||path.includes('texture_layer');});var hasShadowLayer=layers.some(function(l){var path=String(l&&(l.path||l.proofPath)||'').toLowerCase();return path.includes('_shadow_')||path.includes('shadow_layer')||path.includes('isshadow');});return(hasId?1000:0)+(hasNumber?100:0)+(hasTextureLayer?25:0)+(hasShadowLayer?10:0)+layers.length;};var matchingPatterns=appState.selectedCollection.patterns.filter(function(p){var pSlug=String(p&&p.slug||'').trim().toLowerCase();var pId=String(p&&p.id||'').trim().toLowerCase();var pName=String(p&&p.name||'').trim().toLowerCase();return pSlug&&pSlug===normalizedPatternRefLower||pId&&pId===normalizedPatternRefLower||pName&&pName===normalizedPatternRefLower;});var pattern=(matchingPatterns.length?matchingPatterns.slice().sort(function(a,b){return scorePatternCandidate(b)-scorePatternCandidate(a);})[0]:null)||appState.selectedCollection.patterns[0];if(!pattern){console.error("Pattern ".concat(patternName," not found in selected collection"));return;}appState.currentPattern=pattern;// ⚡ Standard = not ColorFlex by data, or in a standard-only collection. Avoids compositing standard thumbnails.
+function handlePatternSelection(patternName){var _appState$selectedCol31,_appState$selectedCol32,_appState$currentLaye4;var preserveColors=arguments.length>1&&arguments[1]!==undefined?arguments[1]:false;var colorLockBuffer=arguments.length>2&&arguments[2]!==undefined?arguments[2]:null;if(!appState.selectedCollection||!appState.selectedCollection.patterns||!appState.selectedCollection.patterns.length){console.warn('handlePatternSelection: no collection or patterns');return;}clearCoordinateRestoreSnapshot();// Check if colors are locked - if so, force preserveColors to true
+if(appState.colorsLocked){preserveColors=true;console.log('🔒 Color lock enabled - preserving current color selections');if(colorLockBuffer){console.log('🔒 Using color lock buffer:',colorLockBuffer);}}console.log("handlePatternSelection: pattern=".concat(patternName,", lockedCollection=").concat(appState.lockedCollection,", currentCollection=").concat((_appState$selectedCol31=appState.selectedCollection)===null||_appState$selectedCol31===void 0?void 0:_appState$selectedCol31.name));var normalizedPatternRef=String(patternName||'').trim();var normalizedPatternRefLower=normalizedPatternRef.toLowerCase();var scorePatternCandidate=function scorePatternCandidate(p){var layers=Array.isArray(p&&p.layers)?p.layers:[];var hasId=!!(p&&p.id);var hasNumber=!!(p&&p.number);var hasTextureLayer=layers.some(function(l){var path=String(l&&(l.path||l.proofPath)||'').toLowerCase();return path.includes('_texture_')||path.includes('texture_layer');});var hasShadowLayer=layers.some(function(l){var path=String(l&&(l.path||l.proofPath)||'').toLowerCase();return path.includes('_shadow_')||path.includes('shadow_layer')||path.includes('isshadow');});return(hasId?1000:0)+(hasNumber?100:0)+(hasTextureLayer?25:0)+(hasShadowLayer?10:0)+layers.length;};var matchingPatterns=appState.selectedCollection.patterns.filter(function(p){var pSlug=String(p&&p.slug||'').trim().toLowerCase();var pId=String(p&&p.id||'').trim().toLowerCase();var pName=String(p&&p.name||'').trim().toLowerCase();return pSlug&&pSlug===normalizedPatternRefLower||pId&&pId===normalizedPatternRefLower||pName&&pName===normalizedPatternRefLower;});var pattern=(matchingPatterns.length?matchingPatterns.slice().sort(function(a,b){return scorePatternCandidate(b)-scorePatternCandidate(a);})[0]:null)||appState.selectedCollection.patterns[0];if(!pattern){console.error("Pattern ".concat(patternName," not found in selected collection"));return;}appState.currentPattern=pattern;// ⚡ Standard = not ColorFlex by data, or in a standard-only collection. Avoids compositing standard thumbnails.
 var isStandard=patternIsStandard(pattern,appState.selectedCollection);if(isStandard){// Standard patterns don't need layer management, just set minimal state
 appState.currentLayers=[{imageUrl:null,color:"#FFFFFF",label:"Background",isShadow:false}];// Hide download proof button for standard patterns (no customization to proof)
 toggleDownloadProofButton(false);return;// Exit early - no color/layer processing needed
 }// Show download proof button for ColorFlex patterns (customizable)
 toggleDownloadProofButton(true);var designerColors=appState.currentPattern.designer_colors||[];var curatedColors=appState.selectedCollection.curatedColors||[];var colorSource=designerColors.length>0?designerColors:curatedColors;// ✅ Use color lock buffer if provided (from loadPatternData), otherwise use old currentLayers
 var savedColors=preserveColors&&colorLockBuffer?colorLockBuffer:preserveColors?appState.currentLayers.map(function(layer){return layer.color;}):[];appState.currentLayers=[];var colorIndex=0;// ✅ Make sure this is only declared once
-var patternType=getPatternType(pattern,appState.selectedCollection);console.log("\uD83D\uDD0D Pattern type detected: ".concat(patternType," for pattern: ").concat(pattern.name," in collection: ").concat((_appState$selectedCol30=appState.selectedCollection)===null||_appState$selectedCol30===void 0?void 0:_appState$selectedCol30.name));var isWallPanel=patternType==="wall-panel";var isWall=pattern.isWall||isWallPanel;if(isWall){var wallColor=colorSource[colorIndex]||"#FFFFFF";appState.currentLayers.push({imageUrl:null,color:wallColor,label:"Wall Color",isShadow:false});colorIndex++;}var backgroundColor=colorSource[colorIndex]||"#FFFFFF";appState.currentLayers.push({imageUrl:null,color:backgroundColor,label:"Background",isShadow:false});console.log("DEBUG: currentLayers[0]?.color =",(_appState$currentLaye4=appState.currentLayers[0])===null||_appState$currentLaye4===void 0?void 0:_appState$currentLaye4.color);colorIndex++;if(!appState.currentPattern.tintWhite){var overlayLayers=pattern.layers||[];console.log("Processing ".concat(overlayLayers.length," overlay layers"));overlayLayers.forEach(function(layer,index){var layerPath=layer.path||"";var label=pattern.layerLabels[index]||"Layer ".concat(index+1);var pathStr=layer.path||layer.proofPath||"";var isShadow=layer.isShadow===true||pathStr&&(String(pathStr).toUpperCase().includes("_SHADOW_")||String(pathStr).toUpperCase().includes("SHADOW_LAYER")||String(pathStr).toUpperCase().includes("ISSHADOW"));if(isShadow){appState.currentLayers.push({imageUrl:layerPath,color:null,label:"Shadow ".concat(index+1),isShadow:true});colorIndex++;}else{var layerColor=colorSource[colorIndex]||"#000000";appState.currentLayers.push({imageUrl:layerPath,color:layerColor,label:label,isShadow:false});console.log("Assigned color to ".concat(label,": ").concat(layerColor));colorIndex++;}});console.log("Final appState.currentLayers:",JSON.stringify(appState.currentLayers,null,2));}// Restore saved colors if preserving (apply buffer in colorable order so structure can differ)
+var patternType=getPatternType(pattern,appState.selectedCollection);console.log("\uD83D\uDD0D Pattern type detected: ".concat(patternType," for pattern: ").concat(pattern.name," in collection: ").concat((_appState$selectedCol32=appState.selectedCollection)===null||_appState$selectedCol32===void 0?void 0:_appState$selectedCol32.name));var isWallPanel=patternType==="wall-panel";var isWall=pattern.isWall||isWallPanel;if(isWall){var wallColor=colorSource[colorIndex]||"#FFFFFF";appState.currentLayers.push({imageUrl:null,color:wallColor,label:"Wall Color",isShadow:false});colorIndex++;}var backgroundColor=colorSource[colorIndex]||"#FFFFFF";appState.currentLayers.push({imageUrl:null,color:backgroundColor,label:"Background",isShadow:false});console.log("DEBUG: currentLayers[0]?.color =",(_appState$currentLaye4=appState.currentLayers[0])===null||_appState$currentLaye4===void 0?void 0:_appState$currentLaye4.color);colorIndex++;if(!appState.currentPattern.tintWhite){var overlayLayers=pattern.layers||[];console.log("Processing ".concat(overlayLayers.length," overlay layers"));overlayLayers.forEach(function(layer,index){var layerPath=layer.path||"";var label=pattern.layerLabels[index]||"Layer ".concat(index+1);var pathStr=layer.path||layer.proofPath||"";var isShadow=layer.isShadow===true||pathStr&&(String(pathStr).toUpperCase().includes("_SHADOW_")||String(pathStr).toUpperCase().includes("SHADOW_LAYER")||String(pathStr).toUpperCase().includes("ISSHADOW"));if(isShadow){appState.currentLayers.push({imageUrl:layerPath,color:null,label:"Shadow ".concat(index+1),isShadow:true});colorIndex++;}else{var layerColor=colorSource[colorIndex]||"#000000";appState.currentLayers.push({imageUrl:layerPath,color:layerColor,label:label,isShadow:false});console.log("Assigned color to ".concat(label,": ").concat(layerColor));colorIndex++;}});console.log("Final appState.currentLayers:",JSON.stringify(appState.currentLayers,null,2));}// Restore saved colors if preserving (apply buffer in colorable order so structure can differ)
 if(preserveColors&&savedColors.length>0){var colorableIndex=0;appState.currentLayers.forEach(function(layer){if(layer.color!=null){var saved=savedColors[colorableIndex];if(saved!==undefined&&saved!==null&&String(saved).trim()!==''){layer.color=saved;}colorableIndex++;}});// Keep full palette buffer: current colorable colors + tail from incoming buffer (for when user switches back to more layers)
 if(colorLockBuffer&&colorLockBuffer.length>0){var colorableColors=appState.currentLayers.filter(function(l){return l.color!=null;}).map(function(l){return l.color;});var newFull=[];for(var i=0;i<colorableColors.length;i++)newFull[i]=colorableColors[i];for(var _i4=colorableColors.length;_i4<colorLockBuffer.length;_i4++)newFull[_i4]=colorLockBuffer[_i4];appState.colorLockFullBuffer=newFull;}console.log("🔄 Colors preserved from previous selection");}// ⚡ PERFORMANCE: Preload adjacent patterns for instant switching
 preloadAdjacentPatterns(pattern);}/**
@@ -2662,7 +2705,9 @@ var prevIndex=currentIndex>0?currentIndex-1:patterns.length-1;var prevPattern=pa
 var nextIndex=currentIndex<patterns.length-1?currentIndex+1:0;var nextPattern=patterns[nextIndex];// Collect all image URLs from adjacent patterns
 [prevPattern,nextPattern].forEach(function(pattern){if(!pattern)return;// Add thumbnail
 if(pattern.thumbnail){urlsToPreload.push(pattern.thumbnail);}// Add layer images (for ColorFlex patterns)
-if(pattern.layers&&Array.isArray(pattern.layers)){pattern.layers.forEach(function(layer){var layerPath=typeof layer==='string'?layer:layer.path;if(layerPath){urlsToPreload.push(layerPath);}});}});if(urlsToPreload.length>0){console.log("\uD83D\uDD04 Preloading ".concat(urlsToPreload.length," images from adjacent patterns (").concat(prevPattern.name,", ").concat(nextPattern.name,")"));preloadImages(urlsToPreload);}}function applyColorsToLayerInputs(colors){var curatedColors=arguments.length>1&&arguments[1]!==undefined?arguments[1]:[];console.log("Applying colors to layer inputs:",colors,"Curated colors:",curatedColors,"Layer inputs length:",appState.layerInputs.length,"Current layers length:",appState.currentLayers.length);appState.layerInputs.forEach(function(layer,index){var clIdx=appState.currentLayers.findIndex(function(l){return l.label===layer.label;});if(clIdx===-1){console.warn("Skipping input ".concat(layer.label,": no matching currentLayer"));return;}var color=colors.length>clIdx&&colors[clIdx]!=null?colors[clIdx]:curatedColors[index]||(layer.isBackground?"#FFFFFF":"Snowbound");var cleanColor=(color||"").replace(/^(SW|SC)\d+\s*/i,"").trim();var hex=lookupColor(color)||"#FFFFFF";layer.input.value=getCleanColorName(color);layer.circle.style.backgroundColor=hex;console.log("Applied ".concat(cleanColor," (").concat(hex,") to ").concat(layer.label," input (currentLayers[").concat(clIdx,"])"));appState.currentLayers[clIdx].color=cleanColor;});console.log("Inputs after apply:",appState.layerInputs.map(function(l){return{id:l.input.id,label:l.label,value:l.input.value};}));updateDisplays();}// Highlight active layer
+if(pattern.layers&&Array.isArray(pattern.layers)){pattern.layers.forEach(function(layer){var layerPath=typeof layer==='string'?layer:layer.path;if(layerPath){urlsToPreload.push(layerPath);}});}});if(urlsToPreload.length>0){console.log("\uD83D\uDD04 Preloading ".concat(urlsToPreload.length," images from adjacent patterns (").concat(prevPattern.name,", ").concat(nextPattern.name,")"));preloadImages(urlsToPreload);}}function applyColorsToLayerInputs(colors){var curatedColors=arguments.length>1&&arguments[1]!==undefined?arguments[1]:[];console.log("Applying colors to layer inputs:",colors,"Curated colors:",curatedColors,"Layer inputs length:",appState.layerInputs.length,"Current layers length:",appState.currentLayers.length);appState.layerInputs.forEach(function(layer,index){var clIdx=appState.currentLayers.findIndex(function(l){return l.label===layer.label;});if(clIdx===-1){console.warn("Skipping input ".concat(layer.label,": no matching currentLayer"));return;}var color=colors.length>clIdx&&colors[clIdx]!=null?colors[clIdx]:curatedColors[index]||(layer.isBackground?"#FFFFFF":"Snowbound");var normHex=typeof color==='string'?normalizeHexInput6(color):null;// Raw hex → catalog label (after colors.json is loaded into appState.colorsData).
+if(normHex){var resolved=resolveHexToSWDisplay(normHex);if(resolved){layer.input.value=resolved.display;layer.circle.style.backgroundColor=resolved.circleHex;console.log("Applied ".concat(resolved.display," (").concat(resolved.circleHex,") to ").concat(layer.label," input (currentLayers[").concat(clIdx,"]) [hex\u2192catalog]"));appState.currentLayers[clIdx].color=resolved.cleanColor;return;}}var cleanColor=(color||"").replace(/^(SW|SC)\d+\s*/i,"").trim();var hex=lookupColor(color)||"#FFFFFF";layer.input.value=getCleanColorName(color);layer.circle.style.backgroundColor=hex;console.log("Applied ".concat(cleanColor," (").concat(hex,") to ").concat(layer.label," input (currentLayers[").concat(clIdx,"])"));appState.currentLayers[clIdx].color=cleanColor;});console.log("Inputs after apply:",appState.layerInputs.map(function(l){return{id:l.input.id,label:l.label,value:l.input.value};}));updateDisplays();}// Palette-engine test hook (`demo/colorflexPaletteHook.js`) uses the same apply path as the UI.
+window.applyColorsToLayerInputs=applyColorsToLayerInputs;// Highlight active layer
 var highlightActiveLayer=function highlightActiveLayer(circle){console.log("🎯 highlightActiveLayer called for circle:",circle.id);document.querySelectorAll(".circle-input").forEach(function(c){c.style.outline="none";c.style.setProperty('outline','none','important');});circle.style.outline="6px solid rgb(244, 255, 219)";circle.style.setProperty('outline','6px solid rgb(244, 255, 219)','important');console.log("✅ Active layer highlighted:",circle.id,"outline:",circle.style.outline);};/**
  * =============================================================================
  * SECTION 5: PATTERN PROCESSING ENGINE
@@ -2713,7 +2758,7 @@ if(USE_GUARD&&DEBUG_TRACE){processImage=guard(traceWrapper(processImage,"process
 }else if(USE_GUARD){processImage=guard(processImage,"processImage");// Wrapped for debugging
 }// Load pattern data from JSON
 function loadPatternData(_x11,_x12){return _loadPatternData.apply(this,arguments);}// GUARD / TRACE WRAPPER
-function _loadPatternData(){_loadPatternData=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee25(collection,patternId){var scorePatternCandidate,matches,pattern,_appState$currentPatt39,_appState$currentPatt40,_appState$currentPatt41,_appState$currentPatt42,_appState$selectedCol52,_appState$selectedCol53,_appState$currentPatt43,_savedColorBuffer,_appState$currentLaye18,_appState$currentLaye19,_collection$curatedCo,_appState$currentPatt44,_appState$selectedCol55,_appState$selectedCol56,_appState$selectedCol57,variantCollection,variantType,_isFurnitureMode6,_isClothingMode4,baseName,variantSuffix,variantSuffixHyphen,variantNames,_variantCollection$pa2,_variantCollection$pa3,variantPattern,clonedMockupLayers,isFurnitureSimpleMode,roomMockupDiv,isClothingCollection,_appState$selectedCol54,isSimpleMode,_roomMockupDiv,scaleControls,scaleDescription,allHeadings,coordinatesContainer,allH3s,_isSimpleMode2,_isFurnitureSimpleMode3,canvasElement,zoomControls,createZoomButton,zoomOutBtn,zoomInBtn,resetBtn,isPanning,startX,startY,currentPanX,currentPanY,backButton,savedZoomScale,existingCanvas,savedScaleMultiplier,savedColorBuffer,bufferToRestore,isFurnitureModeRestore,isClothingModeRestore,isFurniturePattern,isClothingMode,hasFurSuffix,isFurnitureMode,isFurnitureCollectionForRender,isFurnitureModeScale;return _regenerator().w(function(_context33){while(1)switch(_context33.n){case 0:console.log("loadPatternData: patternId=".concat(patternId));// BASSETT: clear room mockup cache so we never show the previous pattern/collection; mockup will re-composite with current state.
+function _loadPatternData(){_loadPatternData=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee25(collection,patternId){var scorePatternCandidate,matches,pattern,_appState$currentPatt41,_appState$currentPatt42,_appState$currentPatt43,_appState$currentPatt44,_appState$selectedCol54,_appState$selectedCol55,_appState$currentPatt45,_savedColorBuffer,_appState$currentLaye19,_appState$currentLaye20,_collection$curatedCo,_appState$currentPatt46,_appState$selectedCol57,_appState$selectedCol58,_appState$selectedCol59,variantCollection,variantType,_isFurnitureMode6,_isClothingMode4,baseName,variantSuffix,variantSuffixHyphen,variantNames,_variantCollection$pa2,_variantCollection$pa3,variantPattern,clonedMockupLayers,isFurnitureSimpleMode,roomMockupDiv,isClothingCollection,_appState$selectedCol56,isSimpleMode,_roomMockupDiv,scaleControls,scaleDescription,allHeadings,coordinatesContainer,allH3s,_isSimpleMode2,_isFurnitureSimpleMode3,canvasElement,zoomControls,createZoomButton,zoomOutBtn,zoomInBtn,resetBtn,isPanning,startX,startY,currentPanX,currentPanY,backButton,savedZoomScale,existingCanvas,savedScaleMultiplier,savedColorBuffer,bufferToRestore,isFurnitureModeRestore,isClothingModeRestore,isBassettMode,standardHideCurated,curatedStrip,isFurniturePattern,isClothingMode,hasFurSuffix,isFurnitureMode,isFurnitureCollectionForRender,isFurnitureModeScale;return _regenerator().w(function(_context33){while(1)switch(_context33.n){case 0:console.log("loadPatternData: patternId=".concat(patternId));clearCoordinateRestoreSnapshot();// BASSETT: clear room mockup cache so we never show the previous pattern/collection; mockup will re-composite with current state.
 if(window.COLORFLEX_MODE==='BASSETT'){appState.bassettResultUrl=null;appState.bassettResultPatternId=null;appState.bassettResultBlanketColor=null;appState.bassettResultScale=null;appState.bassettResultSofaColor=null;appState.bassettResultLayerColorsSig=null;}// Check slug, id, and name for backwards compatibility.
 // If duplicates exist (same name/slug), prefer canonical richer layer structure.
 scorePatternCandidate=function scorePatternCandidate(p){var layers=Array.isArray(p&&p.layers)?p.layers:[];var hasId=!!(p&&p.id);var hasNumber=!!(p&&p.number);var hasTextureLayer=layers.some(function(l){var path=String(l&&(l.path||l.proofPath)||'').toLowerCase();return path.includes('_texture_')||path.includes('texture_layer');});var hasShadowLayer=layers.some(function(l){var path=String(l&&(l.path||l.proofPath)||'').toLowerCase();return path.includes('_shadow_')||path.includes('shadow_layer')||path.includes('isshadow');});return(hasId?1000:0)+(hasNumber?100:0)+(hasTextureLayer?25:0)+(hasShadowLayer?10:0)+layers.length;};matches=collection.patterns.filter(function(p){return p.slug===patternId||p.id===patternId||p.name===patternId;});pattern=matches.length?matches.slice().sort(function(a,b){return scorePatternCandidate(b)-scorePatternCandidate(a);})[0]:null;if(!pattern){_context33.n=19;break;}console.log("\u2705 Found pattern \"".concat(pattern.name,"\" (ID: ").concat(pattern.id,") in collection \"").concat(collection.name,"\""));// Build currentLayers with the exact matched pattern identity.
@@ -2744,10 +2789,10 @@ console.log("  \u2139\uFE0F No ".concat(variantType," mockupLayers found for pat
 // This ensures updateFurniturePreview() will construct paths dynamically
 console.log("  \u2139\uFE0F Furniture mode: No variant collection or mockupLayers - will construct paths dynamically");pattern=_objectSpread(_objectSpread({},pattern),{},{mockupLayers:[]// Empty array signals to construct paths dynamically
 });}appState.currentPattern=pattern;// ===== INSERT DEBUG LOGS HERE =====
-console.log("🔍 SOURCE DATA DEBUG:");console.log("  Current pattern:",(_appState$currentPatt39=appState.currentPattern)===null||_appState$currentPatt39===void 0?void 0:_appState$currentPatt39.name);console.log("  Designer colors:",(_appState$currentPatt40=appState.currentPattern)===null||_appState$currentPatt40===void 0?void 0:_appState$currentPatt40.designer_colors);console.log("  Layer labels:",(_appState$currentPatt41=appState.currentPattern)===null||_appState$currentPatt41===void 0?void 0:_appState$currentPatt41.layerLabels);console.log("  Layers array:",(_appState$currentPatt42=appState.currentPattern)===null||_appState$currentPatt42===void 0||(_appState$currentPatt42=_appState$currentPatt42.layers)===null||_appState$currentPatt42===void 0?void 0:_appState$currentPatt42.map(function(l,i){var _l$path;return"".concat(i,": ").concat((_l$path=l.path)===null||_l$path===void 0?void 0:_l$path.split('/').pop());}));// ✅ FIX: Set container size for furniture simple mode BEFORE clothing check
+console.log("🔍 SOURCE DATA DEBUG:");console.log("  Current pattern:",(_appState$currentPatt41=appState.currentPattern)===null||_appState$currentPatt41===void 0?void 0:_appState$currentPatt41.name);console.log("  Designer colors:",(_appState$currentPatt42=appState.currentPattern)===null||_appState$currentPatt42===void 0?void 0:_appState$currentPatt42.designer_colors);console.log("  Layer labels:",(_appState$currentPatt43=appState.currentPattern)===null||_appState$currentPatt43===void 0?void 0:_appState$currentPatt43.layerLabels);console.log("  Layers array:",(_appState$currentPatt44=appState.currentPattern)===null||_appState$currentPatt44===void 0||(_appState$currentPatt44=_appState$currentPatt44.layers)===null||_appState$currentPatt44===void 0?void 0:_appState$currentPatt44.map(function(l,i){var _l$path;return"".concat(i,": ").concat((_l$path=l.path)===null||_l$path===void 0?void 0:_l$path.split('/').pop());}));// ✅ FIX: Set container size for furniture simple mode BEFORE clothing check
 // This ensures furniture collections get 800x600 even if they're not clothing collections
 isFurnitureSimpleMode=window.COLORFLEX_SIMPLE_MODE===true&&window.COLORFLEX_MODE==='FURNITURE';roomMockupDiv=document.getElementById('roomMockup');if(isFurnitureSimpleMode&&roomMockupDiv){roomMockupDiv.style.removeProperty('--mockup-width');roomMockupDiv.style.setProperty('width','800px','important');roomMockupDiv.style.setProperty('height','600px','important');roomMockupDiv.style.setProperty('max-width','800px','important');roomMockupDiv.style.setProperty('min-width','800px','important');console.log('✅ Furniture simple mode: Set container to 800×600 in loadPatternData');}// Check if this is a clothing collection (needs fabric mode)
-isClothingCollection=((_appState$selectedCol52=appState.selectedCollection)===null||_appState$selectedCol52===void 0||(_appState$selectedCol52=_appState$selectedCol52.name)===null||_appState$selectedCol52===void 0?void 0:_appState$selectedCol52.includes('-clo'))||((_appState$selectedCol53=appState.selectedCollection)===null||_appState$selectedCol53===void 0||(_appState$selectedCol53=_appState$selectedCol53.name)===null||_appState$selectedCol53===void 0?void 0:_appState$selectedCol53.includes('.clo-'));if(isClothingCollection){appState.isInFabricMode=true;console.log("\u2705 Auto-enabled fabric mode for clothing collection: ".concat((_appState$selectedCol54=appState.selectedCollection)===null||_appState$selectedCol54===void 0?void 0:_appState$selectedCol54.name));// ✅ SIMPLE MODE: Skip UI modifications - let template CSS handle it
+isClothingCollection=((_appState$selectedCol54=appState.selectedCollection)===null||_appState$selectedCol54===void 0||(_appState$selectedCol54=_appState$selectedCol54.name)===null||_appState$selectedCol54===void 0?void 0:_appState$selectedCol54.includes('-clo'))||((_appState$selectedCol55=appState.selectedCollection)===null||_appState$selectedCol55===void 0||(_appState$selectedCol55=_appState$selectedCol55.name)===null||_appState$selectedCol55===void 0?void 0:_appState$selectedCol55.includes('.clo-'));if(isClothingCollection){appState.isInFabricMode=true;console.log("\u2705 Auto-enabled fabric mode for clothing collection: ".concat((_appState$selectedCol56=appState.selectedCollection)===null||_appState$selectedCol56===void 0?void 0:_appState$selectedCol56.name));// ✅ SIMPLE MODE: Skip UI modifications - let template CSS handle it
 isSimpleMode=window.COLORFLEX_SIMPLE_MODE===true;// Declare roomMockupDiv OUTSIDE the if/else so it's available for zoom controls below
 _roomMockupDiv=document.getElementById('roomMockup');if(isSimpleMode){console.log('✅ Simple mode: Skipping roomMockup style overrides (template CSS handles styling)');}else{// Modify UI for clothing collections (non-simple mode only)
 console.log("\uD83D\uDC57 Applying clothing collection UI modifications...");// SHOW scale controls for multi-scale clothing collections
@@ -2772,7 +2817,7 @@ if(false)// removed by dead control flow
 backButton=document.getElementById('backToPatternsBtn');if(backButton){backButton.remove();console.log('✅ Removed "Back to Pattern" button for clothing mode');}console.log('👗 Clothing collection UI modifications complete');}// ✅ Save current zoom level for clothing mockup (BEFORE pattern switch)
 // Use clothing default (0.7) instead of 1.0 for initial zoom
 savedZoomScale=CLOTHING_ZOOM_DEFAULTS.defaultScale;existingCanvas=document.querySelector('#roomMockup canvas');console.log("\uD83D\uDD0D Zoom persistence: Looking for existing canvas...",existingCanvas?'FOUND':'NOT FOUND');if(existingCanvas){console.log("\uD83D\uDD0D Zoom persistence: Canvas zoomScale dataset:",existingCanvas.dataset.zoomScale);}if(existingCanvas&&existingCanvas.dataset.zoomScale){savedZoomScale=parseFloat(existingCanvas.dataset.zoomScale);console.log("\uD83D\uDD0D Zoom persistence: \u2705 Saved zoom level: ".concat(savedZoomScale*100,"%"));}else{console.log("\uD83D\uDD0D Zoom persistence: Using default zoom (".concat(CLOTHING_ZOOM_DEFAULTS.defaultScale*100,"%)"));}// ✅ Save current scale (BEFORE populateLayerInputs rebuilds everything)
-savedScaleMultiplier=appState.scaleMultiplier||1;console.log("\uD83D\uDD0D Scale persistence: Saved current scale multiplier: ".concat(savedScaleMultiplier));console.log("\uD83D\uDD0D Scale persistence: Current pattern being switched FROM: ".concat(((_appState$currentPatt43=appState.currentPattern)===null||_appState$currentPatt43===void 0?void 0:_appState$currentPatt43.name)||'none'));// ✅ Save current colors if lock is enabled (BEFORE populateLayerInputs rebuilds everything)
+savedScaleMultiplier=appState.scaleMultiplier||1;console.log("\uD83D\uDD0D Scale persistence: Saved current scale multiplier: ".concat(savedScaleMultiplier));console.log("\uD83D\uDD0D Scale persistence: Current pattern being switched FROM: ".concat(((_appState$currentPatt45=appState.currentPattern)===null||_appState$currentPatt45===void 0?void 0:_appState$currentPatt45.name)||'none'));// ✅ Save current colors if lock is enabled (BEFORE populateLayerInputs rebuilds everything)
 savedColorBuffer=null;if(appState.colorsLocked&&appState.layerInputs&&appState.layerInputs.length>0){savedColorBuffer=appState.layerInputs.map(function(layer){return layer.input.value;});console.log('🔒 Color lock: Saved color buffer:',savedColorBuffer);}// ✅ Build layer + input models once pattern is set
 populateLayerInputs(pattern);// ✅ Restore saved colors if lock is enabled (AFTER populateLayerInputs builds new UI)
 // Use full palette buffer when available so we don't overwrite with a short cycled buffer (which would clamp to min layer count)
@@ -2790,22 +2835,22 @@ else if(savedScaleMultiplier===0.33)activeButtonIndex=2;// 3X
 else if(savedScaleMultiplier===0.25)activeButtonIndex=3;// 4X
 if(activeButtonIndex>=0&&buttons[activeButtonIndex]){buttons[activeButtonIndex].style.setProperty('background-color','#d4af37','important');buttons[activeButtonIndex].style.setProperty('color','#1a202c','important');buttons[activeButtonIndex].style.setProperty('font-weight','bold','important');console.log("\uD83D\uDD0D Scale persistence: Highlighted button ".concat(activeButtonIndex," for scale ").concat(savedScaleMultiplier));}},50);// Small delay to ensure DOM is ready
 // ===== DEBUG AFTER populateLayerInputs =====
-console.log("🎛️ UI POPULATION DEBUG:");console.log("  currentLayers count:",(_appState$currentLaye18=appState.currentLayers)===null||_appState$currentLaye18===void 0?void 0:_appState$currentLaye18.length);console.log("  currentLayers content:");(_appState$currentLaye19=appState.currentLayers)===null||_appState$currentLaye19===void 0||_appState$currentLaye19.forEach(function(layer,index){console.log("    ".concat(index,": \"").concat(layer.label,"\" = \"").concat(layer.color,"\""));});// ===== DEBUG ACTUAL DOM INPUTS =====
+console.log("🎛️ UI POPULATION DEBUG:");console.log("  currentLayers count:",(_appState$currentLaye19=appState.currentLayers)===null||_appState$currentLaye19===void 0?void 0:_appState$currentLaye19.length);console.log("  currentLayers content:");(_appState$currentLaye20=appState.currentLayers)===null||_appState$currentLaye20===void 0||_appState$currentLaye20.forEach(function(layer,index){console.log("    ".concat(index,": \"").concat(layer.label,"\" = \"").concat(layer.color,"\""));});// ===== DEBUG ACTUAL DOM INPUTS =====
 setTimeout(function(){console.log("🔍 ACTUAL UI INPUTS:");var inputs=document.querySelectorAll('.layer-input');inputs.forEach(function(input,index){var _container$querySelec;var container=input.closest('.layer-input-container');var label=container===null||container===void 0||(_container$querySelec=container.querySelector('.layer-label'))===null||_container$querySelec===void 0?void 0:_container$querySelec.textContent;console.log("    UI Input ".concat(index,": \"").concat(label,"\" = \"").concat(input.value,"\""));});},100);// Small delay to ensure DOM is updated
-console.log(">>> Updated appState.currentPattern:",JSON.stringify(pattern,null,2));appState.curatedColors=appState.selectedCollection.curatedColors||[];console.log(">>> Updated appState.curatedColors:",appState.curatedColors);// ✅ Populate curated colors when we have colors data; don't block preview/mockup on it
-if(Array.isArray(appState.colorsData)&&appState.colorsData.length&&(_collection$curatedCo=collection.curatedColors)!==null&&_collection$curatedCo!==void 0&&_collection$curatedCo.length){appState.curatedColors=collection.curatedColors;populateCuratedColors(appState.curatedColors);}else if(!Array.isArray(appState.colorsData)||appState.colorsData.length===0){console.warn("🛑 Sherwin-Williams colors not loaded yet. Curated circles will appear when colors load.");}else{console.warn("X Not populating curated colors - missing collection curatedColors");}isFurniturePattern=((_appState$currentPatt44=appState.currentPattern)===null||_appState$currentPatt44===void 0?void 0:_appState$currentPatt44.isFurniture)||false;// Store savedZoomScale in appState so renderFabricMockup can access it
+console.log(">>> Updated appState.currentPattern:",JSON.stringify(pattern,null,2));appState.curatedColors=appState.selectedCollection.curatedColors||[];console.log(">>> Updated appState.curatedColors:",appState.curatedColors);isBassettMode=window.COLORFLEX_MODE==="BASSETT";standardHideCurated=patternIsStandard(pattern,collection)&&!isBassettMode;curatedStrip=dom.curatedColorsContainer||document.getElementById("curatedColorsContainer");// ✅ Curated strip: only for ColorFlex-style patterns (Bassett keeps collection palette on standards)
+if(standardHideCurated){console.log("🧹 loadPatternData: standard pattern — curated strip cleared");if(curatedStrip)curatedStrip.innerHTML="";}else if(Array.isArray(appState.colorsData)&&appState.colorsData.length&&(_collection$curatedCo=collection.curatedColors)!==null&&_collection$curatedCo!==void 0&&_collection$curatedCo.length){appState.curatedColors=collection.curatedColors;populateCuratedColors(appState.curatedColors);}else if(!Array.isArray(appState.colorsData)||appState.colorsData.length===0){console.warn("🛑 Sherwin-Williams colors not loaded yet. Curated circles will appear when colors load.");}else{console.warn("X Not populating curated colors - missing collection curatedColors");}isFurniturePattern=((_appState$currentPatt46=appState.currentPattern)===null||_appState$currentPatt46===void 0?void 0:_appState$currentPatt46.isFurniture)||false;// Store savedZoomScale in appState so renderFabricMockup can access it
 appState.savedZoomScale=savedZoomScale;console.log("\uD83D\uDD0D Scale persistence: About to render with scale: ".concat(appState.scaleMultiplier));updatePreview();// ✅ CLOTHING MODE DETECTION: Check both collection name AND window.COLORFLEX_MODE
 // Standard clothing page uses base collections without -clo suffix, so we must check window.COLORFLEX_MODE
-isClothingMode=window.COLORFLEX_MODE==='CLOTHING'||((_appState$selectedCol55=appState.selectedCollection)===null||_appState$selectedCol55===void 0||(_appState$selectedCol55=_appState$selectedCol55.name)===null||_appState$selectedCol55===void 0?void 0:_appState$selectedCol55.includes('-clo'))||((_appState$selectedCol56=appState.selectedCollection)===null||_appState$selectedCol56===void 0||(_appState$selectedCol56=_appState$selectedCol56.name)===null||_appState$selectedCol56===void 0?void 0:_appState$selectedCol56.includes('.clo-'));// ✅ FURNITURE DETECTION: Use same logic as updateRoomMockup() for consistency
+isClothingMode=window.COLORFLEX_MODE==='CLOTHING'||((_appState$selectedCol57=appState.selectedCollection)===null||_appState$selectedCol57===void 0||(_appState$selectedCol57=_appState$selectedCol57.name)===null||_appState$selectedCol57===void 0?void 0:_appState$selectedCol57.includes('-clo'))||((_appState$selectedCol58=appState.selectedCollection)===null||_appState$selectedCol58===void 0||(_appState$selectedCol58=_appState$selectedCol58.name)===null||_appState$selectedCol58===void 0?void 0:_appState$selectedCol58.includes('.clo-'));// ✅ FURNITURE DETECTION: Use same logic as updateRoomMockup() for consistency
 // Check both .fur- in name AND furniture mode flags (some collections might not have .fur- suffix)
-hasFurSuffix=(_appState$selectedCol57=appState.selectedCollection)===null||_appState$selectedCol57===void 0||(_appState$selectedCol57=_appState$selectedCol57.name)===null||_appState$selectedCol57===void 0?void 0:_appState$selectedCol57.includes('.fur-');isFurnitureMode=appState.isInFurnitureMode||window.COLORFLEX_MODE==='FURNITURE';isFurnitureCollectionForRender=hasFurSuffix||isFurnitureMode&&appState.furnitureConfig&&appState.selectedFurnitureType;// ✅ FURNITURE MODE: Use updateFurniturePreview() (NOT renderFabricMockup)
+hasFurSuffix=(_appState$selectedCol59=appState.selectedCollection)===null||_appState$selectedCol59===void 0||(_appState$selectedCol59=_appState$selectedCol59.name)===null||_appState$selectedCol59===void 0?void 0:_appState$selectedCol59.includes('.fur-');isFurnitureMode=appState.isInFurnitureMode||window.COLORFLEX_MODE==='FURNITURE';isFurnitureCollectionForRender=hasFurSuffix||isFurnitureMode&&appState.furnitureConfig&&appState.selectedFurnitureType;// ✅ FURNITURE MODE: Use updateFurniturePreview() (NOT renderFabricMockup)
 if(!isFurnitureCollectionForRender){_context33.n=11;break;}console.log("🪑 loadPatternData in furniture mode - calling updateFurniturePreview()");console.log("🪑 Furniture detection:",{hasFurSuffix:hasFurSuffix,isFurnitureMode:isFurnitureMode,hasConfig:!!appState.furnitureConfig,hasType:!!appState.selectedFurnitureType});if(!(typeof updateFurniturePreview==='function')){_context33.n=9;break;}_context33.n=8;return updateFurniturePreview();case 8:_context33.n=10;break;case 9:console.error("❌ updateFurniturePreview function not found!");case 10:_context33.n=18;break;case 11:if(!(appState.isInFabricMode||isClothingMode)){_context33.n=13;break;}// ✅ FABRIC/CLOTHING MODE: Use renderFabricMockup()
 if(isClothingMode){console.log("👗 loadPatternData in clothing mode - calling renderFabricMockup() for avatar");}else{console.log("🧵 loadPatternData in fabric mode - calling renderFabricMockup()");}_context33.n=12;return renderFabricMockup();case 12:_context33.n=18;break;case 13:// ✅ Check mode and call appropriate render function
 isFurnitureModeScale=window.COLORFLEX_MODE==='FURNITURE'||appState.isInFurnitureMode;if(!isFurnitureModeScale){_context33.n=17;break;}console.log("\uD83D\uDD0D Scale persistence: Calling updateFurniturePreview() with scale: ".concat(appState.scaleMultiplier));if(!(typeof updateFurniturePreview==='function')){_context33.n=15;break;}_context33.n=14;return updateFurniturePreview();case 14:_context33.n=16;break;case 15:console.error('❌ updateFurniturePreview not available!');case 16:_context33.n=18;break;case 17:console.log("\uD83D\uDD0D Scale persistence: Calling updateRoomMockup() with scale: ".concat(appState.scaleMultiplier));if(window.COLORFLEX_MODE!=='BASSETT')updateRoomMockup();case 18:// ✅ Only populate coordinates for wallpaper mode (skip clothing/furniture)
 if(window.COLORFLEX_MODE!=='CLOTHING'&&window.COLORFLEX_MODE!=='FURNITURE'){populateCoordinates();}_context33.n=20;break;case 19:console.error(">>> Pattern not found:",patternId);case 20:return _context33.a(2);}},_callee25);}));return _loadPatternData.apply(this,arguments);}if(USE_GUARD&&DEBUG_TRACE){loadPatternData=guard(traceWrapper(loadPatternData,"loadPatternData"));// Wrapped for debugging
 }else if(USE_GUARD){loadPatternData=guard(loadPatternData,"loadPatternData");// Wrapped for debugging
 }// Pattern scaling
-window.setPatternScale=/*#__PURE__*/function(){var _ref13=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7(multiplier){var _appState$currentPatt13;var isFurniturePattern;return _regenerator().w(function(_context7){while(1)switch(_context7.n){case 0:console.log("\uD83D\uDD0D setPatternScale called with multiplier: ".concat(multiplier));console.log("\uD83D\uDD0D Previous scale multiplier: ".concat(appState.scaleMultiplier));appState.scaleMultiplier=multiplier;// 🎯 FIX: Update currentScale to reflect actual scale percentage
+window.setPatternScale=/*#__PURE__*/function(){var _ref13=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee7(multiplier){var _appState$currentPatt15;var isFurniturePattern;return _regenerator().w(function(_context7){while(1)switch(_context7.n){case 0:console.log("\uD83D\uDD0D setPatternScale called with multiplier: ".concat(multiplier));console.log("\uD83D\uDD0D Previous scale multiplier: ".concat(appState.scaleMultiplier));appState.scaleMultiplier=multiplier;// 🎯 FIX: Update currentScale to reflect actual scale percentage
 // Convert scaleMultiplier to percentage for consistent scale display
 if(multiplier===1){appState.currentScale=100;// Normal = 100%
 }else if(multiplier===0.5){appState.currentScale=200;// 2X = 200%
@@ -2818,7 +2863,7 @@ document.querySelectorAll('button[data-multiplier]').forEach(function(btn){var b
 btn.style.setProperty('background-color','#d4af37','important');btn.style.setProperty('color','#1a202c','important');btn.style.setProperty('font-weight','bold','important');console.log('🎯 Highlighted scale button:',btn.textContent,'with multiplier:',btnMultiplier);}else{// Inactive state - default styling
 btn.style.setProperty('background-color','#e2e8f0','important');btn.style.setProperty('color','#1a202c','important');btn.style.setProperty('font-weight','normal','important');}});// Check if we're in fabric mode - if so, only render fabric mockup
 if(!appState.isInFabricMode){_context7.n=2;break;}console.log("🧵 setPatternScale in fabric mode - calling renderFabricMockup()");_context7.n=1;return renderFabricMockup();case 1:_context7.n=3;break;case 2:// BASSETT: clear room cache so next updateRoomMockup re-requests with new scale
-if(window.COLORFLEX_MODE==='BASSETT'){appState.bassettResultUrl=null;appState.bassettResultPatternId=null;appState.bassettResultBlanketColor=null;appState.bassettResultScale=null;appState.bassettResultSofaColor=null;appState.bassettResultLayerColorsSig=null;}updatePreview();if(window.COLORFLEX_MODE!=='BASSETT')updateRoomMockup();case 3:isFurniturePattern=((_appState$currentPatt13=appState.currentPattern)===null||_appState$currentPatt13===void 0?void 0:_appState$currentPatt13.isFurniture)||false;case 4:return _context7.a(2);}},_callee7);}));return function(_x13){return _ref13.apply(this,arguments);};}();// GUARD / TRACE WRAPPER
+if(window.COLORFLEX_MODE==='BASSETT'){appState.bassettResultUrl=null;appState.bassettResultPatternId=null;appState.bassettResultBlanketColor=null;appState.bassettResultScale=null;appState.bassettResultSofaColor=null;appState.bassettResultLayerColorsSig=null;}updatePreview();if(window.COLORFLEX_MODE!=='BASSETT')updateRoomMockup();case 3:isFurniturePattern=((_appState$currentPatt15=appState.currentPattern)===null||_appState$currentPatt15===void 0?void 0:_appState$currentPatt15.isFurniture)||false;case 4:return _context7.a(2);}},_callee7);}));return function(_x13){return _ref13.apply(this,arguments);};}();// GUARD / TRACE WRAPPER
 if(USE_GUARD&&DEBUG_TRACE){setPatternScale=guard(traceWrapper(setPatternScale,"setPatternScale"));// Wrapped for debugging
 }else if(USE_GUARD){setPatternScale=guard(setPatternScale,"setPatternScale");// Wrapped for debugging
 }// Initialize scale on page load
@@ -2840,9 +2885,9 @@ var isSimpleFurnitureMode=window.COLORFLEX_SIMPLE_MODE===true&&window.COLORFLEX_
 // BG/Sofa Base will use designerColors[0], so layer 1 will use designerColors[1]
 var defaultWallColor;if(isSimpleFurnitureMode){// Get the color that will be assigned to the first pattern layer (layer 1)
 // After BG/Sofa Base takes designerColors[0], layer 1 gets designerColors[1]
-var layer1Color=designerColors.length>1?designerColors[1]:designerColors[0]||"SW7006 Extra White";defaultWallColor=layer1Color;console.log("  \uD83C\uDFA8 Simple furniture mode: Using layer 1 color for wall: ".concat(defaultWallColor));}else{var _appState$selectedCol31,_appState$furnitureCo,_appState$selectedCol32;// Standard furniture mode: use config or default
-var collectionFurnitureConfig=(_appState$selectedCol31=appState.selectedCollection)===null||_appState$selectedCol31===void 0?void 0:_appState$selectedCol31.furnitureConfig;var furnitureType=appState.selectedFurnitureType||'Sofa-Capitol';var furnitureConfigKey=furnitureType==='Sofa-Capitol'?'furniture':'furniture-kite';var furniturePieceConfig=(_appState$furnitureCo=appState.furnitureConfig)===null||_appState$furnitureCo===void 0?void 0:_appState$furnitureCo[furnitureConfigKey];// ✅ DEBUG: Log what we're finding
-console.log("\uD83D\uDD0D DEBUG: Looking for defaultWallColor");console.log("  Collection name: ".concat((_appState$selectedCol32=appState.selectedCollection)===null||_appState$selectedCol32===void 0?void 0:_appState$selectedCol32.name));console.log("  Collection object keys:",appState.selectedCollection?Object.keys(appState.selectedCollection):'null');console.log("  Collection furnitureConfig:",collectionFurnitureConfig);console.log("  Furniture piece config (".concat(furnitureConfigKey,"):"),furniturePieceConfig);// Priority: collection.furnitureConfig.defaultWallColor > furniture piece config > default
+var layer1Color=designerColors.length>1?designerColors[1]:designerColors[0]||"SW7006 Extra White";defaultWallColor=layer1Color;console.log("  \uD83C\uDFA8 Simple furniture mode: Using layer 1 color for wall: ".concat(defaultWallColor));}else{var _appState$selectedCol33,_appState$furnitureCo,_appState$selectedCol34;// Standard furniture mode: use config or default
+var collectionFurnitureConfig=(_appState$selectedCol33=appState.selectedCollection)===null||_appState$selectedCol33===void 0?void 0:_appState$selectedCol33.furnitureConfig;var furnitureType=appState.selectedFurnitureType||'Sofa-Capitol';var furnitureConfigKey=furnitureType==='Sofa-Capitol'?'furniture':'furniture-kite';var furniturePieceConfig=(_appState$furnitureCo=appState.furnitureConfig)===null||_appState$furnitureCo===void 0?void 0:_appState$furnitureCo[furnitureConfigKey];// ✅ DEBUG: Log what we're finding
+console.log("\uD83D\uDD0D DEBUG: Looking for defaultWallColor");console.log("  Collection name: ".concat((_appState$selectedCol34=appState.selectedCollection)===null||_appState$selectedCol34===void 0?void 0:_appState$selectedCol34.name));console.log("  Collection object keys:",appState.selectedCollection?Object.keys(appState.selectedCollection):'null');console.log("  Collection furnitureConfig:",collectionFurnitureConfig);console.log("  Furniture piece config (".concat(furnitureConfigKey,"):"),furniturePieceConfig);// Priority: collection.furnitureConfig.defaultWallColor > furniture piece config > default
 defaultWallColor=(collectionFurnitureConfig===null||collectionFurnitureConfig===void 0?void 0:collectionFurnitureConfig.defaultWallColor)||(furniturePieceConfig===null||furniturePieceConfig===void 0?void 0:furniturePieceConfig.defaultWallColor)||"SW7006 Extra White";}console.log("  \u2705 Selected defaultWallColor: ".concat(defaultWallColor));allLayers.push({label:"Wall Color",color:defaultWallColor,path:null,isBackground:true,// ✅ Fixed: Wall Color should be a colored square, not image
 isShadow:false,isWallPanel:false,inputId:"layer-".concat(inputIndex++)});console.log("  \u2705 Added Wall Color (default): ".concat(defaultWallColor));// Add sofa base layer  
 allLayers.push({label:"BG/Sofa Base",color:designerColors[colorIndex++]||"Snowbound",path:null,isBackground:true,isShadow:false,isWallPanel:false,inputId:"layer-".concat(inputIndex++)});console.log("  \u2705 Added BG/Sofa Base (designer color ".concat(colorIndex-1,")"));}else{// Standard collection - just background
@@ -2860,19 +2905,19 @@ extrasColor=designerColors[colorIndex++]||"SW7006 Extra White";}allLayers.push({
 inputId:"layer-".concat(inputIndex++)});console.log("  \u2705 Added Extras/Pillows layer with color: ".concat(extrasColor));}console.log("\uD83C\uDFD7\uFE0F Final layer model (used ".concat(colorIndex," designer colors):"));allLayers.forEach(function(layer,index){var type=layer.isBackground?'bg':layer.isShadow?'shadow':layer.isExtras?'extras':'layer';console.log("  ".concat(index,": ").concat(layer.label," (").concat(type,") = ").concat(layer.color||'no color'));});// VALIDATION: Check counts
 var inputLayers=allLayers.filter(function(l){return!l.isShadow;});console.log("\u2705 Created ".concat(inputLayers.length," input layers, used ").concat(colorIndex," designer colors"));if(designerColors.length<colorIndex){console.warn("\u26A0\uFE0F Not enough designer colors: need ".concat(colorIndex,", have ").concat(designerColors.length));}// Add this at the very end of buildLayerModel(), just before the return statement
 console.log("\uD83C\uDFD7\uFE0F FINAL LAYER MODEL DEBUG:");console.log("  Total layers created: ".concat(allLayers.length));console.log("  isFurnitureCollection was: ".concat(isFurnitureCollection));console.log("  Used ".concat(colorIndex," designer colors"));console.log("  Final layer structure:");allLayers.forEach(function(layer,index){var type=layer.isBackground?'bg':layer.isShadow?'shadow':'input';console.log("    ".concat(index,": \"").concat(layer.label,"\" (").concat(type,") = \"").concat(layer.color,"\" | inputId: ").concat(layer.inputId));});return allLayers;}// ✅ Wrap in an IIFE to avoid illegal top-level return
-if(appState.currentPattern){(function(){try{var _appState$selectedCol33,_appState$selectedCol34;var pattern=appState.currentPattern;if(!pattern||!Array.isArray(pattern.layers)){console.error("❌ Invalid pattern or missing layers:",pattern);return;}var designerColors=pattern.designer_colors||[];var curatedColors=((_appState$selectedCol33=appState.selectedCollection)===null||_appState$selectedCol33===void 0?void 0:_appState$selectedCol33.curatedColors)||[];// Use curated colors as fallback if no designer colors
-var effectiveColors=designerColors.length>0?designerColors:curatedColors;console.log("🎨 PATTERN LOAD COLOR FALLBACK:");console.log("  - Pattern:",pattern.name);console.log("  - designerColors:",designerColors.length,designerColors);console.log("  - curatedColors:",curatedColors.length,curatedColors);console.log("  - Using effectiveColors:",effectiveColors.length,effectiveColors);appState.currentLayers=buildLayerModel(pattern,effectiveColors,{isWallPanel:((_appState$selectedCol34=appState.selectedCollection)===null||_appState$selectedCol34===void 0?void 0:_appState$selectedCol34.name)==="wall-panels",tintWhite:appState.tintWhite||false});// Create inputs ONLY for non-shadow layers (shadows are fixed, not exposed in UI)
+if(appState.currentPattern){(function(){try{var _appState$selectedCol35,_appState$selectedCol36;var pattern=appState.currentPattern;if(!pattern||!Array.isArray(pattern.layers)){console.error("❌ Invalid pattern or missing layers:",pattern);return;}var designerColors=pattern.designer_colors||[];var curatedColors=((_appState$selectedCol35=appState.selectedCollection)===null||_appState$selectedCol35===void 0?void 0:_appState$selectedCol35.curatedColors)||[];// Use curated colors as fallback if no designer colors
+var effectiveColors=designerColors.length>0?designerColors:curatedColors;console.log("🎨 PATTERN LOAD COLOR FALLBACK:");console.log("  - Pattern:",pattern.name);console.log("  - designerColors:",designerColors.length,designerColors);console.log("  - curatedColors:",curatedColors.length,curatedColors);console.log("  - Using effectiveColors:",effectiveColors.length,effectiveColors);appState.currentLayers=buildLayerModel(pattern,effectiveColors,{isWallPanel:((_appState$selectedCol36=appState.selectedCollection)===null||_appState$selectedCol36===void 0?void 0:_appState$selectedCol36.name)==="wall-panels",tintWhite:appState.tintWhite||false});// Create inputs ONLY for non-shadow layers (shadows are fixed, not exposed in UI)
 var inputLayers=appState.currentLayers.filter(function(layer){return!layer.isShadow;});appState.layerInputs=inputLayers.map(function(layer){var layerData=createColorInput(layer.label,layer.inputId,layer.color,layer.isBackground);return _objectSpread(_objectSpread({},layerData),{},{color:layer.color,hex:lookupColor(layer.color)||"#FFFFFF"});});}catch(e){console.error("❌ Error populating layer inputs:",e);}})();}// 2. updatePreview
-var updatePreview=/*#__PURE__*/function(){var _ref14=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee9(){var _appState$currentPatt14,_appState$currentPatt15,_appState$selectedCol35;var _appState$selectedCol36,_appState$selectedCol37,_patternToRender$laye,_appState$selectedCol38,_appState$selectedCol39,_appState$selectedCol40,_appState$currentLaye5,_patternToRender$laye2,computedStyle,previewSizeValue,canvasSize,previewWidth,patternToRender,isClothingCollection,isStandard,_previewCanvas,_previewCtx,thumbUrl,patternImg,usedFallback,_patternRepeatsElement,previewCanvas,previewCtx,hasFurSuffix,isFurnitureMode,isFurnitureCollection,layerMapping,usesBotanicalLayers,backgroundLayerIndex,backgroundColor,backgroundLayer,_backgroundLayer,isStandardBg,baseImage,isLayerShadow,firstLayer,tempImg,firstLayerPath,patternRepeatsElement,_t7;return _regenerator().w(function(_context0){while(1)switch(_context0.p=_context0.n){case 0:console.log("🔍 updatePreview PATTERN DEBUG:");console.log("  currentPattern name:",(_appState$currentPatt14=appState.currentPattern)===null||_appState$currentPatt14===void 0?void 0:_appState$currentPatt14.name);console.log("  currentPattern layers:",(_appState$currentPatt15=appState.currentPattern)===null||_appState$currentPatt15===void 0||(_appState$currentPatt15=_appState$currentPatt15.layers)===null||_appState$currentPatt15===void 0?void 0:_appState$currentPatt15.map(function(l){var path=typeof l==='string'?l:l===null||l===void 0?void 0:l.path;return path===null||path===void 0?void 0:path.split('/').pop();}));console.log("  isFurnitureMode:",appState.furnitureMode);console.log("  selectedCollection name:",(_appState$selectedCol35=appState.selectedCollection)===null||_appState$selectedCol35===void 0?void 0:_appState$selectedCol35.name);if(dom.preview){_context0.n=1;break;}return _context0.a(2,console.error("preview not found in DOM"));case 1:_context0.p=1;if(dom.preview){_context0.n=2;break;}return _context0.a(2,console.error("preview not found in DOM"));case 2:if(appState.currentPattern){_context0.n=3;break;}console.log("⏳ No current pattern selected yet, skipping updatePreview");return _context0.a(2);case 3:// Loading indicator removed
+var updatePreview=/*#__PURE__*/function(){var _ref14=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee9(){var _appState$currentPatt16,_appState$currentPatt17,_appState$selectedCol37;var _appState$selectedCol38,_appState$selectedCol39,_patternToRender$laye,_appState$selectedCol40,_appState$selectedCol41,_appState$selectedCol42,_appState$currentLaye5,_patternToRender$laye2,computedStyle,previewSizeValue,canvasSize,previewWidth,patternToRender,isClothingCollection,isStandard,_previewCanvas,_previewCtx,thumbUrl,patternImg,usedFallback,_patternRepeatsElement,previewCanvas,previewCtx,hasFurSuffix,isFurnitureMode,isFurnitureCollection,layerMapping,usesBotanicalLayers,backgroundLayerIndex,backgroundColor,backgroundLayer,_backgroundLayer,isStandardBg,baseImage,isLayerShadow,firstLayer,tempImg,firstLayerPath,patternRepeatsElement,_t8;return _regenerator().w(function(_context0){while(1)switch(_context0.p=_context0.n){case 0:console.log("🔍 updatePreview PATTERN DEBUG:");console.log("  currentPattern name:",(_appState$currentPatt16=appState.currentPattern)===null||_appState$currentPatt16===void 0?void 0:_appState$currentPatt16.name);console.log("  currentPattern layers:",(_appState$currentPatt17=appState.currentPattern)===null||_appState$currentPatt17===void 0||(_appState$currentPatt17=_appState$currentPatt17.layers)===null||_appState$currentPatt17===void 0?void 0:_appState$currentPatt17.map(function(l){var path=typeof l==='string'?l:l===null||l===void 0?void 0:l.path;return path===null||path===void 0?void 0:path.split('/').pop();}));console.log("  isFurnitureMode:",appState.furnitureMode);console.log("  selectedCollection name:",(_appState$selectedCol37=appState.selectedCollection)===null||_appState$selectedCol37===void 0?void 0:_appState$selectedCol37.name);if(dom.preview){_context0.n=1;break;}return _context0.a(2,console.error("preview not found in DOM"));case 1:_context0.p=1;if(dom.preview){_context0.n=2;break;}return _context0.a(2,console.error("preview not found in DOM"));case 2:if(appState.currentPattern){_context0.n=3;break;}console.log("⏳ No current pattern selected yet, skipping updatePreview");return _context0.a(2);case 3:// Loading indicator removed
 // Get responsive canvas size from CSS custom properties (MOVED UP)
 computedStyle=getComputedStyle(document.documentElement);previewSizeValue=computedStyle.getPropertyValue('--preview-size');canvasSize=parseInt(previewSizeValue&&typeof previewSizeValue==='string'?previewSizeValue.replace('px',''):'700')||700;// Override: If preview container has explicit width, use that
 if(dom.preview){previewWidth=parseInt(getComputedStyle(dom.preview).width);if(previewWidth&&previewWidth!==canvasSize){console.log("\uD83D\uDCD0 Overriding canvas size from ".concat(canvasSize,"px to match container: ").concat(previewWidth,"px"));canvasSize=previewWidth;}}// ⚠️ CRITICAL: Define patternToRender FIRST before using it
 patternToRender=appState.currentPattern;// ✅ CRITICAL FIX FOR CLO-2: Detect clothing collections
 // CLO-2 patterns need special handling - they have layers but need to be TILED in preview
-isClothingCollection=((_appState$selectedCol36=appState.selectedCollection)===null||_appState$selectedCol36===void 0||(_appState$selectedCol36=_appState$selectedCol36.name)===null||_appState$selectedCol36===void 0?void 0:_appState$selectedCol36.includes('-clo'))||((_appState$selectedCol37=appState.selectedCollection)===null||_appState$selectedCol37===void 0||(_appState$selectedCol37=_appState$selectedCol37.name)===null||_appState$selectedCol37===void 0?void 0:_appState$selectedCol37.includes('.clo-'));if(isClothingCollection&&((_patternToRender$laye=patternToRender.layers)===null||_patternToRender$laye===void 0?void 0:_patternToRender$laye.length)>0){console.log("\uD83D\uDC55 CLOTHING COLLECTION DETECTED: Pattern will use layers with custom colors (tiled in preview)");console.log("   Collection: ".concat(appState.selectedCollection.name));console.log("   Pattern has ".concat(patternToRender.layers.length," layers for color customization"));}// ✅ Standard = not ColorFlex by data, or in a standard-only collection
+isClothingCollection=((_appState$selectedCol38=appState.selectedCollection)===null||_appState$selectedCol38===void 0||(_appState$selectedCol38=_appState$selectedCol38.name)===null||_appState$selectedCol38===void 0?void 0:_appState$selectedCol38.includes('-clo'))||((_appState$selectedCol39=appState.selectedCollection)===null||_appState$selectedCol39===void 0||(_appState$selectedCol39=_appState$selectedCol39.name)===null||_appState$selectedCol39===void 0?void 0:_appState$selectedCol39.includes('.clo-'));if(isClothingCollection&&((_patternToRender$laye=patternToRender.layers)===null||_patternToRender$laye===void 0?void 0:_patternToRender$laye.length)>0){console.log("\uD83D\uDC55 CLOTHING COLLECTION DETECTED: Pattern will use layers with custom colors (tiled in preview)");console.log("   Collection: ".concat(appState.selectedCollection.name));console.log("   Pattern has ".concat(patternToRender.layers.length," layers for color customization"));}// ✅ Standard = not ColorFlex by data, or in a standard-only collection
 isStandard=patternIsStandard(patternToRender,appState.selectedCollection);if(!isStandard){_context0.n=6;break;}console.log("📋 Rendering standard pattern with thumbnail:",appState.currentPattern.name);if(!appState.currentPattern.thumbnail){_context0.n=5;break;}// Use same canvas setup as regular ColorFlex patterns
-_previewCanvas=document.createElement("canvas");_previewCtx=_previewCanvas.getContext("2d",{willReadFrequently:true});_previewCanvas.width=canvasSize;_previewCanvas.height=canvasSize;// Load thumbnail as pattern image (crossOrigin enables non-tainted canvas when CORS allows omit+credentials)
-thumbUrl=urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));patternImg=new Image();if(!colorFlexB2OmitImgCrossOrigin(thumbUrl))patternImg.crossOrigin="Anonymous";patternImg.src=thumbUrl;usedFallback=false;_context0.n=4;return new Promise(function(resolve){patternImg.onload=function(){console.log("🔍 STANDARD PATTERN SIZING DEBUG:");console.log("  Pattern image:",patternImg.width+"x"+patternImg.height);console.log("  Canvas size:",canvasSize+"x"+canvasSize);console.log("  Scale factors:",appState.currentScale,appState.scaleMultiplier);// No background fill - let pattern tiles show naturally
+_previewCanvas=document.createElement("canvas");_previewCtx=_previewCanvas.getContext("2d",{willReadFrequently:true});_previewCanvas.width=canvasSize;_previewCanvas.height=canvasSize;// Load thumbnail as pattern image (crossOrigin required for canvas draw)
+thumbUrl=urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));patternImg=new Image();patternImg.crossOrigin="Anonymous";patternImg.src=thumbUrl;usedFallback=false;_context0.n=4;return new Promise(function(resolve){patternImg.onload=function(){console.log("🔍 STANDARD PATTERN SIZING DEBUG:");console.log("  Pattern image:",patternImg.width+"x"+patternImg.height);console.log("  Canvas size:",canvasSize+"x"+canvasSize);console.log("  Scale factors:",appState.currentScale,appState.scaleMultiplier);// No background fill - let pattern tiles show naturally
 // Scale pattern to fit canvas, then apply user scaling
 // Fix: Use only scaleMultiplier since currentScale and scaleMultiplier are inverses
 var scale=appState.scaleMultiplier||1;console.log("  Final scale multiplier:",scale);// Fit pattern to canvas (like CSS object-fit: contain)
@@ -2894,13 +2939,15 @@ console.log("  📍 Normal scale - showing single centered pattern");_previewCtx
 console.log("  🔄 Scaled mode - tiling pattern with clipping");console.log("  🔄 Using tile size:",tileWidth,"x",tileHeight);// ✅ FIX: Apply clipping to match ColorFlex pattern behavior
 _previewCtx.save();_previewCtx.beginPath();_previewCtx.rect(displayX,displayY,fitWidth,fitHeight);_previewCtx.clip();// Check for half-drop tiling
 var isHalfDrop=isHalfDropTiling(appState.currentPattern.tilingType)||appState.currentPattern.name.toLowerCase().includes("hd");console.log("  \uD83D\uDD04 Half-drop: ".concat(isHalfDrop));// Tile within the clipped area
-var startX=displayX;var startY=displayY;var endX=displayX+fitWidth+tileWidth;var endY=displayY+fitHeight+tileHeight;for(var x=startX;x<endX;x+=tileWidth){var isOddColumn=Math.floor((x-startX)/tileWidth)%2!==0;var yOffset=isHalfDrop&&isOddColumn?tileHeight/2:0;for(var y=startY-tileHeight+yOffset;y<endY;y+=tileHeight){_previewCtx.drawImage(patternImg,x,y,tileWidth,tileHeight);}}_previewCtx.restore();}console.log("✅ Standard pattern rendered");resolve();};patternImg.onerror=function(){console.error("❌ Failed to load standard pattern thumbnail (CORS or 404); falling back to img display");usedFallback=true;// Fallback: show thumbnail in <img> without crossOrigin so it can display even when CORS blocks canvas
+var startX=displayX;var startY=displayY;var endX=displayX+fitWidth+tileWidth;var endY=displayY+fitHeight+tileHeight;for(var x=startX;x<endX;x+=tileWidth){var isOddColumn=Math.floor((x-startX)/tileWidth)%2!==0;var yOffset=isHalfDrop&&isOddColumn?tileHeight/2:0;for(var y=startY-tileHeight+yOffset;y<endY;y+=tileHeight){_previewCtx.drawImage(patternImg,x,y,tileWidth,tileHeight);}}_previewCtx.restore();}console.log("✅ Standard pattern rendered");resolve();};patternImg.onerror=function(){// #region agent log
+cfAgentDebug('CFM.js:updatePreview:standardThumb','standard thumb load error','TH-CORS',{thumbTail:String(thumbUrl||'').slice(-100),patternName:appState.currentPattern&&appState.currentPattern.name});// #endregion
+console.error("❌ Failed to load standard pattern thumbnail (CORS or 404); falling back to img display");usedFallback=true;// Fallback: show thumbnail in <img> without crossOrigin so it can display even when CORS blocks canvas
 var fallbackImg=document.createElement("img");fallbackImg.src=thumbUrl;fallbackImg.alt=appState.currentPattern.name||"Pattern";fallbackImg.style.cssText="max-width:100%;max-height:100%;width:auto;height:auto;object-fit:contain;display:block;margin:0 auto;background:#000;";dom.preview.innerHTML="";dom.preview.style.width=canvasSize+"px";dom.preview.style.height=canvasSize+"px";dom.preview.style.backgroundColor="#000";dom.preview.style.display="flex";dom.preview.style.alignItems="center";dom.preview.style.justifyContent="center";dom.preview.appendChild(fallbackImg);resolve();return;};});case 4:// Use same display setup as regular ColorFlex patterns (only if we didn't use CORS fallback)
 if(!usedFallback){dom.preview.innerHTML='';dom.preview.appendChild(_previewCanvas);dom.preview.style.width="".concat(canvasSize,"px");dom.preview.style.height="".concat(canvasSize,"px");dom.preview.style.backgroundColor="#000";}if(appState.currentPattern.name&&dom.patternName){dom.patternName.innerHTML=appState.currentPattern.name+formatPatternInfo(appState.currentPattern);}// 🎨 SIMPLE MODE REDESIGN: Update pattern repeats display
 _patternRepeatsElement=document.getElementById('patternRepeats');if(_patternRepeatsElement){_patternRepeatsElement.textContent='Pattern Repeats 24x24';}if(window.COLORFLEX_MODE==='BASSETT'){requestAnimationFrame(function(){requestAnimationFrame(updateRoomMockup);});}return _context0.a(2);case 5:console.warn("⚠️ Standard pattern has no thumbnail:",appState.currentPattern.name);case 6:// Canvas size already defined above
 previewCanvas=document.createElement("canvas");previewCtx=previewCanvas.getContext("2d",{willReadFrequently:true});previewCanvas.width=canvasSize;previewCanvas.height=canvasSize;// Check if this is a furniture collection
 // ✅ Use multiple detection methods for robustness
-hasFurSuffix=((_appState$selectedCol38=appState.selectedCollection)===null||_appState$selectedCol38===void 0||(_appState$selectedCol38=_appState$selectedCol38.name)===null||_appState$selectedCol38===void 0?void 0:_appState$selectedCol38.includes('.fur'))||((_appState$selectedCol39=appState.selectedCollection)===null||_appState$selectedCol39===void 0||(_appState$selectedCol39=_appState$selectedCol39.name)===null||_appState$selectedCol39===void 0?void 0:_appState$selectedCol39.includes('-fur'));isFurnitureMode=appState.isInFurnitureMode||window.COLORFLEX_MODE==='FURNITURE'||window.location.pathname.includes('furniture');isFurnitureCollection=hasFurSuffix||isFurnitureMode&&appState.furnitureConfig&&appState.selectedFurnitureType;console.log("🔍 FURNITURE DETECTION IN PATTERN PREVIEW:");console.log("  hasFurSuffix:",hasFurSuffix,"(collection:",(_appState$selectedCol40=appState.selectedCollection)===null||_appState$selectedCol40===void 0?void 0:_appState$selectedCol40.name,")");console.log("  isFurnitureMode:",isFurnitureMode);console.log("  furnitureConfig exists:",!!appState.furnitureConfig);console.log("  selectedFurnitureType:",appState.selectedFurnitureType);console.log("  isFurnitureCollection result:",isFurnitureCollection);layerMapping=getLayerMappingForPreview(isFurnitureCollection);console.log("🔍 Layer mapping:",layerMapping);console.log("🔍 Current layers:",appState.currentLayers?appState.currentLayers.map(function(l,i){return l?"".concat(i,": ").concat(l.label," = ").concat(l.color):"".concat(i,": undefined");}):'No layers');usesBotanicalLayers=false;// Removed furniture collection logic - use current pattern directly
+hasFurSuffix=((_appState$selectedCol40=appState.selectedCollection)===null||_appState$selectedCol40===void 0||(_appState$selectedCol40=_appState$selectedCol40.name)===null||_appState$selectedCol40===void 0?void 0:_appState$selectedCol40.includes('.fur'))||((_appState$selectedCol41=appState.selectedCollection)===null||_appState$selectedCol41===void 0||(_appState$selectedCol41=_appState$selectedCol41.name)===null||_appState$selectedCol41===void 0?void 0:_appState$selectedCol41.includes('-fur'));isFurnitureMode=appState.isInFurnitureMode||window.COLORFLEX_MODE==='FURNITURE'||window.location.pathname.includes('furniture');isFurnitureCollection=hasFurSuffix||isFurnitureMode&&appState.furnitureConfig&&appState.selectedFurnitureType;console.log("🔍 FURNITURE DETECTION IN PATTERN PREVIEW:");console.log("  hasFurSuffix:",hasFurSuffix,"(collection:",(_appState$selectedCol42=appState.selectedCollection)===null||_appState$selectedCol42===void 0?void 0:_appState$selectedCol42.name,")");console.log("  isFurnitureMode:",isFurnitureMode);console.log("  furnitureConfig exists:",!!appState.furnitureConfig);console.log("  selectedFurnitureType:",appState.selectedFurnitureType);console.log("  isFurnitureCollection result:",isFurnitureCollection);layerMapping=getLayerMappingForPreview(isFurnitureCollection);console.log("🔍 Layer mapping:",layerMapping);console.log("🔍 Current layers:",appState.currentLayers?appState.currentLayers.map(function(l,i){return l?"".concat(i,": ").concat(l.label," = ").concat(l.color):"".concat(i,": undefined");}):'No layers');usesBotanicalLayers=false;// Removed furniture collection logic - use current pattern directly
 // Get background color based on collection type
 // ✅ CRITICAL: Always use layerMapping.backgroundIndex - it's already set correctly by getLayerMappingForPreview()
 backgroundLayerIndex=layerMapping.backgroundIndex;console.log("🔍 BACKGROUND COLOR SELECTION:");console.log("  layerMapping.backgroundIndex:",backgroundLayerIndex);console.log("  layerMapping.type:",layerMapping.type);console.log("  isFurnitureCollection:",isFurnitureCollection);console.log("  Available layers at backgroundIndex:",((_appState$currentLaye5=appState.currentLayers)===null||_appState$currentLaye5===void 0||(_appState$currentLaye5=_appState$currentLaye5[backgroundLayerIndex])===null||_appState$currentLaye5===void 0?void 0:_appState$currentLaye5.label)||"MISSING");// ✅ FIX: For furniture mode pattern preview, ALWAYS use the BG/Sofa Base color (index 1)
@@ -2917,16 +2964,15 @@ firstLayerPath=typeof firstLayer==='string'?firstLayer:firstLayer.path||firstLay
 var patternAspect=getCorrectAspectRatio(tempImg,patternToRender);var scaleMultiplier=appState.scaleMultiplier||1;var patternDisplayWidth,patternDisplayHeight,offsetX,offsetY;var baseSize=canvasSize;// ✅ CRITICAL FIX FOR CLO-2: Tile across entire canvas for clothing collections
 if(isClothingCollection){// Fill entire canvas - no centered rectangle
 patternDisplayWidth=canvasSize;patternDisplayHeight=canvasSize;offsetX=0;offsetY=0;console.log("\uD83D\uDC55 CLO-2 tiling mode: Full canvas ".concat(canvasSize,"x").concat(canvasSize));}else{// Original behavior for regular patterns - centered rectangle
-if(patternAspect>1){patternDisplayWidth=Math.min(baseSize,canvasSize);patternDisplayHeight=patternDisplayWidth/patternAspect;}else{patternDisplayHeight=Math.min(baseSize,canvasSize);patternDisplayWidth=patternDisplayHeight*patternAspect;}offsetX=(canvasSize-patternDisplayWidth)/2;offsetY=(canvasSize-patternDisplayHeight)/2;}previewCtx.fillStyle=backgroundColor;previewCtx.fillRect(offsetX,offsetY,patternDisplayWidth,patternDisplayHeight);console.log("\uD83C\uDFA8 Pattern area: ".concat(patternDisplayWidth.toFixed(0),"x").concat(patternDisplayHeight.toFixed(0)));resolve({offsetX:offsetX,offsetY:offsetY,patternDisplayWidth:patternDisplayWidth,patternDisplayHeight:patternDisplayHeight,scaleMultiplier:scaleMultiplier});};tempImg.onerror=function(){return resolve(null);};}).then(/*#__PURE__*/function(){var _ref15=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee8(patternBounds){var _loop4,layerIndex;return _regenerator().w(function(_context9){while(1)switch(_context9.n){case 0:if(patternBounds){_context9.n=1;break;}return _context9.a(2);case 1:_loop4=/*#__PURE__*/_regenerator().m(function _loop4(layerIndex){var layer,layerPath,isShadow,layerColor,_appState$currentLaye7,furnitureInputIndex,_appState$currentLaye8,inputLayer,_appState$currentLaye9,inputIndex;return _regenerator().w(function(_context8){while(1)switch(_context8.n){case 0:layer=patternToRender.layers[layerIndex];layerPath=typeof layer==='string'?layer:layer&&(layer.path||layer.proofPath);// JSON isShadow controls compositing; path-based fallback when flag missing
-isShadow=_typeof(layer)==='object'&&layer.isShadow===true||layerPath&&(String(layerPath).toUpperCase().includes('_SHADOW_')||String(layerPath).toUpperCase().includes('SHADOW_LAYER')||String(layerPath).toUpperCase().includes('ISSHADOW'));layerColor=null;if(!isShadow){// ✅ FIX: For furniture collections, pattern layers start at patternStartIndex (2)
-if(isFurnitureCollection){furnitureInputIndex=layerMapping.patternStartIndex+layerIndex;if(furnitureInputIndex>=(((_appState$currentLaye7=appState.currentLayers)===null||_appState$currentLaye7===void 0?void 0:_appState$currentLaye7.length)||0)){console.error("  \u274C Pattern preview: furnitureInputIndex ".concat(furnitureInputIndex," out of bounds for layer ").concat(layerIndex));layerColor=lookupColor("Snowbound");}else{layerColor=lookupColor(((_appState$currentLaye8=appState.currentLayers[furnitureInputIndex])===null||_appState$currentLaye8===void 0?void 0:_appState$currentLaye8.color)||"Snowbound");inputLayer=appState.currentLayers[furnitureInputIndex];console.log("\uD83E\uDE91 Furniture pattern preview layer ".concat(layerIndex," \u2192 input ").concat(furnitureInputIndex," (").concat(inputLayer===null||inputLayer===void 0?void 0:inputLayer.label,") \u2192 ").concat(layerColor));}}else{inputIndex=layerMapping.patternStartIndex+layerIndex;layerColor=lookupColor(((_appState$currentLaye9=appState.currentLayers[inputIndex])===null||_appState$currentLaye9===void 0?void 0:_appState$currentLaye9.color)||"Snowbound");console.log("\uD83C\uDFE0 Standard layer ".concat(layerIndex," \u2192 input ").concat(inputIndex," \u2192 ").concat(layerColor));}}_context8.n=1;return new Promise(function(resolve){var pathForLoad=typeof layer==='string'?layer:layer&&(layer.path||layer.proofPath);processImage(pathForLoad,function(processedCanvas){if(!(processedCanvas instanceof HTMLCanvasElement)){return resolve();}// Fix for non-square patterns: calculate scale based on aspect ratio
+if(patternAspect>1){patternDisplayWidth=Math.min(baseSize,canvasSize);patternDisplayHeight=patternDisplayWidth/patternAspect;}else{patternDisplayHeight=Math.min(baseSize,canvasSize);patternDisplayWidth=patternDisplayHeight*patternAspect;}offsetX=(canvasSize-patternDisplayWidth)/2;offsetY=(canvasSize-patternDisplayHeight)/2;}previewCtx.fillStyle=backgroundColor;previewCtx.fillRect(offsetX,offsetY,patternDisplayWidth,patternDisplayHeight);console.log("\uD83C\uDFA8 Pattern area: ".concat(patternDisplayWidth.toFixed(0),"x").concat(patternDisplayHeight.toFixed(0)));resolve({offsetX:offsetX,offsetY:offsetY,patternDisplayWidth:patternDisplayWidth,patternDisplayHeight:patternDisplayHeight,scaleMultiplier:scaleMultiplier});};tempImg.onerror=function(){return resolve(null);};}).then(/*#__PURE__*/function(){var _ref15=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee8(patternBounds){var _loop4,layerIndex;return _regenerator().w(function(_context9){while(1)switch(_context9.n){case 0:if(patternBounds){_context9.n=1;break;}return _context9.a(2);case 1:_loop4=/*#__PURE__*/_regenerator().m(function _loop4(layerIndex){var layer,layerPath,isShadow,layerColor,_appState$currentLaye7,inputIndex,_appState$currentLaye8,inputLayer,tag;return _regenerator().w(function(_context8){while(1)switch(_context8.n){case 0:layer=patternToRender.layers[layerIndex];layerPath=typeof layer==='string'?layer:layer&&(layer.path||layer.proofPath);// JSON isShadow controls compositing; path-based fallback when flag missing
+isShadow=_typeof(layer)==='object'&&layer.isShadow===true||layerPath&&(String(layerPath).toUpperCase().includes('_SHADOW_')||String(layerPath).toUpperCase().includes('SHADOW_LAYER')||String(layerPath).toUpperCase().includes('ISSHADOW'));layerColor=null;if(!isShadow){inputIndex=resolveCurrentLayersIndexForPatternLayer(layerIndex,layerMapping.patternStartIndex);if(inputIndex>=(((_appState$currentLaye7=appState.currentLayers)===null||_appState$currentLaye7===void 0?void 0:_appState$currentLaye7.length)||0)){console.error("  \u274C Pattern preview: inputIndex ".concat(inputIndex," out of bounds for layer ").concat(layerIndex));layerColor=lookupColor("Snowbound");}else{layerColor=lookupColor(((_appState$currentLaye8=appState.currentLayers[inputIndex])===null||_appState$currentLaye8===void 0?void 0:_appState$currentLaye8.color)||"Snowbound");inputLayer=appState.currentLayers[inputIndex];tag=isFurnitureCollection?"🪑 Furniture":"🏠 Standard";console.log("".concat(tag," layer ").concat(layerIndex," \u2192 input ").concat(inputIndex," (").concat(inputLayer===null||inputLayer===void 0?void 0:inputLayer.label,") \u2192 ").concat(layerColor));}}_context8.n=1;return new Promise(function(resolve){var pathForLoad=typeof layer==='string'?layer:layer&&(layer.path||layer.proofPath);processImage(pathForLoad,function(processedCanvas){if(!(processedCanvas instanceof HTMLCanvasElement)){return resolve();}// Fix for non-square patterns: calculate scale based on aspect ratio
 var patternAspect=processedCanvas.width/processedCanvas.height;var displayAspect=patternBounds.patternDisplayWidth/patternBounds.patternDisplayHeight;var baseScale;if(patternAspect>displayAspect){// Pattern is wider than display area - scale to fit width
 baseScale=patternBounds.patternDisplayWidth/processedCanvas.width;}else{// Pattern is taller than display area - scale to fit height  
 baseScale=patternBounds.patternDisplayHeight/processedCanvas.height;}var finalScale=baseScale*patternBounds.scaleMultiplier;var tileWidth=processedCanvas.width*finalScale;var tileHeight=processedCanvas.height*finalScale;var isHalfDrop=isHalfDropTiling(patternToRender.tilingType);previewCtx.save();previewCtx.beginPath();previewCtx.rect(patternBounds.offsetX,patternBounds.offsetY,patternBounds.patternDisplayWidth,patternBounds.patternDisplayHeight);previewCtx.clip();previewCtx.globalCompositeOperation=isShadow?"multiply":"source-over";previewCtx.globalAlpha=isShadow?0.3:1.0;var startX=patternBounds.offsetX;var startY=patternBounds.offsetY;var endX=patternBounds.offsetX+patternBounds.patternDisplayWidth+tileWidth;var endY=patternBounds.offsetY+patternBounds.patternDisplayHeight+tileHeight;for(var x=startX;x<endX;x+=tileWidth){var isOddColumn=Math.floor((x-startX)/tileWidth)%2!==0;var yOffset=isHalfDrop&&isOddColumn?tileHeight/2:0;for(var y=startY-tileHeight+yOffset;y<endY;y+=tileHeight){previewCtx.drawImage(processedCanvas,x,y,tileWidth,tileHeight);}}previewCtx.restore();console.log("\u2705 Rendered layer ".concat(layerIndex," with color ").concat(layerColor));resolve();},layerColor,2.2,isShadow,false,false);});case 1:return _context8.a(2);}},_loop4);});layerIndex=0;case 2:if(!(layerIndex<patternToRender.layers.length)){_context9.n=4;break;}return _context9.d(_regeneratorValues(_loop4(layerIndex)),3);case 3:layerIndex++;_context9.n=2;break;case 4:return _context9.a(2);}},_callee8);}));return function(_x14){return _ref15.apply(this,arguments);};}());case 9:// Update DOM
 dom.preview.innerHTML="";dom.preview.appendChild(previewCanvas);// Allow container to size naturally based on canvas content
 dom.preview.style.backgroundColor="#000";if(patternToRender.name){dom.patternName.innerHTML=toInitialCaps(appState.currentPattern.name)+formatPatternInfo(appState.currentPattern);}// 🎨 SIMPLE MODE REDESIGN: Update pattern repeats display
 patternRepeatsElement=document.getElementById('patternRepeats');if(patternRepeatsElement){patternRepeatsElement.textContent='Pattern Repeats 24x24';}console.log("✅ Pattern preview rendered");if(window.COLORFLEX_MODE==='BASSETT'){requestAnimationFrame(function(){requestAnimationFrame(updateRoomMockup);});}// Loading indicator removed
-_context0.n=11;break;case 10:_context0.p=10;_t7=_context0.v;console.error("updatePreview error:",_t7);// Loading indicator removed
+_context0.n=11;break;case 10:_context0.p=10;_t8=_context0.v;console.error("updatePreview error:",_t8);// Loading indicator removed
 case 11:return _context0.a(2);}},_callee9,null,[[1,10]]);}));return function updatePreview(){return _ref14.apply(this,arguments);};}();// Helper: Format pattern size and tiling info as HTML
 function formatPatternInfo(pattern){if(!pattern)return'';// Build the pattern repeat string: "24x24HD" or "24x24S"
 var repeatStr='';if(pattern.size&&Array.isArray(pattern.size)&&pattern.size.length>=2){var width=pattern.size[0];var height=pattern.size[1];repeatStr="".concat(width,"x").concat(height);// Add tiling suffix
@@ -2959,19 +3005,19 @@ imageLoadQueue.unshift(loadFn);}else{// Low priority - add to end of queue
 imageLoadQueue.push(loadFn);}}});}// Bassett: one folder (sofa-with-pillow-1). beauty.png, sofa_disp1/2.png, pillow1–3_disp.png
 var BASSETT_LAYER_STACK=[{id:'background',file:'beauty.png',type:'image',colorFlexIndex:null},{id:'sofa-displaced-1',displacementFile:'sofa_disp1.png',type:'pattern-displaced'},{id:'sofa-displaced-2',displacementFile:'sofa_disp2.png',type:'pattern-displaced',transform:{scale:0.94,translateX:-8,translateY:2}},{id:'pillow1-displaced',displacementFile:'pillow1_disp.png',type:'pattern-displaced'},{id:'pillow2-displaced',displacementFile:'pillow2_disp.png',type:'pattern-displaced'},{id:'pillow3-displaced',displacementFile:'pillow3_disp.png',type:'pattern-displaced'}];function getBassettLayersBaseUrl(){if(typeof window!=='undefined'&&window.BASSETT_LAYERS_BASE_URL){var u=(window.BASSETT_LAYERS_BASE_URL||'').toString().trim();if(u&&u.indexOf('http')===0)return u;}return'https://s3.us-east-005.backblazeb2.com/cf-data/data/mockups/bassett/sofa-with-pillow-1';}function getBassettLayerStack(){if(typeof window!=='undefined'&&window.BASSETT_LAYER_STACK)return window.BASSETT_LAYER_STACK;return BASSETT_LAYER_STACK;}function bassettDisplaceInWorker(patternBitmap,displacementMapBitmap,strength){strength=strength!=null?strength:1;var origin=typeof window!=='undefined'&&window.location&&window.location.origin?window.location.origin.replace(/\/$/,''):'';var workerUrl=typeof window!=='undefined'&&window.BASSETT_DISPLACE_WORKER_URL||origin+'/assets/pattern-displace.worker.js';return new Promise(function(resolve,reject){var w=new Worker(workerUrl);var _onMsg=function onMsg(e){w.removeEventListener('message',_onMsg);w.removeEventListener('error',_onErr);var d=e.data;if(d&&d.type==='result'&&d.bitmap)resolve(d.bitmap);else if(d&&d.type==='error')reject(new Error(d.message||'displace failed'));else reject(new Error('displace worker unknown response'));};var _onErr=function onErr(err){w.removeEventListener('message',_onMsg);w.removeEventListener('error',_onErr);reject(err&&err.message?err:new Error('displace worker error'));};w.addEventListener('message',_onMsg);w.addEventListener('error',_onErr);w.postMessage({type:'displace',pattern:patternBitmap,displacementMap:displacementMapBitmap,strength:strength},[patternBitmap,displacementMapBitmap]);});}// Bassett room mockup: square container (up to 800×800); image fits inside until click opens full-size overlay. Optional wall pattern + pillow solid colors.
 function updateBassettRoomMockup(){return _updateBassettRoomMockup.apply(this,arguments);}// Open room mockup in fullscreen overlay (Bassett-style: click to expand, click again for full res, click to close)
-function _updateBassettRoomMockup(){_updateBassettRoomMockup=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee28(){var internalSize,dpr,resultUrl,resultPatternId,resultBlanketColor,resultScale,currentId,blanketHex,hexFromRgb,normalizeBlanketHex,currentBlanketColor,currentScaleMultiplier,sofaHex,currentSofaColor,resultSofaColor,currentLayerColorsSig,resultLayerColorsSig,pillowWallSig,resultPillowWallSig,stale,renderResult,apiBase,renderUrl,uploadUrl,thumb,patternUrl,blanketColor,baseUrl,hasExistingContent,overlay,loadingWrap,layerCompositeOk,getPillowSolidColor,applyLayerTransform,layerUrl,loadImg,patternImg,previewCanvas,dataUrl,stack,fromWindow,stackFiles,di,l,firstImageLayer,si,bgImg,cw,ch,bgUrl,outW,outH,scaleToOut,compCanvas,ctx,masterTiledCanvas,hasPatternDisplaced,patternForTiling,layersForTiling,layerMappingB,patternStartIdx,tilingTypeB,isHalfDropB,mctx,lIdx,ly,layerPathB,isShadowB,inputIdx,layerColorB,sizeIn,aspect,reps,tw,th,numColsT,numRowsT,i,tx,j,li,layer,limg,lw,lh,wallMaskImg,ww,wh,wallTile,wctx,patternForWall,sizeWall,aspectWall,repsWall,twWall,thWall,ty,isPillow1,isPillow2,useSolid,pillowMaskFile,pimg,pillHex,pillCanvas,pctx,pw,ph,dispUrl,dispImg,dw,dh,tileCanvas,tctx,numColsF,numRowsF,blimg,blanketCanvas,bctx,hex,_thumb,_patternUrl,_blanketColor,_loadingWrap,body,res,blob,prevUrl,errBody,wrap,input,_t42,_t43,_t44,_t45,_t46,_t47,_t48,_t49;return _regenerator().w(function(_context36){while(1)switch(_context36.p=_context36.n){case 0:normalizeBlanketHex=function _normalizeBlanketHex(h){var hex=typeof h==="string"&&h.startsWith("#")?h:hexFromRgb(h);var six=hex.replace(/^#/,"").replace(/[^0-9A-Fa-f]/g,"").slice(0,6);if(six.length!==6)return"#336699";return"#"+six;};hexFromRgb=function _hexFromRgb(rgb){if(!rgb)return"#336699";if(typeof rgb==="string"&&rgb.startsWith("#"))return rgb;if(_typeof(rgb)==="object"&&rgb.r!=null)return"#"+[rgb.r,rgb.g,rgb.b].map(function(x){return("0"+Math.round(x).toString(16)).slice(-2);}).join("");return"#336699";};if(dom.roomMockup){_context36.n=1;break;}return _context36.a(2);case 1:dom.roomMockup.style.setProperty("width","min(800px, 100%)","important");dom.roomMockup.style.setProperty("aspect-ratio","1","important");dom.roomMockup.style.setProperty("height","auto","important");dom.roomMockup.style.setProperty("max-height","min(800px, 80vh)","important");dom.roomMockup.style.setProperty("overflow","hidden","important");dom.roomMockup.style.setProperty("display","flex","important");dom.roomMockup.style.setProperty("align-items","center","important");dom.roomMockup.style.setProperty("justify-content","center","important");internalSize=2000;// 2K; display scales down to fit container
+function _updateBassettRoomMockup(){_updateBassettRoomMockup=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee28(){var internalSize,dpr,resultUrl,resultPatternId,resultBlanketColor,resultScale,currentId,blanketHex,hexFromRgb,normalizeBlanketHex,currentBlanketColor,currentScaleMultiplier,sofaHex,currentSofaColor,resultSofaColor,currentLayerColorsSig,resultLayerColorsSig,pillowWallSig,resultPillowWallSig,stale,renderResult,apiBase,renderUrl,uploadUrl,thumb,patternUrl,blanketColor,baseUrl,hasExistingContent,overlay,loadingWrap,layerCompositeOk,getPillowSolidColor,applyLayerTransform,layerUrl,loadImg,patternImg,previewCanvas,dataUrl,stack,fromWindow,stackFiles,di,l,firstImageLayer,si,bgImg,cw,ch,bgUrl,outW,outH,scaleToOut,compCanvas,ctx,masterTiledCanvas,hasPatternDisplaced,patternForTiling,layersForTiling,layerMappingB,patternStartIdx,tilingTypeB,isHalfDropB,mctx,lIdx,ly,layerPathB,isShadowB,inputIdx,layerColorB,sizeIn,aspect,reps,tw,th,numColsT,numRowsT,i,tx,j,li,layer,limg,lw,lh,wallMaskImg,ww,wh,wallTile,wctx,patternForWall,sizeWall,aspectWall,repsWall,twWall,thWall,ty,isPillow1,isPillow2,useSolid,pillowMaskFile,pimg,pillHex,pillCanvas,pctx,pw,ph,dispUrl,dispImg,dw,dh,tileCanvas,tctx,numColsF,numRowsF,blimg,blanketCanvas,bctx,hex,_thumb,_patternUrl,_blanketColor,_loadingWrap,body,res,blob,prevUrl,errBody,wrap,input,_t43,_t44,_t45,_t46,_t47,_t48,_t49,_t50;return _regenerator().w(function(_context36){while(1)switch(_context36.p=_context36.n){case 0:normalizeBlanketHex=function _normalizeBlanketHex(h){var hex=typeof h==="string"&&h.startsWith("#")?h:hexFromRgb(h);var six=hex.replace(/^#/,"").replace(/[^0-9A-Fa-f]/g,"").slice(0,6);if(six.length!==6)return"#336699";return"#"+six;};hexFromRgb=function _hexFromRgb(rgb){if(!rgb)return"#336699";if(typeof rgb==="string"&&rgb.startsWith("#"))return rgb;if(_typeof(rgb)==="object"&&rgb.r!=null)return"#"+[rgb.r,rgb.g,rgb.b].map(function(x){return("0"+Math.round(x).toString(16)).slice(-2);}).join("");return"#336699";};if(dom.roomMockup){_context36.n=1;break;}return _context36.a(2);case 1:dom.roomMockup.style.setProperty("width","min(800px, 100%)","important");dom.roomMockup.style.setProperty("aspect-ratio","1","important");dom.roomMockup.style.setProperty("height","auto","important");dom.roomMockup.style.setProperty("max-height","min(800px, 80vh)","important");dom.roomMockup.style.setProperty("overflow","hidden","important");dom.roomMockup.style.setProperty("display","flex","important");dom.roomMockup.style.setProperty("align-items","center","important");dom.roomMockup.style.setProperty("justify-content","center","important");internalSize=2000;// 2K; display scales down to fit container
 dpr=window.devicePixelRatio||1;resultUrl=appState.bassettResultUrl;resultPatternId=appState.bassettResultPatternId;resultBlanketColor=appState.bassettResultBlanketColor;resultScale=appState.bassettResultScale;currentId=appState.currentPattern?appState.currentPattern.id||appState.currentPattern.name:null;blanketHex=appState.currentLayers&&appState.currentLayers[1]&&appState.currentLayers[1].color?lookupColor(appState.currentLayers[1].color)||"#336699":"#336699";currentBlanketColor=normalizeBlanketHex(blanketHex);currentScaleMultiplier=appState.scaleMultiplier!=null?appState.scaleMultiplier:1;sofaHex=appState.currentLayers&&appState.currentLayers[0]&&appState.currentLayers[0].color?lookupColor(appState.currentLayers[0].color)||"#ffffff":"#ffffff";currentSofaColor=normalizeBlanketHex(sofaHex);resultSofaColor=appState.bassettResultSofaColor!=null?appState.bassettResultSofaColor:null;currentLayerColorsSig=(appState.currentLayers||[]).map(function(l){return l&&l.color?normalizeBlanketHex(lookupColor(l.color)||"#000"):"";}).join("|");resultLayerColorsSig=appState.bassettResultLayerColorsSig!=null?appState.bassettResultLayerColorsSig:null;pillowWallSig=[appState.bassettPillow1Style||"pattern",appState.bassettPillow2Style||"pattern",appState.bassettPillow1ColorSource!=null?appState.bassettPillow1ColorSource:0,appState.bassettPillow2ColorSource!=null?appState.bassettPillow2ColorSource:1,appState.bassettWallpaperOn?"1":"0"].join("|");resultPillowWallSig=appState.bassettResultPillowWallSig!=null?appState.bassettResultPillowWallSig:null;stale=resultUrl&&(resultPatternId!==currentId||resultBlanketColor!==currentBlanketColor||resultScale!==currentScaleMultiplier||resultSofaColor!==currentSofaColor||resultLayerColorsSig!==currentLayerColorsSig||resultPillowWallSig!==pillowWallSig);renderResult=function renderResult(imageUrl){var img=new Image();img.crossOrigin="Anonymous";img.onload=function(){var canvas=document.createElement("canvas");canvas.width=internalSize;canvas.height=internalSize;canvas.dataset.bassettMockup="true";var ctx=canvas.getContext("2d",{willReadFrequently:true});ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";ctx.drawImage(img,0,0,internalSize,internalSize);// Bassett: fit image inside the square container (container may be <800px on narrow viewports)
 dom.roomMockup.innerHTML="";dom.roomMockup.appendChild(canvas);canvas.style.display="block";canvas.style.flexShrink="0";canvas.style.cursor="zoom-in";dom.roomMockup.style.cursor="zoom-in";function sizeCanvasToContainer(){var boxW=dom.roomMockup.clientWidth;var boxH=dom.roomMockup.clientHeight;var fitSize=Math.max(1,Math.min(boxW,boxH,800));canvas.style.width=fitSize+"px";canvas.style.height=fitSize+"px";}sizeCanvasToContainer();requestAnimationFrame(function(){requestAnimationFrame(sizeCanvasToContainer);});canvas._bassettZoomClick=function(){var overlay=document.createElement("div");overlay.id="bassettMockupOverlay";overlay.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;overflow:hidden;";var scrollWrap=document.createElement("div");scrollWrap.style.cssText="display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;overflow:auto;max-width:100%;max-height:100%;";var fullImg=new Image();fullImg.src=imageUrl;fullImg.style.maxWidth="90vmin";fullImg.style.maxHeight="90vmin";fullImg.style.width="auto";fullImg.style.height="auto";fullImg.style.cursor="pointer";fullImg.alt="Room mockup (click for full resolution)";scrollWrap.appendChild(fullImg);overlay.appendChild(scrollWrap);var isFullRes=false;var close=function close(){overlay.remove();document.body.style.overflow="";};overlay.addEventListener("click",function(e){if(e.target===overlay)close();});fullImg.addEventListener("click",function(e){e.stopPropagation();if(!isFullRes){var w=fullImg.naturalWidth||fullImg.width;var h=fullImg.naturalHeight||fullImg.height;if(w&&h){isFullRes=true;fullImg.style.maxWidth="none";fullImg.style.maxHeight="none";fullImg.style.width=w+"px";fullImg.style.height=h+"px";fullImg.alt="Room mockup full resolution (click to close)";scrollWrap.style.alignItems="flex-start";scrollWrap.style.justifyContent="flex-start";}}else{close();}});fullImg.onload=function(){fullImg.title="Click for full resolution, click again to close";};document.body.style.overflow="hidden";document.body.appendChild(overlay);};canvas.addEventListener("click",canvas._bassettZoomClick);};img.onerror=function(){dom.roomMockup.innerHTML="";};img.src=imageUrl;};if(!(resultUrl&&!stale)){_context36.n=2;break;}renderResult(resultUrl);return _context36.a(2);case 2:if(stale){appState.bassettResultUrl=null;appState.bassettResultPatternId=null;appState.bassettResultBlanketColor=null;appState.bassettResultScale=null;appState.bassettResultSofaColor=null;appState.bassettResultLayerColorsSig=null;appState.bassettResultPillowWallSig=null;}apiBase=(window.ColorFlexApiBaseUrl||"").replace(/\/$/,"");renderUrl=apiBase?apiBase+"/api/bassett/render":"/api/bassett/render";uploadUrl=apiBase?apiBase+"/api/bassett/upload-result":"/api/bassett/upload-result";// Try layer-stack composite first (no PSD): exported layers + displacement worker
 if(!(appState.currentPattern&&!appState.bassettRenderPending)){_context36.n=56;break;}thumb=appState.currentPattern.thumbnail||"";patternUrl=thumb.startsWith("http")?thumb:normalizePath(thumb);blanketColor=currentBlanketColor;baseUrl=getBassettLayersBaseUrl();if(!baseUrl||String(baseUrl).indexOf('http')!==0){baseUrl='https://s3.us-east-005.backblazeb2.com/cf-data/data/mockups/bassett/sofa-with-pillow-1';}appState.bassettRenderPending=true;hasExistingContent=dom.roomMockup.children.length>0;if(hasExistingContent){overlay=document.createElement("div");overlay.id="bassett-mockup-updating-overlay";overlay.setAttribute("aria-busy","true");overlay.style.cssText="position:absolute;inset:0;background:rgba(0,0,0,0.35);display:flex;flex-direction:column;align-items:center;justify-content:center;color:#e2e8f0;font-size:0.9rem;pointer-events:none;transition:opacity 0.2s ease;";overlay.innerHTML="<span style='color:#d4af37;'>Updating…</span>";dom.roomMockup.style.position=dom.roomMockup.style.position||"relative";dom.roomMockup.appendChild(overlay);}else{dom.roomMockup.innerHTML="";loadingWrap=document.createElement("div");loadingWrap.style.cssText="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#e2e8f0;padding:1rem;text-align:center;box-sizing:border-box;";loadingWrap.innerHTML="<p style='margin-bottom:0.5rem;'>Generating room preview…</p><p style='font-size:0.85rem;color:#94a3b8;'>Using layers + displacement</p>";dom.roomMockup.appendChild(loadingWrap);}layerCompositeOk=false;_context36.p=3;getPillowSolidColor=function getPillowSolidColor(colorSourceIndex){var layers=appState.currentLayers||[];var idx=Math.max(0,Math.min(colorSourceIndex,layers.length-1));var c=layers[idx]&&layers[idx].color?lookupColor(layers[idx].color):"#888888";return normalizeBlanketHex(c);};applyLayerTransform=function applyLayerTransform(ctx,transform,outW,outH){if(!transform||_typeof(transform)!=='object')return;var cx=outW/2;var cy=outH/2;ctx.translate(cx,cy);if(transform.rotation!=null&&transform.rotation!==0){var rad=transform.rotation*Math.PI/180;ctx.rotate(rad);}var sx=transform.scaleX!=null?transform.scaleX:transform.scale!=null?transform.scale:1;var sy=transform.scaleY!=null?transform.scaleY:transform.scale!=null?transform.scale:1;if(sx!==1||sy!==1)ctx.scale(sx,sy);ctx.translate(-cx,-cy);var tx=transform.translateX!=null?transform.translateX:0;var ty=transform.translateY!=null?transform.translateY:0;if(tx!==0||ty!==0)ctx.translate(tx,ty);};// Single shared tiled canvas (outW x outH) so all pattern-displaced layers use the same
 // pattern phase — fixes seam/gap when sofa (or other mesh) is split into multiple DSPL parts.
 _context36.n=4;return new Promise(function(r){requestAnimationFrame(function(){requestAnimationFrame(r);});});case 4:layerUrl=function layerUrl(path){var url=baseUrl+"/"+path;if(typeof window!=="undefined"&&window.BASSETT_LAYER_CACHE_BUST){url+=(url.indexOf("?")>=0?"&":"?")+"v="+(window.BASSETT_LAYER_CACHE_BUST===true?Date.now():window.BASSETT_LAYER_CACHE_BUST);}return url;};loadImg=function loadImg(src){return new Promise(function(resolve,reject){var img=new Image();img.crossOrigin="anonymous";img.onload=function(){resolve(img);};img.onerror=function(){reject(new Error("Load "+src));};img.src=src;});};// Use pattern preview canvas (with current sofa/fabric color) when available so UI color changes update the mockup
-patternImg=null;if(!dom.preview){_context36.n=9;break;}previewCanvas=dom.preview.querySelector("canvas");if(!(previewCanvas&&previewCanvas.width>0&&previewCanvas.height>0)){_context36.n=9;break;}_context36.p=5;dataUrl=previewCanvas.toDataURL("image/png");if(!(dataUrl&&dataUrl.indexOf("data:")===0)){_context36.n=7;break;}_context36.n=6;return loadImg(dataUrl);case 6:patternImg=_context36.v;case 7:_context36.n=9;break;case 8:_context36.p=8;_t42=_context36.v;case 9:if(patternImg){_context36.n=11;break;}_context36.n=10;return loadImg(patternUrl);case 10:patternImg=_context36.v;case 11:stack=getBassettLayerStack();fromWindow=typeof window!=='undefined'&&window.BASSETT_LAYER_STACK===stack;stackFiles=stack.map(function(l){return l&&(l.displacementFile||l.file);}).filter(Boolean);console.log("[Bassett composite] stack source:",fromWindow?"window.BASSETT_LAYER_STACK":"CFM internal (rebuild + deploy Bassett bundle for transforms)","layers:",stack.length,"files:",stackFiles.join(", "));if(!fromWindow&&typeof window!=='undefined')console.warn("[Bassett] Run: npm run build -- --env mode=bassett then deploy assets, or use ./deploy-shopify-cli.sh bassett");for(di=0;di<stack.length;di++){l=stack[di];if(l&&l.transform)console.log("  layer",l.id||di,"transform:",JSON.stringify(l.transform));}firstImageLayer=null;si=0;case 12:if(!(si<stack.length)){_context36.n=14;break;}if(!(stack[si].type==='image'&&stack[si].file)){_context36.n=13;break;}firstImageLayer=stack[si];return _context36.a(3,14);case 13:si++;_context36.n=12;break;case 14:cw=1;ch=1;if(!firstImageLayer){_context36.n=18;break;}bgUrl=layerUrl(firstImageLayer.file);_context36.p=15;_context36.n=16;return loadImg(bgUrl);case 16:bgImg=_context36.v;cw=bgImg.naturalWidth||1;ch=bgImg.naturalHeight||1;_context36.n=18;break;case 17:_context36.p=17;_t43=_context36.v;console.error("Bassett: first image layer failed to load. URL:",bgUrl,_t43&&_t43.message?_t43.message:_t43);throw _t43;case 18:outW=internalSize;outH=internalSize;scaleToOut=outW/cw;compCanvas=document.createElement("canvas");compCanvas.width=outW;compCanvas.height=outH;ctx=compCanvas.getContext("2d");ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";masterTiledCanvas=null;hasPatternDisplaced=stack.some(function(l){return l&&l.type==='pattern-displaced'&&l.displacementFile;});if(!(hasPatternDisplaced&&patternImg)){_context36.n=23;break;}patternForTiling=appState.currentPattern;layersForTiling=patternForTiling&&patternForTiling.layers&&patternForTiling.layers.length>0?patternForTiling.layers:null;layerMappingB=getLayerMappingForPreview(false);patternStartIdx=layerMappingB.patternStartIndex;tilingTypeB=patternForTiling&&patternForTiling.tilingType||"";isHalfDropB=isHalfDropTiling(tilingTypeB);masterTiledCanvas=document.createElement("canvas");masterTiledCanvas.width=outW;masterTiledCanvas.height=outH;mctx=masterTiledCanvas.getContext("2d");mctx.imageSmoothingEnabled=true;mctx.imageSmoothingQuality="high";if(!layersForTiling){_context36.n=22;break;}lIdx=0;case 19:if(!(lIdx<layersForTiling.length)){_context36.n=21;break;}ly=layersForTiling[lIdx];layerPathB=typeof ly==="string"?ly:ly&&(ly.path||ly.proofPath);isShadowB=ly&&_typeof(ly)==="object"&&ly.isShadow===true||layerPathB&&(String(layerPathB).toUpperCase().includes("_SHADOW_")||String(layerPathB).toUpperCase().includes("SHADOW_LAYER")||String(layerPathB).toUpperCase().includes("ISSHADOW"));inputIdx=patternStartIdx+lIdx;layerColorB=isShadowB?null:appState.currentLayers&&appState.currentLayers[inputIdx]?lookupColor(appState.currentLayers[inputIdx].color||"Snowbound"):"#7f817e";_context36.n=20;return new Promise(function(resolve){processImage(layerPathB,function(processedCanvas){if(!processedCanvas||!(processedCanvas instanceof HTMLCanvasElement)){resolve();return;}var pcw=processedCanvas.width;var pch=processedCanvas.height;var repsB=3.85;var scaleB=Math.min(outW/(pcw*repsB),outH/(pch*repsB));var twB=pcw*scaleB;var thB=pch*scaleB;mctx.globalCompositeOperation=isShadowB?"multiply":"source-over";mctx.globalAlpha=isShadowB?0.3:1.0;var numCols=Math.ceil((outW+2*twB)/twB)+1;var numRows=Math.ceil((outH+2*thB)/thB)+1;for(var i=-numCols;i<=numCols;i++){var txB=i*twB;var yOff=isHalfDropB&&(i&1)!==0?thB/2:0;for(var j=-numRows;j<=numRows;j++){var tyB=j*thB+yOff;mctx.drawImage(processedCanvas,txB,tyB,twB,thB);}}mctx.globalAlpha=1.0;resolve();},layerColorB,2.2,isShadowB,false,false);});case 20:lIdx++;_context36.n=19;break;case 21:_context36.n=23;break;case 22:sizeIn=patternForTiling&&patternForTiling.size&&patternForTiling.size.length>=2?patternForTiling.size:[24,24];aspect=sizeIn[0]/sizeIn[1];reps=3.85;tw=outW>=outH?outH/reps*aspect:outW/reps;th=outW>=outH?outH/reps:outW/reps/aspect;numColsT=Math.ceil((outW+2*tw)/tw)+1;numRowsT=Math.ceil((outH+2*th)/th)+1;for(i=-numColsT;i<=numColsT;i++){tx=i*tw;for(j=-numRowsT;j<=numRowsT;j++){mctx.drawImage(patternImg,tx,j*th,tw,th);}}case 23:li=0;case 24:if(!(li<stack.length)){_context36.n=53;break;}layer=stack[li];ctx.globalAlpha=1;ctx.globalCompositeOperation="source-over";if(!(layer.type==='image'&&layer.file)){_context36.n=28;break;}if(!(firstImageLayer&&li===0&&layer.file===firstImageLayer.file)){_context36.n=25;break;}_t44=bgImg;_context36.n=27;break;case 25:_context36.n=26;return loadImg(layerUrl(layer.file));case 26:_t44=_context36.v;case 27:limg=_t44;lw=limg.naturalWidth||limg.width;lh=limg.naturalHeight||limg.height;ctx.drawImage(limg,0,0,lw,lh,0,0,outW,outH);_context36.n=52;break;case 28:if(!(layer.type==='wall-pattern'&&layer.file&&appState.bassettWallpaperOn)){_context36.n=33;break;}_context36.p=29;_context36.n=30;return loadImg(layerUrl(layer.file));case 30:wallMaskImg=_context36.v;ww=wallMaskImg.naturalWidth;wh=wallMaskImg.naturalHeight;wallTile=document.createElement("canvas");wallTile.width=ww;wallTile.height=wh;wctx=wallTile.getContext("2d");wctx.imageSmoothingEnabled=true;wctx.imageSmoothingQuality="high";if(layer.transform&&_typeof(layer.transform)==='object'){wctx.save();applyLayerTransform(wctx,layer.transform,ww,wh);}patternForWall=appState.currentPattern;sizeWall=patternForWall&&patternForWall.size&&patternForWall.size.length>=2?patternForWall.size:[24,24];aspectWall=sizeWall[0]/sizeWall[1];repsWall=Math.max(4,Math.ceil(outW/ww)+2);if(ww>=wh){thWall=wh/4;twWall=thWall*aspectWall;}else{twWall=ww/4;thWall=twWall/aspectWall;}for(tx=-twWall;tx<ww+twWall*repsWall;tx+=twWall){for(ty=-thWall;ty<wh+thWall*repsWall;ty+=thWall){wctx.drawImage(patternImg,tx,ty,twWall,thWall);}}if(layer.transform&&_typeof(layer.transform)==='object')wctx.restore();wctx.globalCompositeOperation="destination-in";wctx.drawImage(wallMaskImg,0,0);ctx.drawImage(wallTile,0,0,outW,outH);_context36.n=32;break;case 31:_context36.p=31;_t45=_context36.v;console.warn("Bassett: wall-pattern layer skipped (missing mask?)",_t45&&_t45.message?_t45.message:_t45);case 32:_context36.n=52;break;case 33:if(!(layer.type==='pattern-displaced'&&layer.displacementFile)){_context36.n=50;break;}isPillow1=layer.id==='pillow1-displaced';isPillow2=layer.id==='pillow2-displaced';useSolid=isPillow1&&appState.bassettPillow1Style==='solid'||isPillow2&&appState.bassettPillow2Style==='solid';pillowMaskFile=isPillow1?'PILLOW-1.png':isPillow2?'PILLOW-2.png':null;if(!(useSolid&&pillowMaskFile)){_context36.n=37;break;}_context36.p=34;_context36.n=35;return loadImg(layerUrl(pillowMaskFile));case 35:pimg=_context36.v;pillHex=isPillow1?getPillowSolidColor(appState.bassettPillow1ColorSource!=null?appState.bassettPillow1ColorSource:0):getPillowSolidColor(appState.bassettPillow2ColorSource!=null?appState.bassettPillow2ColorSource:1);pillCanvas=document.createElement("canvas");pillCanvas.width=outW;pillCanvas.height=outH;pctx=pillCanvas.getContext("2d");pw=pimg.naturalWidth||pimg.width,ph=pimg.naturalHeight||pimg.height;pctx.drawImage(pimg,0,0,pw,ph,0,0,outW,outH);pctx.globalCompositeOperation="multiply";pctx.fillStyle="#"+pillHex.replace(/^#/,"");pctx.fillRect(0,0,outW,outH);pctx.globalCompositeOperation="destination-in";pctx.drawImage(pillCanvas,0,0,outW,outH,0,0,outW,outH);pctx.globalCompositeOperation="source-over";ctx.drawImage(pillCanvas,0,0);_context36.n=37;break;case 36:_context36.p=36;_t46=_context36.v;useSolid=false;case 37:if(useSolid){_context36.n=49;break;}dispUrl=layerUrl(layer.displacementFile);_context36.p=38;_context36.n=39;return loadImg(dispUrl);case 39:dispImg=_context36.v;_context36.n=41;break;case 40:_context36.p=40;_t47=_context36.v;console.error("Bassett: failed to load displacement map:",layer.displacementFile,"URL:",dispUrl,_t47&&_t47.message?_t47.message:_t47);return _context36.a(3,52);case 41:dw=dispImg.naturalWidth;dh=dispImg.naturalHeight;tileCanvas=document.createElement("canvas");tileCanvas.width=dw;tileCanvas.height=dh;tctx=tileCanvas.getContext("2d");tctx.imageSmoothingEnabled=true;tctx.imageSmoothingQuality="high";if(!masterTiledCanvas){_context36.n=42;break;}// Do not apply layer transform when using shared master — transform shifts this layer's
+patternImg=null;if(!dom.preview){_context36.n=9;break;}previewCanvas=dom.preview.querySelector("canvas");if(!(previewCanvas&&previewCanvas.width>0&&previewCanvas.height>0)){_context36.n=9;break;}_context36.p=5;dataUrl=previewCanvas.toDataURL("image/png");if(!(dataUrl&&dataUrl.indexOf("data:")===0)){_context36.n=7;break;}_context36.n=6;return loadImg(dataUrl);case 6:patternImg=_context36.v;case 7:_context36.n=9;break;case 8:_context36.p=8;_t43=_context36.v;case 9:if(patternImg){_context36.n=11;break;}_context36.n=10;return loadImg(patternUrl);case 10:patternImg=_context36.v;case 11:stack=getBassettLayerStack();fromWindow=typeof window!=='undefined'&&window.BASSETT_LAYER_STACK===stack;stackFiles=stack.map(function(l){return l&&(l.displacementFile||l.file);}).filter(Boolean);console.log("[Bassett composite] stack source:",fromWindow?"window.BASSETT_LAYER_STACK":"CFM internal (rebuild + deploy Bassett bundle for transforms)","layers:",stack.length,"files:",stackFiles.join(", "));if(!fromWindow&&typeof window!=='undefined')console.warn("[Bassett] Run: npm run build -- --env mode=bassett then deploy assets, or use ./deploy-shopify-cli.sh bassett");for(di=0;di<stack.length;di++){l=stack[di];if(l&&l.transform)console.log("  layer",l.id||di,"transform:",JSON.stringify(l.transform));}firstImageLayer=null;si=0;case 12:if(!(si<stack.length)){_context36.n=14;break;}if(!(stack[si].type==='image'&&stack[si].file)){_context36.n=13;break;}firstImageLayer=stack[si];return _context36.a(3,14);case 13:si++;_context36.n=12;break;case 14:cw=1;ch=1;if(!firstImageLayer){_context36.n=18;break;}bgUrl=layerUrl(firstImageLayer.file);_context36.p=15;_context36.n=16;return loadImg(bgUrl);case 16:bgImg=_context36.v;cw=bgImg.naturalWidth||1;ch=bgImg.naturalHeight||1;_context36.n=18;break;case 17:_context36.p=17;_t44=_context36.v;console.error("Bassett: first image layer failed to load. URL:",bgUrl,_t44&&_t44.message?_t44.message:_t44);throw _t44;case 18:outW=internalSize;outH=internalSize;scaleToOut=outW/cw;compCanvas=document.createElement("canvas");compCanvas.width=outW;compCanvas.height=outH;ctx=compCanvas.getContext("2d");ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality="high";masterTiledCanvas=null;hasPatternDisplaced=stack.some(function(l){return l&&l.type==='pattern-displaced'&&l.displacementFile;});if(!(hasPatternDisplaced&&patternImg)){_context36.n=23;break;}patternForTiling=appState.currentPattern;layersForTiling=patternForTiling&&patternForTiling.layers&&patternForTiling.layers.length>0?patternForTiling.layers:null;layerMappingB=getLayerMappingForPreview(false);patternStartIdx=layerMappingB.patternStartIndex;tilingTypeB=patternForTiling&&patternForTiling.tilingType||"";isHalfDropB=isHalfDropTiling(tilingTypeB);masterTiledCanvas=document.createElement("canvas");masterTiledCanvas.width=outW;masterTiledCanvas.height=outH;mctx=masterTiledCanvas.getContext("2d");mctx.imageSmoothingEnabled=true;mctx.imageSmoothingQuality="high";if(!layersForTiling){_context36.n=22;break;}lIdx=0;case 19:if(!(lIdx<layersForTiling.length)){_context36.n=21;break;}ly=layersForTiling[lIdx];layerPathB=typeof ly==="string"?ly:ly&&(ly.path||ly.proofPath);isShadowB=ly&&_typeof(ly)==="object"&&ly.isShadow===true||layerPathB&&(String(layerPathB).toUpperCase().includes("_SHADOW_")||String(layerPathB).toUpperCase().includes("SHADOW_LAYER")||String(layerPathB).toUpperCase().includes("ISSHADOW"));inputIdx=patternStartIdx+lIdx;layerColorB=isShadowB?null:appState.currentLayers&&appState.currentLayers[inputIdx]?lookupColor(appState.currentLayers[inputIdx].color||"Snowbound"):"#7f817e";_context36.n=20;return new Promise(function(resolve){processImage(layerPathB,function(processedCanvas){if(!processedCanvas||!(processedCanvas instanceof HTMLCanvasElement)){resolve();return;}var pcw=processedCanvas.width;var pch=processedCanvas.height;var repsB=3.85;var scaleB=Math.min(outW/(pcw*repsB),outH/(pch*repsB));var twB=pcw*scaleB;var thB=pch*scaleB;mctx.globalCompositeOperation=isShadowB?"multiply":"source-over";mctx.globalAlpha=isShadowB?0.3:1.0;var numCols=Math.ceil((outW+2*twB)/twB)+1;var numRows=Math.ceil((outH+2*thB)/thB)+1;for(var i=-numCols;i<=numCols;i++){var txB=i*twB;var yOff=isHalfDropB&&(i&1)!==0?thB/2:0;for(var j=-numRows;j<=numRows;j++){var tyB=j*thB+yOff;mctx.drawImage(processedCanvas,txB,tyB,twB,thB);}}mctx.globalAlpha=1.0;resolve();},layerColorB,2.2,isShadowB,false,false);});case 20:lIdx++;_context36.n=19;break;case 21:_context36.n=23;break;case 22:sizeIn=patternForTiling&&patternForTiling.size&&patternForTiling.size.length>=2?patternForTiling.size:[24,24];aspect=sizeIn[0]/sizeIn[1];reps=3.85;tw=outW>=outH?outH/reps*aspect:outW/reps;th=outW>=outH?outH/reps:outW/reps/aspect;numColsT=Math.ceil((outW+2*tw)/tw)+1;numRowsT=Math.ceil((outH+2*th)/th)+1;for(i=-numColsT;i<=numColsT;i++){tx=i*tw;for(j=-numRowsT;j<=numRowsT;j++){mctx.drawImage(patternImg,tx,j*th,tw,th);}}case 23:li=0;case 24:if(!(li<stack.length)){_context36.n=53;break;}layer=stack[li];ctx.globalAlpha=1;ctx.globalCompositeOperation="source-over";if(!(layer.type==='image'&&layer.file)){_context36.n=28;break;}if(!(firstImageLayer&&li===0&&layer.file===firstImageLayer.file)){_context36.n=25;break;}_t45=bgImg;_context36.n=27;break;case 25:_context36.n=26;return loadImg(layerUrl(layer.file));case 26:_t45=_context36.v;case 27:limg=_t45;lw=limg.naturalWidth||limg.width;lh=limg.naturalHeight||limg.height;ctx.drawImage(limg,0,0,lw,lh,0,0,outW,outH);_context36.n=52;break;case 28:if(!(layer.type==='wall-pattern'&&layer.file&&appState.bassettWallpaperOn)){_context36.n=33;break;}_context36.p=29;_context36.n=30;return loadImg(layerUrl(layer.file));case 30:wallMaskImg=_context36.v;ww=wallMaskImg.naturalWidth;wh=wallMaskImg.naturalHeight;wallTile=document.createElement("canvas");wallTile.width=ww;wallTile.height=wh;wctx=wallTile.getContext("2d");wctx.imageSmoothingEnabled=true;wctx.imageSmoothingQuality="high";if(layer.transform&&_typeof(layer.transform)==='object'){wctx.save();applyLayerTransform(wctx,layer.transform,ww,wh);}patternForWall=appState.currentPattern;sizeWall=patternForWall&&patternForWall.size&&patternForWall.size.length>=2?patternForWall.size:[24,24];aspectWall=sizeWall[0]/sizeWall[1];repsWall=Math.max(4,Math.ceil(outW/ww)+2);if(ww>=wh){thWall=wh/4;twWall=thWall*aspectWall;}else{twWall=ww/4;thWall=twWall/aspectWall;}for(tx=-twWall;tx<ww+twWall*repsWall;tx+=twWall){for(ty=-thWall;ty<wh+thWall*repsWall;ty+=thWall){wctx.drawImage(patternImg,tx,ty,twWall,thWall);}}if(layer.transform&&_typeof(layer.transform)==='object')wctx.restore();wctx.globalCompositeOperation="destination-in";wctx.drawImage(wallMaskImg,0,0);ctx.drawImage(wallTile,0,0,outW,outH);_context36.n=32;break;case 31:_context36.p=31;_t46=_context36.v;console.warn("Bassett: wall-pattern layer skipped (missing mask?)",_t46&&_t46.message?_t46.message:_t46);case 32:_context36.n=52;break;case 33:if(!(layer.type==='pattern-displaced'&&layer.displacementFile)){_context36.n=50;break;}isPillow1=layer.id==='pillow1-displaced';isPillow2=layer.id==='pillow2-displaced';useSolid=isPillow1&&appState.bassettPillow1Style==='solid'||isPillow2&&appState.bassettPillow2Style==='solid';pillowMaskFile=isPillow1?'PILLOW-1.png':isPillow2?'PILLOW-2.png':null;if(!(useSolid&&pillowMaskFile)){_context36.n=37;break;}_context36.p=34;_context36.n=35;return loadImg(layerUrl(pillowMaskFile));case 35:pimg=_context36.v;pillHex=isPillow1?getPillowSolidColor(appState.bassettPillow1ColorSource!=null?appState.bassettPillow1ColorSource:0):getPillowSolidColor(appState.bassettPillow2ColorSource!=null?appState.bassettPillow2ColorSource:1);pillCanvas=document.createElement("canvas");pillCanvas.width=outW;pillCanvas.height=outH;pctx=pillCanvas.getContext("2d");pw=pimg.naturalWidth||pimg.width,ph=pimg.naturalHeight||pimg.height;pctx.drawImage(pimg,0,0,pw,ph,0,0,outW,outH);pctx.globalCompositeOperation="multiply";pctx.fillStyle="#"+pillHex.replace(/^#/,"");pctx.fillRect(0,0,outW,outH);pctx.globalCompositeOperation="destination-in";pctx.drawImage(pillCanvas,0,0,outW,outH,0,0,outW,outH);pctx.globalCompositeOperation="source-over";ctx.drawImage(pillCanvas,0,0);_context36.n=37;break;case 36:_context36.p=36;_t47=_context36.v;useSolid=false;case 37:if(useSolid){_context36.n=49;break;}dispUrl=layerUrl(layer.displacementFile);_context36.p=38;_context36.n=39;return loadImg(dispUrl);case 39:dispImg=_context36.v;_context36.n=41;break;case 40:_context36.p=40;_t48=_context36.v;console.error("Bassett: failed to load displacement map:",layer.displacementFile,"URL:",dispUrl,_t48&&_t48.message?_t48.message:_t48);return _context36.a(3,52);case 41:dw=dispImg.naturalWidth;dh=dispImg.naturalHeight;tileCanvas=document.createElement("canvas");tileCanvas.width=dw;tileCanvas.height=dh;tctx=tileCanvas.getContext("2d");tctx.imageSmoothingEnabled=true;tctx.imageSmoothingQuality="high";if(!masterTiledCanvas){_context36.n=42;break;}// Do not apply layer transform when using shared master — transform shifts this layer's
 // sampling and breaks the seam (offset at part boundaries for non-square patterns).
-tctx.drawImage(masterTiledCanvas,0,0,outW,outH,0,0,dw,dh);_context36.n=48;break;case 42:if(layer.transform&&_typeof(layer.transform)==='object'){tctx.save();applyLayerTransform(tctx,layer.transform,dw,dh);}patternForTiling=appState.currentPattern;layersForTiling=patternForTiling&&patternForTiling.layers&&patternForTiling.layers.length>0?patternForTiling.layers:null;layerMappingB=getLayerMappingForPreview(false);patternStartIdx=layerMappingB.patternStartIndex;tilingTypeB=patternForTiling&&patternForTiling.tilingType||"";isHalfDropB=isHalfDropTiling(tilingTypeB);if(!layersForTiling){_context36.n=46;break;}lIdx=0;case 43:if(!(lIdx<layersForTiling.length)){_context36.n=45;break;}ly=layersForTiling[lIdx];layerPathB=typeof ly==="string"?ly:ly&&(ly.path||ly.proofPath);isShadowB=ly&&_typeof(ly)==="object"&&ly.isShadow===true||layerPathB&&(String(layerPathB).toUpperCase().includes("_SHADOW_")||String(layerPathB).toUpperCase().includes("SHADOW_LAYER")||String(layerPathB).toUpperCase().includes("ISSHADOW"));inputIdx=patternStartIdx+lIdx;layerColorB=isShadowB?null:appState.currentLayers&&appState.currentLayers[inputIdx]?lookupColor(appState.currentLayers[inputIdx].color||"Snowbound"):"#7f817e";_context36.n=44;return new Promise(function(resolve){processImage(layerPathB,function(processedCanvas){if(!processedCanvas||!(processedCanvas instanceof HTMLCanvasElement)){resolve();return;}var pcw=processedCanvas.width;var pch=processedCanvas.height;var repsB=3.85;var scaleB=Math.min(dw/(pcw*repsB),dh/(pch*repsB));var twB=pcw*scaleB;var thB=pch*scaleB;tctx.globalCompositeOperation=isShadowB?"multiply":"source-over";tctx.globalAlpha=isShadowB?0.3:1.0;var numColsL=Math.ceil((dw+2*twB)/twB)+1;var numRowsL=Math.ceil((dh+2*thB)/thB)+1;for(var i=-numColsL;i<=numColsL;i++){var txB=i*twB;var yOff=isHalfDropB&&(i&1)!==0?thB/2:0;for(var j=-numRowsL;j<=numRowsL;j++){tctx.drawImage(processedCanvas,txB,j*thB+yOff,twB,thB);}}tctx.globalAlpha=1.0;resolve();},layerColorB,2.2,isShadowB,false,false);});case 44:lIdx++;_context36.n=43;break;case 45:_context36.n=47;break;case 46:sizeIn=patternForTiling&&patternForTiling.size&&patternForTiling.size.length>=2?patternForTiling.size:[24,24];aspect=sizeIn[0]/sizeIn[1];reps=3.85;tw=dw>=dh?dh/reps*aspect:dw/reps;th=dw>=dh?dh/reps:dw/reps/aspect;numColsF=Math.ceil((dw+2*tw)/tw)+1;numRowsF=Math.ceil((dh+2*th)/th)+1;for(i=-numColsF;i<=numColsF;i++){for(j=-numRowsF;j<=numRowsF;j++){tctx.drawImage(patternImg,i*tw,j*th,tw,th);}}case 47:if(layer.transform&&_typeof(layer.transform)==='object')tctx.restore();case 48:tctx.globalCompositeOperation="destination-in";tctx.drawImage(dispImg,0,0);ctx.globalCompositeOperation="multiply";ctx.drawImage(tileCanvas,0,0,outW,outH);ctx.globalCompositeOperation="source-over";case 49:_context36.n=52;break;case 50:if(!(layer.type==='solid-color'&&layer.file)){_context36.n=52;break;}_context36.n=51;return loadImg(layerUrl(layer.file));case 51:blimg=_context36.v;blanketCanvas=document.createElement("canvas");blanketCanvas.width=outW;blanketCanvas.height=outH;bctx=blanketCanvas.getContext("2d");bctx.drawImage(blimg,0,0,outW,outH);bctx.globalCompositeOperation="multiply";hex=blanketColor.replace(/^#/,"");bctx.fillStyle="#"+hex;bctx.fillRect(0,0,outW,outH);bctx.globalCompositeOperation="destination-in";bctx.drawImage(blimg,0,0,outW,outH);bctx.globalCompositeOperation="source-over";ctx.drawImage(blanketCanvas,0,0);case 52:li++;_context36.n=24;break;case 53:dataUrl=compCanvas.toDataURL("image/png");appState.bassettResultUrl=dataUrl;appState.bassettResultPatternId=currentId;appState.bassettResultBlanketColor=currentBlanketColor;appState.bassettResultScale=currentScaleMultiplier;appState.bassettResultSofaColor=currentSofaColor;appState.bassettResultLayerColorsSig=currentLayerColorsSig;appState.bassettResultPillowWallSig=pillowWallSig;layerCompositeOk=true;_context36.n=55;break;case 54:_context36.p=54;_t48=_context36.v;console.warn("Bassett layer composite failed:",_t48);if(_t48&&_t48.message)console.warn("  Message:",_t48.message);case 55:appState.bassettRenderPending=false;if(!layerCompositeOk){_context36.n=56;break;}updateBassettRoomMockup();return _context36.a(2);case 56:if(!(appState.currentPattern&&!appState.bassettRenderPending)){_context36.n=63;break;}_thumb=appState.currentPattern.thumbnail||"";_patternUrl=_thumb.startsWith("http")?_thumb:normalizePath(_thumb);_blanketColor=currentBlanketColor;appState.bassettRenderPending=true;dom.roomMockup.innerHTML="";_loadingWrap=document.createElement("div");_loadingWrap.style.cssText="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#e2e8f0;padding:1rem;text-align:center;box-sizing:border-box;";_loadingWrap.innerHTML="<p style='margin-bottom:0.5rem;'>Generating room preview…</p><p style='font-size:0.85rem;color:#94a3b8;'>Using your selected pattern</p>";dom.roomMockup.appendChild(_loadingWrap);_context36.p=57;body={patternUrl:_patternUrl,blanketColor:_blanketColor};if(currentScaleMultiplier!=null&&currentScaleMultiplier!==1)body.scaleMultiplier=currentScaleMultiplier;_context36.n=58;return fetch(renderUrl,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});case 58:res=_context36.v;appState.bassettRenderPending=false;if(!(res.ok&&res.headers.get("content-type")&&res.headers.get("content-type").indexOf("image/png")>=0)){_context36.n=60;break;}_context36.n=59;return res.blob();case 59:blob=_context36.v;prevUrl=appState.bassettResultUrl;if(prevUrl&&prevUrl.startsWith("blob:"))URL.revokeObjectURL(prevUrl);appState.bassettResultUrl=URL.createObjectURL(blob);appState.bassettResultPatternId=currentId;appState.bassettResultBlanketColor=currentBlanketColor;appState.bassettResultScale=currentScaleMultiplier;updateBassettRoomMockup();return _context36.a(2);case 60:_context36.n=61;return res.json()["catch"](function(){return{};});case 61:errBody=_context36.v;if(res.status===503){console.warn("Bassett render not available:",errBody.message||"server not configured");}_context36.n=63;break;case 62:_context36.p=62;_t49=_context36.v;appState.bassettRenderPending=false;console.warn("Bassett render request failed:",_t49);case 63:// Fallback: no pattern, API unavailable, or failed — show upload UI (copy-safe command: paths in quotes so paste won't break shell)
-dom.roomMockup.innerHTML="";wrap=document.createElement("div");wrap.style.cssText="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#e2e8f0;padding:1rem;text-align:center;box-sizing:border-box;";wrap.innerHTML="<p style='margin-bottom:0.75rem;'>Preview couldn't be generated from layers. Check the browser console (F12) for errors.</p>"+"<p style='font-size:0.9rem;color:#94a3b8;margin-bottom:0.75rem;'>Ensure layer images and the displacement worker are available, or upload a result image below.</p>"+"<label style='cursor:pointer;display:inline-block;padding:0.5rem 1rem;background:#d4af37;color:#1a202c;border-radius:6px;font-weight:600;'>Upload Bassett result</label>"+"<input type='file' accept='image/*' id='bassettUploadInput' style='display:none'>";dom.roomMockup.appendChild(wrap);input=document.getElementById("bassettUploadInput");if(input){input.onchange=/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee27(){var file,reader;return _regenerator().w(function(_context35){while(1)switch(_context35.n){case 0:file=input.files&&input.files[0];if(file){_context35.n=1;break;}return _context35.a(2);case 1:reader=new FileReader();reader.onload=/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee26(){var dataUrl,_res,data,_t41;return _regenerator().w(function(_context34){while(1)switch(_context34.p=_context34.n){case 0:dataUrl=reader.result;_context34.p=1;_context34.n=2;return fetch(uploadUrl,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:dataUrl,filename:file.name||"bassett-room.png"})});case 2:_res=_context34.v;_context34.n=3;return _res.json();case 3:data=_context34.v;if(data.url){appState.bassettResultUrl=data.url;appState.bassettResultPatternId=currentId;appState.bassettResultBlanketColor=currentBlanketColor;appState.bassettResultScale=currentScaleMultiplier;updateBassettRoomMockup();}else{alert(data.error||"Upload failed");}_context34.n=5;break;case 4:_context34.p=4;_t41=_context34.v;alert("Upload failed: "+(_t41.message||_t41));case 5:input.value="";case 6:return _context34.a(2);}},_callee26,null,[[1,4]]);}));reader.readAsDataURL(file);case 2:return _context35.a(2);}},_callee27);}));wrap.querySelector("label").addEventListener("click",function(){return input.click();});}case 64:return _context36.a(2);}},_callee28,null,[[57,62],[38,40],[34,36],[29,31],[15,17],[5,8],[3,54]]);}));return _updateBassettRoomMockup.apply(this,arguments);}function openRoomMockupFullscreen(source){var overlay=document.createElement("div");overlay.id="roomMockupFullscreenOverlay";overlay.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;overflow:hidden;";var scrollWrap=document.createElement("div");scrollWrap.style.cssText="display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;overflow:auto;max-width:100%;max-height:100%;";var close=function close(){overlay.remove();document.body.style.overflow="";};overlay.addEventListener("click",function(e){if(e.target===overlay)close();});if(typeof source==="string"){var fullImg=new Image();fullImg.src=source;fullImg.style.maxWidth="90vmin";fullImg.style.maxHeight="90vmin";fullImg.style.width="auto";fullImg.style.height="auto";fullImg.style.cursor="pointer";fullImg.alt="Room mockup (click for full resolution)";scrollWrap.appendChild(fullImg);var isFullRes=false;fullImg.addEventListener("click",function(e){e.stopPropagation();if(!isFullRes){var w=fullImg.naturalWidth||fullImg.width;var h=fullImg.naturalHeight||fullImg.height;if(w&&h){isFullRes=true;fullImg.style.maxWidth="none";fullImg.style.maxHeight="none";fullImg.style.width=w+"px";fullImg.style.height=h+"px";fullImg.alt="Room mockup full resolution (click to close)";scrollWrap.style.alignItems="flex-start";scrollWrap.style.justifyContent="flex-start";}}else{close();}});fullImg.onload=function(){fullImg.title="Click for full resolution, click again to close";};}else if(source&&source.tagName==="CANVAS"){var dataUrl;try{dataUrl=source.toDataURL("image/png");}catch(err){dataUrl=null;}if(dataUrl){var _fullImg=new Image();_fullImg.src=dataUrl;_fullImg.style.maxWidth="90vmin";_fullImg.style.maxHeight="90vmin";_fullImg.style.width="auto";_fullImg.style.height="auto";_fullImg.style.cursor="pointer";_fullImg.alt="Room mockup (click for full resolution)";scrollWrap.appendChild(_fullImg);var _isFullRes=false;_fullImg.addEventListener("click",function(e){e.stopPropagation();if(!_isFullRes){var w=_fullImg.naturalWidth||_fullImg.width;var h=_fullImg.naturalHeight||_fullImg.height;if(w&&h){_isFullRes=true;_fullImg.style.maxWidth="none";_fullImg.style.maxHeight="none";_fullImg.style.width=w+"px";_fullImg.style.height=h+"px";_fullImg.alt="Room mockup full resolution (click to close)";scrollWrap.style.alignItems="flex-start";scrollWrap.style.justifyContent="flex-start";}}else{close();}});_fullImg.onload=function(){_fullImg.title="Click for full resolution, click again to close";};}else{var clone=source.cloneNode(true);clone.style.width=source.width+"px";clone.style.height=source.height+"px";clone.style.cursor="pointer";clone.title="Click to close";scrollWrap.appendChild(clone);clone.addEventListener("click",function(e){e.stopPropagation();close();});}}overlay.appendChild(scrollWrap);document.body.style.overflow="hidden";document.body.appendChild(overlay);}//  room mockup
-var updateRoomMockup=/*#__PURE__*/function(){var _ref16=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee10(){var _appState$currentPatt16,_appState$currentPatt17,_appState$selectedCol41,_appState$selectedCol42,_appState$selectedCol43,_appState$currentLaye0,_appState$currentLaye1,computeTileSizeFromInches,effectiveMockup,mockupWidthInches,mockupHeightInches,mockupAspect,rect,cssW,cssH,dpr,snap,mod,pxPerInRoom,canvas,_ctx2,isStandardPattern,isClothingCollection,isClothingMode,isFurnitureMode,isWallPanel,wallColor,backgroundColor,attachStandardRoomZoom,roomImg,roomMockupSrc,processOverlay,_t9;return _regenerator().w(function(_context13){while(1)switch(_context13.p=_context13.n){case 0:_context13.p=0;// Compute tile size (in CSS px) from declared pattern inches + user scale
+tctx.drawImage(masterTiledCanvas,0,0,outW,outH,0,0,dw,dh);_context36.n=48;break;case 42:if(layer.transform&&_typeof(layer.transform)==='object'){tctx.save();applyLayerTransform(tctx,layer.transform,dw,dh);}patternForTiling=appState.currentPattern;layersForTiling=patternForTiling&&patternForTiling.layers&&patternForTiling.layers.length>0?patternForTiling.layers:null;layerMappingB=getLayerMappingForPreview(false);patternStartIdx=layerMappingB.patternStartIndex;tilingTypeB=patternForTiling&&patternForTiling.tilingType||"";isHalfDropB=isHalfDropTiling(tilingTypeB);if(!layersForTiling){_context36.n=46;break;}lIdx=0;case 43:if(!(lIdx<layersForTiling.length)){_context36.n=45;break;}ly=layersForTiling[lIdx];layerPathB=typeof ly==="string"?ly:ly&&(ly.path||ly.proofPath);isShadowB=ly&&_typeof(ly)==="object"&&ly.isShadow===true||layerPathB&&(String(layerPathB).toUpperCase().includes("_SHADOW_")||String(layerPathB).toUpperCase().includes("SHADOW_LAYER")||String(layerPathB).toUpperCase().includes("ISSHADOW"));inputIdx=patternStartIdx+lIdx;layerColorB=isShadowB?null:appState.currentLayers&&appState.currentLayers[inputIdx]?lookupColor(appState.currentLayers[inputIdx].color||"Snowbound"):"#7f817e";_context36.n=44;return new Promise(function(resolve){processImage(layerPathB,function(processedCanvas){if(!processedCanvas||!(processedCanvas instanceof HTMLCanvasElement)){resolve();return;}var pcw=processedCanvas.width;var pch=processedCanvas.height;var repsB=3.85;var scaleB=Math.min(dw/(pcw*repsB),dh/(pch*repsB));var twB=pcw*scaleB;var thB=pch*scaleB;tctx.globalCompositeOperation=isShadowB?"multiply":"source-over";tctx.globalAlpha=isShadowB?0.3:1.0;var numColsL=Math.ceil((dw+2*twB)/twB)+1;var numRowsL=Math.ceil((dh+2*thB)/thB)+1;for(var i=-numColsL;i<=numColsL;i++){var txB=i*twB;var yOff=isHalfDropB&&(i&1)!==0?thB/2:0;for(var j=-numRowsL;j<=numRowsL;j++){tctx.drawImage(processedCanvas,txB,j*thB+yOff,twB,thB);}}tctx.globalAlpha=1.0;resolve();},layerColorB,2.2,isShadowB,false,false);});case 44:lIdx++;_context36.n=43;break;case 45:_context36.n=47;break;case 46:sizeIn=patternForTiling&&patternForTiling.size&&patternForTiling.size.length>=2?patternForTiling.size:[24,24];aspect=sizeIn[0]/sizeIn[1];reps=3.85;tw=dw>=dh?dh/reps*aspect:dw/reps;th=dw>=dh?dh/reps:dw/reps/aspect;numColsF=Math.ceil((dw+2*tw)/tw)+1;numRowsF=Math.ceil((dh+2*th)/th)+1;for(i=-numColsF;i<=numColsF;i++){for(j=-numRowsF;j<=numRowsF;j++){tctx.drawImage(patternImg,i*tw,j*th,tw,th);}}case 47:if(layer.transform&&_typeof(layer.transform)==='object')tctx.restore();case 48:tctx.globalCompositeOperation="destination-in";tctx.drawImage(dispImg,0,0);ctx.globalCompositeOperation="multiply";ctx.drawImage(tileCanvas,0,0,outW,outH);ctx.globalCompositeOperation="source-over";case 49:_context36.n=52;break;case 50:if(!(layer.type==='solid-color'&&layer.file)){_context36.n=52;break;}_context36.n=51;return loadImg(layerUrl(layer.file));case 51:blimg=_context36.v;blanketCanvas=document.createElement("canvas");blanketCanvas.width=outW;blanketCanvas.height=outH;bctx=blanketCanvas.getContext("2d");bctx.drawImage(blimg,0,0,outW,outH);bctx.globalCompositeOperation="multiply";hex=blanketColor.replace(/^#/,"");bctx.fillStyle="#"+hex;bctx.fillRect(0,0,outW,outH);bctx.globalCompositeOperation="destination-in";bctx.drawImage(blimg,0,0,outW,outH);bctx.globalCompositeOperation="source-over";ctx.drawImage(blanketCanvas,0,0);case 52:li++;_context36.n=24;break;case 53:dataUrl=compCanvas.toDataURL("image/png");appState.bassettResultUrl=dataUrl;appState.bassettResultPatternId=currentId;appState.bassettResultBlanketColor=currentBlanketColor;appState.bassettResultScale=currentScaleMultiplier;appState.bassettResultSofaColor=currentSofaColor;appState.bassettResultLayerColorsSig=currentLayerColorsSig;appState.bassettResultPillowWallSig=pillowWallSig;layerCompositeOk=true;_context36.n=55;break;case 54:_context36.p=54;_t49=_context36.v;console.warn("Bassett layer composite failed:",_t49);if(_t49&&_t49.message)console.warn("  Message:",_t49.message);case 55:appState.bassettRenderPending=false;if(!layerCompositeOk){_context36.n=56;break;}updateBassettRoomMockup();return _context36.a(2);case 56:if(!(appState.currentPattern&&!appState.bassettRenderPending)){_context36.n=63;break;}_thumb=appState.currentPattern.thumbnail||"";_patternUrl=_thumb.startsWith("http")?_thumb:normalizePath(_thumb);_blanketColor=currentBlanketColor;appState.bassettRenderPending=true;dom.roomMockup.innerHTML="";_loadingWrap=document.createElement("div");_loadingWrap.style.cssText="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#e2e8f0;padding:1rem;text-align:center;box-sizing:border-box;";_loadingWrap.innerHTML="<p style='margin-bottom:0.5rem;'>Generating room preview…</p><p style='font-size:0.85rem;color:#94a3b8;'>Using your selected pattern</p>";dom.roomMockup.appendChild(_loadingWrap);_context36.p=57;body={patternUrl:_patternUrl,blanketColor:_blanketColor};if(currentScaleMultiplier!=null&&currentScaleMultiplier!==1)body.scaleMultiplier=currentScaleMultiplier;_context36.n=58;return fetch(renderUrl,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});case 58:res=_context36.v;appState.bassettRenderPending=false;if(!(res.ok&&res.headers.get("content-type")&&res.headers.get("content-type").indexOf("image/png")>=0)){_context36.n=60;break;}_context36.n=59;return res.blob();case 59:blob=_context36.v;prevUrl=appState.bassettResultUrl;if(prevUrl&&prevUrl.startsWith("blob:"))URL.revokeObjectURL(prevUrl);appState.bassettResultUrl=URL.createObjectURL(blob);appState.bassettResultPatternId=currentId;appState.bassettResultBlanketColor=currentBlanketColor;appState.bassettResultScale=currentScaleMultiplier;updateBassettRoomMockup();return _context36.a(2);case 60:_context36.n=61;return res.json()["catch"](function(){return{};});case 61:errBody=_context36.v;if(res.status===503){console.warn("Bassett render not available:",errBody.message||"server not configured");}_context36.n=63;break;case 62:_context36.p=62;_t50=_context36.v;appState.bassettRenderPending=false;console.warn("Bassett render request failed:",_t50);case 63:// Fallback: no pattern, API unavailable, or failed — show upload UI (copy-safe command: paths in quotes so paste won't break shell)
+dom.roomMockup.innerHTML="";wrap=document.createElement("div");wrap.style.cssText="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#1a1a1a;color:#e2e8f0;padding:1rem;text-align:center;box-sizing:border-box;";wrap.innerHTML="<p style='margin-bottom:0.75rem;'>Preview couldn't be generated from layers. Check the browser console (F12) for errors.</p>"+"<p style='font-size:0.9rem;color:#94a3b8;margin-bottom:0.75rem;'>Ensure layer images and the displacement worker are available, or upload a result image below.</p>"+"<label style='cursor:pointer;display:inline-block;padding:0.5rem 1rem;background:#d4af37;color:#1a202c;border-radius:6px;font-weight:600;'>Upload Bassett result</label>"+"<input type='file' accept='image/*' id='bassettUploadInput' style='display:none'>";dom.roomMockup.appendChild(wrap);input=document.getElementById("bassettUploadInput");if(input){input.onchange=/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee27(){var file,reader;return _regenerator().w(function(_context35){while(1)switch(_context35.n){case 0:file=input.files&&input.files[0];if(file){_context35.n=1;break;}return _context35.a(2);case 1:reader=new FileReader();reader.onload=/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee26(){var dataUrl,_res,data,_t42;return _regenerator().w(function(_context34){while(1)switch(_context34.p=_context34.n){case 0:dataUrl=reader.result;_context34.p=1;_context34.n=2;return fetch(uploadUrl,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:dataUrl,filename:file.name||"bassett-room.png"})});case 2:_res=_context34.v;_context34.n=3;return _res.json();case 3:data=_context34.v;if(data.url){appState.bassettResultUrl=data.url;appState.bassettResultPatternId=currentId;appState.bassettResultBlanketColor=currentBlanketColor;appState.bassettResultScale=currentScaleMultiplier;updateBassettRoomMockup();}else{alert(data.error||"Upload failed");}_context34.n=5;break;case 4:_context34.p=4;_t42=_context34.v;alert("Upload failed: "+(_t42.message||_t42));case 5:input.value="";case 6:return _context34.a(2);}},_callee26,null,[[1,4]]);}));reader.readAsDataURL(file);case 2:return _context35.a(2);}},_callee27);}));wrap.querySelector("label").addEventListener("click",function(){return input.click();});}case 64:return _context36.a(2);}},_callee28,null,[[57,62],[38,40],[34,36],[29,31],[15,17],[5,8],[3,54]]);}));return _updateBassettRoomMockup.apply(this,arguments);}function openRoomMockupFullscreen(source){var overlay=document.createElement("div");overlay.id="roomMockupFullscreenOverlay";overlay.style.cssText="position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;overflow:hidden;";var scrollWrap=document.createElement("div");scrollWrap.style.cssText="display:flex;align-items:center;justify-content:center;min-width:0;min-height:0;overflow:auto;max-width:100%;max-height:100%;";var close=function close(){overlay.remove();document.body.style.overflow="";};overlay.addEventListener("click",function(e){if(e.target===overlay)close();});if(typeof source==="string"){var fullImg=new Image();fullImg.src=source;fullImg.style.maxWidth="90vmin";fullImg.style.maxHeight="90vmin";fullImg.style.width="auto";fullImg.style.height="auto";fullImg.style.cursor="pointer";fullImg.alt="Room mockup (click for full resolution)";scrollWrap.appendChild(fullImg);var isFullRes=false;fullImg.addEventListener("click",function(e){e.stopPropagation();if(!isFullRes){var w=fullImg.naturalWidth||fullImg.width;var h=fullImg.naturalHeight||fullImg.height;if(w&&h){isFullRes=true;fullImg.style.maxWidth="none";fullImg.style.maxHeight="none";fullImg.style.width=w+"px";fullImg.style.height=h+"px";fullImg.alt="Room mockup full resolution (click to close)";scrollWrap.style.alignItems="flex-start";scrollWrap.style.justifyContent="flex-start";}}else{close();}});fullImg.onload=function(){fullImg.title="Click for full resolution, click again to close";};}else if(source&&source.tagName==="CANVAS"){var dataUrl;try{dataUrl=source.toDataURL("image/png");}catch(err){dataUrl=null;}if(dataUrl){var _fullImg=new Image();_fullImg.src=dataUrl;_fullImg.style.maxWidth="90vmin";_fullImg.style.maxHeight="90vmin";_fullImg.style.width="auto";_fullImg.style.height="auto";_fullImg.style.cursor="pointer";_fullImg.alt="Room mockup (click for full resolution)";scrollWrap.appendChild(_fullImg);var _isFullRes=false;_fullImg.addEventListener("click",function(e){e.stopPropagation();if(!_isFullRes){var w=_fullImg.naturalWidth||_fullImg.width;var h=_fullImg.naturalHeight||_fullImg.height;if(w&&h){_isFullRes=true;_fullImg.style.maxWidth="none";_fullImg.style.maxHeight="none";_fullImg.style.width=w+"px";_fullImg.style.height=h+"px";_fullImg.alt="Room mockup full resolution (click to close)";scrollWrap.style.alignItems="flex-start";scrollWrap.style.justifyContent="flex-start";}}else{close();}});_fullImg.onload=function(){_fullImg.title="Click for full resolution, click again to close";};}else{var clone=source.cloneNode(true);clone.style.width=source.width+"px";clone.style.height=source.height+"px";clone.style.cursor="pointer";clone.title="Click to close";scrollWrap.appendChild(clone);clone.addEventListener("click",function(e){e.stopPropagation();close();});}}overlay.appendChild(scrollWrap);document.body.style.overflow="hidden";document.body.appendChild(overlay);}//  room mockup
+var updateRoomMockup=/*#__PURE__*/function(){var _ref16=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee10(){var _appState$currentPatt18,_appState$currentPatt19,_appState$selectedCol43,_appState$selectedCol44,_appState$selectedCol45,_appState$currentLaye9,_appState$currentLaye0,computeTileSizeFromInches,effectiveMockup,mockupWidthInches,mockupHeightInches,mockupAspect,rect,cssW,cssH,dpr,snap,mod,pxPerInRoom,canvas,_ctx2,isStandardPattern,isClothingCollection,isClothingMode,isFurnitureMode,isWallPanel,wallColor,backgroundColor,attachStandardRoomZoom,roomImg,roomMockupSrc,processOverlay,_t0;return _regenerator().w(function(_context13){while(1)switch(_context13.p=_context13.n){case 0:_context13.p=0;// Compute tile size (in CSS px) from declared pattern inches + user scale
 computeTileSizeFromInches=function computeTileSizeFromInches(pattern){var userScale=arguments.length>1&&arguments[1]!==undefined?arguments[1]:1;var _ref17=pattern.size||[24,24],_ref18=_slicedToArray(_ref17,2),wIn=_ref18[0],hIn=_ref18[1];// fallback if size missing
-return{tileW:snap(wIn*pxPerInRoom*userScale),tileH:snap(hIn*pxPerInRoom*userScale)};};if(!appState.isFurnitureCompositing){_context13.n=1;break;}console.log("🚫 updateRoomMockup blocked - furniture compositing in progress");return _context13.a(2);case 1:if(dom.roomMockup){_context13.n=2;break;}return _context13.a(2,console.error("roomMockup element not found in DOM"));case 2:if(!(!appState.selectedCollection||!appState.currentPattern)){_context13.n=3;break;}console.log("🔍 Skipping updateRoomMockup - no collection/pattern selected");return _context13.a(2);case 3:console.log("🔍 ROOM MOCKUP tilingType:",(_appState$currentPatt16=appState.currentPattern)===null||_appState$currentPatt16===void 0?void 0:_appState$currentPatt16.name,"→",(_appState$currentPatt17=appState.currentPattern)===null||_appState$currentPatt17===void 0?void 0:_appState$currentPatt17.tilingType);// BASSETT: show Bassett result in room mockup (upload or pipeline result)
+return{tileW:snap(wIn*pxPerInRoom*userScale),tileH:snap(hIn*pxPerInRoom*userScale)};};if(!appState.isFurnitureCompositing){_context13.n=1;break;}console.log("🚫 updateRoomMockup blocked - furniture compositing in progress");return _context13.a(2);case 1:if(dom.roomMockup){_context13.n=2;break;}return _context13.a(2,console.error("roomMockup element not found in DOM"));case 2:if(!(!appState.selectedCollection||!appState.currentPattern)){_context13.n=3;break;}console.log("🔍 Skipping updateRoomMockup - no collection/pattern selected");return _context13.a(2);case 3:console.log("🔍 ROOM MOCKUP tilingType:",(_appState$currentPatt18=appState.currentPattern)===null||_appState$currentPatt18===void 0?void 0:_appState$currentPatt18.name,"→",(_appState$currentPatt19=appState.currentPattern)===null||_appState$currentPatt19===void 0?void 0:_appState$currentPatt19.tilingType);// BASSETT: show Bassett result in room mockup (upload or pipeline result)
 if(!(window.COLORFLEX_MODE==='BASSETT')){_context13.n=4;break;}updateBassettRoomMockup();return _context13.a(2);case 4:// Loading indicator removed
 // --- Canvas setup (CSS px -> DPR backing) ---
 // Width comes from the element, but height should match the selected mockup aspect ratio
@@ -2983,39 +3029,37 @@ mod=function mod(a,b){return(a%b+b)%b;};// Calculate px per inch based on actual
 pxPerInRoom=cssW/mockupWidthInches;console.log("\uD83D\uDCD0 Room mockup dimensions: ".concat(mockupWidthInches,"x").concat(mockupHeightInches," inches"));console.log("\uD83D\uDCD0 Canvas size: ".concat(cssW,"x").concat(cssH," px"));console.log("\uD83D\uDCD0 Calculated px per inch: ".concat(pxPerInRoom.toFixed(2)," px/in"));canvas=document.createElement("canvas");canvas.width=Math.round(cssW*dpr);canvas.height=Math.round(cssH*dpr);canvas.style.width=cssW+"px";canvas.style.height=cssH+"px";_ctx2=canvas.getContext("2d",{willReadFrequently:true});_ctx2.imageSmoothingEnabled=true;_ctx2.imageSmoothingQuality="high";_ctx2.setTransform(dpr,0,0,dpr,0,0);// draw in CSS px
 isStandardPattern=patternIsStandard(appState.currentPattern,appState.selectedCollection);// ✅ CORE FUNCTION PROTECTION: updateRoomMockup() is WALLPAPER ONLY
 // If clothing or furniture mode detected, exit early - routing happens in callers
-isClothingCollection=((_appState$selectedCol41=appState.selectedCollection)===null||_appState$selectedCol41===void 0||(_appState$selectedCol41=_appState$selectedCol41.name)===null||_appState$selectedCol41===void 0?void 0:_appState$selectedCol41.includes('-clo'))||((_appState$selectedCol42=appState.selectedCollection)===null||_appState$selectedCol42===void 0||(_appState$selectedCol42=_appState$selectedCol42.name)===null||_appState$selectedCol42===void 0?void 0:_appState$selectedCol42.includes('.clo-'));isClothingMode=window.COLORFLEX_MODE==='CLOTHING';isFurnitureMode=window.COLORFLEX_MODE==='FURNITURE'||appState.isInFurnitureMode;if(!(isClothingCollection||isClothingMode)){_context13.n=5;break;}console.log("👗 updateRoomMockup() - Exiting early for clothing mode (core wallpaper function, routing handled by caller)");return _context13.a(2);case 5:if(!isFurnitureMode){_context13.n=6;break;}console.log("🪑 updateRoomMockup() - Exiting early for furniture mode (core wallpaper function, routing handled by caller)");return _context13.a(2);case 6:// ✅ Furniture mode check already handled above - this code should never run
+isClothingCollection=((_appState$selectedCol43=appState.selectedCollection)===null||_appState$selectedCol43===void 0||(_appState$selectedCol43=_appState$selectedCol43.name)===null||_appState$selectedCol43===void 0?void 0:_appState$selectedCol43.includes('-clo'))||((_appState$selectedCol44=appState.selectedCollection)===null||_appState$selectedCol44===void 0||(_appState$selectedCol44=_appState$selectedCol44.name)===null||_appState$selectedCol44===void 0?void 0:_appState$selectedCol44.includes('.clo-'));isClothingMode=window.COLORFLEX_MODE==='CLOTHING';isFurnitureMode=window.COLORFLEX_MODE==='FURNITURE'||appState.isInFurnitureMode;if(!(isClothingCollection||isClothingMode)){_context13.n=5;break;}console.log("👗 updateRoomMockup() - Exiting early for clothing mode (core wallpaper function, routing handled by caller)");return _context13.a(2);case 5:if(!isFurnitureMode){_context13.n=6;break;}console.log("🪑 updateRoomMockup() - Exiting early for furniture mode (core wallpaper function, routing handled by caller)");return _context13.a(2);case 6:// ✅ Furniture mode check already handled above - this code should never run
 // (Removed furniture handling - core function is wallpaper only)
-isWallPanel=((_appState$selectedCol43=appState.selectedCollection)===null||_appState$selectedCol43===void 0?void 0:_appState$selectedCol43.name)==="wall-panels";wallColor=lookupColor(((_appState$currentLaye0=appState.currentLayers[0])===null||_appState$currentLaye0===void 0?void 0:_appState$currentLaye0.color)||"Snowbound");backgroundColor=isWallPanel?lookupColor(((_appState$currentLaye1=appState.currentLayers[1])===null||_appState$currentLaye1===void 0?void 0:_appState$currentLaye1.color)||"Snowbound"):wallColor;// ---------- STANDARD (thumbnail-only) ----------
-if(!isStandardPattern){_context13.n=8;break;}attachStandardRoomZoom=function attachStandardRoomZoom(c){c.style.cursor="pointer";c.title="Click for full size";c.addEventListener("click",function(){openRoomMockupFullscreen(c);});};if(effectiveMockup.mockup){_context13.n=7;break;}console.log("⏭️  Skipping standard pattern rendering (no mockup defined for collection)");return _context13.a(2);case 7:roomImg=new Image();roomMockupSrc=normalizePath(effectiveMockup.mockup);if(!colorFlexB2OmitImgCrossOrigin(roomMockupSrc))roomImg.crossOrigin="Anonymous";roomImg.src=roomMockupSrc;roomImg.onerror=function(){if(!roomImg.dataset.fallbackUsed){var _window$ColorFlexMock,_fallbackMockup$image,_fallbackMockup$image2;roomImg.dataset.fallbackUsed='1';var fallbackMockup=(_window$ColorFlexMock=window.ColorFlexMockups)===null||_window$ColorFlexMock===void 0?void 0:_window$ColorFlexMock['white-dresser'];var fallbackPath=fallbackMockup&&(typeof fallbackMockup.image==='string'?fallbackMockup.image:((_fallbackMockup$image=fallbackMockup.image)===null||_fallbackMockup$image===void 0?void 0:_fallbackMockup$image.path)||((_fallbackMockup$image2=fallbackMockup.image)===null||_fallbackMockup$image2===void 0?void 0:_fallbackMockup$image2.url))||'./data/mockups/white-dresser-W72H72.png';console.warn("\u26A0\uFE0F Mockup image failed to load, using fallback (white dresser): ".concat(fallbackPath));roomImg.src=normalizePath(fallbackPath);}else{console.error('❌ Mockup and fallback mockup failed to load');dom.roomMockup.innerHTML='';attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();}};roomImg.onload=function(){// bg
-_ctx2.fillStyle="#000";_ctx2.fillRect(0,0,cssW,cssH);var patternImg=new Image();var stdThumbSrc=urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));if(!colorFlexB2OmitImgCrossOrigin(stdThumbSrc))patternImg.crossOrigin="Anonymous";patternImg.src=stdThumbSrc;function drawStandardRoomWithOptionalShadow(){var fit=scaleToFit(roomImg,cssW,cssH);_ctx2.drawImage(roomImg,fit.x,fit.y,fit.width,fit.height);if(effectiveMockup.mockupShadow){var shadowOverlay=new Image();var shadowSrcEarly=normalizePath(effectiveMockup.mockupShadow);if(!colorFlexB2OmitImgCrossOrigin(shadowSrcEarly))shadowOverlay.crossOrigin="Anonymous";shadowOverlay.src=shadowSrcEarly;shadowOverlay.onload=function(){_ctx2.globalCompositeOperation="multiply";var shadowFit=scaleToFit(shadowOverlay,cssW,cssH);_ctx2.drawImage(shadowOverlay,shadowFit.x,shadowFit.y,shadowFit.width,shadowFit.height);_ctx2.globalCompositeOperation="source-over";dom.roomMockup.innerHTML="";attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();};shadowOverlay.onerror=function(){dom.roomMockup.innerHTML="";attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();};}else{dom.roomMockup.innerHTML="";attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();}}patternImg.onload=function(){var _appState$selectedCol44;// ✅ FIX: Use same default as ColorFlex patterns (1 = normal scale)
+isWallPanel=((_appState$selectedCol45=appState.selectedCollection)===null||_appState$selectedCol45===void 0?void 0:_appState$selectedCol45.name)==="wall-panels";wallColor=lookupColor(((_appState$currentLaye9=appState.currentLayers[0])===null||_appState$currentLaye9===void 0?void 0:_appState$currentLaye9.color)||"Snowbound");backgroundColor=isWallPanel?lookupColor(((_appState$currentLaye0=appState.currentLayers[1])===null||_appState$currentLaye0===void 0?void 0:_appState$currentLaye0.color)||"Snowbound"):wallColor;// ---------- STANDARD (thumbnail-only) ----------
+if(!isStandardPattern){_context13.n=8;break;}attachStandardRoomZoom=function attachStandardRoomZoom(c){c.style.cursor="pointer";c.title="Click for full size";c.addEventListener("click",function(){openRoomMockupFullscreen(c);});};if(effectiveMockup.mockup){_context13.n=7;break;}console.log("⏭️  Skipping standard pattern rendering (no mockup defined for collection)");return _context13.a(2);case 7:roomImg=new Image();roomMockupSrc=normalizePath(effectiveMockup.mockup);roomImg.crossOrigin="Anonymous";roomImg.src=roomMockupSrc;roomImg.onerror=function(){if(!roomImg.dataset.fallbackUsed){var _window$ColorFlexMock,_fallbackMockup$image,_fallbackMockup$image2;roomImg.dataset.fallbackUsed='1';var fallbackMockup=(_window$ColorFlexMock=window.ColorFlexMockups)===null||_window$ColorFlexMock===void 0?void 0:_window$ColorFlexMock['white-dresser'];var fallbackPath=fallbackMockup&&(typeof fallbackMockup.image==='string'?fallbackMockup.image:((_fallbackMockup$image=fallbackMockup.image)===null||_fallbackMockup$image===void 0?void 0:_fallbackMockup$image.path)||((_fallbackMockup$image2=fallbackMockup.image)===null||_fallbackMockup$image2===void 0?void 0:_fallbackMockup$image2.url))||'./data/mockups/white-dresser-W72H72.png';console.warn("\u26A0\uFE0F Mockup image failed to load, using fallback (white dresser): ".concat(fallbackPath));roomImg.src=normalizePath(fallbackPath);}else{console.error('❌ Mockup and fallback mockup failed to load');dom.roomMockup.innerHTML='';attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();}};roomImg.onload=function(){// bg
+_ctx2.fillStyle="#000";_ctx2.fillRect(0,0,cssW,cssH);var patternImg=new Image();var stdThumbSrc=urlForCorsFetch(normalizePath(appState.currentPattern.thumbnail));patternImg.crossOrigin="Anonymous";patternImg.src=stdThumbSrc;function drawStandardRoomWithOptionalShadow(){var fit=scaleToFit(roomImg,cssW,cssH);_ctx2.drawImage(roomImg,fit.x,fit.y,fit.width,fit.height);if(effectiveMockup.mockupShadow){var shadowOverlay=new Image();var shadowSrcEarly=normalizePath(effectiveMockup.mockupShadow);shadowOverlay.crossOrigin="Anonymous";shadowOverlay.src=shadowSrcEarly;shadowOverlay.onload=function(){_ctx2.globalCompositeOperation="multiply";var shadowFit=scaleToFit(shadowOverlay,cssW,cssH);_ctx2.drawImage(shadowOverlay,shadowFit.x,shadowFit.y,shadowFit.width,shadowFit.height);_ctx2.globalCompositeOperation="source-over";dom.roomMockup.innerHTML="";attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();};shadowOverlay.onerror=function(){dom.roomMockup.innerHTML="";attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();};}else{dom.roomMockup.innerHTML="";attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();}}patternImg.onload=function(){var _appState$selectedCol46;// ✅ FIX: Use same default as ColorFlex patterns (1 = normal scale)
 console.log("🔍 STANDARD PATTERN ROOM MOCKUP DEBUG:");console.log("  appState.scaleMultiplier:",appState.scaleMultiplier);console.log("  Default will use:",appState.scaleMultiplier||1);var _computeTileSizeFromI=computeTileSizeFromInches(appState.currentPattern,appState.scaleMultiplier||1),tileW=_computeTileSizeFromI.tileW,tileH=_computeTileSizeFromI.tileH;console.log("  Calculated tile size: tileW =",tileW,", tileH =",tileH);var isHalfDrop=isHalfDropTiling(appState.currentPattern.tilingType)||/hd/i.test(appState.currentPattern.name);// Clip the tiled pattern to the visible mockup image area so it doesn't show
 // in any letterboxed margins around the room scene.
 var fit=scaleToFit(roomImg,cssW,cssH);// expects CSS px
 _ctx2.save();_ctx2.beginPath();_ctx2.rect(fit.x,fit.y,fit.width,fit.height);_ctx2.clip();var startX=0-mod(0,tileW)-tileW;var endX=cssW+tileW;var startY=0-tileH;var endY=cssH+tileH;var col=0;for(var X=startX;X<endX;X+=tileW,col++){var yOff=isHalfDrop&&col&1?tileH/2:0;for(var Y=startY+yOff;Y<endY;Y+=tileH){_ctx2.drawImage(patternImg,X,Y,tileW,tileH);}}_ctx2.restore();_ctx2.drawImage(roomImg,fit.x,fit.y,fit.width,fit.height);// ----- Shadow overlay for standard patterns -----
-console.log("🎨 STANDARD PATTERN: Checking for shadow overlay...");console.log("  Collection:",(_appState$selectedCol44=appState.selectedCollection)===null||_appState$selectedCol44===void 0?void 0:_appState$selectedCol44.name);console.log("  mockupShadow:",effectiveMockup.mockupShadow);if(effectiveMockup.mockupShadow){console.log("✅ STANDARD PATTERN: Found mockupShadow, loading shadow overlay...");var shadowOverlay=new Image();var shadowSrcLate=normalizePath(effectiveMockup.mockupShadow);if(!colorFlexB2OmitImgCrossOrigin(shadowSrcLate))shadowOverlay.crossOrigin="Anonymous";shadowOverlay.src=shadowSrcLate;shadowOverlay.onload=function(){console.log("✅ STANDARD PATTERN: Shadow overlay loaded successfully!");console.log("  Shadow image size:",shadowOverlay.width,"x",shadowOverlay.height);_ctx2.globalCompositeOperation="multiply";var shadowFit=scaleToFit(shadowOverlay,cssW,cssH);_ctx2.drawImage(shadowOverlay,shadowFit.x,shadowFit.y,shadowFit.width,shadowFit.height);_ctx2.globalCompositeOperation="source-over";console.log("✅ STANDARD PATTERN: Shadow overlay drawn with multiply blend mode");dom.roomMockup.innerHTML="";attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();};shadowOverlay.onerror=function(){console.error("❌ STANDARD PATTERN: Shadow overlay failed to load:",shadowOverlay.src);dom.roomMockup.innerHTML="";attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();};}else{console.log("⏭️ STANDARD PATTERN: No mockupShadow defined, skipping shadow overlay");dom.roomMockup.innerHTML="";attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();}};patternImg.onerror=function(){console.warn("❌ Room mockup: standard pattern thumbnail failed (CORS or 404). Showing room without pattern.");drawStandardRoomWithOptionalShadow();};};return _context13.a(2);case 8:// ---------- REGULAR / PANELS ----------
-processOverlay=/*#__PURE__*/function(){var _ref19=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee1(){var _appState$currentPatt18,_appState$currentPatt22,_appState$currentPatt23,_appState$currentPatt24;var _appState$currentPatt19,_appState$currentPatt20,_appState$currentPatt21,panelWidthInches,panelHeightInches,baseScale,panelWidth,panelHeight,layout,_layout$split,_layout$split2,numPanelsStr,spacingStr,numPanels,spacing,totalWidth,startX,startY,panelCanvas,panelCtx,inputLayers,inputIdx,_loop5,i,p,px,patternCanvas,patternCtx,baseImage,_patternCanvas,_patternCtx,_inputLayers3,_inputIdx,_loop6,_i7,mockupPath,mockupImage,tintMaskPath,tintMaskImg,shadowOverlay,dataUrl,_isSimpleMode,_isFurnitureMode,_isClothingMode,isFurnitureSimpleMode,mockupW,mockupH,img,isSimpleMode,_t8;return _regenerator().w(function(_context12){while(1)switch(_context12.p=_context12.n){case 0:// Paint wall base (CSS px)
+console.log("🎨 STANDARD PATTERN: Checking for shadow overlay...");console.log("  Collection:",(_appState$selectedCol46=appState.selectedCollection)===null||_appState$selectedCol46===void 0?void 0:_appState$selectedCol46.name);console.log("  mockupShadow:",effectiveMockup.mockupShadow);if(effectiveMockup.mockupShadow){console.log("✅ STANDARD PATTERN: Found mockupShadow, loading shadow overlay...");var shadowOverlay=new Image();var shadowSrcLate=normalizePath(effectiveMockup.mockupShadow);shadowOverlay.crossOrigin="Anonymous";shadowOverlay.src=shadowSrcLate;shadowOverlay.onload=function(){console.log("✅ STANDARD PATTERN: Shadow overlay loaded successfully!");console.log("  Shadow image size:",shadowOverlay.width,"x",shadowOverlay.height);_ctx2.globalCompositeOperation="multiply";var shadowFit=scaleToFit(shadowOverlay,cssW,cssH);_ctx2.drawImage(shadowOverlay,shadowFit.x,shadowFit.y,shadowFit.width,shadowFit.height);_ctx2.globalCompositeOperation="source-over";console.log("✅ STANDARD PATTERN: Shadow overlay drawn with multiply blend mode");dom.roomMockup.innerHTML="";attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();};shadowOverlay.onerror=function(){console.error("❌ STANDARD PATTERN: Shadow overlay failed to load:",shadowOverlay.src);dom.roomMockup.innerHTML="";attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();};}else{console.log("⏭️ STANDARD PATTERN: No mockupShadow defined, skipping shadow overlay");dom.roomMockup.innerHTML="";attachStandardRoomZoom(canvas);dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();}};patternImg.onerror=function(){console.warn("❌ Room mockup: standard pattern thumbnail failed (CORS or 404). Showing room without pattern.");drawStandardRoomWithOptionalShadow();};};return _context13.a(2);case 8:// ---------- REGULAR / PANELS ----------
+processOverlay=/*#__PURE__*/function(){var _ref19=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee1(){var _appState$currentPatt20,_appState$currentPatt24,_appState$currentPatt25,_appState$currentPatt26;var rmLayerMapping,_appState$currentPatt21,_appState$currentPatt22,_appState$currentPatt23,panelWidthInches,panelHeightInches,baseScale,panelWidth,panelHeight,layout,_layout$split,_layout$split2,numPanelsStr,spacingStr,numPanels,spacing,totalWidth,startX,startY,panelCanvas,panelCtx,_loop5,i,p,px,patternCanvas,patternCtx,baseImage,_patternCanvas,_patternCtx,_loop6,_i7,mockupPath,mockupImage,tintMaskPath,tintMaskImg,shadowOverlay,dataUrl,_isSimpleMode,_isFurnitureMode,_isClothingMode,isFurnitureSimpleMode,mockupW,mockupH,img,isSimpleMode,_t9;return _regenerator().w(function(_context12){while(1)switch(_context12.p=_context12.n){case 0:rmLayerMapping=getLayerMappingForPreview(false);// Paint wall base (CSS px)
 _ctx2.fillStyle=wallColor;_ctx2.fillRect(0,0,cssW,cssH);// ----- WALL PANELS -----
-if(!(isWallPanel&&(_appState$currentPatt18=appState.currentPattern)!==null&&_appState$currentPatt18!==void 0&&(_appState$currentPatt18=_appState$currentPatt18.layers)!==null&&_appState$currentPatt18!==void 0&&_appState$currentPatt18.length)){_context12.n=4;break;}panelWidthInches=((_appState$currentPatt19=appState.currentPattern.size)===null||_appState$currentPatt19===void 0?void 0:_appState$currentPatt19[0])||24;panelHeightInches=((_appState$currentPatt20=appState.currentPattern.size)===null||_appState$currentPatt20===void 0?void 0:_appState$currentPatt20[1])||36;// scale panels in CSS px space
-baseScale=Math.min(cssW/100,cssH/80);panelWidth=panelWidthInches*baseScale*(appState.scaleMultiplier||1);panelHeight=panelHeightInches*baseScale*(appState.scaleMultiplier||1);layout=appState.currentPattern.layout||"3,20";_layout$split=layout.split(","),_layout$split2=_slicedToArray(_layout$split,2),numPanelsStr=_layout$split2[0],spacingStr=_layout$split2[1];numPanels=parseInt(numPanelsStr,10)||3;spacing=parseInt(spacingStr,10)||20;totalWidth=numPanels*panelWidth+(numPanels-1)*spacing;startX=(cssW-totalWidth)/2;startY=(cssH-panelHeight)/2-(((_appState$currentPatt21=appState.currentPattern)===null||_appState$currentPatt21===void 0?void 0:_appState$currentPatt21.verticalOffset)||50);// panel offscreen (DPR-aware)
-panelCanvas=document.createElement("canvas");panelCanvas.width=Math.round(panelWidth*dpr);panelCanvas.height=Math.round(panelHeight*dpr);panelCtx=panelCanvas.getContext("2d",{willReadFrequently:true});panelCtx.imageSmoothingEnabled=true;panelCtx.imageSmoothingQuality="high";panelCtx.setTransform(dpr,0,0,dpr,0,0);// Build input color mapping (skip background)
-inputLayers=appState.currentLayers.filter(function(l){return!l.isShadow;});inputIdx=0;_loop5=/*#__PURE__*/_regenerator().m(function _loop5(){var layer,pathStr,isShadow,layerColor,_inputLayers2,tilingType,isHalfDrop;return _regenerator().w(function(_context1){while(1)switch(_context1.n){case 0:layer=appState.currentPattern.layers[i];pathStr=layer&&(layer.path||layer.proofPath)?layer.path||layer.proofPath:'';isShadow=!!layer.isShadow||pathStr&&(String(pathStr).toUpperCase().includes('_SHADOW_')||String(pathStr).toUpperCase().includes('SHADOW_LAYER')||String(pathStr).toUpperCase().includes('ISSHADOW'));layerColor=null;if(!isShadow){layerColor=lookupColor(((_inputLayers2=inputLayers[inputIdx+1])===null||_inputLayers2===void 0?void 0:_inputLayers2.color)||"Snowbound");inputIdx++;}tilingType=appState.currentPattern.tilingType||"";isHalfDrop=isHalfDropTiling(tilingType);_context1.n=1;return new Promise(function(resolve){processImage(layer.path,function(processedCanvas){if(!(processedCanvas instanceof HTMLCanvasElement))return resolve();var scale=(appState.scaleMultiplier||.5)*0.1;var tileW=snap(processedCanvas.width*scale);var tileH=snap(processedCanvas.height*scale);panelCtx.globalCompositeOperation=isShadow?"multiply":"source-over";panelCtx.globalAlpha=isShadow?0.3:1.0;var rect={x:0,y:0,w:panelWidth,h:panelHeight};var sx=rect.x-mod(rect.x,tileW)-tileW;var ex=rect.x+rect.w+tileW;var sy=rect.y-tileH;var ey=rect.y+rect.h+tileH;var col=0;for(var X=sx;X<ex;X+=tileW,col++){var yOff=isHalfDrop&&col&1?tileH/2:0;for(var Y=sy+yOff;Y<ey;Y+=tileH){panelCtx.drawImage(processedCanvas,X,Y,tileW,tileH);}}resolve();},layerColor,2.2,isShadow,/*isWallPanel*/false,/*isWall*/false);});case 1:return _context1.a(2);}},_loop5);});i=0;case 1:if(!(i<appState.currentPattern.layers.length)){_context12.n=3;break;}return _context12.d(_regeneratorValues(_loop5()),2);case 2:i++;_context12.n=1;break;case 3:// draw panels to main canvas
-for(p=0;p<numPanels;p++){px=startX+p*(panelWidth+spacing);_ctx2.fillStyle=backgroundColor;_ctx2.fillRect(px,startY,panelWidth,panelHeight);_ctx2.drawImage(panelCanvas,px,startY,panelWidth,panelHeight);}_context12.n=10;break;case 4:if(!((_appState$currentPatt22=appState.currentPattern)!==null&&_appState$currentPatt22!==void 0&&_appState$currentPatt22.tintWhite&&(_appState$currentPatt23=appState.currentPattern)!==null&&_appState$currentPatt23!==void 0&&_appState$currentPatt23.baseComposite)){_context12.n=6;break;}patternCanvas=document.createElement("canvas");patternCanvas.width=Math.round(cssW*dpr);patternCanvas.height=Math.round(cssH*dpr);patternCtx=patternCanvas.getContext("2d",{willReadFrequently:true});patternCtx.imageSmoothingEnabled=true;patternCtx.imageSmoothingQuality="high";patternCtx.setTransform(dpr,0,0,dpr,0,0);baseImage=new Image();baseImage.crossOrigin="Anonymous";baseImage.src=normalizePath(appState.currentPattern.baseComposite);_context12.n=5;return new Promise(function(resolve){baseImage.onload=function(){var _computeTileSizeFromI2=computeTileSizeFromInches(appState.currentPattern,appState.scaleMultiplier||1),tileW=_computeTileSizeFromI2.tileW,tileH=_computeTileSizeFromI2.tileH;var isHalfDrop=isHalfDropTiling(appState.currentPattern.tilingType);var sx=0-mod(0,tileW)-tileW,ex=cssW+tileW;var sy=0-tileH,ey=cssH+tileH;for(var col=0,X=sx;X<ex;X+=tileW,col++){var yOff=isHalfDrop&&col&1?tileH/2:0;for(var Y=sy+yOff;Y<ey;Y+=tileH){patternCtx.drawImage(baseImage,X,Y,tileW,tileH);}}// tint whites
-var imageData;try{imageData=patternCtx.getImageData(0,0,patternCanvas.width,patternCanvas.height);}catch(e){console.warn("⚠️ Canvas tainted, skipping tint white:",e.message);_ctx2.drawImage(patternCanvas,0,0);return resolve();}var d=imageData.data;var hex=wallColor.replace("#","");var rT=parseInt(hex.slice(0,2),16);var gT=parseInt(hex.slice(2,4),16);var bT=parseInt(hex.slice(4,6),16);for(var _i6=0;_i6<d.length;_i6+=4){var r=d[_i6],g=d[_i6+1],b=d[_i6+2];if(r>240&&g>240&&b>240){d[_i6]=rT;d[_i6+1]=gT;d[_i6+2]=bT;}}patternCtx.putImageData(imageData,0,0);_ctx2.drawImage(patternCanvas,0,0);resolve();};baseImage.onerror=resolve;});case 5:_context12.n=10;break;case 6:if(!((_appState$currentPatt24=appState.currentPattern)!==null&&_appState$currentPatt24!==void 0&&(_appState$currentPatt24=_appState$currentPatt24.layers)!==null&&_appState$currentPatt24!==void 0&&_appState$currentPatt24.length)){_context12.n=10;break;}_patternCanvas=document.createElement("canvas");_patternCanvas.width=Math.round(cssW*dpr);_patternCanvas.height=Math.round(cssH*dpr);_patternCtx=_patternCanvas.getContext("2d",{willReadFrequently:true});_patternCtx.imageSmoothingEnabled=true;_patternCtx.imageSmoothingQuality="high";_patternCtx.setTransform(dpr,0,0,dpr,0,0);// map user colors (skip bg in input list)
-_inputLayers3=appState.currentLayers.filter(function(l){return!l.isShadow;});_inputIdx=0;_loop6=/*#__PURE__*/_regenerator().m(function _loop6(){var layer,pathStr,isShadow,layerColor,_inputLayers4;return _regenerator().w(function(_context10){while(1)switch(_context10.n){case 0:layer=appState.currentPattern.layers[_i7];pathStr=layer&&(layer.path||layer.proofPath)?layer.path||layer.proofPath:'';isShadow=!!layer.isShadow||pathStr&&(String(pathStr).toUpperCase().includes('_SHADOW_')||String(pathStr).toUpperCase().includes('SHADOW_LAYER')||String(pathStr).toUpperCase().includes('ISSHADOW'));layerColor=null;if(!isShadow){layerColor=lookupColor(((_inputLayers4=_inputLayers3[_inputIdx+1])===null||_inputLayers4===void 0?void 0:_inputLayers4.color)||"Snowbound");_inputIdx++;}_context10.n=1;return new Promise(function(resolve){processImage(layer.path,function(processedCanvas){if(!(processedCanvas instanceof HTMLCanvasElement))return resolve();var _computeTileSizeFromI3=computeTileSizeFromInches(appState.currentPattern,appState.scaleMultiplier||1),tileW=_computeTileSizeFromI3.tileW,tileH=_computeTileSizeFromI3.tileH;var isHalfDrop=isHalfDropTiling(appState.currentPattern.tilingType);_patternCtx.globalCompositeOperation=isShadow?"multiply":"source-over";_patternCtx.globalAlpha=isShadow?0.3:1.0;var sx=0-mod(0,tileW)-tileW,ex=cssW+tileW;var sy=0-tileH,ey=cssH+tileH;var col=0;for(var X=sx;X<ex;X+=tileW,col++){var yOff=isHalfDrop&&col&1?tileH/2:0;for(var Y=sy+yOff;Y<ey;Y+=tileH){_patternCtx.drawImage(processedCanvas,X,Y,tileW,tileH);}}resolve();},layerColor,2.2,isShadow,/*isWallPanel*/false,/*isWall*/false);});case 1:return _context10.a(2);}},_loop6);});_i7=0;case 7:if(!(_i7<appState.currentPattern.layers.length)){_context12.n=9;break;}return _context12.d(_regeneratorValues(_loop6()),8);case 8:_i7++;_context12.n=7;break;case 9:// ✅ FIX: Draw pattern canvas at CSS size to prevent double-DPR scaling
+if(!(isWallPanel&&(_appState$currentPatt20=appState.currentPattern)!==null&&_appState$currentPatt20!==void 0&&(_appState$currentPatt20=_appState$currentPatt20.layers)!==null&&_appState$currentPatt20!==void 0&&_appState$currentPatt20.length)){_context12.n=4;break;}panelWidthInches=((_appState$currentPatt21=appState.currentPattern.size)===null||_appState$currentPatt21===void 0?void 0:_appState$currentPatt21[0])||24;panelHeightInches=((_appState$currentPatt22=appState.currentPattern.size)===null||_appState$currentPatt22===void 0?void 0:_appState$currentPatt22[1])||36;// scale panels in CSS px space
+baseScale=Math.min(cssW/100,cssH/80);panelWidth=panelWidthInches*baseScale*(appState.scaleMultiplier||1);panelHeight=panelHeightInches*baseScale*(appState.scaleMultiplier||1);layout=appState.currentPattern.layout||"3,20";_layout$split=layout.split(","),_layout$split2=_slicedToArray(_layout$split,2),numPanelsStr=_layout$split2[0],spacingStr=_layout$split2[1];numPanels=parseInt(numPanelsStr,10)||3;spacing=parseInt(spacingStr,10)||20;totalWidth=numPanels*panelWidth+(numPanels-1)*spacing;startX=(cssW-totalWidth)/2;startY=(cssH-panelHeight)/2-(((_appState$currentPatt23=appState.currentPattern)===null||_appState$currentPatt23===void 0?void 0:_appState$currentPatt23.verticalOffset)||50);// panel offscreen (DPR-aware)
+panelCanvas=document.createElement("canvas");panelCanvas.width=Math.round(panelWidth*dpr);panelCanvas.height=Math.round(panelHeight*dpr);panelCtx=panelCanvas.getContext("2d",{willReadFrequently:true});panelCtx.imageSmoothingEnabled=true;panelCtx.imageSmoothingQuality="high";panelCtx.setTransform(dpr,0,0,dpr,0,0);_loop5=/*#__PURE__*/_regenerator().m(function _loop5(){var layer,pathStr,isShadow,layerColor,_appState$currentLaye1,clIdx,tilingType,isHalfDrop;return _regenerator().w(function(_context1){while(1)switch(_context1.n){case 0:layer=appState.currentPattern.layers[i];pathStr=layer&&(layer.path||layer.proofPath)?layer.path||layer.proofPath:'';isShadow=!!layer.isShadow||pathStr&&(String(pathStr).toUpperCase().includes('_SHADOW_')||String(pathStr).toUpperCase().includes('SHADOW_LAYER')||String(pathStr).toUpperCase().includes('ISSHADOW'));layerColor=null;if(!isShadow){clIdx=resolveCurrentLayersIndexForPatternLayer(i,rmLayerMapping.patternStartIndex);layerColor=lookupColor(((_appState$currentLaye1=appState.currentLayers[clIdx])===null||_appState$currentLaye1===void 0?void 0:_appState$currentLaye1.color)||"Snowbound");}tilingType=appState.currentPattern.tilingType||"";isHalfDrop=isHalfDropTiling(tilingType);_context1.n=1;return new Promise(function(resolve){var layerLoadPath=layer&&(layer.path||layer.proofPath);processImage(layerLoadPath,function(processedCanvas){if(!(processedCanvas instanceof HTMLCanvasElement))return resolve();var scale=(appState.scaleMultiplier||.5)*0.1;var tileW=snap(processedCanvas.width*scale);var tileH=snap(processedCanvas.height*scale);panelCtx.globalCompositeOperation=isShadow?"multiply":"source-over";panelCtx.globalAlpha=isShadow?0.3:1.0;var rect={x:0,y:0,w:panelWidth,h:panelHeight};var sx=rect.x-mod(rect.x,tileW)-tileW;var ex=rect.x+rect.w+tileW;var sy=rect.y-tileH;var ey=rect.y+rect.h+tileH;var col=0;for(var X=sx;X<ex;X+=tileW,col++){var yOff=isHalfDrop&&col&1?tileH/2:0;for(var Y=sy+yOff;Y<ey;Y+=tileH){panelCtx.drawImage(processedCanvas,X,Y,tileW,tileH);}}resolve();},layerColor,2.2,isShadow,/*isWallPanel*/false,/*isWall*/false);});case 1:return _context1.a(2);}},_loop5);});i=0;case 1:if(!(i<appState.currentPattern.layers.length)){_context12.n=3;break;}return _context12.d(_regeneratorValues(_loop5()),2);case 2:i++;_context12.n=1;break;case 3:// draw panels to main canvas
+for(p=0;p<numPanels;p++){px=startX+p*(panelWidth+spacing);_ctx2.fillStyle=backgroundColor;_ctx2.fillRect(px,startY,panelWidth,panelHeight);_ctx2.drawImage(panelCanvas,px,startY,panelWidth,panelHeight);}_context12.n=10;break;case 4:if(!((_appState$currentPatt24=appState.currentPattern)!==null&&_appState$currentPatt24!==void 0&&_appState$currentPatt24.tintWhite&&(_appState$currentPatt25=appState.currentPattern)!==null&&_appState$currentPatt25!==void 0&&_appState$currentPatt25.baseComposite)){_context12.n=6;break;}patternCanvas=document.createElement("canvas");patternCanvas.width=Math.round(cssW*dpr);patternCanvas.height=Math.round(cssH*dpr);patternCtx=patternCanvas.getContext("2d",{willReadFrequently:true});patternCtx.imageSmoothingEnabled=true;patternCtx.imageSmoothingQuality="high";patternCtx.setTransform(dpr,0,0,dpr,0,0);baseImage=new Image();baseImage.crossOrigin="Anonymous";baseImage.src=normalizePath(appState.currentPattern.baseComposite);_context12.n=5;return new Promise(function(resolve){baseImage.onload=function(){var _computeTileSizeFromI2=computeTileSizeFromInches(appState.currentPattern,appState.scaleMultiplier||1),tileW=_computeTileSizeFromI2.tileW,tileH=_computeTileSizeFromI2.tileH;var isHalfDrop=isHalfDropTiling(appState.currentPattern.tilingType);var sx=0-mod(0,tileW)-tileW,ex=cssW+tileW;var sy=0-tileH,ey=cssH+tileH;for(var col=0,X=sx;X<ex;X+=tileW,col++){var yOff=isHalfDrop&&col&1?tileH/2:0;for(var Y=sy+yOff;Y<ey;Y+=tileH){patternCtx.drawImage(baseImage,X,Y,tileW,tileH);}}// tint whites
+var imageData;try{imageData=patternCtx.getImageData(0,0,patternCanvas.width,patternCanvas.height);}catch(e){console.warn("⚠️ Canvas tainted, skipping tint white:",e.message);_ctx2.drawImage(patternCanvas,0,0);return resolve();}var d=imageData.data;var hex=wallColor.replace("#","");var rT=parseInt(hex.slice(0,2),16);var gT=parseInt(hex.slice(2,4),16);var bT=parseInt(hex.slice(4,6),16);for(var _i6=0;_i6<d.length;_i6+=4){var r=d[_i6],g=d[_i6+1],b=d[_i6+2];if(r>240&&g>240&&b>240){d[_i6]=rT;d[_i6+1]=gT;d[_i6+2]=bT;}}patternCtx.putImageData(imageData,0,0);_ctx2.drawImage(patternCanvas,0,0);resolve();};baseImage.onerror=resolve;});case 5:_context12.n=10;break;case 6:if(!((_appState$currentPatt26=appState.currentPattern)!==null&&_appState$currentPatt26!==void 0&&(_appState$currentPatt26=_appState$currentPatt26.layers)!==null&&_appState$currentPatt26!==void 0&&_appState$currentPatt26.length)){_context12.n=10;break;}_patternCanvas=document.createElement("canvas");_patternCanvas.width=Math.round(cssW*dpr);_patternCanvas.height=Math.round(cssH*dpr);_patternCtx=_patternCanvas.getContext("2d",{willReadFrequently:true});_patternCtx.imageSmoothingEnabled=true;_patternCtx.imageSmoothingQuality="high";_patternCtx.setTransform(dpr,0,0,dpr,0,0);_loop6=/*#__PURE__*/_regenerator().m(function _loop6(){var layer,pathStr,isShadow,layerColor,_appState$currentLaye10,clIdx;return _regenerator().w(function(_context10){while(1)switch(_context10.n){case 0:layer=appState.currentPattern.layers[_i7];pathStr=layer&&(layer.path||layer.proofPath)?layer.path||layer.proofPath:'';isShadow=!!layer.isShadow||pathStr&&(String(pathStr).toUpperCase().includes('_SHADOW_')||String(pathStr).toUpperCase().includes('SHADOW_LAYER')||String(pathStr).toUpperCase().includes('ISSHADOW'));layerColor=null;if(!isShadow){clIdx=resolveCurrentLayersIndexForPatternLayer(_i7,rmLayerMapping.patternStartIndex);layerColor=lookupColor(((_appState$currentLaye10=appState.currentLayers[clIdx])===null||_appState$currentLaye10===void 0?void 0:_appState$currentLaye10.color)||"Snowbound");}_context10.n=1;return new Promise(function(resolve){var layerLoadPath=layer&&(layer.path||layer.proofPath);processImage(layerLoadPath,function(processedCanvas){if(!(processedCanvas instanceof HTMLCanvasElement))return resolve();var _computeTileSizeFromI3=computeTileSizeFromInches(appState.currentPattern,appState.scaleMultiplier||1),tileW=_computeTileSizeFromI3.tileW,tileH=_computeTileSizeFromI3.tileH;var isHalfDrop=isHalfDropTiling(appState.currentPattern.tilingType);_patternCtx.globalCompositeOperation=isShadow?"multiply":"source-over";_patternCtx.globalAlpha=isShadow?0.3:1.0;var sx=0-mod(0,tileW)-tileW,ex=cssW+tileW;var sy=0-tileH,ey=cssH+tileH;var col=0;for(var X=sx;X<ex;X+=tileW,col++){var yOff=isHalfDrop&&col&1?tileH/2:0;for(var Y=sy+yOff;Y<ey;Y+=tileH){_patternCtx.drawImage(processedCanvas,X,Y,tileW,tileH);}}resolve();},layerColor,2.2,isShadow,/*isWallPanel*/false,/*isWall*/false);});case 1:return _context10.a(2);}},_loop6);});_i7=0;case 7:if(!(_i7<appState.currentPattern.layers.length)){_context12.n=9;break;}return _context12.d(_regeneratorValues(_loop6()),8);case 8:_i7++;_context12.n=7;break;case 9:// ✅ FIX: Draw pattern canvas at CSS size to prevent double-DPR scaling
 // patternCanvas is already DPR-scaled (cssW*dpr x cssH*dpr pixels)
 // Main ctx also has DPR transform, so we must specify CSS dimensions
 // This ensures ColorFlex patterns render at the same scale as Standard patterns
-_ctx2.drawImage(_patternCanvas,0,0,cssW,cssH);case 10:if(!effectiveMockup.mockup){_context12.n=11;break;}mockupPath=effectiveMockup.mockup;mockupImage=new Image();mockupImage.crossOrigin="Anonymous";mockupImage.src=normalizePath(mockupPath);_context12.n=11;return new Promise(function(resolve){mockupImage.onload=function(){var fit=scaleToFit(mockupImage,cssW,cssH);_ctx2.drawImage(mockupImage,fit.x,fit.y,fit.width,fit.height);resolve();};mockupImage.onerror=/*#__PURE__*/function(){var _ref20=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee0(err){var _window$ColorFlexMock2,_fallbackMockup$image3,_fallbackMockup$image4;var fallbackMockup,fallbackPath,fallbackImg;return _regenerator().w(function(_context11){while(1)switch(_context11.n){case 0:console.warn("\u26A0\uFE0F Failed to load mockup image: ".concat(mockupPath,", trying fallback (white dresser)"),err);fallbackMockup=(_window$ColorFlexMock2=window.ColorFlexMockups)===null||_window$ColorFlexMock2===void 0?void 0:_window$ColorFlexMock2['white-dresser'];fallbackPath=fallbackMockup&&(typeof fallbackMockup.image==='string'?fallbackMockup.image:((_fallbackMockup$image3=fallbackMockup.image)===null||_fallbackMockup$image3===void 0?void 0:_fallbackMockup$image3.path)||((_fallbackMockup$image4=fallbackMockup.image)===null||_fallbackMockup$image4===void 0?void 0:_fallbackMockup$image4.url))||'./data/mockups/white-dresser-W72H72.png';fallbackImg=new Image();fallbackImg.crossOrigin="Anonymous";fallbackImg.src=normalizePath(fallbackPath);_context11.n=1;return new Promise(function(res){fallbackImg.onload=function(){var fit=scaleToFit(fallbackImg,cssW,cssH);_ctx2.drawImage(fallbackImg,fit.x,fit.y,fit.width,fit.height);res();};fallbackImg.onerror=function(){return res();};});case 1:resolve();case 2:return _context11.a(2);}},_callee0);}));return function(_x15){return _ref20.apply(this,arguments);};}();});case 11:if(!effectiveMockup.tintMask){_context12.n=12;break;}tintMaskPath=normalizePath(effectiveMockup.tintMask);tintMaskImg=new Image();tintMaskImg.crossOrigin="Anonymous";tintMaskImg.src=tintMaskPath;_context12.n=12;return new Promise(function(resolve){tintMaskImg.onload=function(){var fit=scaleToFit(tintMaskImg,cssW,cssH);var tw=Math.ceil(fit.width);var th=Math.ceil(fit.height);var maskCanvas=document.createElement("canvas");maskCanvas.width=tw;maskCanvas.height=th;var maskCtx=maskCanvas.getContext("2d");maskCtx.drawImage(tintMaskImg,0,0,tw,th);var maskData;try{maskData=maskCtx.getImageData(0,0,tw,th);}catch(e){console.warn("⚠️ Tint mask canvas tainted, skipping:",e.message);resolve();return;}var data=maskData.data;var hex=(backgroundColor||"#ffffff").replace("#","");var r=parseInt(hex.substring(0,2),16);var g=parseInt(hex.substring(2,4),16);var b=parseInt(hex.substring(4,6),16);for(var _i8=0;_i8<data.length;_i8+=4){var maskR=data[_i8];var maskG=data[_i8+1];var maskB=data[_i8+2];var maskA=data[_i8+3];var intensity=maskR*0.299+maskG*0.587+maskB*0.114;var alpha=Math.round(intensity/255*(maskA/255)*255);data[_i8]=r;data[_i8+1]=g;data[_i8+2]=b;data[_i8+3]=alpha;}maskCtx.putImageData(maskData,0,0);_ctx2.save();_ctx2.globalCompositeOperation="multiply";_ctx2.drawImage(maskCanvas,fit.x,fit.y,fit.width,fit.height);_ctx2.restore();console.log("✅ Mockup tint mask applied (BG color)");resolve();};tintMaskImg.onerror=function(){console.warn("⚠️ Failed to load tint mask:",tintMaskPath);resolve();};});case 12:if(!effectiveMockup.mockupShadow){_context12.n=13;break;}shadowOverlay=new Image();shadowOverlay.crossOrigin="Anonymous";shadowOverlay.src=normalizePath(effectiveMockup.mockupShadow);_context12.n=13;return new Promise(function(resolve){shadowOverlay.onload=function(){_ctx2.globalCompositeOperation="multiply";var fit=scaleToFit(shadowOverlay,cssW,cssH);_ctx2.drawImage(shadowOverlay,fit.x,fit.y,fit.width,fit.height);_ctx2.globalCompositeOperation="source-over";resolve();};shadowOverlay.onerror=resolve;});case 13:_context12.p=13;dataUrl=canvas.toDataURL("image/png");_context12.n=16;break;case 14:_context12.p=14;_t8=_context12.v;if(!(_t8.name==="SecurityError")){_context12.n=15;break;}dom.roomMockup.innerHTML="";canvas.style.cssText="width: 100%; height: 100%; object-fit: contain; border: 1px solid #333; cursor: pointer;";dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();canvas.addEventListener("click",function(){openRoomMockupFullscreen(canvas);});_isSimpleMode=window.COLORFLEX_SIMPLE_MODE===true;// Simple mode: let template CSS handle sizing, but ensure it stays 800x600
+_ctx2.drawImage(_patternCanvas,0,0,cssW,cssH);case 10:if(!effectiveMockup.mockup){_context12.n=11;break;}mockupPath=effectiveMockup.mockup;mockupImage=new Image();mockupImage.crossOrigin="Anonymous";mockupImage.src=normalizePath(mockupPath);_context12.n=11;return new Promise(function(resolve){mockupImage.onload=function(){var fit=scaleToFit(mockupImage,cssW,cssH);_ctx2.drawImage(mockupImage,fit.x,fit.y,fit.width,fit.height);resolve();};mockupImage.onerror=/*#__PURE__*/function(){var _ref20=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee0(err){var _window$ColorFlexMock2,_fallbackMockup$image3,_fallbackMockup$image4;var fallbackMockup,fallbackPath,fallbackImg;return _regenerator().w(function(_context11){while(1)switch(_context11.n){case 0:console.warn("\u26A0\uFE0F Failed to load mockup image: ".concat(mockupPath,", trying fallback (white dresser)"),err);fallbackMockup=(_window$ColorFlexMock2=window.ColorFlexMockups)===null||_window$ColorFlexMock2===void 0?void 0:_window$ColorFlexMock2['white-dresser'];fallbackPath=fallbackMockup&&(typeof fallbackMockup.image==='string'?fallbackMockup.image:((_fallbackMockup$image3=fallbackMockup.image)===null||_fallbackMockup$image3===void 0?void 0:_fallbackMockup$image3.path)||((_fallbackMockup$image4=fallbackMockup.image)===null||_fallbackMockup$image4===void 0?void 0:_fallbackMockup$image4.url))||'./data/mockups/white-dresser-W72H72.png';fallbackImg=new Image();fallbackImg.crossOrigin="Anonymous";fallbackImg.src=normalizePath(fallbackPath);_context11.n=1;return new Promise(function(res){fallbackImg.onload=function(){var fit=scaleToFit(fallbackImg,cssW,cssH);_ctx2.drawImage(fallbackImg,fit.x,fit.y,fit.width,fit.height);res();};fallbackImg.onerror=function(){return res();};});case 1:resolve();case 2:return _context11.a(2);}},_callee0);}));return function(_x15){return _ref20.apply(this,arguments);};}();});case 11:if(!effectiveMockup.tintMask){_context12.n=12;break;}tintMaskPath=normalizePath(effectiveMockup.tintMask);tintMaskImg=new Image();tintMaskImg.crossOrigin="Anonymous";tintMaskImg.src=tintMaskPath;_context12.n=12;return new Promise(function(resolve){tintMaskImg.onload=function(){var fit=scaleToFit(tintMaskImg,cssW,cssH);var tw=Math.ceil(fit.width);var th=Math.ceil(fit.height);var maskCanvas=document.createElement("canvas");maskCanvas.width=tw;maskCanvas.height=th;var maskCtx=maskCanvas.getContext("2d");maskCtx.drawImage(tintMaskImg,0,0,tw,th);var maskData;try{maskData=maskCtx.getImageData(0,0,tw,th);}catch(e){console.warn("⚠️ Tint mask canvas tainted, skipping:",e.message);resolve();return;}var data=maskData.data;var hex=(backgroundColor||"#ffffff").replace("#","");var r=parseInt(hex.substring(0,2),16);var g=parseInt(hex.substring(2,4),16);var b=parseInt(hex.substring(4,6),16);for(var _i8=0;_i8<data.length;_i8+=4){var maskR=data[_i8];var maskG=data[_i8+1];var maskB=data[_i8+2];var maskA=data[_i8+3];var intensity=maskR*0.299+maskG*0.587+maskB*0.114;var alpha=Math.round(intensity/255*(maskA/255)*255);data[_i8]=r;data[_i8+1]=g;data[_i8+2]=b;data[_i8+3]=alpha;}maskCtx.putImageData(maskData,0,0);_ctx2.save();_ctx2.globalCompositeOperation="multiply";_ctx2.drawImage(maskCanvas,fit.x,fit.y,fit.width,fit.height);_ctx2.restore();console.log("✅ Mockup tint mask applied (BG color)");resolve();};tintMaskImg.onerror=function(){console.warn("⚠️ Failed to load tint mask:",tintMaskPath);resolve();};});case 12:if(!effectiveMockup.mockupShadow){_context12.n=13;break;}shadowOverlay=new Image();shadowOverlay.crossOrigin="Anonymous";shadowOverlay.src=normalizePath(effectiveMockup.mockupShadow);_context12.n=13;return new Promise(function(resolve){shadowOverlay.onload=function(){_ctx2.globalCompositeOperation="multiply";var fit=scaleToFit(shadowOverlay,cssW,cssH);_ctx2.drawImage(shadowOverlay,fit.x,fit.y,fit.width,fit.height);_ctx2.globalCompositeOperation="source-over";resolve();};shadowOverlay.onerror=resolve;});case 13:_context12.p=13;dataUrl=canvas.toDataURL("image/png");_context12.n=16;break;case 14:_context12.p=14;_t9=_context12.v;if(!(_t9.name==="SecurityError")){_context12.n=15;break;}dom.roomMockup.innerHTML="";canvas.style.cssText="width: 100%; height: 100%; object-fit: contain; border: 1px solid #333; cursor: pointer;";dom.roomMockup.appendChild(canvas);ensureRoomMockupDropdown();canvas.addEventListener("click",function(){openRoomMockupFullscreen(canvas);});_isSimpleMode=window.COLORFLEX_SIMPLE_MODE===true;// Simple mode: let template CSS handle sizing, but ensure it stays 800x600
 if(_isSimpleMode){// ✅ FIX: Force 800x600 in simple mode to prevent other code from changing it
 dom.roomMockup.style.setProperty('width','800px','important');dom.roomMockup.style.setProperty('height','600px','important');console.log("✅ Simple mode: Forcing roomMockup to 800x600");}else{_isFurnitureMode=window.COLORFLEX_MODE==='FURNITURE';_isClothingMode=window.COLORFLEX_MODE==='CLOTHING';// ✅ FIX: Furniture simple mode should be 800x600, not 600x450
-isFurnitureSimpleMode=_isSimpleMode&&_isFurnitureMode;mockupW=isFurnitureSimpleMode?'800px':_isFurnitureMode?'600px':_isClothingMode?'500px':'700px';mockupH=isFurnitureSimpleMode?'600px':_isFurnitureMode?'450px':_isClothingMode?'500px':'600px';dom.roomMockup.style.cssText="width: ".concat(mockupW,"; height: ").concat(mockupH,"; position: relative; background-color: #000;");}ensureButtonsAfterUpdate();return _context12.a(2);case 15:throw _t8;case 16:img=document.createElement("img");img.src=dataUrl;img.style.cssText="width: 100%; height: 100%; object-fit: contain; border: 1px solid #333; cursor: pointer;";img.title="Click for full size";img.alt="Room mockup (click for full size)";dom.roomMockup.innerHTML="";dom.roomMockup.appendChild(img);ensureRoomMockupDropdown();img.addEventListener("click",function(){openRoomMockupFullscreen(dataUrl);});// ✅ CORE WALLPAPER FUNCTION: Only set wallpaper-specific styling
+isFurnitureSimpleMode=_isSimpleMode&&_isFurnitureMode;mockupW=isFurnitureSimpleMode?'800px':_isFurnitureMode?'600px':_isClothingMode?'500px':'700px';mockupH=isFurnitureSimpleMode?'600px':_isFurnitureMode?'450px':_isClothingMode?'500px':'600px';dom.roomMockup.style.cssText="width: ".concat(mockupW,"; height: ").concat(mockupH,"; position: relative; background-color: #000;");}ensureButtonsAfterUpdate();return _context12.a(2);case 15:throw _t9;case 16:img=document.createElement("img");img.src=dataUrl;img.style.cssText="width: 100%; height: 100%; object-fit: contain; border: 1px solid #333; cursor: pointer;";img.title="Click for full size";img.alt="Room mockup (click for full size)";dom.roomMockup.innerHTML="";dom.roomMockup.appendChild(img);ensureRoomMockupDropdown();img.addEventListener("click",function(){openRoomMockupFullscreen(dataUrl);});// ✅ CORE WALLPAPER FUNCTION: Only set wallpaper-specific styling
 // Clothing and furniture modes should never reach this code (exited early above)
 // Simple mode is handled by template CSS, standard wallpaper uses default sizing
 isSimpleMode=window.COLORFLEX_SIMPLE_MODE===true;if(!isSimpleMode){// Standard wallpaper mode - use default wallpaper dimensions
-dom.roomMockup.style.cssText="width: 700px; height: 600px; position: relative; background: #000;";}ensureButtonsAfterUpdate();case 17:return _context12.a(2);}},_callee1,null,[[13,14]]);}));return function processOverlay(){return _ref19.apply(this,arguments);};}();_context13.n=9;return processOverlay()["catch"](function(err){return console.error("Error processing room mockup:",err);});case 9:_context13.n=11;break;case 10:_context13.p=10;_t9=_context13.v;console.error("Error in updateRoomMockup:",_t9);// Loading indicator removed
+dom.roomMockup.style.cssText="width: 700px; height: 600px; position: relative; background: #000;";}ensureButtonsAfterUpdate();case 17:return _context12.a(2);}},_callee1,null,[[13,14]]);}));return function processOverlay(){return _ref19.apply(this,arguments);};}();_context13.n=9;return processOverlay()["catch"](function(err){return console.error("Error processing room mockup:",err);});case 9:_context13.n=11;break;case 10:_context13.p=10;_t0=_context13.v;console.error("Error in updateRoomMockup:",_t0);// Loading indicator removed
 case 11:return _context13.a(2);}},_callee10,null,[[0,10]]);}));return function updateRoomMockup(){return _ref16.apply(this,arguments);};}();// GUARD / TRACE WRAPPER
 if(USE_GUARD&&DEBUG_TRACE){updateRoomMockup=guard(traceWrapper(updateRoomMockup,"updateRoomMockup"));}else if(USE_GUARD){updateRoomMockup=guard(updateRoomMockup,"updateRoomMockup");}// ✅ Track previous furniture type to prevent unnecessary background reloads
-var previousFurnitureType=null;var updateFurniturePreview=/*#__PURE__*/function(){var _ref21=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee11(){var isFurnitureSimpleMode,layerMapping,_appState$furnitureCo2,currentFurnitureType,oldFurnitureType,furnitureTypeChanged,isSimpleModeForZoom,frozenZoomState,preservedSettings,isSimpleMode,_isFurnitureSimpleMode,currentPattern,_appState$selectedCol45,collectionName,_currentPattern$mocku,firstKey,firstType,hasNestedMockupLayers,_selectedFurnitureType,furnitureTypeLayers,normalizedScale,scaleLayers,scaleWithZero,scaleWithoutZero,_scaleLayers$,fallbackLayers,sofaCapitol,scale1Layers,canvas,isFurnitureMode,_ctx3,collection,pattern,selectedFurnitureType,furnitureTypeToConfigKey,furnitureConfigKey,furniture,testPaths,_layerMapping,_appState$currentLaye10,_layersToRender,_layersToRender2,_appState$currentLaye15,shouldReloadBackgroundImage,mockupPath,backgroundIndex,backgroundLayer,sofaBaseColor,_shadowPath,layersToRender,furnitureType,selectedScale,_furnitureTypeLayers,_normalizedScale,_scaleLayers,_fallbackLayers,werePathsConstructed,_collection,collectionBaseName,_furnitureType,patternNameSlug,baseLayers,_patternNameSlug,patternNameShort,filteredLayers,i,_appState$currentLaye11,_appState$currentLaye12,_appState$currentLaye13,_layer$path,layer,furnitureInputIndex,_appState$currentLaye14,inputLayer,layerColor,_appState$furnitureCo3,_ctx3$canvas,_ctx3$canvas2,furnitureLayerPath,_furnitureType2,_furnitureConfigKey,_furniture,needsConversion,patternSlug,_collectionName,fileName,originalFileName,scaleMatch,extractedScale,layerMatch,layerNum,layerLabel,_layerMatch,_layerNum,_layerLabel,_collectionBaseName2,finalFileName,scaleToUse,baseFileName,_baseFileName,normalizedPath,shadowPath,extrasLayer,extrasColor,wallColor,dataUrl,img,forceSize,_isFurnitureMode2,isClothingMode,_isFurnitureSimpleMode2,mockupWidth,mockupHeight,_t0,_t1,_t10,_t11,_t12,_t13,_t14,_t15;return _regenerator().w(function(_context14){while(1)switch(_context14.p=_context14.n){case 0:// ✅ CRITICAL: Set container size FIRST before anything else (for furniture simple mode)
+var previousFurnitureType=null;var updateFurniturePreview=/*#__PURE__*/function(){var _ref21=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee11(){var isFurnitureSimpleMode,layerMapping,_appState$furnitureCo2,currentFurnitureType,oldFurnitureType,furnitureTypeChanged,isSimpleModeForZoom,frozenZoomState,preservedSettings,isSimpleMode,_isFurnitureSimpleMode,currentPattern,_appState$selectedCol47,collectionName,_currentPattern$mocku,firstKey,firstType,hasNestedMockupLayers,_selectedFurnitureType,furnitureTypeLayers,normalizedScale,scaleLayers,scaleWithZero,scaleWithoutZero,_scaleLayers$,fallbackLayers,sofaCapitol,scale1Layers,canvas,isFurnitureMode,_ctx3,collection,pattern,selectedFurnitureType,furnitureTypeToConfigKey,furnitureConfigKey,furniture,testPaths,_layerMapping,_appState$currentLaye11,_layersToRender,_layersToRender2,_appState$currentLaye16,shouldReloadBackgroundImage,mockupPath,backgroundIndex,backgroundLayer,sofaBaseColor,_shadowPath,layersToRender,furnitureType,selectedScale,_furnitureTypeLayers,_normalizedScale,_scaleLayers,_fallbackLayers,werePathsConstructed,_collection,collectionBaseName,_furnitureType,patternNameSlug,baseLayers,_patternNameSlug,patternNameShort,filteredLayers,i,_appState$currentLaye12,_appState$currentLaye13,_appState$currentLaye14,_layer$path,layer,furnitureInputIndex,_appState$currentLaye15,inputLayer,layerColor,_appState$furnitureCo3,_ctx3$canvas,_ctx3$canvas2,furnitureLayerPath,_furnitureType2,_furnitureConfigKey,_furniture,needsConversion,patternSlug,_collectionName,fileName,originalFileName,scaleMatch,extractedScale,layerMatch,layerNum,layerLabel,_layerMatch,_layerNum,_layerLabel,_collectionBaseName2,finalFileName,scaleToUse,baseFileName,_baseFileName,normalizedPath,shadowPath,extrasLayer,extrasColor,wallColor,dataUrl,img,forceSize,_isFurnitureMode2,isClothingMode,_isFurnitureSimpleMode2,mockupWidth,mockupHeight,_t1,_t10,_t11,_t12,_t13,_t14,_t15,_t16;return _regenerator().w(function(_context14){while(1)switch(_context14.p=_context14.n){case 0:// ✅ CRITICAL: Set container size FIRST before anything else (for furniture simple mode)
 // This ensures ALL furniture collections get 800x600, not just Cottage Sketchbook
 isFurnitureSimpleMode=window.COLORFLEX_SIMPLE_MODE===true&&window.COLORFLEX_MODE==='FURNITURE';if(isFurnitureSimpleMode&&dom.roomMockup){// ✅ AGGRESSIVE: Set width multiple times and remove any CSS variable references
 dom.roomMockup.style.removeProperty('--mockup-width');dom.roomMockup.style.setProperty('width','800px','important');dom.roomMockup.style.setProperty('height','600px','important');dom.roomMockup.style.setProperty('overflow','visible','important');// Show full couch
@@ -3035,7 +3079,7 @@ isSimpleMode=window.COLORFLEX_SIMPLE_MODE===true;// ✅ CRITICAL: Distinguish fu
 _isFurnitureSimpleMode=isSimpleMode&&(window.COLORFLEX_MODE==='FURNITURE'||window.location.pathname.includes('furniture'));currentPattern=appState.currentPattern;// ✅ ONLY process multi-res if in FURNITURE-SIMPLE MODE
 // Standard furniture page (colorflex-furniture) uses single-scale array format (like Folksie)
 if(_isFurnitureSimpleMode){// ✅ ENHANCED DEBUG LOGGING FOR FOLKSIE INVESTIGATION (ONLY IN SIMPLE MODE)
-collectionName=((_appState$selectedCol45=appState.selectedCollection)===null||_appState$selectedCol45===void 0?void 0:_appState$selectedCol45.name)||'unknown';console.log("🔍 ========================================");console.log("🔍 MULTI-RES DEBUG - FURNITURE-SIMPLE MODE ONLY");console.log("🔍 ========================================");console.log("  Collection name:",collectionName);console.log("  Pattern name:",currentPattern===null||currentPattern===void 0?void 0:currentPattern.name);console.log("  isFurnitureSimpleMode:",_isFurnitureSimpleMode);console.log("  window.COLORFLEX_SIMPLE_MODE:",window.COLORFLEX_SIMPLE_MODE);console.log("  window.COLORFLEX_MODE:",window.COLORFLEX_MODE);console.log("  mockupLayers exists:",!!(currentPattern!==null&&currentPattern!==void 0&&currentPattern.mockupLayers));console.log("  mockupLayers type:",_typeof(currentPattern===null||currentPattern===void 0?void 0:currentPattern.mockupLayers));console.log("  mockupLayers is array:",Array.isArray(currentPattern===null||currentPattern===void 0?void 0:currentPattern.mockupLayers));// Show structure details
+collectionName=((_appState$selectedCol47=appState.selectedCollection)===null||_appState$selectedCol47===void 0?void 0:_appState$selectedCol47.name)||'unknown';console.log("🔍 ========================================");console.log("🔍 MULTI-RES DEBUG - FURNITURE-SIMPLE MODE ONLY");console.log("🔍 ========================================");console.log("  Collection name:",collectionName);console.log("  Pattern name:",currentPattern===null||currentPattern===void 0?void 0:currentPattern.name);console.log("  isFurnitureSimpleMode:",_isFurnitureSimpleMode);console.log("  window.COLORFLEX_SIMPLE_MODE:",window.COLORFLEX_SIMPLE_MODE);console.log("  window.COLORFLEX_MODE:",window.COLORFLEX_MODE);console.log("  mockupLayers exists:",!!(currentPattern!==null&&currentPattern!==void 0&&currentPattern.mockupLayers));console.log("  mockupLayers type:",_typeof(currentPattern===null||currentPattern===void 0?void 0:currentPattern.mockupLayers));console.log("  mockupLayers is array:",Array.isArray(currentPattern===null||currentPattern===void 0?void 0:currentPattern.mockupLayers));// Show structure details
 if(currentPattern!==null&&currentPattern!==void 0&&currentPattern.mockupLayers){if(Array.isArray(currentPattern.mockupLayers)){console.log("  📋 mockupLayers is ARRAY format (old format like Folksie)");console.log("  📋 Array length:",currentPattern.mockupLayers.length);if(currentPattern.mockupLayers.length>0){console.log("  📋 First layer sample:",{path:((_currentPattern$mocku=currentPattern.mockupLayers[0])===null||_currentPattern$mocku===void 0?void 0:_currentPattern$mocku.path)||'N/A',type:_typeof(currentPattern.mockupLayers[0])});}}else{console.log("  📋 mockupLayers is OBJECT format (new nested multi-res format)");console.log("  📋 Top-level keys:",Object.keys(currentPattern.mockupLayers));// Show first furniture type structure if available
 firstKey=Object.keys(currentPattern.mockupLayers)[0];if(firstKey){firstType=currentPattern.mockupLayers[firstKey];if(_typeof(firstType)==='object'&&!Array.isArray(firstType)){console.log("  \uD83D\uDCCB First type \"".concat(firstKey,"\" has scales:"),Object.keys(firstType));}}}}else{console.log("  ⚠️ mockupLayers is MISSING or NULL");}console.log("  _originalMockupLayers exists:",!!(currentPattern!==null&&currentPattern!==void 0&&currentPattern._originalMockupLayers));if(currentPattern!==null&&currentPattern!==void 0&&currentPattern._originalMockupLayers){console.log("  _originalMockupLayers type:",_typeof(currentPattern._originalMockupLayers));console.log("  _originalMockupLayers is array:",Array.isArray(currentPattern._originalMockupLayers));if(!Array.isArray(currentPattern._originalMockupLayers)){console.log("  _originalMockupLayers keys:",Object.keys(currentPattern._originalMockupLayers));}}console.log("  ✅ IN FURNITURE-SIMPLE MODE - checking for multi-res structure");// ✅ FIX: Check both mockupLayers (if not yet flattened) OR _originalMockupLayers (if already flattened)
 hasNestedMockupLayers=currentPattern._originalMockupLayers&&_typeof(currentPattern._originalMockupLayers)==='object'&&!Array.isArray(currentPattern._originalMockupLayers)||currentPattern.mockupLayers&&_typeof(currentPattern.mockupLayers)==='object'&&!Array.isArray(currentPattern.mockupLayers);console.log("  🔍 hasNestedMockupLayers:",hasNestedMockupLayers);console.log("  🔍 Detection breakdown:");console.log("    - _originalMockupLayers check:",!!currentPattern._originalMockupLayers&&_typeof(currentPattern._originalMockupLayers)==='object'&&!Array.isArray(currentPattern._originalMockupLayers));console.log("    - mockupLayers check:",!!currentPattern.mockupLayers&&_typeof(currentPattern.mockupLayers)==='object'&&!Array.isArray(currentPattern.mockupLayers));if(hasNestedMockupLayers){console.log("🪑 MULTI-SCALE FURNITURE (SIMPLE MODE): Flattening nested mockupLayers");// Initialize furniture scale and type if not set
@@ -3098,8 +3142,8 @@ _context14.n=8;return drawFurnitureLayer(_ctx3,mockupPath,{zoomState:frozenZoomS
 console.log("2️⃣ Drawing sofa base - USING MAPPING");// ✅ Use the layer mapping to get the correct background index
 backgroundIndex=_layerMapping.backgroundIndex;backgroundLayer=appState.currentLayers[backgroundIndex];sofaBaseColor=resolveColor((backgroundLayer===null||backgroundLayer===void 0?void 0:backgroundLayer.color)||"#FAFAFA");// ✅ ENHANCED DEBUG - Let's catch the bug red-handed
 console.log("🔍 SOFA BASE COLOR RESOLUTION DEBUG:");console.log("  backgroundIndex:",backgroundIndex);console.log("  backgroundLayer:",backgroundLayer);console.log("  backgroundLayer.label:",backgroundLayer===null||backgroundLayer===void 0?void 0:backgroundLayer.label);console.log("  backgroundLayer.color:",backgroundLayer===null||backgroundLayer===void 0?void 0:backgroundLayer.color);console.log("  sofaBaseColor resolved to:",sofaBaseColor);// ✅ ALSO CHECK: What does resolveColor actually return?
-console.log("  resolveColor direct test:",resolveColor(backgroundLayer===null||backgroundLayer===void 0?void 0:backgroundLayer.color));console.log("  lookupColor direct test:",lookupColor(backgroundLayer===null||backgroundLayer===void 0?void 0:backgroundLayer.color));console.log("  Sofa base color from input ".concat(backgroundIndex," (").concat((_appState$currentLaye10=appState.currentLayers[backgroundIndex])===null||_appState$currentLaye10===void 0?void 0:_appState$currentLaye10.label,"): ").concat(sofaBaseColor));if(!furniture.base){_context14.n=16;break;}console.log("  🛋️ Sofa base path exists:",furniture.base);console.log("  🛋️ Calling drawFurnitureLayer for sofa base...");// ✅ ENSURE SOFA BASE COMPLETES BEFORE PATTERNS
-console.log("🐛 ABOUT TO DRAW SOFA BASE:");console.log("  furniture.base path:",furniture.base);console.log("  Should be: data/furniture/sofa-capitol/sofa-capitol-base.png");console.log("  Tint color:",sofaBaseColor);_context14.p=11;_context14.n=12;return drawFurnitureLayer(_ctx3,furniture.base,{tintColor:sofaBaseColor,zoomState:frozenZoomState});case 12:console.log("  ✅ Sofa base step completed - CONFIRMED");_context14.n=14;break;case 13:_context14.p=13;_t0=_context14.v;console.error("  ❌ Sofa base failed:",_t0);case 14:// ✅ Then: Add shadow layer with multiply blend (no UI input needed)
+console.log("  resolveColor direct test:",resolveColor(backgroundLayer===null||backgroundLayer===void 0?void 0:backgroundLayer.color));console.log("  lookupColor direct test:",lookupColor(backgroundLayer===null||backgroundLayer===void 0?void 0:backgroundLayer.color));console.log("  Sofa base color from input ".concat(backgroundIndex," (").concat((_appState$currentLaye11=appState.currentLayers[backgroundIndex])===null||_appState$currentLaye11===void 0?void 0:_appState$currentLaye11.label,"): ").concat(sofaBaseColor));if(!furniture.base){_context14.n=16;break;}console.log("  🛋️ Sofa base path exists:",furniture.base);console.log("  🛋️ Calling drawFurnitureLayer for sofa base...");// ✅ ENSURE SOFA BASE COMPLETES BEFORE PATTERNS
+console.log("🐛 ABOUT TO DRAW SOFA BASE:");console.log("  furniture.base path:",furniture.base);console.log("  Should be: data/furniture/sofa-capitol/sofa-capitol-base.png");console.log("  Tint color:",sofaBaseColor);_context14.p=11;_context14.n=12;return drawFurnitureLayer(_ctx3,furniture.base,{tintColor:sofaBaseColor,zoomState:frozenZoomState});case 12:console.log("  ✅ Sofa base step completed - CONFIRMED");_context14.n=14;break;case 13:_context14.p=13;_t1=_context14.v;console.error("  ❌ Sofa base failed:",_t1);case 14:// ✅ Then: Add shadow layer with multiply blend (no UI input needed)
 _shadowPath=furniture.baseShadow||furniture.base.replace(/base.*\.png/,'base-shadow.png');console.log("  🌚 Adding sofa base shadow...");_context14.n=15;return drawFurnitureLayer(_ctx3,_shadowPath,{tintColor:null,// No tinting for shadow
 zoomState:frozenZoomState,blendMode:"multiply",// Multiply blend for shadow
 opacity:0.7// Adjust shadow intensity
@@ -3140,7 +3184,7 @@ var patternWords=patternNameShort.toLowerCase().split(/[\s-]+/);var slugWords=_p
 console.log("  \u2705 Using all ".concat(layersToRender.length," layers as fallback (filter was too strict)"));}}else if(werePathsConstructed){console.log("  \u2705 Skipping filter - paths were just constructed, they're already correct");}// ✅ CRITICAL FIX: If layersToRender is still empty, try using pattern.layers as last resort
 if(!layersToRender||Array.isArray(layersToRender)&&layersToRender.length===0){console.warn("  ⚠️ layersToRender is empty - trying pattern.layers as fallback");if(pattern.layers&&Array.isArray(pattern.layers)&&pattern.layers.length>0){console.log("  \u2705 Using pattern.layers as fallback (".concat(pattern.layers.length," layers)"));layersToRender=pattern.layers;}else{console.error("  ❌ CRITICAL: No pattern layers available at all!");console.error("  ❌ Pattern name:",pattern.name);console.error("  ❌ Pattern mockupLayers:",pattern.mockupLayers);console.error("  ❌ Pattern layers:",pattern.layers);}}console.log("  Total pattern layers to process: ".concat(((_layersToRender=layersToRender)===null||_layersToRender===void 0?void 0:_layersToRender.length)||0));console.log("  Using layer array: ".concat(pattern.mockupLayers?'mockupLayers (furniture)':'layers (wallpaper)'));console.log("  Pattern layer start index: ".concat(_layerMapping.patternStartIndex));console.log("  Available inputs: ".concat(appState.currentLayers.length));// Show all current inputs
 console.log("  📋 ALL CURRENT INPUTS:");appState.currentLayers.forEach(function(layer,idx){console.log("    Input ".concat(idx,": ").concat(layer.label," = \"").concat(layer.color,"\""));});console.log("  🎨 PATTERN LAYER MAPPING:");console.log("  \uD83D\uDD0D Starting pattern layer rendering loop (".concat(((_layersToRender2=layersToRender)===null||_layersToRender2===void 0?void 0:_layersToRender2.length)||0," layers to process)"));if(!(!layersToRender||layersToRender.length===0)){_context14.n=19;break;}console.error("  ❌ CRITICAL: No pattern layers to render! layersToRender is empty!");console.error("  ❌ This means patterns will NOT appear on the sofa!");console.error("  ❌ Pattern name:",pattern.name);console.error("  ❌ Pattern mockupLayers:",pattern.mockupLayers);console.error("  ❌ Pattern layers:",pattern.layers);return _context14.a(2);case 19:console.log("  ✅ Pattern layers found, will render:",layersToRender.map(function(l){return typeof l==='string'?l:(l===null||l===void 0?void 0:l.path)||l;}).join(', '));case 20:i=0;case 21:if(!(i<layersToRender.length)){_context14.n=29;break;}console.log("  \uD83D\uDD04 Processing pattern layer ".concat(i+1,"/").concat(layersToRender.length));layer=typeof layersToRender[i]==='string'?{path:layersToRender[i]}:layersToRender[i];furnitureInputIndex=_layerMapping.patternStartIndex+i;// ✅ CRITICAL: Verify bounds and layer existence
-console.log("  \uD83D\uDD0D LAYER MAPPING CHECK:");console.log("    Pattern layer index: ".concat(i));console.log("    patternStartIndex: ".concat(_layerMapping.patternStartIndex));console.log("    Calculated furnitureInputIndex: ".concat(furnitureInputIndex));console.log("    appState.currentLayers.length: ".concat(((_appState$currentLaye11=appState.currentLayers)===null||_appState$currentLaye11===void 0?void 0:_appState$currentLaye11.length)||0));console.log("    Available layers:",((_appState$currentLaye12=appState.currentLayers)===null||_appState$currentLaye12===void 0?void 0:_appState$currentLaye12.map(function(l,idx){return"".concat(idx,": ").concat((l===null||l===void 0?void 0:l.label)||'undefined');}).join(', '))||'none');if(!(furnitureInputIndex>=(((_appState$currentLaye13=appState.currentLayers)===null||_appState$currentLaye13===void 0?void 0:_appState$currentLaye13.length)||0))){_context14.n=22;break;}console.error("  \u274C CRITICAL: furnitureInputIndex ".concat(furnitureInputIndex," is out of bounds!"));console.error("  \u274C currentLayers only has ".concat(((_appState$currentLaye14=appState.currentLayers)===null||_appState$currentLaye14===void 0?void 0:_appState$currentLaye14.length)||0," elements"));console.error("  \u274C This pattern layer will be skipped!");return _context14.a(3,28);case 22:inputLayer=appState.currentLayers[furnitureInputIndex];layerColor=resolveColor((inputLayer===null||inputLayer===void 0?void 0:inputLayer.color)||"Snowbound");console.log("  \uD83D\uDCD0 Pattern layer ".concat(i,":"));console.log("    Layer path: ".concat((_layer$path=layer.path)===null||_layer$path===void 0?void 0:_layer$path.split('/').pop()));console.log("    Full layer path: ".concat(layer.path));console.log("    Maps to input ".concat(furnitureInputIndex,": ").concat((inputLayer===null||inputLayer===void 0?void 0:inputLayer.label)||'MISSING'," = \"").concat((inputLayer===null||inputLayer===void 0?void 0:inputLayer.color)||'MISSING',"\""));console.log("    Resolved color: ".concat(layerColor));console.log("    Input exists: ".concat(!!inputLayer));if(!(layerColor&&layer.path)){_context14.n=27;break;}_context14.p=23;// Convert layer path to match selected furniture type
+console.log("  \uD83D\uDD0D LAYER MAPPING CHECK:");console.log("    Pattern layer index: ".concat(i));console.log("    patternStartIndex: ".concat(_layerMapping.patternStartIndex));console.log("    Calculated furnitureInputIndex: ".concat(furnitureInputIndex));console.log("    appState.currentLayers.length: ".concat(((_appState$currentLaye12=appState.currentLayers)===null||_appState$currentLaye12===void 0?void 0:_appState$currentLaye12.length)||0));console.log("    Available layers:",((_appState$currentLaye13=appState.currentLayers)===null||_appState$currentLaye13===void 0?void 0:_appState$currentLaye13.map(function(l,idx){return"".concat(idx,": ").concat((l===null||l===void 0?void 0:l.label)||'undefined');}).join(', '))||'none');if(!(furnitureInputIndex>=(((_appState$currentLaye14=appState.currentLayers)===null||_appState$currentLaye14===void 0?void 0:_appState$currentLaye14.length)||0))){_context14.n=22;break;}console.error("  \u274C CRITICAL: furnitureInputIndex ".concat(furnitureInputIndex," is out of bounds!"));console.error("  \u274C currentLayers only has ".concat(((_appState$currentLaye15=appState.currentLayers)===null||_appState$currentLaye15===void 0?void 0:_appState$currentLaye15.length)||0," elements"));console.error("  \u274C This pattern layer will be skipped!");return _context14.a(3,28);case 22:inputLayer=appState.currentLayers[furnitureInputIndex];layerColor=resolveColor((inputLayer===null||inputLayer===void 0?void 0:inputLayer.color)||"Snowbound");console.log("  \uD83D\uDCD0 Pattern layer ".concat(i,":"));console.log("    Layer path: ".concat((_layer$path=layer.path)===null||_layer$path===void 0?void 0:_layer$path.split('/').pop()));console.log("    Full layer path: ".concat(layer.path));console.log("    Maps to input ".concat(furnitureInputIndex,": ").concat((inputLayer===null||inputLayer===void 0?void 0:inputLayer.label)||'MISSING'," = \"").concat((inputLayer===null||inputLayer===void 0?void 0:inputLayer.color)||'MISSING',"\""));console.log("    Resolved color: ".concat(layerColor));console.log("    Input exists: ".concat(!!inputLayer));if(!(layerColor&&layer.path)){_context14.n=27;break;}_context14.p=23;// Convert layer path to match selected furniture type
 furnitureLayerPath=layer.path;_furnitureType2=appState.selectedFurnitureType||'Sofa-Capitol';_furnitureConfigKey=_furnitureType2==='Sofa-Capitol'?'furniture':'furniture-kite';_furniture=(_appState$furnitureCo3=appState.furnitureConfig)===null||_appState$furnitureCo3===void 0?void 0:_appState$furnitureCo3[_furnitureConfigKey];// Debug logging
 console.log("    \uD83D\uDD0D Path conversion check for layer ".concat(i,":"));console.log("      Full path: ".concat(layer.path));console.log("      Selected furniture: ".concat(_furnitureType2," (config key: ").concat(_furnitureConfigKey,")"));console.log("      Has mockupLayers: ".concat(!!currentPattern.mockupLayers));console.log("      Template: ".concat(_furniture===null||_furniture===void 0?void 0:_furniture.patternPathTemplate));// Check if we need to convert the path
 needsConversion=!currentPattern.mockupLayers||// No mockupLayers (using wallpaper)
@@ -3177,18 +3221,18 @@ furnitureLayerPath=normalizePath("data/collections/".concat(_collectionBaseName2
 // loadImage will also normalize, but let's do it here for clarity
 normalizedPath=normalizePath(furnitureLayerPath);console.log("    \uD83C\uDFA8 About to draw pattern layer ".concat(i,":"));console.log("      Original path: ".concat(furnitureLayerPath));console.log("      Normalized path: ".concat(normalizedPath));console.log("      Using color: ".concat(layerColor));console.log("      Using zoom state: scale=".concat(frozenZoomState.scale,", offset=(").concat(frozenZoomState.offsetX,", ").concat(frozenZoomState.offsetY,")"));console.log("      Canvas context: ".concat(_ctx3?'available':'MISSING'));console.log("      Canvas size: ".concat(_ctx3===null||_ctx3===void 0||(_ctx3$canvas=_ctx3.canvas)===null||_ctx3$canvas===void 0?void 0:_ctx3$canvas.width,"x").concat(_ctx3===null||_ctx3===void 0||(_ctx3$canvas2=_ctx3.canvas)===null||_ctx3$canvas2===void 0?void 0:_ctx3$canvas2.height));_context14.n=24;return drawFurnitureLayer(_ctx3,normalizedPath,{tintColor:layerColor,zoomState:frozenZoomState,highRes:true,// ✅ Enable high-res for patterns
 isPatternLayer:true// ✅ Explicitly mark as pattern layer to ensure luminance logic
-});case 24:console.log("    \u2705 Pattern layer ".concat(i," rendered successfully in high resolution"));_context14.n=26;break;case 25:_context14.p=25;_t1=_context14.v;console.error("    \u274C FAILED to render pattern layer ".concat(i,":"),_t1);console.error("    \u274C Error message: ".concat(_t1.message));console.error("    \u274C Error stack: ".concat(_t1.stack));case 26:_context14.n=28;break;case 27:console.warn("    \u26A0\uFE0F Skipping pattern layer ".concat(i,": missing color (").concat(!layerColor,") or path (").concat(!layer.path,")"));if(!layerColor)console.warn("      - Layer color is missing/null");if(!layer.path)console.warn("      - Layer path is missing/null");case 28:i++;_context14.n=21;break;case 29:console.log("✅ Pattern layers step completed");// ===== STEP 3.5: Add sofa base shadow AFTER patterns =====
+});case 24:console.log("    \u2705 Pattern layer ".concat(i," rendered successfully in high resolution"));_context14.n=26;break;case 25:_context14.p=25;_t10=_context14.v;console.error("    \u274C FAILED to render pattern layer ".concat(i,":"),_t10);console.error("    \u274C Error message: ".concat(_t10.message));console.error("    \u274C Error stack: ".concat(_t10.stack));case 26:_context14.n=28;break;case 27:console.warn("    \u26A0\uFE0F Skipping pattern layer ".concat(i,": missing color (").concat(!layerColor,") or path (").concat(!layer.path,")"));if(!layerColor)console.warn("      - Layer color is missing/null");if(!layer.path)console.warn("      - Layer path is missing/null");case 28:i++;_context14.n=21;break;case 29:console.log("✅ Pattern layers step completed");// ===== STEP 3.5: Add sofa base shadow AFTER patterns =====
 console.log("3️⃣.5 Adding sofa base shadow on top of patterns");shadowPath=furniture.baseShadow||furniture.base.replace(/base.*\.png/,'base-shadow.png');if(!(shadowPath&&furniture.base)){_context14.n=34;break;}console.log("  🌚 Drawing shadow on top of patterns...");_context14.p=30;_context14.n=31;return drawFurnitureLayer(_ctx3,shadowPath,{tintColor:null,// No tinting for shadow
 zoomState:frozenZoomState,blendMode:"multiply",// Multiply blend for shadow effect
 opacity:0.7// Adjust shadow intensity as needed
-});case 31:console.log("  ✅ Shadow applied on top of patterns");_context14.n=33;break;case 32:_context14.p=32;_t10=_context14.v;console.log("  ⚠️ Shadow file not found, skipping:",shadowPath);case 33:_context14.n=35;break;case 34:console.log("  ⚠️ No shadow path defined, skipping shadow");case 35:// ===== STEP 4: Draw extras on top (split into tintable + fixed) =====
+});case 31:console.log("  ✅ Shadow applied on top of patterns");_context14.n=33;break;case 32:_context14.p=32;_t11=_context14.v;console.log("  ⚠️ Shadow file not found, skipping:",shadowPath);case 33:_context14.n=35;break;case 34:console.log("  ⚠️ No shadow path defined, skipping shadow");case 35:// ===== STEP 4: Draw extras on top (split into tintable + fixed) =====
 console.log("4️⃣ Drawing extras (pillows/throw + table)");// ✅ Find the Extras/Pillows color from currentLayers
 extrasLayer=appState.currentLayers.find(function(l){return l.isExtras===true;});extrasColor=extrasLayer?resolveColor(extrasLayer.color||"SW7006 Extra White"):null;console.log("  Extras color:",extrasColor);// Check if furniture has separate extras files or combined
 if(!(furniture.extrasTintable&&furniture.extrasFixed)){_context14.n=43;break;}// Capitol style - separate tintable and fixed extras
-console.log("  Using split extras (tintable + fixed)");_context14.p=36;_context14.n=37;return drawFurnitureLayer(_ctx3,furniture.extrasTintable,{tintColor:extrasColor,zoomState:frozenZoomState,opacity:1.0,blendMode:"source-over",isTintableExtras:true});case 37:console.log("  ✅ Tintable extras (pillows/throw) drawn with color:",extrasColor);_context14.n=39;break;case 38:_context14.p=38;_t11=_context14.v;console.log("  ⚠️ Tintable extras not found:",_t11.message);case 39:_context14.p=39;_context14.n=40;return drawFurnitureLayer(_ctx3,furniture.extrasFixed,{tintColor:null,zoomState:frozenZoomState,opacity:1.0,blendMode:"source-over"});case 40:console.log("  ✅ Fixed extras (table/candles) drawn without tinting");_context14.n=42;break;case 41:_context14.p=41;_t12=_context14.v;console.log("  ⚠️ Fixed extras not found:",_t12.message);case 42:_context14.n=49;break;case 43:if(!furniture.extras){_context14.n=48;break;}// Kite style - combined extras file
+console.log("  Using split extras (tintable + fixed)");_context14.p=36;_context14.n=37;return drawFurnitureLayer(_ctx3,furniture.extrasTintable,{tintColor:extrasColor,zoomState:frozenZoomState,opacity:1.0,blendMode:"source-over",isTintableExtras:true});case 37:console.log("  ✅ Tintable extras (pillows/throw) drawn with color:",extrasColor);_context14.n=39;break;case 38:_context14.p=38;_t12=_context14.v;console.log("  ⚠️ Tintable extras not found:",_t12.message);case 39:_context14.p=39;_context14.n=40;return drawFurnitureLayer(_ctx3,furniture.extrasFixed,{tintColor:null,zoomState:frozenZoomState,opacity:1.0,blendMode:"source-over"});case 40:console.log("  ✅ Fixed extras (table/candles) drawn without tinting");_context14.n=42;break;case 41:_context14.p=41;_t13=_context14.v;console.log("  ⚠️ Fixed extras not found:",_t13.message);case 42:_context14.n=49;break;case 43:if(!furniture.extras){_context14.n=48;break;}// Kite style - combined extras file
 console.log("  Using combined extras file");_context14.p=44;_context14.n=45;return drawFurnitureLayer(_ctx3,furniture.extras,{tintColor:null,// Combined file, no tinting
-zoomState:frozenZoomState,opacity:1.0,blendMode:"source-over"});case 45:console.log("  ✅ Combined extras drawn");_context14.n=47;break;case 46:_context14.p=46;_t13=_context14.v;console.log("  ⚠️ Combined extras not found:",_t13.message);case 47:_context14.n=49;break;case 48:console.log("  ⚠️ No extras configuration found for this furniture");case 49:console.log("✅ Extras step completed");// ===== STEP 5: Apply wall mask over everything (final composite) =====
-console.log("5️⃣ Applying wall color mask (screen blend over all layers)");wallColor=resolveColor(((_appState$currentLaye15=appState.currentLayers[_layerMapping.wallIndex])===null||_appState$currentLaye15===void 0?void 0:_appState$currentLaye15.color)||"Snowbound");console.log("  Wall color from input ".concat(_layerMapping.wallIndex,": ").concat(wallColor));if(!furniture.wallMask){_context14.n=51;break;}console.log("  Wall mask path:",furniture.wallMask);console.log("  Wall color to apply:",wallColor);console.log("  Applying as FINAL layer (wall mask logic: white areas = wall color, black areas = transparent)");// wallmode ✅ FIX: Use isMask flag to trigger wall mask logic (white areas = wall color, black areas = transparent)
+zoomState:frozenZoomState,opacity:1.0,blendMode:"source-over"});case 45:console.log("  ✅ Combined extras drawn");_context14.n=47;break;case 46:_context14.p=46;_t14=_context14.v;console.log("  ⚠️ Combined extras not found:",_t14.message);case 47:_context14.n=49;break;case 48:console.log("  ⚠️ No extras configuration found for this furniture");case 49:console.log("✅ Extras step completed");// ===== STEP 5: Apply wall mask over everything (final composite) =====
+console.log("5️⃣ Applying wall color mask (screen blend over all layers)");wallColor=resolveColor(((_appState$currentLaye16=appState.currentLayers[_layerMapping.wallIndex])===null||_appState$currentLaye16===void 0?void 0:_appState$currentLaye16.color)||"Snowbound");console.log("  Wall color from input ".concat(_layerMapping.wallIndex,": ").concat(wallColor));if(!furniture.wallMask){_context14.n=51;break;}console.log("  Wall mask path:",furniture.wallMask);console.log("  Wall color to apply:",wallColor);console.log("  Applying as FINAL layer (wall mask logic: white areas = wall color, black areas = transparent)");// wallmode ✅ FIX: Use isMask flag to trigger wall mask logic (white areas = wall color, black areas = transparent)
 _context14.n=50;return drawFurnitureLayer(_ctx3,furniture.wallMask,{tintColor:wallColor,isMask:true,// ✅ CRITICAL: This triggers the wall mask logic
 blendMode:"screen",// ✅ FIX: Use source-over to properly respect alpha channel (not "normal" which doesn't exist)
 opacity:1.0,// Full opacity for wall color
@@ -3206,48 +3250,44 @@ setTimeout(forceSize,50);setTimeout(forceSize,100);setTimeout(forceSize,200);set
 _isFurnitureMode2=window.COLORFLEX_MODE==='FURNITURE';isClothingMode=window.COLORFLEX_MODE==='CLOTHING';// ✅ FIX: Furniture simple mode should be 800x600, not 600x450
 _isFurnitureSimpleMode2=isSimpleMode&&_isFurnitureMode2;mockupWidth=_isFurnitureSimpleMode2?'800px':_isFurnitureMode2?'600px':isClothingMode?'500px':'700px';mockupHeight=_isFurnitureSimpleMode2?'600px':_isFurnitureMode2?'450px':isClothingMode?'500px':'600px';dom.roomMockup.style.cssText="width: ".concat(mockupWidth,"; height: ").concat(mockupHeight,"; position: relative; background-image: none; background-color: var(--color-bg-medium);");}ensureButtonsAfterUpdate();console.log("✅ Furniture preview displayed in DOM");console.log("📊 Final canvas dimensions:",canvas.width,"x",canvas.height);console.log("📊 DataURL length:",dataUrl.length);// ✅ CRITICAL: Add delay before clearing flag to prevent race conditions
 // This ensures the DOM update completes before allowing other renders
-_context14.n=53;return new Promise(function(resolve){return setTimeout(resolve,100);});case 53:console.log("⏳ Delay completed - DOM should be stable now");_context14.n=55;break;case 54:_context14.p=54;_t14=_context14.v;console.error("❌ Error in furniture rendering sequence:",_t14);console.error("❌ Error stack:",_t14.stack);// Fallback: show error message in mockup area
+_context14.n=53;return new Promise(function(resolve){return setTimeout(resolve,100);});case 53:console.log("⏳ Delay completed - DOM should be stable now");_context14.n=55;break;case 54:_context14.p=54;_t15=_context14.v;console.error("❌ Error in furniture rendering sequence:",_t15);console.error("❌ Error stack:",_t15.stack);// Fallback: show error message in mockup area
 dom.roomMockup.innerHTML="\n                <div style=\"\n                    width: 100%; \n                    height: 100%; \n                    display: flex; \n                    align-items: center; \n                    justify-content: center; \n                    background: #f3f4f6; \n                    color: #dc2626;\n                    font-family: monospace;\n                    text-align: center;\n                    padding: 20px;\n                \">\n                    <div>\n                        <div style=\"font-size: 24px; margin-bottom: 10px;\">\u26A0\uFE0F</div>\n                        <div>Furniture Preview Error</div>\n                        <div style=\"font-size: 12px; margin-top: 10px;\">Check console for details</div>\n                    </div>\n                </div>\n            ";case 55:// ✅ RESTORE PRESERVED SETTINGS AT THE END
 Object.assign(furnitureViewSettings,preservedSettings);console.log("✅ Zoom settings restored after rendering:",furnitureViewSettings);// ✅ CRITICAL: Clear compositing flag AFTER everything is complete
-appState.isFurnitureCompositing=false;console.log("🔓 Furniture compositing flag cleared - other renders can proceed");_context14.n=57;break;case 56:_context14.p=56;_t15=_context14.v;console.error("🔥 Critical error in updateFurniturePreview:",_t15);console.error("🔥 Error stack:",_t15.stack);// Ultimate fallback
+appState.isFurnitureCompositing=false;console.log("🔓 Furniture compositing flag cleared - other renders can proceed");_context14.n=57;break;case 56:_context14.p=56;_t16=_context14.v;console.error("🔥 Critical error in updateFurniturePreview:",_t16);console.error("🔥 Error stack:",_t16.stack);// Ultimate fallback
 if(dom.roomMockup){dom.roomMockup.innerHTML="\n                <div style=\"\n                    width: 100%; \n                    height: 100%; \n                    display: flex; \n                    align-items: center; \n                    justify-content: center; \n                    background: #fef2f2; \n                    color: #dc2626;\n                    font-family: monospace;\n                \">\n                    Critical furniture preview error - check console\n                </div>\n            ";}case 57:return _context14.a(2);}},_callee11,null,[[44,46],[39,41],[36,38],[30,32],[23,25],[11,13],[7,54],[1,56]]);}));return function updateFurniturePreview(){return _ref21.apply(this,arguments);};}();function parseCoordinateFilename(filename){console.log('Before click - Scroll Y:',window.scrollY);var parts=filename.split('/');var filePart=parts[5];// "BOMBAY-KITANELLI-VINE.jpg"
 var collectionName='coordinates';var patternPart=filePart.replace(/^BOMBAY-/,'')// Remove "BOMBAY-"
 .replace(/\.jpg$/i,'');// Remove ".jpg"
 var patternName=patternPart.split('-').map(function(word){return word.charAt(0).toUpperCase()+word.slice(1).toLowerCase();}).join(' ');// No mapping needed to match JSON
-var normalizedPatternName=patternName;console.log("Parsed filename: ".concat(filename," \xE2\u2020\u2019 collection: ").concat(collectionName,", pattern: ").concat(normalizedPatternName));return{collectionName:collectionName,patternName:normalizedPatternName};}function loadPatternFromLocalCollections(collectionName,patternName){try{if(!appState.collections||!appState.collections.length){console.error("appState.collections is empty or not initialized");return null;}var collection=appState.collections.find(function(c){return c&&typeof c.name==='string'&&c.name.toLowerCase()==="coordinates";});if(!collection){console.error("Coordinates collection not found in appState.collections");return null;}var pattern=collection.patterns.find(function(p){return p&&typeof p.name==='string'&&patternName&&typeof patternName==='string'&&p.name.toLowerCase()===patternName.toLowerCase();});if(!pattern){console.error("Pattern ".concat(patternName," not found in coordinates collection"));return null;}console.log("Loaded pattern: ".concat(pattern.name," from coordinates collection"));return{collection:collection,pattern:pattern};}catch(error){console.error("Error accessing collections: ".concat(error.message));return null;}}/**
-     * Find the coordinates collection pattern that matches a coordinate record.
-     * Coordinate filenames use kebab-case (e.g. trenton-ticking.jpg) while pattern
-     * names use spaces (e.g. "Trenton Ticking"). Match by thumbnail path.
-     */function findCoordinatesPatternByFilename(filenameNoExt){if(!appState.collections||!filenameNoExt)return null;var lower=String(filenameNoExt).toLowerCase();var matchInCollection=function matchInCollection(collection){if(!collection||!Array.isArray(collection.patterns))return null;return collection.patterns.find(function(p){var thumb=(p.thumbnail||'').toLowerCase();return thumb&&(thumb.includes("/".concat(lower,"."))||thumb.endsWith("/".concat(lower))||thumb.includes("/".concat(lower,".jpg")));})||null;};var coordsColl=appState.collections.find(function(c){return c&&typeof c.name==='string'&&c.name.toLowerCase()==='coordinates';});var fromCoords=matchInCollection(coordsColl);if(fromCoords)return fromCoords;var _iterator5=_createForOfIteratorHelper(appState.collections),_step5;try{for(_iterator5.s();!(_step5=_iterator5.n()).done;){var c=_step5.value;if(!c||typeof c.name!=='string')continue;if(c.name.toLowerCase()==='coordinates')continue;var hit=matchInCollection(c);if(hit)return hit;}}catch(err){_iterator5.e(err);}finally{_iterator5.f();}return null;}// ✅ FIX: Define handleCoordinateClick outside setupCoordinateImageHandlers
+var normalizedPatternName=patternName;console.log("Parsed filename: ".concat(filename," \xE2\u2020\u2019 collection: ").concat(collectionName,", pattern: ").concat(normalizedPatternName));return{collectionName:collectionName,patternName:normalizedPatternName};}function loadPatternFromLocalCollections(collectionName,patternName){try{if(!appState.collections||!appState.collections.length){console.error("appState.collections is empty or not initialized");return null;}var collection=appState.collections.find(function(c){return c&&typeof c.name==='string'&&c.name.toLowerCase()==="coordinates";});if(!collection){console.error("Coordinates collection not found in appState.collections");return null;}var pattern=collection.patterns.find(function(p){return p&&typeof p.name==='string'&&patternName&&typeof patternName==='string'&&p.name.toLowerCase()===patternName.toLowerCase();});if(!pattern){console.error("Pattern ".concat(patternName," not found in coordinates collection"));return null;}console.log("Loaded pattern: ".concat(pattern.name," from coordinates collection"));return{collection:collection,pattern:pattern};}catch(error){console.error("Error accessing collections: ".concat(error.message));return null;}}// ✅ FIX: Define handleCoordinateClick outside setupCoordinateImageHandlers
 // This ensures stable function reference for removeEventListener to work correctly
 function handleCoordinateClick(){return _handleCoordinateClick.apply(this,arguments);}// ✅ FIX: setupCoordinateImageHandlers now references stable handleCoordinateClick function
 function _handleCoordinateClick(){_handleCoordinateClick=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee30(){var image,filename,coordinate,primaryLayerIndex,layerPaths,coordImage,normalizedCoordPath,coordLayerSrc;return _regenerator().w(function(_context38){while(1)switch(_context38.n){case 0:image=this;console.log('>>> handleCoordinateClick START <<<');// Only store original state if not already stored
 if(!appState.originalPattern){appState.originalPattern=_objectSpread({},appState.currentPattern);appState.originalCoordinates=_toConsumableArray(getCoordinateListForCurrentUI());appState.originalLayerInputs=appState.layerInputs.map(function(layer,index){return{id:"layer-".concat(index),label:layer.label,inputValue:layer.input.value,hex:layer.circle.style.backgroundColor,isBackground:layer.isBackground};});appState.originalCurrentLayers=appState.currentLayers.map(function(layer){return _objectSpread({},layer);});console.log("Stored original state:",{pattern:appState.originalPattern.name,coordinates:appState.originalCoordinates,layerInputs:appState.originalLayerInputs,currentLayers:appState.originalCurrentLayers});}// Highlight selected image
 document.querySelectorAll(".coordinate-image").forEach(function(img){return img.classList.remove("selected");});image.classList.add("selected");filename=image.dataset.filename;console.log("Coordinate image clicked: ".concat(filename));// Find the coordinate (same list order as populateCoordinates)
 coordinate=getCoordinateListForCurrentUI().find(function(coord){return coord.path===filename;});if(coordinate){_context38.n=1;break;}console.error("Coordinate not found for filename: ".concat(filename));if(dom.coordinatesContainer){dom.coordinatesContainer.innerHTML+="<p style='color: red;'>Error: Coordinate not found.</p>";}return _context38.a(2);case 1:console.log("Found coordinate:",coordinate);// Find the primary pattern layer index (non-background, non-shadow)
-primaryLayerIndex=appState.currentLayers.findIndex(function(layer){var _layer$imageUrl;return layer.label!=="Background"&&!((_layer$imageUrl=layer.imageUrl)!==null&&_layer$imageUrl!==void 0&&_layer$imageUrl.toUpperCase().includes("ISSHADOW"));});if(!(primaryLayerIndex===-1)){_context38.n=2;break;}console.error("No primary pattern layer found in appState.currentLayers:",appState.currentLayers);return _context38.a(2);case 2:console.log("Primary layer index: ".concat(primaryLayerIndex));// Determine layers to use (handle both layerPath and layerPaths)
-layerPaths=coordinate.layerPaths||(coordinate.layerPath?[coordinate.layerPath]:[]);if(!(layerPaths.length===0)){_context38.n=3;break;}console.error("No layers found for coordinate: ".concat(filename));return _context38.a(2);case 3:// Load the first coordinate image to get its dimensions
-coordImage=new Image();normalizedCoordPath=normalizePath(layerPaths[0]);coordLayerSrc=urlForCorsFetch(normalizedCoordPath);console.log("\uD83D\uDD0D Coordinate click path: \"".concat(layerPaths[0],"\" \u2192 normalized: \"").concat(normalizedCoordPath,"\""));if(!colorFlexB2OmitImgCrossOrigin(coordLayerSrc))coordImage.crossOrigin="Anonymous";coordImage.src=coordLayerSrc;coordImage.onload=/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee29(){var maxDimension,naturalWidth,naturalHeight,scale,imageWidth,imageHeight,layers,layerLabels,coordsPattern,patternSize,patternTilingType,patternRepeat,currentColors,layersToInput,isFurnitureModeCoord,isClothingModeCoord,coordinatesContainer,backLink;return _regenerator().w(function(_context37){while(1)switch(_context37.n){case 0:// Limit coordinate image dimensions to prevent oversized canvases
+primaryLayerIndex=appState.currentLayers.findIndex(function(layer){var _layer$imageUrl;return layer.label!=="Background"&&!((_layer$imageUrl=layer.imageUrl)!==null&&_layer$imageUrl!==void 0&&_layer$imageUrl.toUpperCase().includes("ISSHADOW"));});if(!(primaryLayerIndex===-1)){_context38.n=2;break;}console.error("No primary pattern layer found in appState.currentLayers:",appState.currentLayers);return _context38.a(2);case 2:console.log("Primary layer index: ".concat(primaryLayerIndex));appState.coordinatePreviewColorStartIndex=primaryLayerIndex;// Determine layers to use (handle both layerPath and layerPaths); prefer canonical paths from Coordinates collection pattern
+layerPaths=coordinateLayerPathsFromCollectionPattern(coordinate);if(!(layerPaths.length===0)){_context38.n=3;break;}console.error("No layers found for coordinate: ".concat(filename));return _context38.a(2);case 3:// Load the first coordinate image to get its dimensions
+coordImage=new Image();normalizedCoordPath=normalizePath(layerPaths[0]);coordLayerSrc=urlForCorsFetch(normalizedCoordPath);console.log("\uD83D\uDD0D Coordinate click path: \"".concat(layerPaths[0],"\" \u2192 normalized: \"").concat(normalizedCoordPath,"\""));coordImage.crossOrigin="Anonymous";coordImage.src=coordLayerSrc;coordImage.onload=/*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee29(){var maxDimension,naturalWidth,naturalHeight,scale,imageWidth,imageHeight,layers,layerLabels,coordsPattern,patternSize,patternTilingType,patternRepeat,colorsByLabel,layersToInput,isFurnitureModeCoord,isClothingModeCoord,coordinatesContainer,backLink;return _regenerator().w(function(_context37){while(1)switch(_context37.n){case 0:// Limit coordinate image dimensions to prevent oversized canvases
 maxDimension=400;naturalWidth=coordImage.naturalWidth;naturalHeight=coordImage.naturalHeight;scale=Math.min(maxDimension/naturalWidth,maxDimension/naturalHeight,1);imageWidth=Math.floor(naturalWidth*scale);imageHeight=Math.floor(naturalHeight*scale);console.log("\uD83D\uDCD0 Coordinate image sizing: natural(".concat(naturalWidth,"x").concat(naturalHeight,") \u2192 scaled(").concat(imageWidth,"x").concat(imageHeight,")"));// Create layers and labels for all coordinate layers
 layers=layerPaths.map(function(path){return{path:path};});layerLabels=layerPaths.map(function(_,index){return index===0?"Flowers":"Layer ".concat(index+1);});// Look up the coordinates collection pattern for correct size/tiling (room mockup scale)
 coordsPattern=findCoordinatesPatternByFilename(coordinate.filename.replace(/\.jpg$/,''));patternSize=coordsPattern!==null&&coordsPattern!==void 0&&coordsPattern.size&&Array.isArray(coordsPattern.size)&&coordsPattern.size.length>=2?coordsPattern.size:[24,24];patternTilingType=(coordsPattern===null||coordsPattern===void 0?void 0:coordsPattern.tilingType)||"straight";patternRepeat=(coordsPattern===null||coordsPattern===void 0?void 0:coordsPattern.repeat)||"yes";// Update currentPattern with coordinate data - use coordinates pattern size for room mockup
 appState.currentPattern=_objectSpread(_objectSpread({},appState.currentPattern),{},{name:coordinate.filename.replace(/\.jpg$/,''),thumbnail:coordinate.path,size:patternSize,repeat:patternRepeat,tilingType:patternTilingType,layers:layers,layerLabels:layerLabels,tintWhite:false});console.log("Updated appState.currentPattern:",appState.currentPattern);// Update the primary pattern layer's imageUrl in currentLayers
 appState.currentLayers=appState.currentLayers.map(function(layer,index){if(index===primaryLayerIndex){console.log("Updating layer at index ".concat(index," with layerPath: ").concat(layerPaths[0]));return _objectSpread(_objectSpread({},layer),{},{imageUrl:layerPaths[0]// Update primary layer
-});}return layer;});// Preserve the original layer structure and colors
-currentColors=appState.layerInputs.map(function(layer){return layer.input.value;});console.log("Preserving colors:",currentColors);// Restore layer inputs with preserved colors (only non-shadow layers get inputs)
-appState.layerInputs=[];if(dom.layerInputsContainer)dom.layerInputsContainer.innerHTML="";layersToInput=appState.currentLayers.filter(function(l){return!l.isShadow;});layersToInput.forEach(function(layer,index){var clIdx=appState.currentLayers.findIndex(function(l){return l.label===layer.label;});var id=layer.inputId||"layer-".concat(clIdx);var isBackground=layer.label==="Background";var initialColor=clIdx>=0&&currentColors[clIdx]!=null?currentColors[clIdx]:isBackground?"#FFFFFF":"Snowbound";var layerData=createColorInput(layer.label,id,initialColor,isBackground);layerData.input.value=getCleanColorName(initialColor);layerData.circle.style.backgroundColor=lookupColor(initialColor)||"#FFFFFF";dom.layerInputsContainer.appendChild(layerData.container);appState.layerInputs.push(_objectSpread(_objectSpread({},layerData),{},{color:layer.color,hex:lookupColor(layer.color)||"#FFFFFF"}));console.log("Set ".concat(layer.label," input to ").concat(layerData.input.value,", id=").concat(id));});// Update UI
+});}return layer;});// Preserve UI colors by label (indices can diverge when shadows sit between pattern slots)
+colorsByLabel={};appState.layerInputs.forEach(function(li){if(li&&li.label)colorsByLabel[li.label]=li.input.value;});console.log("Preserving colors by label:",colorsByLabel);// Restore layer inputs with preserved colors (only non-shadow layers get inputs)
+appState.layerInputs=[];if(dom.layerInputsContainer)dom.layerInputsContainer.innerHTML="";layersToInput=appState.currentLayers.filter(function(l){return!l.isShadow;});layersToInput.forEach(function(layer,index){var clIdx=appState.currentLayers.findIndex(function(l){return l.label===layer.label;});var id=layer.inputId||"layer-".concat(clIdx);var isBackground=layer.label==="Background";var initialColor=colorsByLabel[layer.label]!=null&&colorsByLabel[layer.label]!==""?colorsByLabel[layer.label]:isBackground?"#FFFFFF":"Snowbound";var layerData=createColorInput(layer.label,id,initialColor,isBackground);layerData.input.value=getCleanColorName(initialColor);layerData.circle.style.backgroundColor=lookupColor(initialColor)||"#FFFFFF";dom.layerInputsContainer.appendChild(layerData.container);if(clIdx>=0){appState.currentLayers[clIdx].color=layerData.input.value;}appState.layerInputs.push(_objectSpread(_objectSpread({},layerData),{},{color:layerData.input.value,hex:lookupColor(layerData.input.value)||"#FFFFFF"}));console.log("Set ".concat(layer.label," input to ").concat(layerData.input.value,", id=").concat(id));});// Update UI
 // updatePreview();
 // const isFurniturePattern = appState.currentPattern?.isFurniture || false;
 updatePreview();// ✅ Check mode and call appropriate render function
 isFurnitureModeCoord=window.COLORFLEX_MODE==='FURNITURE'||appState.isInFurnitureMode;isClothingModeCoord=window.COLORFLEX_MODE==='CLOTHING'||window.COLORFLEX_SIMPLE_MODE===true&&window.COLORFLEX_MODE!=='FURNITURE';if(!isFurnitureModeCoord){_context37.n=4;break;}console.log("🪑 handleCoordinateClick in furniture mode - calling updateFurniturePreview()");if(!(typeof updateFurniturePreview==='function')){_context37.n=2;break;}_context37.n=1;return updateFurniturePreview();case 1:_context37.n=3;break;case 2:console.error('❌ updateFurniturePreview not available!');case 3:_context37.n=7;break;case 4:if(!(appState.isInFabricMode||isClothingModeCoord)){_context37.n=6;break;}console.log("🧵 handleCoordinateClick in fabric/clothing mode - calling renderFabricMockup()");_context37.n=5;return renderFabricMockup();case 5:_context37.n=7;break;case 6:updateRoomMockup();case 7:// Add "Back to Pattern" link
-console.log("🔍 Adding Back to Pattern button...");coordinatesContainer=document.getElementById("coordinatesContainer");console.log("🔍 coordinatesContainer found:",!!coordinatesContainer);if(coordinatesContainer){backLink=document.getElementById("backToPatternLink");if(backLink){console.log("🔍 Removing existing back link");backLink.remove();}backLink=document.createElement("div");backLink.id="backToPatternLink";backLink.style.cssText="\n                        color: #f0e6d2 !important;\n                        font-family: 'Island Moments', cursive !important;\n                        font-size: 1.8rem !important;\n                        text-align: center !important;\n                        cursor: pointer !important;\n                        margin-top: 0.5rem !important;\n                        padding: 0.5rem !important;\n                        transition: color 0.2s !important;\n                        display: block !important;\n                        visibility: visible !important;\n                        opacity: 1 !important;\n                        z-index: 1000 !important;\n                        position: relative !important;\n                    ";backLink.textContent="  ← Back to Pattern ";backLink.addEventListener("mouseover",function(){backLink.style.color="#beac9f";});backLink.addEventListener("mouseout",function(){backLink.style.color="#f0e6d2";});coordinatesContainer.appendChild(backLink);backLink.addEventListener("click",restoreOriginalPattern);console.log("✅ Back to Pattern button added successfully");}else{console.error("❌ coordinatesContainer not found - cannot add back link");}case 8:return _context37.a(2);}},_callee29);}));coordImage.onerror=function(){console.error("Failed to load coordinate image: ".concat(layerPaths[0]||coordinate.layerPath));};case 4:return _context38.a(2);}},_callee30,this);}));return _handleCoordinateClick.apply(this,arguments);}function setupCoordinateImageHandlers(){var coordinateImages=document.querySelectorAll(".coordinate-image");console.log("\uD83D\uDD0D Found ".concat(coordinateImages.length," coordinate images to set up handlers"));coordinateImages.forEach(function(image){image.removeEventListener("click",handleCoordinateClick);image.addEventListener("click",handleCoordinateClick);console.log("\u2705 Attached click handler to coordinate: ".concat(image.dataset.filename));});}function restoreOriginalPattern(){return _restoreOriginalPattern.apply(this,arguments);}// Update displays with layer compositing
-function _restoreOriginalPattern(){_restoreOriginalPattern=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee31(){var coll,fresh,isFurnitureModeRestore,isClothingModeRestore,coordinatesSection,backLink,errorMessages,_t50;return _regenerator().w(function(_context39){while(1)switch(_context39.p=_context39.n){case 0:_context39.p=0;console.log('>>> restoreOriginalPattern START <<<');if(!(!appState.originalPattern||!appState.originalCurrentLayers||!appState.originalLayerInputs)){_context39.n=1;break;}console.warn("No original state to restore",{originalPattern:appState.originalPattern,originalCurrentLayers:appState.originalCurrentLayers,originalLayerInputs:appState.originalLayerInputs});return _context39.a(2);case 1:console.log("Restoring original pattern:",appState.originalPattern.name,"Original state:",{layerInputs:appState.originalLayerInputs,currentLayers:appState.originalCurrentLayers});// Restore appState to the original pattern
+console.log("🔍 Adding Back to Pattern button...");coordinatesContainer=document.getElementById("coordinatesContainer");console.log("🔍 coordinatesContainer found:",!!coordinatesContainer);if(coordinatesContainer){backLink=document.getElementById("backToPatternLink");if(backLink){console.log("🔍 Removing existing back link");backLink.remove();}backLink=document.createElement("div");backLink.id="backToPatternLink";backLink.style.cssText="\n                        color: #f0e6d2 !important;\n                        font-family: 'Island Moments', cursive !important;\n                        font-size: 1.8rem !important;\n                        text-align: left !important;\n                        cursor: pointer !important;\n                        padding: 0.5rem !important;\n                        transition: color 0.2s !important;\n                        display: block !important;\n                        visibility: visible !important;\n                        opacity: 1 !important;\n                    ";backLink.textContent="  ← Back to Pattern ";backLink.addEventListener("mouseover",function(){backLink.style.color="#beac9f";});backLink.addEventListener("mouseout",function(){backLink.style.color="#f0e6d2";});coordinatesContainer.appendChild(backLink);backLink.addEventListener("click",restoreOriginalPattern);disconnectBackToPatternLinkResizeObserver();scheduleBackToPatternLinkPosition(coordinatesContainer,backLink);backToPatternLinkResizeObserver=new ResizeObserver(function(){return positionBackToPatternLink(coordinatesContainer,backLink);});backToPatternLinkResizeObserver.observe(coordinatesContainer);console.log("✅ Back to Pattern button added successfully");}else{console.error("❌ coordinatesContainer not found - cannot add back link");}case 8:return _context37.a(2);}},_callee29);}));coordImage.onerror=function(){console.error("Failed to load coordinate image: ".concat(layerPaths[0]||coordinate.layerPath));};case 4:return _context38.a(2);}},_callee30,this);}));return _handleCoordinateClick.apply(this,arguments);}function setupCoordinateImageHandlers(){var coordinateImages=document.querySelectorAll(".coordinate-image");console.log("\uD83D\uDD0D Found ".concat(coordinateImages.length," coordinate images to set up handlers"));coordinateImages.forEach(function(image){image.removeEventListener("click",handleCoordinateClick);image.addEventListener("click",handleCoordinateClick);console.log("\u2705 Attached click handler to coordinate: ".concat(image.dataset.filename));});}function restoreOriginalPattern(){return _restoreOriginalPattern.apply(this,arguments);}// Update displays with layer compositing
+function _restoreOriginalPattern(){_restoreOriginalPattern=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee31(){var coll,fresh,isFurnitureModeRestore,isClothingModeRestore,coordinatesSection,backLink,errorMessages,_t51;return _regenerator().w(function(_context39){while(1)switch(_context39.p=_context39.n){case 0:_context39.p=0;console.log('>>> restoreOriginalPattern START <<<');if(!(!appState.originalPattern||!appState.originalCurrentLayers||!appState.originalLayerInputs)){_context39.n=1;break;}console.warn("No original state to restore",{originalPattern:appState.originalPattern,originalCurrentLayers:appState.originalCurrentLayers,originalLayerInputs:appState.originalLayerInputs});return _context39.a(2);case 1:console.log("Restoring original pattern:",appState.originalPattern.name,"Original state:",{layerInputs:appState.originalLayerInputs,currentLayers:appState.originalCurrentLayers});// Restore appState to the original pattern
 appState.currentPattern=_objectSpread({},appState.originalPattern);appState.currentLayers=appState.originalCurrentLayers.map(function(layer){return _objectSpread({},layer);});// Merge live catalog row so per-pattern coordinates / paths stay current after restore
 coll=appState.selectedCollection;if(coll!==null&&coll!==void 0&&coll.patterns){fresh=coll.patterns.find(function(x){return x&&(x.id===appState.currentPattern.id||x.name===appState.currentPattern.name||x.slug&&(x.slug===appState.currentPattern.slug||x.slug===appState.currentPattern.name));});if(fresh){appState.currentPattern=_objectSpread(_objectSpread({},appState.currentPattern),{},{coordinates:fresh.coordinates!==undefined&&fresh.coordinates!==null?fresh.coordinates:appState.currentPattern.coordinates});}}console.log("Restored appState: collection=",appState.selectedCollection.name,"pattern=",appState.currentPattern.name);// Restore layer inputs
 appState.originalLayerInputs.forEach(function(layer,index){var id=layer.id||"layer-".concat(index);var layerData=createColorInput(layer.label,id,layer.inputValue,layer.isBackground);layerData.input.value=getCleanColorName(layer.inputValue);layerData.circle.style.backgroundColor=layer.hex;appState.layerInputs[index]=layerData;console.log("Restored ".concat(layer.label," input to ").concat(layer.inputValue,", circle to ").concat(layer.hex,", id=").concat(id));});console.log("After restore, layerInputs:",appState.layerInputs.map(function(l){return{id:l.input.id,label:l.label,value:l.input.value};}));// Update UI
 updatePreview();// ✅ Check mode and call appropriate render function
 isFurnitureModeRestore=window.COLORFLEX_MODE==='FURNITURE'||appState.isInFurnitureMode;isClothingModeRestore=window.COLORFLEX_MODE==='CLOTHING'||window.COLORFLEX_SIMPLE_MODE===true&&window.COLORFLEX_MODE!=='FURNITURE';if(!isFurnitureModeRestore){_context39.n=5;break;}console.log("🪑 restoreOriginalPattern in furniture mode - calling updateFurniturePreview()");if(!(typeof updateFurniturePreview==='function')){_context39.n=3;break;}_context39.n=2;return updateFurniturePreview();case 2:_context39.n=4;break;case 3:console.error('❌ updateFurniturePreview not available!');case 4:_context39.n=8;break;case 5:if(!(appState.isInFabricMode||isClothingModeRestore)){_context39.n=7;break;}console.log("🧵 restoreOriginalPattern in fabric/clothing mode - calling renderFabricMockup()");_context39.n=6;return renderFabricMockup();case 6:_context39.n=8;break;case 7:updateRoomMockup();case 8:populateCoordinates();// Remove Back to Pattern link and clean up
-coordinatesSection=document.getElementById("coordinatesSection");backLink=document.getElementById("backToPatternLink");if(backLink){backLink.remove();console.log("Removed Back to Pattern link");}errorMessages=coordinatesSection.querySelectorAll("p[style*='color: red']");errorMessages.forEach(function(msg){return msg.remove();});console.log("Cleared error messages:",errorMessages.length);console.log('>>> restoreOriginalPattern END <<<');_context39.n=10;break;case 9:_context39.p=9;_t50=_context39.v;console.error("Error restoring original pattern:",_t50);case 10:return _context39.a(2);}},_callee31,null,[[0,9]]);}));return _restoreOriginalPattern.apply(this,arguments);}function updateDisplays(){return _updateDisplays.apply(this,arguments);}// ============================================================================
+coordinatesSection=document.getElementById("coordinatesSection");backLink=document.getElementById("backToPatternLink");if(backLink){disconnectBackToPatternLinkResizeObserver();backLink.remove();console.log("Removed Back to Pattern link");}errorMessages=coordinatesSection.querySelectorAll("p[style*='color: red']");errorMessages.forEach(function(msg){return msg.remove();});console.log("Cleared error messages:",errorMessages.length);clearCoordinateRestoreSnapshot();console.log('>>> restoreOriginalPattern END <<<');_context39.n=10;break;case 9:_context39.p=9;_t51=_context39.v;console.error("Error restoring original pattern:",_t51);case 10:return _context39.a(2);}},_callee31,null,[[0,9]]);}));return _restoreOriginalPattern.apply(this,arguments);}function updateDisplays(){return _updateDisplays.apply(this,arguments);}// ============================================================================
 // SECTION 9: COLOR LOCK & THUMBNAILS
 // ============================================================================
 // Color lock toggle, thumbnail click handling, pattern thumbnail capture.
@@ -3255,8 +3295,8 @@ coordinatesSection=document.getElementById("coordinatesSection");backLink=docume
 // ============================================================================
 /**
  * Toggle color lock - when locked, pattern thumbnail clicks preserve current colors
- */function _updateDisplays(){_updateDisplays=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee32(){var isFurnitureModeUpdate,isClothingModeUpdate,isBassett,_t51;return _regenerator().w(function(_context40){while(1)switch(_context40.p=_context40.n){case 0:_context40.p=0;console.log('updateDisplays called');isFurnitureModeUpdate=window.COLORFLEX_MODE==='FURNITURE'||appState.isInFurnitureMode;isClothingModeUpdate=window.COLORFLEX_MODE==='CLOTHING'||window.COLORFLEX_SIMPLE_MODE===true&&window.COLORFLEX_MODE!=='FURNITURE';isBassett=window.COLORFLEX_MODE==='BASSETT';if(isBassett){appState.bassettResultUrl=null;appState.bassettResultPatternId=null;appState.bassettResultBlanketColor=null;appState.bassettResultScale=null;appState.bassettResultSofaColor=null;appState.bassettResultLayerColorsSig=null;}if(!isFurnitureModeUpdate){_context40.n=4;break;}console.log("🪑 updateDisplays in furniture mode - calling updateFurniturePreview()");updatePreview();if(!(typeof updateFurniturePreview==='function')){_context40.n=2;break;}_context40.n=1;return updateFurniturePreview();case 1:_context40.n=3;break;case 2:console.error('❌ updateFurniturePreview not available!');case 3:_context40.n=9;break;case 4:if(!(appState.isInFabricMode||isClothingModeUpdate)){_context40.n=6;break;}console.log("🧵 updateDisplays in fabric/clothing mode - calling renderFabricMockup()");updatePreview();_context40.n=5;return renderFabricMockup();case 5:_context40.n=9;break;case 6:if(!isBassett){_context40.n=8;break;}_context40.n=7;return updatePreview();case 7:_context40.n=9;break;case 8:updatePreview();updateRoomMockup();case 9:// ✅ Only populate coordinates for wallpaper mode (skip clothing/furniture)
-if(window.COLORFLEX_MODE!=='CLOTHING'&&window.COLORFLEX_MODE!=='FURNITURE'){populateCoordinates();}_context40.n=11;break;case 10:_context40.p=10;_t51=_context40.v;console.error('Error in updateDisplays:',_t51);case 11:return _context40.a(2);}},_callee32,null,[[0,10]]);}));return _updateDisplays.apply(this,arguments);}function toggleColorLock(){appState.colorsLocked=!appState.colorsLocked;var btn=document.getElementById('colorLockBtn');var icon=document.getElementById('colorLockIcon');var text=document.getElementById('colorLockText');if(!btn||!icon||!text){console.warn('Color lock button elements not found');return;}if(appState.colorsLocked){// Locked state
+ */function _updateDisplays(){_updateDisplays=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee32(){var isFurnitureModeUpdate,isClothingModeUpdate,isBassett,_t52;return _regenerator().w(function(_context40){while(1)switch(_context40.p=_context40.n){case 0:_context40.p=0;console.log('updateDisplays called');isFurnitureModeUpdate=window.COLORFLEX_MODE==='FURNITURE'||appState.isInFurnitureMode;isClothingModeUpdate=window.COLORFLEX_MODE==='CLOTHING'||window.COLORFLEX_SIMPLE_MODE===true&&window.COLORFLEX_MODE!=='FURNITURE';isBassett=window.COLORFLEX_MODE==='BASSETT';if(isBassett){appState.bassettResultUrl=null;appState.bassettResultPatternId=null;appState.bassettResultBlanketColor=null;appState.bassettResultScale=null;appState.bassettResultSofaColor=null;appState.bassettResultLayerColorsSig=null;}if(!isFurnitureModeUpdate){_context40.n=4;break;}console.log("🪑 updateDisplays in furniture mode - calling updateFurniturePreview()");updatePreview();if(!(typeof updateFurniturePreview==='function')){_context40.n=2;break;}_context40.n=1;return updateFurniturePreview();case 1:_context40.n=3;break;case 2:console.error('❌ updateFurniturePreview not available!');case 3:_context40.n=9;break;case 4:if(!(appState.isInFabricMode||isClothingModeUpdate)){_context40.n=6;break;}console.log("🧵 updateDisplays in fabric/clothing mode - calling renderFabricMockup()");updatePreview();_context40.n=5;return renderFabricMockup();case 5:_context40.n=9;break;case 6:if(!isBassett){_context40.n=8;break;}_context40.n=7;return updatePreview();case 7:_context40.n=9;break;case 8:updatePreview();updateRoomMockup();case 9:// ✅ Only populate coordinates for wallpaper mode (skip clothing/furniture)
+if(window.COLORFLEX_MODE!=='CLOTHING'&&window.COLORFLEX_MODE!=='FURNITURE'){populateCoordinates();}_context40.n=11;break;case 10:_context40.p=10;_t52=_context40.v;console.error('Error in updateDisplays:',_t52);case 11:return _context40.a(2);}},_callee32,null,[[0,10]]);}));return _updateDisplays.apply(this,arguments);}function toggleColorLock(){appState.colorsLocked=!appState.colorsLocked;var btn=document.getElementById('colorLockBtn');var icon=document.getElementById('colorLockIcon');var text=document.getElementById('colorLockText');if(!btn||!icon||!text){console.warn('Color lock button elements not found');return;}if(appState.colorsLocked){// Locked state
 icon.textContent='🔒';text.textContent='Locked';btn.style.background='rgba(212, 175, 55, 0.3)';btn.style.borderColor='#ffd700';console.log('🔒 Color lock enabled - colors will be preserved when changing patterns');}else{// Unlocked state
 icon.textContent='🔓';text.textContent='Unlocked';btn.style.background='rgba(110, 110, 110, 0.2)';btn.style.borderColor='#d4af37';appState.colorLockFullBuffer=null;// Clear full palette buffer when lock is off
 console.log('🔓 Color lock disabled - patterns will load with default colors');}}// Expose to window for button onclick
@@ -3267,28 +3307,28 @@ window.toggleColorLock=toggleColorLock;/**
  *
  * @param {boolean} show - True to show button (ColorFlex patterns), false to hide (standard patterns)
  */function toggleDownloadProofButton(show){var proofContainer=document.getElementById('downloadProofContainer');if(!proofContainer){console.warn('⚠️ Download proof container not found');return;}if(show){proofContainer.style.display='inline-block';console.log('✅ Download proof button shown (ColorFlex pattern with layers)');}else{proofContainer.style.display='none';console.log('⏭️ Download proof button hidden (standard pattern, no customization)');}}// Expose to window for external access if needed
-window.toggleDownloadProofButton=toggleDownloadProofButton;function handleThumbnailClick(patternId){console.log("handleThumbnailClick: patternId=".concat(patternId));if(!patternId){console.error("Invalid pattern ID:",patternId);return;}try{var _appState$selectedCol46;// Preserve current mockup
-var originalMockup=((_appState$selectedCol46=appState.selectedCollection)===null||_appState$selectedCol46===void 0?void 0:_appState$selectedCol46.mockup)||"";console.log("Preserving mockup for thumbnail click:",originalMockup);loadPatternData(appState.selectedCollection,patternId);// Update thumbnails
+window.toggleDownloadProofButton=toggleDownloadProofButton;function handleThumbnailClick(patternId){console.log("handleThumbnailClick: patternId=".concat(patternId));if(!patternId){console.error("Invalid pattern ID:",patternId);return;}try{var _appState$selectedCol48;// Preserve current mockup
+var originalMockup=((_appState$selectedCol48=appState.selectedCollection)===null||_appState$selectedCol48===void 0?void 0:_appState$selectedCol48.mockup)||"";console.log("Preserving mockup for thumbnail click:",originalMockup);loadPatternData(appState.selectedCollection,patternId);// Update thumbnails
 document.querySelectorAll(".thumbnail").forEach(function(t){return t.classList.remove("selected");});var selectedThumb=document.querySelector(".thumbnail[data-pattern-id=\"".concat(patternId,"\"]"));if(selectedThumb){selectedThumb.classList.add("selected");console.log("Selected thumbnail: ".concat(patternId));}else{console.warn("Thumbnail not found for ID: ".concat(patternId));}}catch(error){console.error("Error handling thumbnail click:",error);}}// Generate print preview
-var generatePrintPreview=function generatePrintPreview(){var _appState$currentPatt25,_appState$selectedCol47,_appState$layerInputs,_appState$selectedCol48;var options=arguments.length>0&&arguments[0]!==undefined?arguments[0]:{};var silent=!!(options&&options.silent);if(!appState.currentPattern){console.error("No current pattern selected for print preview");return null;}var isWall=((_appState$currentPatt25=appState.currentPattern)===null||_appState$currentPatt25===void 0?void 0:_appState$currentPatt25.isWall)||((_appState$selectedCol47=appState.selectedCollection)===null||_appState$selectedCol47===void 0?void 0:_appState$selectedCol47.name)==="wall-panels";var backgroundIndex=isWall?1:0;var backgroundInput=(_appState$layerInputs=appState.layerInputs[backgroundIndex])===null||_appState$layerInputs===void 0?void 0:_appState$layerInputs.input;if(!backgroundInput){console.error("Background input not found at index ".concat(backgroundIndex),appState.layerInputs);return null;}var backgroundColor=lookupColor(backgroundInput.value);console.log("Print preview - Background color:",backgroundColor,"isWall:",isWall);console.log("Print preview - Layer inputs:",appState.layerInputs.map(function(li,i){var _li$input;return{index:i,value:li===null||li===void 0||(_li$input=li.input)===null||_li$input===void 0?void 0:_li$input.value};}));// We'll set canvas size after loading first layer to match actual image dimensions
-var printCanvas=document.createElement("canvas");var printCtx=printCanvas.getContext("2d",{willReadFrequently:true});var collectionName=toInitialCaps(((_appState$selectedCol48=appState.selectedCollection)===null||_appState$selectedCol48===void 0?void 0:_appState$selectedCol48.name)||"Unknown");var patternName=toInitialCaps(appState.currentPattern.name||"Pattern");var layerLabels=[];var usedVisibleCapture=false;var processPrintPreview=/*#__PURE__*/function(){var _ref23=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee12(){var _appState$currentPatt26,_appState$currentPatt27,_appState$currentPatt28,_appState$currentPatt32,_appState$selectedCol49,_appState$currentPatt33,_appState$currentPatt34;var isTintWhite,visibleDataUrl,canvasInitialized,_appState$currentPatt29,sourceLayers,isShadowDancePattern,normalizeLayerPath,runtimeLayers,runtimeDrawableLayers,runtimeShadowByPath,layersInOrder,labelInputIndex,_renderTrace,nonShadowInputIndex,_iterator6,_step6,_loop7,singleTileCanvas,singleTileCtx,effectiveScale,scaledWidth,scaledHeight,y,x,dataUrl,tilingMethod,scaleDisplay,escapeHtml,resultPayload,modalId,existingModal,modal,backdrop,content,ul,styleId,styleEl,closeModal,_t16,_t17;return _regenerator().w(function(_context16){while(1)switch(_context16.p=_context16.n){case 0:closeModal=function _closeModal(){modal.remove();};isTintWhite=((_appState$currentPatt26=appState.currentPattern)===null||_appState$currentPatt26===void 0?void 0:_appState$currentPatt26.tintWhite)||false;console.log("Print preview - tintWhite flag: ".concat(isTintWhite));// Source-of-truth path: use the exact visible preview capture when available.
+var generatePrintPreview=function generatePrintPreview(){var _appState$currentPatt27,_appState$selectedCol49,_appState$layerInputs,_appState$selectedCol50;var options=arguments.length>0&&arguments[0]!==undefined?arguments[0]:{};var silent=!!(options&&options.silent);if(!appState.currentPattern){console.error("No current pattern selected for print preview");return null;}var isWall=((_appState$currentPatt27=appState.currentPattern)===null||_appState$currentPatt27===void 0?void 0:_appState$currentPatt27.isWall)||((_appState$selectedCol49=appState.selectedCollection)===null||_appState$selectedCol49===void 0?void 0:_appState$selectedCol49.name)==="wall-panels";var backgroundIndex=isWall?1:0;var backgroundInput=(_appState$layerInputs=appState.layerInputs[backgroundIndex])===null||_appState$layerInputs===void 0?void 0:_appState$layerInputs.input;if(!backgroundInput){console.error("Background input not found at index ".concat(backgroundIndex),appState.layerInputs);return null;}var backgroundColor=lookupColor(backgroundInput.value);console.log("Print preview - Background color:",backgroundColor,"isWall:",isWall);console.log("Print preview - Layer inputs:",appState.layerInputs.map(function(li,i){var _li$input;return{index:i,value:li===null||li===void 0||(_li$input=li.input)===null||_li$input===void 0?void 0:_li$input.value};}));// We'll set canvas size after loading first layer to match actual image dimensions
+var printCanvas=document.createElement("canvas");var printCtx=printCanvas.getContext("2d",{willReadFrequently:true});var collectionName=toInitialCaps(((_appState$selectedCol50=appState.selectedCollection)===null||_appState$selectedCol50===void 0?void 0:_appState$selectedCol50.name)||"Unknown");var patternName=toInitialCaps(appState.currentPattern.name||"Pattern");var layerLabels=[];var usedVisibleCapture=false;var processPrintPreview=/*#__PURE__*/function(){var _ref23=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee12(){var _appState$currentPatt28,_appState$currentPatt29,_appState$currentPatt30,_appState$currentPatt34,_appState$selectedCol51,_appState$currentPatt35,_appState$currentPatt36;var isTintWhite,visibleDataUrl,canvasInitialized,_appState$currentPatt31,sourceLayers,isShadowDancePattern,normalizeLayerPath,runtimeLayers,runtimeDrawableLayers,runtimeShadowByPath,layersInOrder,labelInputIndex,_renderTrace,nonShadowInputIndex,_iterator6,_step6,_loop7,singleTileCanvas,singleTileCtx,effectiveScale,scaledWidth,scaledHeight,y,x,dataUrl,tilingMethod,scaleDisplay,escapeHtml,resultPayload,modalId,existingModal,modal,backdrop,content,ul,styleId,styleEl,closeModal,_t17,_t18;return _regenerator().w(function(_context16){while(1)switch(_context16.p=_context16.n){case 0:closeModal=function _closeModal(){modal.remove();};isTintWhite=((_appState$currentPatt28=appState.currentPattern)===null||_appState$currentPatt28===void 0?void 0:_appState$currentPatt28.tintWhite)||false;console.log("Print preview - tintWhite flag: ".concat(isTintWhite));// Source-of-truth path: use the exact visible preview capture when available.
 // This keeps print/save output visually identical to the UI preview.
-if(!(options.preferVisibleCapture!==false&&typeof window.capturePatternThumbnail==='function')){_context16.n=4;break;}_context16.p=1;visibleDataUrl=window.capturePatternThumbnail();if(!(visibleDataUrl&&typeof visibleDataUrl==='string'&&visibleDataUrl.startsWith('data:image'))){_context16.n=2;break;}_context16.n=2;return new Promise(function(resolve){var img=new Image();img.onload=function(){var w=img.naturalWidth||img.width;var h=img.naturalHeight||img.height;if(w>0&&h>0){printCanvas.width=w;printCanvas.height=h;printCtx.clearRect(0,0,w,h);printCtx.drawImage(img,0,0,w,h);usedVisibleCapture=true;var runtimeLayers=Array.isArray(appState.currentLayers)?appState.currentLayers:[];layerLabels=runtimeLayers.filter(function(l){return l&&l.color!=null&&String(l.color).trim()!=='';}).map(function(l,idx){return{label:l.label||(idx===0?'Background':"Layer ".concat(idx)),color:String(l.color).trim()};});if(!layerLabels.length){layerLabels=[{label:"Background",color:backgroundInput.value||"Snowbound"}];}console.log("\u2705 Print preview sourced from visible capture: ".concat(w,"x").concat(h));}resolve();};img.onerror=function(){return resolve();};img.src=visibleDataUrl;});case 2:_context16.n=4;break;case 3:_context16.p=3;_t16=_context16.v;console.warn('⚠️ Visible capture path failed, falling back to renderer:',_t16);case 4:// Determine canvas size from first layer image (maximum resolution)
-canvasInitialized=false;if(!(!usedVisibleCapture&&isTintWhite&&(_appState$currentPatt27=appState.currentPattern)!==null&&_appState$currentPatt27!==void 0&&_appState$currentPatt27.baseComposite)){_context16.n=5;break;}_context16.n=13;break;case 5:if(!(!usedVisibleCapture&&(_appState$currentPatt28=appState.currentPattern)!==null&&_appState$currentPatt28!==void 0&&(_appState$currentPatt28=_appState$currentPatt28.layers)!==null&&_appState$currentPatt28!==void 0&&_appState$currentPatt28.length)){_context16.n=13;break;}// Draw ONLY real pattern layers (avoid synthetic background entries from runtime layer models).
+if(!(options.preferVisibleCapture!==false&&typeof capturePatternThumbnail==='function')){_context16.n=4;break;}_context16.p=1;visibleDataUrl=capturePatternThumbnail();if(!(visibleDataUrl&&typeof visibleDataUrl==='string'&&visibleDataUrl.startsWith('data:image'))){_context16.n=2;break;}_context16.n=2;return new Promise(function(resolve){var img=new Image();img.onload=function(){var w=img.naturalWidth||img.width;var h=img.naturalHeight||img.height;if(w>0&&h>0){printCanvas.width=w;printCanvas.height=h;printCtx.clearRect(0,0,w,h);printCtx.drawImage(img,0,0,w,h);usedVisibleCapture=true;var runtimeLayers=Array.isArray(appState.currentLayers)?appState.currentLayers:[];layerLabels=runtimeLayers.filter(function(l){return l&&l.color!=null&&String(l.color).trim()!=='';}).map(function(l,idx){return{label:l.label||(idx===0?'Background':"Layer ".concat(idx)),color:String(l.color).trim()};});if(!layerLabels.length){layerLabels=[{label:"Background",color:backgroundInput.value||"Snowbound"}];}console.log("\u2705 Print preview sourced from visible capture: ".concat(w,"x").concat(h));}resolve();};img.onerror=function(){return resolve();};img.src=visibleDataUrl;});case 2:_context16.n=4;break;case 3:_context16.p=3;_t17=_context16.v;console.warn('⚠️ Visible capture path failed, falling back to renderer:',_t17);case 4:// Determine canvas size from first layer image (maximum resolution)
+canvasInitialized=false;if(!(!usedVisibleCapture&&isTintWhite&&(_appState$currentPatt29=appState.currentPattern)!==null&&_appState$currentPatt29!==void 0&&_appState$currentPatt29.baseComposite)){_context16.n=5;break;}_context16.n=13;break;case 5:if(!(!usedVisibleCapture&&(_appState$currentPatt30=appState.currentPattern)!==null&&_appState$currentPatt30!==void 0&&(_appState$currentPatt30=_appState$currentPatt30.layers)!==null&&_appState$currentPatt30!==void 0&&_appState$currentPatt30.length)){_context16.n=13;break;}// Draw ONLY real pattern layers (avoid synthetic background entries from runtime layer models).
 sourceLayers=Array.isArray(appState.currentPattern.layers)?appState.currentPattern.layers:[];// Build layer labels AFTER we resolve shadow/non-shadow deterministically.
 layerLabels=[{label:"Background",color:backgroundInput.value||"Snowbound"}];// 🔍 COLOR MAPPING DEBUG - Log background color
-console.log("\uD83C\uDFA8 PRINT PATTERN - Background:");console.log("  - Color name: \"".concat(backgroundInput.value,"\""));console.log("  - Color RGB:",backgroundColor);isShadowDancePattern=/shadow\s*dance/i.test(String(((_appState$currentPatt29=appState.currentPattern)===null||_appState$currentPatt29===void 0?void 0:_appState$currentPatt29.name)||''));normalizeLayerPath=function normalizeLayerPath(pathValue){return String(pathValue||'').trim().replace(/\\/g,'/').replace(/^\.?\//,'').toLowerCase();};runtimeLayers=Array.isArray(appState.currentLayers)?appState.currentLayers:[];runtimeDrawableLayers=runtimeLayers.filter(function(l){return!!normalizeLayerPath(l&&(l.proofPath||l.path)||'');});runtimeShadowByPath=new Map();runtimeDrawableLayers.forEach(function(l){var p=normalizeLayerPath(l&&(l.proofPath||l.path)||'');if(!p)return;runtimeShadowByPath.set(p,l&&l.isShadow===true);});layersInOrder=sourceLayers.map(function(layer,index){var _appState$currentPatt30,_appState$currentPatt31;var sourceLayer=layer||null;var pathStr=sourceLayer&&(sourceLayer.path||sourceLayer.proofPath)?sourceLayer.path||sourceLayer.proofPath:'';var sourcePathStr=sourceLayer&&(sourceLayer.path||sourceLayer.proofPath)?sourceLayer.path||sourceLayer.proofPath:'';var labelStr=(((_appState$currentPatt30=appState.currentPattern.layerLabels)===null||_appState$currentPatt30===void 0?void 0:_appState$currentPatt30[index])||'').toString();var merged="".concat(pathStr," ").concat(sourcePathStr," ").concat(labelStr).toUpperCase();var normalizedPath=normalizeLayerPath(pathStr||sourcePathStr);var runtimePathShadow=normalizedPath?runtimeShadowByPath.get(normalizedPath):undefined;var runtimeIndexLayer=runtimeDrawableLayers[index];var runtimeIndexPath=normalizeLayerPath(runtimeIndexLayer&&(runtimeIndexLayer.proofPath||runtimeIndexLayer.path)||'');var runtimeIndexPathMatches=!!(normalizedPath&&runtimeIndexPath&&runtimeIndexPath===normalizedPath);var isShadow=sourceLayer&&sourceLayer.isShadow===true||runtimePathShadow===true||runtimeIndexPathMatches&&runtimeIndexLayer&&runtimeIndexLayer.isShadow===true||merged.includes('_SHADOW_')||merged.includes('SHADOW_LAYER')||merged.includes('ISSHADOW');var label=((_appState$currentPatt31=appState.currentPattern.layerLabels)===null||_appState$currentPatt31===void 0?void 0:_appState$currentPatt31[index])||sourceLayer&&sourceLayer.label||"Layer ".concat(index+1);return{layer:layer,index:index,label:label,isShadow:isShadow};});labelInputIndex=isWall?2:1;layersInOrder.forEach(function(_ref24){var _appState$layerInputs2;var label=_ref24.label,isShadow=_ref24.isShadow;var colorName=!isShadow?((_appState$layerInputs2=appState.layerInputs[labelInputIndex])===null||_appState$layerInputs2===void 0||(_appState$layerInputs2=_appState$layerInputs2.input)===null||_appState$layerInputs2===void 0?void 0:_appState$layerInputs2.value)||"Snowbound":null;if(!isShadow)labelInputIndex++;layerLabels.push({label:label,color:colorName});});_renderTrace=[];console.log("\uD83C\uDFA8 PRINT PATTERN - Layer Structure:");console.log("  - Total layers: ".concat(layersInOrder.length));console.log("  - Shadow layers: ".concat(layersInOrder.filter(function(l){return l.isShadow;}).length),layersInOrder.filter(function(l){return l.isShadow;}).map(function(l){return"".concat(l.index,":").concat(l.label);}));console.log("  - Non-shadow layers: ".concat(layersInOrder.filter(function(l){return!l.isShadow;}).length),layersInOrder.filter(function(l){return!l.isShadow;}).map(function(l){return"".concat(l.index,":").concat(l.label);}));console.log("  - layerLabels length: ".concat(layerLabels.length," (includes background at [0])"));console.log("  - appState.layerInputs length: ".concat(appState.layerInputs.length));// Keep original layer order; shadow layers never consume non-shadow inputs.
+console.log("\uD83C\uDFA8 PRINT PATTERN - Background:");console.log("  - Color name: \"".concat(backgroundInput.value,"\""));console.log("  - Color RGB:",backgroundColor);isShadowDancePattern=/shadow\s*dance/i.test(String(((_appState$currentPatt31=appState.currentPattern)===null||_appState$currentPatt31===void 0?void 0:_appState$currentPatt31.name)||''));normalizeLayerPath=function normalizeLayerPath(pathValue){return String(pathValue||'').trim().replace(/\\/g,'/').replace(/^\.?\//,'').toLowerCase();};runtimeLayers=Array.isArray(appState.currentLayers)?appState.currentLayers:[];runtimeDrawableLayers=runtimeLayers.filter(function(l){return!!normalizeLayerPath(l&&(l.proofPath||l.path)||'');});runtimeShadowByPath=new Map();runtimeDrawableLayers.forEach(function(l){var p=normalizeLayerPath(l&&(l.proofPath||l.path)||'');if(!p)return;runtimeShadowByPath.set(p,l&&l.isShadow===true);});layersInOrder=sourceLayers.map(function(layer,index){var _appState$currentPatt32,_appState$currentPatt33;var sourceLayer=layer||null;var pathStr=sourceLayer&&(sourceLayer.path||sourceLayer.proofPath)?sourceLayer.path||sourceLayer.proofPath:'';var sourcePathStr=sourceLayer&&(sourceLayer.path||sourceLayer.proofPath)?sourceLayer.path||sourceLayer.proofPath:'';var labelStr=(((_appState$currentPatt32=appState.currentPattern.layerLabels)===null||_appState$currentPatt32===void 0?void 0:_appState$currentPatt32[index])||'').toString();var merged="".concat(pathStr," ").concat(sourcePathStr," ").concat(labelStr).toUpperCase();var normalizedPath=normalizeLayerPath(pathStr||sourcePathStr);var runtimePathShadow=normalizedPath?runtimeShadowByPath.get(normalizedPath):undefined;var runtimeIndexLayer=runtimeDrawableLayers[index];var runtimeIndexPath=normalizeLayerPath(runtimeIndexLayer&&(runtimeIndexLayer.proofPath||runtimeIndexLayer.path)||'');var runtimeIndexPathMatches=!!(normalizedPath&&runtimeIndexPath&&runtimeIndexPath===normalizedPath);var isShadow=sourceLayer&&sourceLayer.isShadow===true||runtimePathShadow===true||runtimeIndexPathMatches&&runtimeIndexLayer&&runtimeIndexLayer.isShadow===true||merged.includes('_SHADOW_')||merged.includes('SHADOW_LAYER')||merged.includes('ISSHADOW');var label=((_appState$currentPatt33=appState.currentPattern.layerLabels)===null||_appState$currentPatt33===void 0?void 0:_appState$currentPatt33[index])||sourceLayer&&sourceLayer.label||"Layer ".concat(index+1);return{layer:layer,index:index,label:label,isShadow:isShadow};});labelInputIndex=isWall?2:1;layersInOrder.forEach(function(_ref24){var _appState$layerInputs2;var label=_ref24.label,isShadow=_ref24.isShadow;var colorName=!isShadow?((_appState$layerInputs2=appState.layerInputs[labelInputIndex])===null||_appState$layerInputs2===void 0||(_appState$layerInputs2=_appState$layerInputs2.input)===null||_appState$layerInputs2===void 0?void 0:_appState$layerInputs2.value)||"Snowbound":null;if(!isShadow)labelInputIndex++;layerLabels.push({label:label,color:colorName});});_renderTrace=[];console.log("\uD83C\uDFA8 PRINT PATTERN - Layer Structure:");console.log("  - Total layers: ".concat(layersInOrder.length));console.log("  - Shadow layers: ".concat(layersInOrder.filter(function(l){return l.isShadow;}).length),layersInOrder.filter(function(l){return l.isShadow;}).map(function(l){return"".concat(l.index,":").concat(l.label);}));console.log("  - Non-shadow layers: ".concat(layersInOrder.filter(function(l){return!l.isShadow;}).length),layersInOrder.filter(function(l){return!l.isShadow;}).map(function(l){return"".concat(l.index,":").concat(l.label);}));console.log("  - layerLabels length: ".concat(layerLabels.length," (includes background at [0])"));console.log("  - appState.layerInputs length: ".concat(appState.layerInputs.length));// Keep original layer order; shadow layers never consume non-shadow inputs.
 nonShadowInputIndex=isWall?2:1;_iterator6=_createForOfIteratorHelper(layersInOrder);_context16.p=6;_loop7=/*#__PURE__*/_regenerator().m(function _loop7(){var _layerInput$input;var _step6$value,layer,index,label,isShadow,layerPath,layerInput,layerInputColorName,layerColor,_layerInput$input2;return _regenerator().w(function(_context15){while(1)switch(_context15.n){case 0:_step6$value=_step6.value,layer=_step6$value.layer,index=_step6$value.index,label=_step6$value.label,isShadow=_step6$value.isShadow;layerPath=layer.proofPath||layer.path||"";if(layerPath){_context15.n=1;break;}console.warn("\u26A0\uFE0F Skipping layer ".concat(index," (").concat(label,") due to missing layer path"));return _context15.a(2,1);case 1:layerInput=!isShadow?appState.layerInputs[nonShadowInputIndex]:null;// Source color from current visible inputs.
-layerInputColorName=!isShadow?(layerInput===null||layerInput===void 0||(_layerInput$input=layerInput.input)===null||_layerInput$input===void 0?void 0:_layerInput$input.value)||"Snowbound":null;layerColor=!isShadow?lookupColor(layerInputColorName):null;_renderTrace.push({index:index,label:label,isShadow:isShadow,inputIndex:isShadow?null:nonShadowInputIndex,inputColorName:layerInputColorName,resolvedHex:layerColor,path:layerPath});console.log("\uD83C\uDFA8 PRINT PATTERN - ".concat(isShadow?'Shadow':'Non-shadow'," layer ").concat(index,":"));console.log("  - Label: \"".concat(label,"\""));if(!isShadow){console.log("  - Input index: ".concat(nonShadowInputIndex));console.log("  - layerInput exists:",!!layerInput);console.log("  - Color name from input: \"".concat(layerInput===null||layerInput===void 0||(_layerInput$input2=layerInput.input)===null||_layerInput$input2===void 0?void 0:_layerInput$input2.value,"\""));}_context15.n=2;return new Promise(function(resolve){processImage(layerPath,function(processedUrl){var img=new Image();console.log("🧪 processedUrl type:",_typeof(processedUrl),processedUrl);if(processedUrl instanceof HTMLCanvasElement){img.src=processedUrl.toDataURL("image/png");}else{img.src=processedUrl;}img.onload=function(){if(!canvasInitialized){var canvasWidth=img.naturalWidth||img.width;var canvasHeight=img.naturalHeight||img.height;printCanvas.width=canvasWidth;printCanvas.height=canvasHeight;console.log("\uD83D\uDD27 Print canvas at FULL resolution: ".concat(canvasWidth,"x").concat(canvasHeight));printCtx.fillStyle=backgroundColor;printCtx.fillRect(0,0,canvasWidth,canvasHeight);canvasInitialized=true;}printCtx.globalCompositeOperation=isShadow?"multiply":"source-over";printCtx.globalAlpha=isShadow?0.3:1.0;printCtx.drawImage(img,0,0,printCanvas.width,printCanvas.height);if(!isShadow)nonShadowInputIndex++;resolve();};img.onerror=function(){return resolve();};},layerColor,2.2,isShadow,isWall);});case 2:return _context15.a(2);}},_loop7);});_iterator6.s();case 7:if((_step6=_iterator6.n()).done){_context16.n=10;break;}return _context16.d(_regeneratorValues(_loop7()),8);case 8:if(!_context16.v){_context16.n=9;break;}return _context16.a(3,9);case 9:_context16.n=7;break;case 10:_context16.n=12;break;case 11:_context16.p=11;_t17=_context16.v;_iterator6.e(_t17);case 12:_context16.p=12;_iterator6.f();return _context16.f(12);case 13:// Apply tiling based on scale setting (same logic as proof downloads)
+layerInputColorName=!isShadow?(layerInput===null||layerInput===void 0||(_layerInput$input=layerInput.input)===null||_layerInput$input===void 0?void 0:_layerInput$input.value)||"Snowbound":null;layerColor=!isShadow?lookupColor(layerInputColorName):null;_renderTrace.push({index:index,label:label,isShadow:isShadow,inputIndex:isShadow?null:nonShadowInputIndex,inputColorName:layerInputColorName,resolvedHex:layerColor,path:layerPath});console.log("\uD83C\uDFA8 PRINT PATTERN - ".concat(isShadow?'Shadow':'Non-shadow'," layer ").concat(index,":"));console.log("  - Label: \"".concat(label,"\""));if(!isShadow){console.log("  - Input index: ".concat(nonShadowInputIndex));console.log("  - layerInput exists:",!!layerInput);console.log("  - Color name from input: \"".concat(layerInput===null||layerInput===void 0||(_layerInput$input2=layerInput.input)===null||_layerInput$input2===void 0?void 0:_layerInput$input2.value,"\""));}_context15.n=2;return new Promise(function(resolve){processImage(layerPath,function(processedUrl){var img=new Image();console.log("🧪 processedUrl type:",_typeof(processedUrl),processedUrl);if(processedUrl instanceof HTMLCanvasElement){img.src=processedUrl.toDataURL("image/png");}else{img.src=processedUrl;}img.onload=function(){if(!canvasInitialized){var canvasWidth=img.naturalWidth||img.width;var canvasHeight=img.naturalHeight||img.height;printCanvas.width=canvasWidth;printCanvas.height=canvasHeight;console.log("\uD83D\uDD27 Print canvas at FULL resolution: ".concat(canvasWidth,"x").concat(canvasHeight));printCtx.fillStyle=backgroundColor;printCtx.fillRect(0,0,canvasWidth,canvasHeight);canvasInitialized=true;}printCtx.globalCompositeOperation=isShadow?"multiply":"source-over";printCtx.globalAlpha=isShadow?0.3:1.0;printCtx.drawImage(img,0,0,printCanvas.width,printCanvas.height);if(!isShadow)nonShadowInputIndex++;resolve();};img.onerror=function(){return resolve();};},layerColor,2.2,isShadow,isWall);});case 2:return _context15.a(2);}},_loop7);});_iterator6.s();case 7:if((_step6=_iterator6.n()).done){_context16.n=10;break;}return _context16.d(_regeneratorValues(_loop7()),8);case 8:if(!_context16.v){_context16.n=9;break;}return _context16.a(3,9);case 9:_context16.n=7;break;case 10:_context16.n=12;break;case 11:_context16.p=11;_t18=_context16.v;_iterator6.e(_t18);case 12:_context16.p=12;_iterator6.f();return _context16.f(12);case 13:// Apply tiling based on scale setting (same logic as proof downloads)
 if(!usedVisibleCapture&&appState.currentScale&&appState.currentScale!==100){console.log("\uD83D\uDD27 Print preview: Applying scale ".concat(appState.currentScale,"% (tiling pattern)"));// Save the single-tile pattern
 singleTileCanvas=document.createElement('canvas');singleTileCanvas.width=printCanvas.width;singleTileCanvas.height=printCanvas.height;singleTileCtx=singleTileCanvas.getContext('2d');singleTileCtx.drawImage(printCanvas,0,0);// Calculate effective scale (inverted: 2X = pattern appears smaller)
 effectiveScale=appState.currentScale/100;// 200% = 2.0
 scaledWidth=singleTileCanvas.width/effectiveScale;scaledHeight=singleTileCanvas.height/effectiveScale;console.log("  Single tile: ".concat(singleTileCanvas.width,"x").concat(singleTileCanvas.height));console.log("  Scaled tile: ".concat(scaledWidth,"x").concat(scaledHeight));console.log("  Tiles to fit: ~".concat(Math.ceil(printCanvas.width/scaledWidth),"x").concat(Math.ceil(printCanvas.height/scaledHeight)));// Clear the main canvas and redraw with tiling
 printCtx.clearRect(0,0,printCanvas.width,printCanvas.height);// Fill background color first
 printCtx.fillStyle=backgroundColor;printCtx.fillRect(0,0,printCanvas.width,printCanvas.height);// Tile the pattern across the canvas at scaled size
-for(y=0;y<printCanvas.height;y+=scaledHeight){for(x=0;x<printCanvas.width;x+=scaledWidth){printCtx.drawImage(singleTileCanvas,x,y,scaledWidth,scaledHeight);}}console.log("\u2705 Print preview: Pattern tiled at ".concat(appState.currentScale,"% scale"));}else if(!usedVisibleCapture){console.log("\uD83D\uDD27 Print preview: No scaling (100% - single tile)");}else{console.log("\uD83D\uDD27 Print preview: Using visible capture (scale already represented in captured preview)");}dataUrl=printCanvas.toDataURL("image/png");console.log("Print preview - Generated data URL, length: ".concat(dataUrl.length));window.__colorflexLastProofRenderSnapshot={at:new Date().toISOString(),pattern:((_appState$currentPatt32=appState.currentPattern)===null||_appState$currentPatt32===void 0?void 0:_appState$currentPatt32.name)||null,collection:((_appState$selectedCol49=appState.selectedCollection)===null||_appState$selectedCol49===void 0?void 0:_appState$selectedCol49.name)||null,canvas:{width:printCanvas.width,height:printCanvas.height},layerLabels:layerLabels,renderTrace:typeof renderTrace!=='undefined'?renderTrace:[]};// Generate HTML content
+for(y=0;y<printCanvas.height;y+=scaledHeight){for(x=0;x<printCanvas.width;x+=scaledWidth){printCtx.drawImage(singleTileCanvas,x,y,scaledWidth,scaledHeight);}}console.log("\u2705 Print preview: Pattern tiled at ".concat(appState.currentScale,"% scale"));}else if(!usedVisibleCapture){console.log("\uD83D\uDD27 Print preview: No scaling (100% - single tile)");}else{console.log("\uD83D\uDD27 Print preview: Using visible capture (scale already represented in captured preview)");}dataUrl=printCanvas.toDataURL("image/png");console.log("Print preview - Generated data URL, length: ".concat(dataUrl.length));window.__colorflexLastProofRenderSnapshot={at:new Date().toISOString(),pattern:((_appState$currentPatt34=appState.currentPattern)===null||_appState$currentPatt34===void 0?void 0:_appState$currentPatt34.name)||null,collection:((_appState$selectedCol51=appState.selectedCollection)===null||_appState$selectedCol51===void 0?void 0:_appState$selectedCol51.name)||null,canvas:{width:printCanvas.width,height:printCanvas.height},layerLabels:layerLabels,renderTrace:typeof renderTrace!=='undefined'?renderTrace:[]};// Generate HTML content
 // Determine tiling method and scale display
-tilingMethod=isHalfDropTiling((_appState$currentPatt33=appState.currentPattern)===null||_appState$currentPatt33===void 0?void 0:_appState$currentPatt33.tilingType)?'Half-Drop':((_appState$currentPatt34=appState.currentPattern)===null||_appState$currentPatt34===void 0?void 0:_appState$currentPatt34.tilingType)==='brick'?'Brick':'Normal';scaleDisplay=appState.currentScale===50?'0.5X':appState.currentScale===200?'2X':appState.currentScale===300?'3X':appState.currentScale===400?'4X':'1X';escapeHtml=function escapeHtml(s){if(s==null||s==='')return'';var div=document.createElement('div');div.textContent=s;return div.innerHTML;};resultPayload={canvas:printCanvas,dataUrl:dataUrl,layerLabels:layerLabels,collectionName:collectionName,patternName:patternName};if(!silent){_context16.n=14;break;}return _context16.a(2,resultPayload);case 14:// In-page modal (no new window/tab); print shows only modal content, one page, no browser chrome
+tilingMethod=isHalfDropTiling((_appState$currentPatt35=appState.currentPattern)===null||_appState$currentPatt35===void 0?void 0:_appState$currentPatt35.tilingType)?'Half-Drop':((_appState$currentPatt36=appState.currentPattern)===null||_appState$currentPatt36===void 0?void 0:_appState$currentPatt36.tilingType)==='brick'?'Brick':'Normal';scaleDisplay=appState.currentScale===50?'0.5X':appState.currentScale===200?'2X':appState.currentScale===300?'3X':appState.currentScale===400?'4X':'1X';escapeHtml=function escapeHtml(s){if(s==null||s==='')return'';var div=document.createElement('div');div.textContent=s;return div.innerHTML;};resultPayload={canvas:printCanvas,dataUrl:dataUrl,layerLabels:layerLabels,collectionName:collectionName,patternName:patternName};if(!silent){_context16.n=14;break;}return _context16.a(2,resultPayload);case 14:// In-page modal (no new window/tab); print shows only modal content, one page, no browser chrome
 modalId='print-preview-modal';existingModal=document.getElementById(modalId);if(existingModal)existingModal.remove();modal=document.createElement('div');modal.id=modalId;modal.className='print-preview-modal';backdrop=document.createElement('div');backdrop.className='print-preview-backdrop';content=document.createElement('div');content.className='print-preview-content';content.innerHTML="\n            <div class=\"print-preview-inner\">\n                <img src=\"".concat(normalizePath('img/SC-header-mage.jpg'),"\" alt=\"SC Logo\" class=\"sc-logo\">\n                <h2>").concat(escapeHtml(collectionName),"</h2>\n                <h3>").concat(escapeHtml(patternName),"</h3>\n                <p class=\"print-tiling\"><strong>Tiling: ").concat(escapeHtml(tilingMethod)," | Repeat: ").concat(escapeHtml(scaleDisplay),"</strong></p>\n                <ul class=\"print-colors\"></ul>\n                <img class=\"print-pattern-img\" src=\"\" alt=\"Pattern Preview\">\n                <p class=\"print-tip no-print\">In the print dialog, turn off <strong>Headers and footers</strong> for a clean print (no URL, date, or page number).</p>\n                <div class=\"print-actions no-print\">\n                    <button type=\"button\" class=\"print-btn-print\">Print</button>\n                    <button type=\"button\" class=\"print-btn-download\">Download</button>\n                    <button type=\"button\" class=\"print-btn-close\">Close</button>\n                </div>\n            </div>\n        ");ul=content.querySelector('.print-colors');layerLabels.forEach(function(_ref25){var label=_ref25.label,color=_ref25.color;var li=document.createElement('li');li.textContent="".concat(toInitialCaps(label)," | ").concat(color);ul.appendChild(li);});content.querySelector('.print-pattern-img').src=dataUrl;modal.appendChild(backdrop);modal.appendChild(content);styleId='print-preview-modal-styles';styleEl=document.getElementById(styleId);if(!styleEl){styleEl=document.createElement('style');styleEl.id=styleId;styleEl.textContent="\n                .print-preview-modal { position: fixed; inset: 0; z-index: 99999; display: flex; align-items: center; justify-content: center; font-family: 'Special Elite', 'Times New Roman', serif; }\n                .print-preview-backdrop { position: absolute; inset: 0; background: rgba(0,0,0,0.7); }\n                .print-preview-content { position: relative; max-width: 600px; max-height: 90vh; overflow: auto; background: #434341; color: #f0e6d2; padding: 20px; border-radius: 8px; text-align: center; }\n                .print-preview-inner { display: flex; flex-direction: column; align-items: center; }\n                .print-preview-modal .sc-logo { width: 280px; height: auto; margin: 0 auto 12px; display: block; }\n                .print-preview-modal h2 { font-size: 20px; margin: 6px 0; }\n                .print-preview-modal h3 { font-size: 18px; margin: 4px 0; }\n                .print-preview-modal .print-tiling { margin: 4px 0; font-size: 14px; }\n                .print-preview-modal ul.print-colors { list-style: none; padding: 0; margin: 8px 0; font-size: 14px; text-align: left; max-height: 120px; overflow-y: auto; }\n                .print-preview-modal ul.print-colors li { margin: 2px 0; }\n                .print-preview-modal .print-pattern-img { max-width: 100%; height: auto; margin: 12px auto; display: block; }\n                .print-preview-modal .print-tip { font-size: 12px; color: #b0a090; margin: 12px 0 8px; }\n                .print-preview-modal .print-actions { margin-top: 16px; display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }\n                .print-preview-modal button { font-family: inherit; padding: 10px 20px; font-size: 14px; cursor: pointer; background: #f0e6d2; color: #111827; border: none; border-radius: 4px; }\n                .print-preview-modal button:hover { background: #e0d6c2; }\n                @media print {\n                    body * { visibility: hidden; }\n                    .print-preview-modal, .print-preview-modal * { visibility: visible; }\n                    .print-preview-modal { position: fixed !important; left: 0 !important; top: 0 !important; width: 100% !important; height: 100% !important; margin: 0 !important; padding: 0 !important; background: #fff !important; z-index: 99999 !important; overflow: hidden !important; }\n                    .print-preview-backdrop { display: none !important; }\n                    .print-preview-content { max-height: none !important; overflow: hidden !important; background: #fff !important; color: #000 !important; padding: 0 !important; box-shadow: none !important; }\n                    .print-preview-inner { max-height: 100vh !important; height: 100vh !important; overflow: hidden !important; padding: 12px; box-sizing: border-box; }\n                    .print-preview-modal .sc-logo { max-height: 10vh !important; width: auto !important; margin: 0 auto 6px !important; }\n                    .print-preview-modal h2 { font-size: 14px !important; margin: 2px 0 !important; }\n                    .print-preview-modal h3 { font-size: 13px !important; margin: 2px 0 !important; }\n                    .print-preview-modal .print-tiling { font-size: 11px !important; margin: 2px 0 !important; }\n                    .print-preview-modal ul.print-colors { max-height: 18vh !important; overflow: hidden !important; margin: 4px 0 !important; font-size: 10px !important; }\n                    .print-preview-modal .print-pattern-img { max-height: 58vh !important; width: auto !important; margin: 6px auto !important; }\n                    .print-preview-modal .no-print { display: none !important; }\n                }\n            ";(document.head||document.documentElement).appendChild(styleEl);}backdrop.addEventListener('click',closeModal);content.querySelector('.print-btn-close').addEventListener('click',closeModal);content.querySelector('.print-btn-download').addEventListener('click',function(){var link=document.createElement('a');link.href=dataUrl;link.download="".concat(patternName.replace(/[^\w\s-]/g,''),"-print.png");link.click();});content.querySelector('.print-btn-print').addEventListener('click',function(){window.print();});document.body.appendChild(modal);console.log("Print preview - Modal opened");return _context16.a(2,resultPayload);}},_callee12,null,[[6,11,12,13],[1,3]]);}));return function processPrintPreview(){return _ref23.apply(this,arguments);};}();return processPrintPreview()["catch"](function(error){console.error("Print preview error:",error);return null;});};window.generatePrintPreview=generatePrintPreview;// Start the app
 var appInitializing=false;// Guard to prevent multiple simultaneous initializations
 function startApp(){return _startApp.apply(this,arguments);}// Expose startApp to window so Shopify template can access it
@@ -3298,9 +3338,9 @@ setTimeout(function(){addSaveButton();// This function adds the chameleon icon
 setTimeout(setupIdleUsagePopup,1500);// Idle "quick tips" popup after 15s of no interaction
 case 6:_context41.p=6;appInitializing=false;return _context41.f(6);case 7:return _context41.a(2);}},_callee33,null,[[3,,6,7]]);}));return _startApp.apply(this,arguments);}window.startApp=startApp;// THUMBNAIL CAPTURE SYSTEM
 console.log('🎯 Thumbnail Capture System initializing...');console.log('🔍 Current DOM ready state:',document.readyState);console.log('🔍 Current timestamp:',Date.now());// Function to capture pattern thumbnail using the same method as print function
-function capturePatternThumbnailBuiltIn(){var _appState$currentPatt35,_appState$currentPatt36;console.log('📸📸📸 THUMBNAIL CAPTURE START 📸📸📸');console.log('📸 Current pattern:',(_appState$currentPatt35=appState.currentPattern)===null||_appState$currentPatt35===void 0?void 0:_appState$currentPatt35.name);console.log('📸 Current pattern ID from layers:',generatePatternId((_appState$currentPatt36=appState.currentPattern)===null||_appState$currentPatt36===void 0?void 0:_appState$currentPatt36.name,appState.currentLayers,appState.currentScale));return new Promise(/*#__PURE__*/function(){var _ref26=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee13(resolve){var _appState$currentPatt37,_appState$selectedCol50,_appState$layerInputs3,_appState$currentLaye16,_appState$currentPatt38,isWall,backgroundIndex,backgroundInput,backgroundColor,thumbCanvas,thumbCtx,patternSize,patternWidthInches,patternHeightInches,aspectRatio,maxSize,canvasWidth,canvasHeight,currentScalePercent,scale,shadowLayers,nonShadowLayers,_loop8,_i9,_shadowLayers,nonShadowInputIndex,_loop9,_i0,_nonShadowLayers,dataUrl,_t18;return _regenerator().w(function(_context19){while(1)switch(_context19.p=_context19.n){case 0:if(appState.currentPattern){_context19.n=1;break;}console.warn('⚠️ No current pattern selected for thumbnail');resolve(null);return _context19.a(2);case 1:_context19.p=1;isWall=((_appState$currentPatt37=appState.currentPattern)===null||_appState$currentPatt37===void 0?void 0:_appState$currentPatt37.isWall)||((_appState$selectedCol50=appState.selectedCollection)===null||_appState$selectedCol50===void 0?void 0:_appState$selectedCol50.name)==="wall-panels";backgroundIndex=isWall?1:0;backgroundInput=(_appState$layerInputs3=appState.layerInputs[backgroundIndex])===null||_appState$layerInputs3===void 0?void 0:_appState$layerInputs3.input;if(backgroundInput){_context19.n=2;break;}console.warn('⚠️ Background input not found for thumbnail');console.log('⚠️ Available layerInputs:',appState.layerInputs);resolve(null);return _context19.a(2);case 2:backgroundColor=lookupColor(backgroundInput.value);console.log('📸 Thumbnail - Background color:',backgroundColor);console.log('📸 Thumbnail - Background input value:',backgroundInput.value);// Debug all layer inputs - THIS IS CRITICAL
+function capturePatternThumbnailBuiltIn(){var _appState$currentPatt37,_appState$currentPatt38;console.log('📸📸📸 THUMBNAIL CAPTURE START 📸📸📸');console.log('📸 Current pattern:',(_appState$currentPatt37=appState.currentPattern)===null||_appState$currentPatt37===void 0?void 0:_appState$currentPatt37.name);console.log('📸 Current pattern ID from layers:',generatePatternId((_appState$currentPatt38=appState.currentPattern)===null||_appState$currentPatt38===void 0?void 0:_appState$currentPatt38.name,appState.currentLayers,appState.currentScale));return new Promise(/*#__PURE__*/function(){var _ref26=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee13(resolve){var _appState$currentPatt39,_appState$selectedCol52,_appState$layerInputs3,_appState$currentLaye17,_appState$currentPatt40,isWall,backgroundIndex,backgroundInput,backgroundColor,thumbCanvas,thumbCtx,patternSize,patternWidthInches,patternHeightInches,aspectRatio,maxSize,canvasWidth,canvasHeight,currentScalePercent,scale,shadowLayers,nonShadowLayers,_loop8,_i9,_shadowLayers,nonShadowInputIndex,_loop9,_i0,_nonShadowLayers,dataUrl,_t19;return _regenerator().w(function(_context19){while(1)switch(_context19.p=_context19.n){case 0:if(appState.currentPattern){_context19.n=1;break;}console.warn('⚠️ No current pattern selected for thumbnail');resolve(null);return _context19.a(2);case 1:_context19.p=1;isWall=((_appState$currentPatt39=appState.currentPattern)===null||_appState$currentPatt39===void 0?void 0:_appState$currentPatt39.isWall)||((_appState$selectedCol52=appState.selectedCollection)===null||_appState$selectedCol52===void 0?void 0:_appState$selectedCol52.name)==="wall-panels";backgroundIndex=isWall?1:0;backgroundInput=(_appState$layerInputs3=appState.layerInputs[backgroundIndex])===null||_appState$layerInputs3===void 0?void 0:_appState$layerInputs3.input;if(backgroundInput){_context19.n=2;break;}console.warn('⚠️ Background input not found for thumbnail');console.log('⚠️ Available layerInputs:',appState.layerInputs);resolve(null);return _context19.a(2);case 2:backgroundColor=lookupColor(backgroundInput.value);console.log('📸 Thumbnail - Background color:',backgroundColor);console.log('📸 Thumbnail - Background input value:',backgroundInput.value);// Debug all layer inputs - THIS IS CRITICAL
 console.log('📸 Thumbnail - All layer inputs at capture time:');appState.layerInputs.forEach(function(layerInput,index){if(layerInput&&layerInput.input){var colorValue=layerInput.input.value;var resolvedColor=lookupColor(colorValue);console.log("  Layer ".concat(index,": \"").concat(colorValue,"\" -> ").concat(resolvedColor));}});// Also log currentLayers for comparison
-console.log('📸 Thumbnail - currentLayers at capture time:');(_appState$currentLaye16=appState.currentLayers)===null||_appState$currentLaye16===void 0||_appState$currentLaye16.forEach(function(layer,index){console.log("  Layer ".concat(index,":"),layer);});// 🎨 ASPECT RATIO FIX: Create canvas with pattern's actual proportions
+console.log('📸 Thumbnail - currentLayers at capture time:');(_appState$currentLaye17=appState.currentLayers)===null||_appState$currentLaye17===void 0||_appState$currentLaye17.forEach(function(layer,index){console.log("  Layer ".concat(index,":"),layer);});// 🎨 ASPECT RATIO FIX: Create canvas with pattern's actual proportions
 thumbCanvas=document.createElement('canvas');thumbCtx=thumbCanvas.getContext('2d',{willReadFrequently:true});// Get pattern dimensions to preserve aspect ratio
 patternSize=appState.currentPattern.size||[24,24];// Default to square if no size
 patternWidthInches=patternSize[0];patternHeightInches=patternSize[1];aspectRatio=patternWidthInches/patternHeightInches;// Set canvas size to maintain aspect ratio (max 800px on longest side)
@@ -3310,11 +3350,11 @@ canvasHeight=maxSize;canvasWidth=Math.round(maxSize*aspectRatio);}thumbCanvas.wi
 currentScalePercent=appState.currentScale||100;scale=currentScalePercent/100;// 200 → 2.0, 300 → 3.0, 100 → 1.0
 console.log("\uD83D\uDCF8 Scale for tiling: ".concat(scale,"x (from currentScale: ").concat(currentScalePercent,"%)"));// Fill background
 thumbCtx.fillStyle=backgroundColor;thumbCtx.fillRect(0,0,canvasWidth,canvasHeight);// Process layers like the print function does
-if(!((_appState$currentPatt38=appState.currentPattern)!==null&&_appState$currentPatt38!==void 0&&(_appState$currentPatt38=_appState$currentPatt38.layers)!==null&&_appState$currentPatt38!==void 0&&_appState$currentPatt38.length)){_context19.n=8;break;}shadowLayers=[];nonShadowLayers=[];appState.currentPattern.layers.forEach(function(layer,index){var isShadow=layer.isShadow===true;(isShadow?shadowLayers:nonShadowLayers).push({layer:layer,index:index});});// Process shadow layers first
+if(!((_appState$currentPatt40=appState.currentPattern)!==null&&_appState$currentPatt40!==void 0&&(_appState$currentPatt40=_appState$currentPatt40.layers)!==null&&_appState$currentPatt40!==void 0&&_appState$currentPatt40.length)){_context19.n=8;break;}shadowLayers=[];nonShadowLayers=[];appState.currentPattern.layers.forEach(function(layer,index){var isShadow=layer.isShadow===true;(isShadow?shadowLayers:nonShadowLayers).push({layer:layer,index:index});});// Process shadow layers first
 _loop8=/*#__PURE__*/_regenerator().m(function _loop8(){var _shadowLayers$_i,layer,index;return _regenerator().w(function(_context17){while(1)switch(_context17.n){case 0:_shadowLayers$_i=_shadowLayers[_i9],layer=_shadowLayers$_i.layer,index=_shadowLayers$_i.index;_context17.n=1;return new Promise(function(layerResolve){processImage(layer.path||"",function(processedUrl){var img=new Image();if(processedUrl instanceof HTMLCanvasElement){img.src=processedUrl.toDataURL("image/png");}else{img.src=processedUrl;}img.onload=function(){thumbCtx.globalCompositeOperation="multiply";thumbCtx.globalAlpha=0.3;// Apply tiling based on scale (divide to make tiles smaller = more tiles)
 if(scale!==1.0){var tileWidth=canvasWidth/scale;var tileHeight=canvasHeight/scale;for(var x=0;x<canvasWidth;x+=tileWidth){for(var y=0;y<canvasHeight;y+=tileHeight){thumbCtx.drawImage(img,x,y,tileWidth,tileHeight);}}}else{thumbCtx.drawImage(img,0,0,canvasWidth,canvasHeight);}thumbCtx.globalCompositeOperation="source-over";thumbCtx.globalAlpha=1.0;layerResolve();};img.onerror=function(){return layerResolve();};},null,2.2,true,isWall);});case 1:return _context17.a(2);}},_loop8);});_i9=0,_shadowLayers=shadowLayers;case 3:if(!(_i9<_shadowLayers.length)){_context19.n=5;break;}return _context19.d(_regeneratorValues(_loop8()),4);case 4:_i9++;_context19.n=3;break;case 5:// Process non-shadow layers
 nonShadowInputIndex=isWall?2:1;_loop9=/*#__PURE__*/_regenerator().m(function _loop9(){var _appState$layerInputs4;var _nonShadowLayers$_i,layer,index,layerInput,layerColor;return _regenerator().w(function(_context18){while(1)switch(_context18.n){case 0:_nonShadowLayers$_i=_nonShadowLayers[_i0],layer=_nonShadowLayers$_i.layer,index=_nonShadowLayers$_i.index;layerInput=(_appState$layerInputs4=appState.layerInputs[nonShadowInputIndex])===null||_appState$layerInputs4===void 0?void 0:_appState$layerInputs4.input;layerColor=layerInput?lookupColor(layerInput.value):"#ffffff";_context18.n=1;return new Promise(function(layerResolve){processImage(layer.path||"",function(processedUrl){var img=new Image();if(processedUrl instanceof HTMLCanvasElement){img.src=processedUrl.toDataURL("image/png");}else{img.src=processedUrl;}img.onload=function(){// Apply tiling based on scale (divide to make tiles smaller = more tiles)
-if(scale!==1.0){var tileWidth=canvasWidth/scale;var tileHeight=canvasHeight/scale;for(var x=0;x<canvasWidth;x+=tileWidth){for(var y=0;y<canvasHeight;y+=tileHeight){thumbCtx.drawImage(img,x,y,tileWidth,tileHeight);}}}else{thumbCtx.drawImage(img,0,0,canvasWidth,canvasHeight);}layerResolve();};img.onerror=function(){return layerResolve();};},layerColor,2.2,false,isWall);});case 1:nonShadowInputIndex++;case 2:return _context18.a(2);}},_loop9);});_i0=0,_nonShadowLayers=nonShadowLayers;case 6:if(!(_i0<_nonShadowLayers.length)){_context19.n=8;break;}return _context19.d(_regeneratorValues(_loop9()),7);case 7:_i0++;_context19.n=6;break;case 8:dataUrl=thumbCanvas.toDataURL('image/jpeg',0.9);console.log('✅ Thumbnail captured successfully using print method');resolve(dataUrl);_context19.n=10;break;case 9:_context19.p=9;_t18=_context19.v;console.error('❌ Failed to capture thumbnail:',_t18);resolve(null);case 10:return _context19.a(2);}},_callee13,null,[[1,9]]);}));return function(_x16){return _ref26.apply(this,arguments);};}());}// Initialize thumbnail capture system by overriding the saveToMyList function
+if(scale!==1.0){var tileWidth=canvasWidth/scale;var tileHeight=canvasHeight/scale;for(var x=0;x<canvasWidth;x+=tileWidth){for(var y=0;y<canvasHeight;y+=tileHeight){thumbCtx.drawImage(img,x,y,tileWidth,tileHeight);}}}else{thumbCtx.drawImage(img,0,0,canvasWidth,canvasHeight);}layerResolve();};img.onerror=function(){return layerResolve();};},layerColor,2.2,false,isWall);});case 1:nonShadowInputIndex++;case 2:return _context18.a(2);}},_loop9);});_i0=0,_nonShadowLayers=nonShadowLayers;case 6:if(!(_i0<_nonShadowLayers.length)){_context19.n=8;break;}return _context19.d(_regeneratorValues(_loop9()),7);case 7:_i0++;_context19.n=6;break;case 8:dataUrl=thumbCanvas.toDataURL('image/jpeg',0.9);console.log('✅ Thumbnail captured successfully using print method');resolve(dataUrl);_context19.n=10;break;case 9:_context19.p=9;_t19=_context19.v;console.error('❌ Failed to capture thumbnail:',_t19);resolve(null);case 10:return _context19.a(2);}},_callee13,null,[[1,9]]);}));return function(_x16){return _ref26.apply(this,arguments);};}());}// Initialize thumbnail capture system by overriding the saveToMyList function
 function initializeThumbnailCapture(){// Legacy wrapper disabled: it overrides window.saveToMyList and races async save/proof flows.
 // Canonical thumbnail generation now lives directly in saveToMyList via generatePrintPreviewDataUrl().
 console.log('ℹ️ Legacy initializeThumbnailCapture wrapper disabled (using canonical saveToMyList pipeline)');}// Run immediately if DOM is already ready
@@ -3347,15 +3387,15 @@ var copyBtn=document.createElement('button');copyBtn.textContent='Copy Values to
 document.body.appendChild(controlPanel);}// Function to remove fabric tuning controls
 function removeFabricTuningControls(){var existingControls=document.getElementById('fabricTuningControls');if(existingControls){existingControls.remove();}}// Simple fabric mockup function
 function renderFabricMockup(){return _renderFabricMockup.apply(this,arguments);}// Add Try Fabric button functionality
-function _renderFabricMockup(){_renderFabricMockup=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee34(){var _appState$selectedCol58,_appState$selectedCol59,_appState$selectedCol60,_appState$selectedCol61,_appState$selectedCol62,_appState$selectedCol63,_appState$currentLaye20;var canvas,ctx,canvasWidth,canvasHeight,actualFurnitureConfig,isClothingCollection,isFurnitureCollection,isClothingModeFromCollection,isClothingModeFromWindow,isClothingMode,configKey,furnitureTypeToConfigKey,fabricConfig,pattern,hasNestedMockupLayers,isMultiScaleClothing,isSimpleClothingPage,selectedGarment,garmentLayers,scaleLayers,backgroundColor,mockupBg,fabricBase,tintedDressBase,fabricBaseWidth,fabricBaseHeight,isClothingModeBase,tintCtx,baseImageData,baseData,bgColorMatch,bgR,bgG,bgB,j,alpha,tintStrength,r,g,b,baseCanvas,baseCtx,_baseImageData,_baseData,_bgColorMatch,_bgR,_bgG,_bgB,_j,_r3,_g3,_b3,_alpha2,_tintStrength,patternSlug,_pattern2,CLOTHING_SHADOW_OPACITY,CLOTHING_GLOSS_OPACITY,_selectedGarment,layersToUse,baseName,variantNames,variantCollection,_variantCollection$pa4,variantPattern,scaleToUse,originalLayerCount,_loop10,_ret,i,shadowCanvas,shadowCtx,glossFileName,glossPath,glossImg,fabricGlossy,roomMockup,dataURL,_isSimpleClothingPage,existingZoomControls,existingCanvas,previewCanvases,containerWidth,containerHeight,canvasAspectRatio,containerAspectRatio,displayWidth,displayHeight,panX,panY,scale,_scale,existingButton,_t53,_t54,_t55;return _regenerator().w(function(_context43){while(1)switch(_context43.p=_context43.n){case 0:if(!appState.isFurnitureCompositing){_context43.n=1;break;}console.log("🚫 renderFabricMockup blocked - furniture compositing in progress");return _context43.a(2);case 1:console.log("🧵 ================================");console.log("🧵 FABRIC MOCKUP STARTING");console.log("🧵 ================================");// ✅ CRITICAL: Wait for furniture config to load if not ready yet
+function _renderFabricMockup(){_renderFabricMockup=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee34(){var _appState$selectedCol60,_appState$selectedCol61,_appState$selectedCol62,_appState$selectedCol63,_appState$selectedCol64,_appState$selectedCol65,_appState$currentLaye21;var canvas,ctx,canvasWidth,canvasHeight,actualFurnitureConfig,isClothingCollection,isFurnitureCollection,isClothingModeFromCollection,isClothingModeFromWindow,isClothingMode,configKey,furnitureTypeToConfigKey,fabricConfig,pattern,hasNestedMockupLayers,isMultiScaleClothing,isSimpleClothingPage,selectedGarment,garmentLayers,scaleLayers,backgroundColor,mockupBg,fabricBase,tintedDressBase,fabricBaseWidth,fabricBaseHeight,isClothingModeBase,tintCtx,baseImageData,baseData,bgColorMatch,bgR,bgG,bgB,j,alpha,tintStrength,r,g,b,baseCanvas,baseCtx,_baseImageData,_baseData,_bgColorMatch,_bgR,_bgG,_bgB,_j,_r3,_g3,_b3,_alpha2,_tintStrength,patternSlug,_pattern2,CLOTHING_SHADOW_OPACITY,CLOTHING_GLOSS_OPACITY,_selectedGarment,layersToUse,baseName,variantNames,variantCollection,_variantCollection$pa4,variantPattern,scaleToUse,originalLayerCount,_loop10,_ret,i,shadowCanvas,shadowCtx,glossFileName,glossPath,glossImg,fabricGlossy,roomMockup,dataURL,_isSimpleClothingPage,existingZoomControls,existingCanvas,previewCanvases,containerWidth,containerHeight,canvasAspectRatio,containerAspectRatio,displayWidth,displayHeight,panX,panY,scale,_scale,existingButton,_t54,_t55,_t56;return _regenerator().w(function(_context43){while(1)switch(_context43.p=_context43.n){case 0:if(!appState.isFurnitureCompositing){_context43.n=1;break;}console.log("🚫 renderFabricMockup blocked - furniture compositing in progress");return _context43.a(2);case 1:console.log("🧵 ================================");console.log("🧵 FABRIC MOCKUP STARTING");console.log("🧵 ================================");// ✅ CRITICAL: Wait for furniture config to load if not ready yet
 if(furnitureConfig){_context43.n=3;break;}console.log("⏳ Waiting for furniture config to load...");_context43.n=2;return loadFurnitureConfig();case 2:console.log("✅ Furniture config loaded, proceeding with mockup render");case 3:canvas=document.createElement("canvas");ctx=canvas.getContext("2d");// Will be dynamically sized based on first loaded image
 canvasWidth=600;// Default fallback
 canvasHeight=450;// Default fallback
 // Get fabric config with error handling
-console.log("🔍 Global furnitureConfig:",furnitureConfig);console.log("🔍 AppState furnitureConfig:",appState.furnitureConfig);console.log("🔍 Collection furnitureConfig:",(_appState$selectedCol58=appState.selectedCollection)===null||_appState$selectedCol58===void 0?void 0:_appState$selectedCol58.furnitureConfig);// Try to get furniture config from collection first, then appState, then global
-actualFurnitureConfig=((_appState$selectedCol59=appState.selectedCollection)===null||_appState$selectedCol59===void 0?void 0:_appState$selectedCol59.furnitureConfig)||appState.furnitureConfig||furnitureConfig;console.log("🔍 Using furnitureConfig:",actualFurnitureConfig);// Check if this is a clothing or furniture collection
+console.log("🔍 Global furnitureConfig:",furnitureConfig);console.log("🔍 AppState furnitureConfig:",appState.furnitureConfig);console.log("🔍 Collection furnitureConfig:",(_appState$selectedCol60=appState.selectedCollection)===null||_appState$selectedCol60===void 0?void 0:_appState$selectedCol60.furnitureConfig);// Try to get furniture config from collection first, then appState, then global
+actualFurnitureConfig=((_appState$selectedCol61=appState.selectedCollection)===null||_appState$selectedCol61===void 0?void 0:_appState$selectedCol61.furnitureConfig)||appState.furnitureConfig||furnitureConfig;console.log("🔍 Using furnitureConfig:",actualFurnitureConfig);// Check if this is a clothing or furniture collection
 // Match both .clo- and -clo formats
-isClothingCollection=((_appState$selectedCol60=appState.selectedCollection)===null||_appState$selectedCol60===void 0||(_appState$selectedCol60=_appState$selectedCol60.name)===null||_appState$selectedCol60===void 0?void 0:_appState$selectedCol60.includes('-clo'))||((_appState$selectedCol61=appState.selectedCollection)===null||_appState$selectedCol61===void 0||(_appState$selectedCol61=_appState$selectedCol61.name)===null||_appState$selectedCol61===void 0?void 0:_appState$selectedCol61.includes('.clo-'));isFurnitureCollection=(_appState$selectedCol62=appState.selectedCollection)===null||_appState$selectedCol62===void 0||(_appState$selectedCol62=_appState$selectedCol62.name)===null||_appState$selectedCol62===void 0?void 0:_appState$selectedCol62.includes('.fur-');// ✅ CRITICAL: Exit early if this is furniture - furniture should use updateFurniturePreview(), not renderFabricMockup()
+isClothingCollection=((_appState$selectedCol62=appState.selectedCollection)===null||_appState$selectedCol62===void 0||(_appState$selectedCol62=_appState$selectedCol62.name)===null||_appState$selectedCol62===void 0?void 0:_appState$selectedCol62.includes('-clo'))||((_appState$selectedCol63=appState.selectedCollection)===null||_appState$selectedCol63===void 0||(_appState$selectedCol63=_appState$selectedCol63.name)===null||_appState$selectedCol63===void 0?void 0:_appState$selectedCol63.includes('.clo-'));isFurnitureCollection=(_appState$selectedCol64=appState.selectedCollection)===null||_appState$selectedCol64===void 0||(_appState$selectedCol64=_appState$selectedCol64.name)===null||_appState$selectedCol64===void 0?void 0:_appState$selectedCol64.includes('.fur-');// ✅ CRITICAL: Exit early if this is furniture - furniture should use updateFurniturePreview(), not renderFabricMockup()
 if(!(isFurnitureCollection||appState.isInFurnitureMode||window.COLORFLEX_MODE==='FURNITURE')){_context43.n=4;break;}console.log("🪑 renderFabricMockup() called for furniture - this should use updateFurniturePreview() instead!");console.log("🪑 Exiting early to prevent furniture from getting clothing layers");return _context43.a(2);case 4:// ✅ Define isClothingMode at function level (used later in the function)
 // ✅ FIX: Check window.COLORFLEX_MODE in addition to collection name (clothing pages use base collections without -clo suffix)
 // ✅ Don't use window.COLORFLEX_SIMPLE_MODE as it's set for both clothing AND furniture simple modes
@@ -3368,7 +3408,7 @@ configKey='fabric';if(isClothingMode){// CLOTHING MODE: Check selected garment (
 if(appState.selectedGarment==='pantsuit'){configKey='clothing-pants';}else{configKey='clothing';// Default to dress
 }}else if(isFurnitureCollection){// FURNITURE MODE: Map furniture type to config key
 // mockupLayers use 'Sofa-Capitol'/'Sofa-Kite', but config uses 'furniture'/'furniture-kite'
-furnitureTypeToConfigKey={'Sofa-Capitol':'furniture','Sofa-Kite':'furniture-kite'};configKey=furnitureTypeToConfigKey[appState.selectedFurnitureType]||'furniture';console.log("\uD83E\uDE91 FURNITURE MODE: ".concat(appState.selectedFurnitureType," -> config: ").concat(configKey));}else{console.log("\uD83E\uDDF5 FABRIC MODE: Using fabric config: ".concat(configKey));}console.log("\uD83D\uDD0D Collection type: ".concat(configKey," (").concat((_appState$selectedCol63=appState.selectedCollection)===null||_appState$selectedCol63===void 0?void 0:_appState$selectedCol63.name,")"));fabricConfig=actualFurnitureConfig===null||actualFurnitureConfig===void 0?void 0:actualFurnitureConfig[configKey];if(fabricConfig){_context43.n=5;break;}console.error("\u274C ".concat(configKey," config not found in furnitureConfig!"));console.log("🔍 Available furniture config keys:",Object.keys(actualFurnitureConfig||{}));return _context43.a(2);case 5:console.log("\uD83D\uDD0D ".concat(configKey," config:"),fabricConfig);// ===== MOCKUP RENDERING (WALLPAPER/FABRIC/FURNITURE/CLOTHING) =====
+furnitureTypeToConfigKey={'Sofa-Capitol':'furniture','Sofa-Kite':'furniture-kite'};configKey=furnitureTypeToConfigKey[appState.selectedFurnitureType]||'furniture';console.log("\uD83E\uDE91 FURNITURE MODE: ".concat(appState.selectedFurnitureType," -> config: ").concat(configKey));}else{console.log("\uD83E\uDDF5 FABRIC MODE: Using fabric config: ".concat(configKey));}console.log("\uD83D\uDD0D Collection type: ".concat(configKey," (").concat((_appState$selectedCol65=appState.selectedCollection)===null||_appState$selectedCol65===void 0?void 0:_appState$selectedCol65.name,")"));fabricConfig=actualFurnitureConfig===null||actualFurnitureConfig===void 0?void 0:actualFurnitureConfig[configKey];if(fabricConfig){_context43.n=5;break;}console.error("\u274C ".concat(configKey," config not found in furnitureConfig!"));console.log("🔍 Available furniture config keys:",Object.keys(actualFurnitureConfig||{}));return _context43.a(2);case 5:console.log("\uD83D\uDD0D ".concat(configKey," config:"),fabricConfig);// ===== MOCKUP RENDERING (WALLPAPER/FABRIC/FURNITURE/CLOTHING) =====
 console.log("🔧 Using mockup rendering with background/base/pattern compositing");// Check if this pattern has nested mockupLayers (new multi-scale clothing format)
 pattern=appState.currentPattern;hasNestedMockupLayers=pattern.mockupLayers&&_typeof(pattern.mockupLayers)==='object'&&!Array.isArray(pattern.mockupLayers);// ===== MULTI-SCALE CLOTHING: Flatten nested mockupLayers for traditional pipeline =====
 // Check for nested format OR previously saved original structure
@@ -3382,7 +3422,7 @@ selectedGarment=appState.selectedGarment;console.log("\uD83D\uDC54 Selected garm
 // This allows the traditional rendering pipeline to work with multi-scale data
 pattern.mockupLayers=scaleLayers;console.log("\uD83D\uDC57 Flattened mockupLayers for traditional pipeline (".concat(scaleLayers.length," layers)"));case 8:// ===== TRADITIONAL RENDERING PATH (WORKS FOR ALL FORMATS) =====
 // Get background color (first layer is Background)
-console.log("🔍 Current layers:",appState.currentLayers);console.log("🔍 First layer:",appState.currentLayers[0]);backgroundColor=lookupColor(((_appState$currentLaye20=appState.currentLayers[0])===null||_appState$currentLaye20===void 0?void 0:_appState$currentLaye20.color)||"Snowbound");console.log("🎨 Background color:",backgroundColor);console.log("🔍 Base tint strength:",fabricTuning.baseTintStrength);_context43.p=9;// 1. Load and draw room mockup background
+console.log("🔍 Current layers:",appState.currentLayers);console.log("🔍 First layer:",appState.currentLayers[0]);backgroundColor=lookupColor(((_appState$currentLaye21=appState.currentLayers[0])===null||_appState$currentLaye21===void 0?void 0:_appState$currentLaye21.color)||"Snowbound");console.log("🎨 Background color:",backgroundColor);console.log("🔍 Base tint strength:",fabricTuning.baseTintStrength);_context43.p=9;// 1. Load and draw room mockup background
 mockupBg=new Image();mockupBg.crossOrigin="anonymous";_context43.n=10;return new Promise(function(resolve,reject){mockupBg.onload=resolve;mockupBg.onerror=reject;mockupBg.src=normalizePath(fabricConfig.mockup.startsWith('data/')?fabricConfig.mockup:'data/'+fabricConfig.mockup);});case 10:// Set canvas size to NATIVE 4K image dimensions for full-resolution compositing
 // Use naturalWidth/naturalHeight to get actual file dimensions, not display size
 // const isClothingMode = appState.selectedCollection?.name?.includes('-clo') || appState.selectedCollection?.name?.includes('.clo-');
@@ -3433,14 +3473,14 @@ console.warn("\u26A0\uFE0F No mockupLayers found - falling back to pattern.layer
 originalLayerCount=layersToUse.length;layersToUse=layersToUse.filter(function(layer,index){// Check for isShadow flag
 var isShadowFlag=_typeof(layer)==='object'&&layer.isShadow===true;// Check for "ISSHADOW" in path/imageUrl (case-insensitive)
 var layerPath='';if(typeof layer==='string'){layerPath=layer;}else if(layer.path){layerPath=layer.path;}else if(layer.imageUrl){layerPath=layer.imageUrl;}var isShadowPath=layerPath&&(layerPath.toUpperCase().includes('ISSHADOW')||layerPath.toUpperCase().includes('_SHADOW_')||layerPath.toUpperCase().includes('SHADOW_LAYER'));var isShadow=isShadowFlag||isShadowPath;if(isShadow){console.log("  \uD83D\uDEAB Skipping shadow layer at index ".concat(index," (isShadow: ").concat(isShadowFlag,", path contains ISSHADOW: ").concat(isShadowPath,")"));}return!isShadow;});if(layersToUse.length<originalLayerCount){console.log("\uD83D\uDEAB Filtered out ".concat(originalLayerCount-layersToUse.length," shadow layer(s) from layersToUse"));}console.log("\uD83D\uDD0D Pattern layers available:",layersToUse);console.log("\uD83D\uDD0D Fabric config patternPathTemplate:",fabricConfig.patternPathTemplate);console.log("\uD83D\uDD0D baseCanvas exists:",!!baseCanvas);console.log("\uD83D\uDD0D baseCtx exists:",!!baseCtx);console.log("\uD83D\uDD0D isClothingMode:",isClothingMode);console.log("\uD83D\uDD0D tintedDressBase exists:",!!tintedDressBase);// Process pattern layers (skip Background layer at index 0)
-if(layersToUse.length===0){console.warn('⚠️ No pattern layers to process! This will result in an empty baseCanvas.');}_loop10=/*#__PURE__*/_regenerator().m(function _loop10(){var layer,layerPath,_appState$currentLaye21,layerImg,layerNativeWidth,layerNativeHeight,tempCanvas,tempCtx,colorIndex,layerColor,colorMatch,colorR,colorG,colorB,vibrance,vibranceR,vibranceG,vibranceB,imageData,data,nonTransparentPixels,averageLuminance,_j2,_r4,_g4,_b4,_alpha3,patternLuminance,opacity,_t52;return _regenerator().w(function(_context42){while(1)switch(_context42.p=_context42.n){case 0:layer=layersToUse[i];console.log("\uD83D\uDD0D Pattern layer ".concat(i," object:"),layer);// Use layer path directly from collections.json (no transformation needed)
+if(layersToUse.length===0){console.warn('⚠️ No pattern layers to process! This will result in an empty baseCanvas.');}_loop10=/*#__PURE__*/_regenerator().m(function _loop10(){var layer,layerPath,_appState$currentLaye22,layerImg,layerNativeWidth,layerNativeHeight,tempCanvas,tempCtx,colorIndex,layerColor,colorMatch,colorR,colorG,colorB,vibrance,vibranceR,vibranceG,vibranceB,imageData,data,nonTransparentPixels,averageLuminance,_j2,_r4,_g4,_b4,_alpha3,patternLuminance,opacity,_t53;return _regenerator().w(function(_context42){while(1)switch(_context42.p=_context42.n){case 0:layer=layersToUse[i];console.log("\uD83D\uDD0D Pattern layer ".concat(i," object:"),layer);// Use layer path directly from collections.json (no transformation needed)
 if(!(typeof layer==='string')){_context42.n=1;break;}layerPath=normalizePath(layer);_context42.n=4;break;case 1:if(!layer.path){_context42.n=2;break;}layerPath=normalizePath(layer.path);_context42.n=4;break;case 2:if(!layer.imageUrl){_context42.n=3;break;}layerPath=normalizePath(layer.imageUrl);_context42.n=4;break;case 3:console.warn("\u26A0\uFE0F Pattern layer ".concat(i," has no valid path"));return _context42.a(2,0);case 4:console.log("[ColorFlex] Layer image URL (pattern layer ".concat(i,"):"),layerPath);_context42.p=5;layerImg=new Image();layerImg.crossOrigin="anonymous";_context42.n=6;return new Promise(function(resolve,reject){layerImg.onload=resolve;layerImg.onerror=reject;layerImg.src=layerPath;});case 6:layerNativeWidth=layerImg.naturalWidth||layerImg.width;layerNativeHeight=layerImg.naturalHeight||layerImg.height;console.log("\uD83D\uDCD0 Pattern layer ".concat(i," loaded at NATIVE resolution: ").concat(layerNativeWidth,"x").concat(layerNativeHeight));// Apply pattern to pattern composite (like pattern preview)
 tempCanvas=document.createElement("canvas");tempCtx=tempCanvas.getContext("2d");tempCanvas.width=canvasWidth;tempCanvas.height=canvasHeight;// Configure image smoothing for temp canvas (high quality for all modes)
 tempCtx.imageSmoothingEnabled=true;tempCtx.imageSmoothingQuality="high";// High-quality scaling prevents aliasing
 // Draw the pattern image at canvas size (which is now 4K native resolution)
 tempCtx.drawImage(layerImg,0,0,canvasWidth,canvasHeight);console.log("\u2705 Pattern layer ".concat(i," drawn at native 4K canvas size"));// Get the layer's color from appState (pattern layers start at index 1 after Background)
 colorIndex=i+1;// Skip Background layer at index 0
-layerColor=lookupColor(((_appState$currentLaye21=appState.currentLayers[colorIndex])===null||_appState$currentLaye21===void 0?void 0:_appState$currentLaye21.color)||"#FFFFFF");console.log("\uD83C\uDFA8 Using color ".concat(layerColor," for pattern layer ").concat(i," (color index ").concat(colorIndex,")"));// Parse pattern color (hex to RGB)
+layerColor=lookupColor(((_appState$currentLaye22=appState.currentLayers[colorIndex])===null||_appState$currentLaye22===void 0?void 0:_appState$currentLaye22.color)||"#FFFFFF");console.log("\uD83C\uDFA8 Using color ".concat(layerColor," for pattern layer ").concat(i," (color index ").concat(colorIndex,")"));// Parse pattern color (hex to RGB)
 colorMatch=layerColor.match(/^#([0-9a-f]{6})$/i);if(colorMatch){_context42.n=7;break;}console.warn("\u26A0\uFE0F Invalid color format for layer ".concat(i,": ").concat(layerColor));return _context42.a(2,0);case 7:colorR=parseInt(colorMatch[1].substr(0,2),16);colorG=parseInt(colorMatch[1].substr(2,2),16);colorB=parseInt(colorMatch[1].substr(4,2),16);// Apply color vibrance adjustment
 vibrance=fabricTuning.colorVibrance;vibranceR=Math.floor(127+(colorR-127)*vibrance);vibranceG=Math.floor(127+(colorG-127)*vibrance);vibranceB=Math.floor(127+(colorB-127)*vibrance);console.log("\uD83C\uDFA8 Pattern layer ".concat(i," RGB: ").concat(vibranceR,", ").concat(vibranceG,", ").concat(vibranceB));// Extract pattern luminance and apply color (like pattern preview)
 imageData=tempCtx.getImageData(0,0,canvasWidth,canvasHeight);data=imageData.data;nonTransparentPixels=0;averageLuminance=0;// Apply pattern processing (similar to pattern preview)
@@ -3449,7 +3489,7 @@ patternLuminance=0.299*_r4+0.587*_g4+0.114*_b4;// Apply pattern contrast adjustm
 patternLuminance=Math.pow(patternLuminance/255,1/fabricTuning.patternContrast)*255;averageLuminance+=patternLuminance;// Create colored pattern with luminance-based opacity
 opacity=patternLuminance/255*fabricTuning.alphaStrength;data[_j2]=vibranceR;data[_j2+1]=vibranceG;data[_j2+2]=vibranceB;data[_j2+3]=Math.min(255,opacity*255);}else{data[_j2+3]=0;}}if(nonTransparentPixels>0){averageLuminance/=nonTransparentPixels;console.log("\uD83D\uDD0D Pattern layer ".concat(i,": ").concat(nonTransparentPixels," pixels, avg luminance: ").concat(averageLuminance.toFixed(2)));}else{console.warn("\u26A0\uFE0F Pattern layer ".concat(i,": No non-transparent pixels found"));}// Put the processed pattern back
 tempCtx.putImageData(imageData,0,0);// Apply to base canvas using normal blending
-baseCtx.globalCompositeOperation="source-over";baseCtx.drawImage(tempCanvas,0,0);console.log("\uD83D\uDD0D Applied pattern layer ".concat(i," to base canvas"));console.log("\u2705 Pattern layer ".concat(i," applied"));_context42.n=9;break;case 8:_context42.p=8;_t52=_context42.v;console.warn("\u26A0\uFE0F Pattern layer ".concat(i," failed:"),_t52);case 9:return _context42.a(2);}},_loop10,null,[[5,8]]);});i=0;case 14:if(!(i<layersToUse.length)){_context43.n=17;break;}return _context43.d(_regeneratorValues(_loop10()),15);case 15:_ret=_context43.v;if(!(_ret===0)){_context43.n=16;break;}return _context43.a(3,16);case 16:i++;_context43.n=14;break;case 17:// 4. Final compositing in correct order (isClothingMode already declared above)
+baseCtx.globalCompositeOperation="source-over";baseCtx.drawImage(tempCanvas,0,0);console.log("\uD83D\uDD0D Applied pattern layer ".concat(i," to base canvas"));console.log("\u2705 Pattern layer ".concat(i," applied"));_context42.n=9;break;case 8:_context42.p=8;_t53=_context42.v;console.warn("\u26A0\uFE0F Pattern layer ".concat(i," failed:"),_t53);case 9:return _context42.a(2);}},_loop10,null,[[5,8]]);});i=0;case 14:if(!(i<layersToUse.length)){_context43.n=17;break;}return _context43.d(_regeneratorValues(_loop10()),15);case 15:_ret=_context43.v;if(!(_ret===0)){_context43.n=16;break;}return _context43.a(3,16);case 16:i++;_context43.n=14;break;case 17:// 4. Final compositing in correct order (isClothingMode already declared above)
 console.log("\uD83E\uDDF5 Final compositing: ".concat(isClothingMode?'clothing':'fabric'," mode"));// SIMPLIFIED APPROACH: Draw all layers at canvas size (canvas is now 2x for clothing)
 // Canvas is already sized correctly: 1100x1400 for clothing, 550x700 for fabric
 // Layer 1: Mockup (dress mannequin or room background)
@@ -3469,12 +3509,12 @@ if(!isClothingMode){_context43.n=21;break;}_context43.p=18;// Gloss layers are i
 // Map garment names: "dress" → "dress-gloss.png", "pantsuit" → "pants-suit-gloss.png"
 glossFileName=_selectedGarment==='pantsuit'?'pants-suit-gloss.png':"".concat(_selectedGarment,"-gloss.png");glossPath="data/mockups/clothing/".concat(glossFileName);console.log("\uD83D\uDD0D Loading gloss layer from: ".concat(glossPath));glossImg=new Image();glossImg.crossOrigin="anonymous";_context43.n=19;return new Promise(function(resolve,reject){glossImg.onload=resolve;glossImg.onerror=reject;glossImg.src=glossPath.startsWith('http')?glossPath:normalizePath(glossPath.startsWith('data/')?glossPath:'data/'+glossPath);});case 19:console.log("\uD83D\uDCD0 Gloss layer loaded: ".concat(glossImg.width,"x").concat(glossImg.height));// Apply gloss layer with screen blend mode
 ctx.globalCompositeOperation="screen";ctx.globalAlpha=CLOTHING_GLOSS_OPACITY;ctx.drawImage(glossImg,0,0,canvasWidth,canvasHeight);// Reset alpha and composite operation
-ctx.globalAlpha=1.0;ctx.globalCompositeOperation="source-over";console.log("\u2705 Gloss layer applied (opacity: ".concat(CLOTHING_GLOSS_OPACITY,", screen blend)"));_context43.n=21;break;case 20:_context43.p=20;_t53=_context43.v;console.log("\u26A0\uFE0F Gloss layer not available for ".concat(_selectedGarment," @ ").concat(appState.selectedClothingScale,"X - continuing without gloss"));case 21:if(!(fabricBase&&!isClothingMode)){_context43.n=26;break;}// Fabric mode only: Multiply base for shadows
+ctx.globalAlpha=1.0;ctx.globalCompositeOperation="source-over";console.log("\u2705 Gloss layer applied (opacity: ".concat(CLOTHING_GLOSS_OPACITY,", screen blend)"));_context43.n=21;break;case 20:_context43.p=20;_t54=_context43.v;console.log("\u26A0\uFE0F Gloss layer not available for ".concat(_selectedGarment," @ ").concat(appState.selectedClothingScale,"X - continuing without gloss"));case 21:if(!(fabricBase&&!isClothingMode)){_context43.n=26;break;}// Fabric mode only: Multiply base for shadows
 ctx.globalCompositeOperation="multiply";ctx.drawImage(fabricBase,0,0,canvasWidth,canvasHeight);// Layer 4: Glossy finish (screen blend for shine effect)
 if(!(fabricTuning.glossyStrength>0)){_context43.n=25;break;}_context43.p=22;fabricGlossy=new Image();fabricGlossy.crossOrigin="anonymous";_context43.n=23;return new Promise(function(resolve,reject){fabricGlossy.onload=resolve;fabricGlossy.onerror=reject;// Use fabric-glossy.png from the same directory as fabric-base.png
 var glossyPath=fabricConfig.base.replace('fabric-base.png','fabric-glossy.png');fabricGlossy.src=glossyPath.startsWith('http')?glossyPath:normalizePath(glossyPath.startsWith('data/')?glossyPath:'data/'+glossyPath);});case 23:console.log("\uD83D\uDCD0 Fabric glossy: ".concat(fabricGlossy.width,"x").concat(fabricGlossy.height));// Apply glossy layer with screen blend mode and tunable opacity
 ctx.globalCompositeOperation="screen";ctx.globalAlpha=fabricTuning.glossyStrength;ctx.drawImage(fabricGlossy,0,0,canvasWidth,canvasHeight);// Reset alpha and composite operation
-ctx.globalAlpha=1.0;ctx.globalCompositeOperation="source-over";console.log("✅ Glossy layer applied with screen blend");_context43.n=25;break;case 24:_context43.p=24;_t54=_context43.v;console.warn("⚠️ Glossy layer failed to load:",_t54);// Continue without glossy layer if it fails
+ctx.globalAlpha=1.0;ctx.globalCompositeOperation="source-over";console.log("✅ Glossy layer applied with screen blend");_context43.n=25;break;case 24:_context43.p=24;_t55=_context43.v;console.warn("⚠️ Glossy layer failed to load:",_t55);// Continue without glossy layer if it fails
 case 25:// Reset composite operation
 ctx.globalCompositeOperation="source-over";console.log("✅ All layers composited in correct order (fabric mode)");_context43.n=27;break;case 26:if(isClothingMode){console.log("✅ Clothing mode compositing complete (mockup + dress-base + patterns)");}else{console.log("✅ Fabric mode compositing complete (mockup + patterns only)");}case 27:// Update display - try both possible element references
 roomMockup=document.getElementById('roomMockup');if(!roomMockup&&dom!==null&&dom!==void 0&&dom.roomMockup){roomMockup=dom.roomMockup;}console.log("🔍 roomMockup element found:",!!roomMockup);console.log("🔍 dom.roomMockup available:",!!(dom!==null&&dom!==void 0&&dom.roomMockup));if(!roomMockup){_context43.n=31;break;}dataURL=canvas.toDataURL();console.log("🔍 Canvas dataURL length:",dataURL.length);console.log("🔍 roomMockup element type:",roomMockup.tagName);// ✅ STANDARD CLOTHING PAGE: Set container dimensions and styling
@@ -3520,7 +3560,7 @@ roomMockup.style.backgroundColor='transparent';// Set background image
 roomMockup.style.backgroundImage="url(".concat(dataURL,")");roomMockup.style.backgroundSize='contain';roomMockup.style.backgroundRepeat='no-repeat';roomMockup.style.backgroundPosition='center';// Restore the back button if it existed
 if(existingButton){roomMockup.appendChild(existingButton);console.log("✅ Restored back button after clearing div");}console.log("✅ Set fabric mockup as div background and cleared other content");case 30:_context43.n=32;break;case 31:console.error("❌ No roomMockup element found!");case 32:// Add back button for fabric mode ONLY (not for clothing mode)
 if(!isClothingMode&&!document.getElementById('backToPatternsBtn')){addBackToPatternsButton();console.log('✅ Added back button for fabric mode');}else if(isClothingMode){console.log('👗 Skipping back button for clothing mode');}// Add fabric tuning controls
-addFabricTuningControls();_context43.n=34;break;case 33:_context43.p=33;_t55=_context43.v;console.error("❌ Fabric mockup error:",_t55);case 34:return _context43.a(2);}},_callee34,null,[[22,24],[18,20],[9,33]]);}));return _renderFabricMockup.apply(this,arguments);}function addTryFabricButton(){var _appState$selectedCol51;console.log("🧵 addTryFabricButton called");console.log("🧵 selectedCollection:",(_appState$selectedCol51=appState.selectedCollection)===null||_appState$selectedCol51===void 0?void 0:_appState$selectedCol51.name);// Check if we're in a compatible collection for fabric
+addFabricTuningControls();_context43.n=34;break;case 33:_context43.p=33;_t56=_context43.v;console.error("❌ Fabric mockup error:",_t56);case 34:return _context43.a(2);}},_callee34,null,[[22,24],[18,20],[9,33]]);}));return _renderFabricMockup.apply(this,arguments);}function addTryFabricButton(){var _appState$selectedCol53;console.log("🧵 addTryFabricButton called");console.log("🧵 selectedCollection:",(_appState$selectedCol53=appState.selectedCollection)===null||_appState$selectedCol53===void 0?void 0:_appState$selectedCol53.name);// Check if we're in a compatible collection for fabric
 if(!appState.selectedCollection||appState.selectedCollection.name!=="botanicals"){console.log("🧵 Not botanicals collection, skipping fabric button");return;}console.log("🧵 Creating Try Fabric button");var existingButton=document.getElementById('tryFabricBtn');if(existingButton){existingButton.remove();}var button=document.createElement('button');button.id='tryFabricBtn';button.textContent='Try Fabric';button.className='btn btn-primary';button.style.cssText="\n        margin-top: 10px;\n        padding: 8px 16px;\n        background-color: #007bff;\n        color: white;\n        border: none;\n        border-radius: 4px;\n        cursor: pointer;\n    ";button.addEventListener('click',function(){console.log("🧵 ================================");console.log("🧵 TRY FABRIC BUTTON CLICKED");console.log("🧵 ================================");renderFabricMockup();});// Add button to the appropriate location
 var tryFurnitureBtn=document.getElementById('tryFurnitureBtn');if(tryFurnitureBtn){tryFurnitureBtn.parentNode.insertBefore(button,tryFurnitureBtn.nextSibling);}else{var controlsContainer=document.querySelector('.controls-container')||document.body;controlsContainer.appendChild(button);}}// Add this line at the bottom of your CFM.js file to expose the function globally:
 window.addTryFurnitureButton=addTryFurnitureButton;window.getCompatibleFurniture=getCompatibleFurniture;window.showFurnitureModal=showFurnitureModal;window.selectFurniture=selectFurniture;window.renderFabricMockup=renderFabricMockup;window.addTryFabricButton=addTryFabricButton;// Debug function to manually test fabric
@@ -3556,12 +3596,12 @@ function parseColorEnhanced(_x17){return _parseColorEnhanced.apply(this,argument
 //
 // ============================================================================
 // Pattern proof generation functions for product pages
-function _parseColorEnhanced(){_parseColorEnhanced=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee36(colorStr){var hex,rgbMatch,cleanColor,_appState3,fetchColorsArray,existingColors,_colorsData,_window$ColorFlexAsse5,themeColorsUrl,base,cfDataColorsUrl,canonicalB2ColorsUrl,candidates,lastErr,_i16,_candidates3,url,_i17,_Object$entries,_Object$entries$_i,key,value,_t56,_t57;return _regenerator().w(function(_context45){while(1)switch(_context45.p=_context45.n){case 0:if(colorStr){_context45.n=1;break;}return _context45.a(2,null);case 1:console.log('🔍 Parsing color:',"\"".concat(colorStr,"\""));// Handle hex colors
+function _parseColorEnhanced(){_parseColorEnhanced=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee36(colorStr){var hex,rgbMatch,cleanColor,_appState3,fetchColorsArray,existingColors,_colorsData,_window$ColorFlexAsse5,themeColorsUrl,base,cfDataColorsUrl,canonicalB2ColorsUrl,candidates,lastErr,_i16,_candidates3,url,_i17,_Object$entries,_Object$entries$_i,key,value,_t57,_t58;return _regenerator().w(function(_context45){while(1)switch(_context45.p=_context45.n){case 0:if(colorStr){_context45.n=1;break;}return _context45.a(2,null);case 1:console.log('🔍 Parsing color:',"\"".concat(colorStr,"\""));// Handle hex colors
 if(!colorStr.startsWith('#')){_context45.n=3;break;}hex=colorStr.substring(1);if(!(hex.length===3)){_context45.n=2;break;}return _context45.a(2,{r:parseInt(hex[0]+hex[0],16),g:parseInt(hex[1]+hex[1],16),b:parseInt(hex[2]+hex[2],16)});case 2:if(!(hex.length===6)){_context45.n=3;break;}return _context45.a(2,{r:parseInt(hex.substring(0,2),16),g:parseInt(hex.substring(2,4),16),b:parseInt(hex.substring(4,6),16)});case 3:// Handle rgb() format
 rgbMatch=colorStr.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);if(!rgbMatch){_context45.n=4;break;}return _context45.a(2,{r:parseInt(rgbMatch[1]),g:parseInt(rgbMatch[2]),b:parseInt(rgbMatch[3])});case 4:// Handle named colors with SW/SC codes
 cleanColor=colorStr.toLowerCase().trim();// Load colors if not already loaded
-if(window.colorFlexColors){_context45.n=14;break;}console.log('🔄 Loading colors from colors.json...');_context45.p=5;fetchColorsArray=/*#__PURE__*/function(){var _ref34=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee35(url){var res,d;return _regenerator().w(function(_context44){while(1)switch(_context44.n){case 0:_context44.n=1;return fetch(url,{method:'GET',cache:'no-store',headers:{'Content-Type':'application/json'}});case 1:res=_context44.v;if(res.ok){_context44.n=2;break;}throw new Error("HTTP ".concat(res.status));case 2:_context44.n=3;return res.json();case 3:d=_context44.v;if(!(!Array.isArray(d)||d.length===0)){_context44.n=4;break;}throw new Error('Colors payload empty/invalid');case 4:return _context44.a(2,d);}},_callee35);}));return function fetchColorsArray(_x46){return _ref34.apply(this,arguments);};}();existingColors=Array.isArray((_appState3=appState)===null||_appState3===void 0?void 0:_appState3.colorsData)&&appState.colorsData.length?appState.colorsData:null;_colorsData=existingColors;if(_colorsData){_context45.n=12;break;}themeColorsUrl=((_window$ColorFlexAsse5=window.ColorFlexAssets)===null||_window$ColorFlexAsse5===void 0?void 0:_window$ColorFlexAsse5.colorsUrl)||"/assets/colors.json";base=typeof getColorFlexDataBaseUrl==='function'?getColorFlexDataBaseUrl():'';cfDataColorsUrl=base?"".concat(String(base).replace(/\/$/,''),"/data/colors.json"):'';canonicalB2ColorsUrl="".concat(String(_COLORFLEX_CANONICAL_B2_BASE).replace(/\/$/,''),"/data/colors.json");candidates=[];if(cfDataColorsUrl)candidates.push(cfDataColorsUrl);if(!cfDataColorsUrl||cfDataColorsUrl!==canonicalB2ColorsUrl)candidates.push(canonicalB2ColorsUrl);candidates.push(themeColorsUrl);lastErr=null;_i16=0,_candidates3=candidates;case 6:if(!(_i16<_candidates3.length)){_context45.n=11;break;}url=_candidates3[_i16];_context45.p=7;_context45.n=8;return fetchColorsArray(url);case 8:_colorsData=_context45.v;return _context45.a(3,11);case 9:_context45.p=9;_t56=_context45.v;lastErr=_t56;case 10:_i16++;_context45.n=6;break;case 11:if(_colorsData){_context45.n=12;break;}throw lastErr||new Error('Failed to load colors');case 12:window.colorFlexColors={};_colorsData.forEach(function(color){var baseName=color.color_name.toLowerCase().trim();var rgb={r:color.red,g:color.green,b:color.blue};// Add multiple variations for flexible matching
-window.colorFlexColors[baseName]=rgb;if(color.sw_number){window.colorFlexColors[color.sw_number.toLowerCase()+' '+baseName]=rgb;window.colorFlexColors[color.sw_number.toLowerCase()]=rgb;}});console.log('✅ Loaded',Object.keys(window.colorFlexColors).length,'color variations');_context45.n=14;break;case 13:_context45.p=13;_t57=_context45.v;console.error('❌ Failed to load colors.json:',_t57);return _context45.a(2,null);case 14:if(!window.colorFlexColors[cleanColor]){_context45.n=15;break;}return _context45.a(2,window.colorFlexColors[cleanColor]);case 15:_i17=0,_Object$entries=Object.entries(window.colorFlexColors);case 16:if(!(_i17<_Object$entries.length)){_context45.n=18;break;}_Object$entries$_i=_slicedToArray(_Object$entries[_i17],2),key=_Object$entries$_i[0],value=_Object$entries$_i[1];if(!(key.includes(cleanColor)||cleanColor.includes(key))){_context45.n=17;break;}console.log("\u2705 Found partial match: \"".concat(cleanColor,"\" matched \"").concat(key,"\""));return _context45.a(2,value);case 17:_i17++;_context45.n=16;break;case 18:console.warn("\u274C Could not parse color: \"".concat(colorStr,"\""));return _context45.a(2,null);}},_callee36,null,[[7,9],[5,13]]);}));return _parseColorEnhanced.apply(this,arguments);}function generatePatternProof(_x18,_x19,_x20){return _generatePatternProof.apply(this,arguments);}function _generatePatternProof(){_generatePatternProof=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee37(patternName,collectionName,colorArray){var userScale,_targetPattern$layers,_targetPattern$layers2,collectionsData,targetCollection,targetPattern,canvas,_ctx5,baseImage,layerIsShadow,firstLayer,tempImg,patternBounds,nonShadowColorIndex,_loop11,layerIndex,_args47=arguments,_t58;return _regenerator().w(function(_context47){while(1)switch(_context47.p=_context47.n){case 0:userScale=_args47.length>3&&_args47[3]!==undefined?_args47[3]:null;console.log('🔧 generatePatternProof called with:',patternName,collectionName,colorArray,'scale:',userScale);_context47.p=1;// Access collections from appState
+if(window.colorFlexColors){_context45.n=14;break;}console.log('🔄 Loading colors from colors.json...');_context45.p=5;fetchColorsArray=/*#__PURE__*/function(){var _ref34=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee35(url){var res,d;return _regenerator().w(function(_context44){while(1)switch(_context44.n){case 0:_context44.n=1;return fetch(url,{method:'GET',cache:'no-store',headers:{'Content-Type':'application/json'}});case 1:res=_context44.v;if(res.ok){_context44.n=2;break;}throw new Error("HTTP ".concat(res.status));case 2:_context44.n=3;return res.json();case 3:d=_context44.v;if(!(!Array.isArray(d)||d.length===0)){_context44.n=4;break;}throw new Error('Colors payload empty/invalid');case 4:return _context44.a(2,d);}},_callee35);}));return function fetchColorsArray(_x46){return _ref34.apply(this,arguments);};}();existingColors=Array.isArray((_appState3=appState)===null||_appState3===void 0?void 0:_appState3.colorsData)&&appState.colorsData.length?appState.colorsData:null;_colorsData=existingColors;if(_colorsData){_context45.n=12;break;}themeColorsUrl=((_window$ColorFlexAsse5=window.ColorFlexAssets)===null||_window$ColorFlexAsse5===void 0?void 0:_window$ColorFlexAsse5.colorsUrl)||"/assets/colors.json";base=typeof getColorFlexDataBaseUrl==='function'?getColorFlexDataBaseUrl():'';cfDataColorsUrl=base?"".concat(String(base).replace(/\/$/,''),"/data/colors.json"):'';canonicalB2ColorsUrl="".concat(String(_COLORFLEX_CANONICAL_B2_BASE).replace(/\/$/,''),"/data/colors.json");candidates=[];if(cfDataColorsUrl)candidates.push(cfDataColorsUrl);if(!isColorFlexDemoOffline()&&(!cfDataColorsUrl||cfDataColorsUrl!==canonicalB2ColorsUrl)){candidates.push(canonicalB2ColorsUrl);}candidates.push(themeColorsUrl);lastErr=null;_i16=0,_candidates3=candidates;case 6:if(!(_i16<_candidates3.length)){_context45.n=11;break;}url=_candidates3[_i16];_context45.p=7;_context45.n=8;return fetchColorsArray(url);case 8:_colorsData=_context45.v;return _context45.a(3,11);case 9:_context45.p=9;_t57=_context45.v;lastErr=_t57;case 10:_i16++;_context45.n=6;break;case 11:if(_colorsData){_context45.n=12;break;}throw lastErr||new Error('Failed to load colors');case 12:window.colorFlexColors={};_colorsData.forEach(function(color){var baseName=color.color_name.toLowerCase().trim();var rgb={r:color.red,g:color.green,b:color.blue};// Add multiple variations for flexible matching
+window.colorFlexColors[baseName]=rgb;if(color.sw_number){window.colorFlexColors[color.sw_number.toLowerCase()+' '+baseName]=rgb;window.colorFlexColors[color.sw_number.toLowerCase()]=rgb;}});console.log('✅ Loaded',Object.keys(window.colorFlexColors).length,'color variations');_context45.n=14;break;case 13:_context45.p=13;_t58=_context45.v;console.error('❌ Failed to load colors.json:',_t58);return _context45.a(2,null);case 14:if(!window.colorFlexColors[cleanColor]){_context45.n=15;break;}return _context45.a(2,window.colorFlexColors[cleanColor]);case 15:_i17=0,_Object$entries=Object.entries(window.colorFlexColors);case 16:if(!(_i17<_Object$entries.length)){_context45.n=18;break;}_Object$entries$_i=_slicedToArray(_Object$entries[_i17],2),key=_Object$entries$_i[0],value=_Object$entries$_i[1];if(!(key.includes(cleanColor)||cleanColor.includes(key))){_context45.n=17;break;}console.log("\u2705 Found partial match: \"".concat(cleanColor,"\" matched \"").concat(key,"\""));return _context45.a(2,value);case 17:_i17++;_context45.n=16;break;case 18:console.warn("\u274C Could not parse color: \"".concat(colorStr,"\""));return _context45.a(2,null);}},_callee36,null,[[7,9],[5,13]]);}));return _parseColorEnhanced.apply(this,arguments);}function generatePatternProof(_x18,_x19,_x20){return _generatePatternProof.apply(this,arguments);}function _generatePatternProof(){_generatePatternProof=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee37(patternName,collectionName,colorArray){var userScale,_targetPattern$layers,_targetPattern$layers2,collectionsData,targetCollection,targetPattern,canvas,_ctx5,baseImage,layerIsShadow,firstLayer,tempImg,patternBounds,nonShadowColorIndex,_loop11,layerIndex,_args47=arguments,_t59;return _regenerator().w(function(_context47){while(1)switch(_context47.p=_context47.n){case 0:userScale=_args47.length>3&&_args47[3]!==undefined?_args47[3]:null;console.log('🔧 generatePatternProof called with:',patternName,collectionName,colorArray,'scale:',userScale);_context47.p=1;// Access collections from appState
 collectionsData=appState.collections;if(collectionsData){_context47.n=2;break;}throw new Error('Collections data not loaded');case 2:targetCollection=collectionsData.find(function(c){return c.name===collectionName;});if(targetCollection){_context47.n=3;break;}throw new Error("Collection \"".concat(collectionName,"\" not found"));case 3:targetPattern=targetCollection.patterns.find(function(p){return p.name.toLowerCase().trim()===patternName.toLowerCase().trim();});if(targetPattern){_context47.n=4;break;}throw new Error("Pattern \"".concat(patternName,"\" not found in collection \"").concat(collectionName,"\""));case 4:console.log('🔧 Found pattern:',targetPattern.name,'with',((_targetPattern$layers=targetPattern.layers)===null||_targetPattern$layers===void 0?void 0:_targetPattern$layers.length)||0,'layers');// Create canvas and context - size will be determined by pattern dimensions
 canvas=document.createElement('canvas');_ctx5=canvas.getContext('2d');// Handle patterns exactly like updatePreview does
 if(!(targetPattern.tintWhite&&targetPattern.baseComposite)){_context47.n=6;break;}console.log("🎨 Rendering tint white pattern for proof");baseImage=new Image();baseImage.crossOrigin="Anonymous";baseImage.src=normalizePath(targetPattern.baseComposite);_context47.n=5;return new Promise(function(resolve,reject){baseImage.onload=function(){// Use NATURAL dimensions (actual file size, not display size)
@@ -3595,7 +3635,7 @@ var tilingType=targetPattern.tilingType||"";var isHalfDrop=isHalfDropTiling(tili
 var colIndex=0;for(var x=0;x<canvas.width;x+=scaledWidth,colIndex++){// Apply half-drop offset for odd columns
 var yOffset=isHalfDrop&&colIndex%2===1?scaledHeight/2:0;// Start from -scaledHeight to cover edges, then add yOffset for half-drop
 for(var y=-scaledHeight+yOffset;y<canvas.height+scaledHeight;y+=scaledHeight){_ctx5.drawImage(processedCanvas,x,y,scaledWidth,scaledHeight);}}_ctx5.globalAlpha=1.0;// Reset alpha
-console.log("\u2705 Rendered proof layer ".concat(layerIndex," with color ").concat(layerColor," at scale ").concat(effectiveScale,"x (").concat(scaledWidth,"x").concat(scaledHeight,")"));resolve();},layerColor,2.2,isShadow,false,false);});case 1:return _context46.a(2);}},_loop11);});layerIndex=0;case 8:if(!(layerIndex<targetPattern.layers.length)){_context47.n=10;break;}return _context47.d(_regeneratorValues(_loop11(layerIndex)),9);case 9:layerIndex++;_context47.n=8;break;case 10:console.log('✅ Pattern proof generation complete');return _context47.a(2,canvas);case 11:_context47.p=11;_t58=_context47.v;console.error('❌ Error in generatePatternProof:',_t58);throw _t58;case 12:return _context47.a(2);}},_callee37,null,[[1,11]]);}));return _generatePatternProof.apply(this,arguments);}function downloadPatternProof(canvas,filename){console.log('📥 Downloading pattern proof:',filename);// Calculate DPI to ensure 24 inches wide at actual pixel dimensions
+console.log("\u2705 Rendered proof layer ".concat(layerIndex," with color ").concat(layerColor," at scale ").concat(effectiveScale,"x (").concat(scaledWidth,"x").concat(scaledHeight,")"));resolve();},layerColor,2.2,isShadow,false,false);});case 1:return _context46.a(2);}},_loop11);});layerIndex=0;case 8:if(!(layerIndex<targetPattern.layers.length)){_context47.n=10;break;}return _context47.d(_regeneratorValues(_loop11(layerIndex)),9);case 9:layerIndex++;_context47.n=8;break;case 10:console.log('✅ Pattern proof generation complete');return _context47.a(2,canvas);case 11:_context47.p=11;_t59=_context47.v;console.error('❌ Error in generatePatternProof:',_t59);throw _t59;case 12:return _context47.a(2);}},_callee37,null,[[1,11]]);}));return _generatePatternProof.apply(this,arguments);}function downloadPatternProof(canvas,filename){console.log('📥 Downloading pattern proof:',filename);// Calculate DPI to ensure 24 inches wide at actual pixel dimensions
 var targetWidthInches=24;var calculatedDPI=Math.round(canvas.width/targetWidthInches);console.log("\uD83D\uDCD0 Setting DPI metadata: ".concat(canvas.width,"px \xF7 ").concat(targetWidthInches,"\" = ").concat(calculatedDPI," DPI"));// Convert canvas to data URL
 var dataURL=canvas.toDataURL('image/jpeg',0.95);// Insert DPI metadata into JPEG
 var base64Data=dataURL.split(',')[1];var binaryData=atob(base64Data);var bytes=new Uint8Array(binaryData.length);for(var i=0;i<binaryData.length;i++){bytes[i]=binaryData.charCodeAt(i);}// Find JFIF header (FF E0) and modify DPI values
@@ -3611,7 +3651,7 @@ var url=URL.createObjectURL(blob);var link=document.createElement('a');link.href
 window.generatePatternProof=generatePatternProof;window.downloadPatternProof=downloadPatternProof;/**
  * Generate pattern proof with customer info strip
  */function generatePatternProofWithInfo(_x21,_x22,_x23,_x24,_x25,_x26){return _generatePatternProofWithInfo.apply(this,arguments);}// Export to window
-function _generatePatternProofWithInfo(){_generatePatternProofWithInfo=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee38(patternName,collectionName,colorArray,customerName,dimensions,tiling){var _appState$collections1,_targetCollection$pat2,_targetPattern$layers3,proofCanvas,baseFontSize,smallFontSize,topMargin,bottomMargin,customerLineHeight,textLineHeight,colorLineHeight,scaleLineCount,baseHeight,infoStripHeight,finalCanvas,finalCtx,leftMargin,yPosition,scaleDisplay,targetCollection,targetPattern,layerLabels,rightMargin,tilingType,_t59;return _regenerator().w(function(_context48){while(1)switch(_context48.p=_context48.n){case 0:console.log('🔧 generatePatternProofWithInfo called:',{patternName:patternName,collectionName:collectionName,colorArray:colorArray,customerName:customerName,dimensions:dimensions,tiling:tiling});_context48.p=1;_context48.n=2;return generatePatternProof(patternName,collectionName,colorArray,appState.currentScale);case 2:proofCanvas=_context48.v;// Create a new canvas with extra height for info strip
+function _generatePatternProofWithInfo(){_generatePatternProofWithInfo=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee38(patternName,collectionName,colorArray,customerName,dimensions,tiling){var _appState$collections1,_targetCollection$pat2,_targetPattern$layers3,proofCanvas,baseFontSize,smallFontSize,topMargin,bottomMargin,customerLineHeight,textLineHeight,colorLineHeight,scaleLineCount,baseHeight,infoStripHeight,finalCanvas,finalCtx,leftMargin,yPosition,scaleDisplay,targetCollection,targetPattern,layerLabels,rightMargin,tilingType,_t60;return _regenerator().w(function(_context48){while(1)switch(_context48.p=_context48.n){case 0:console.log('🔧 generatePatternProofWithInfo called:',{patternName:patternName,collectionName:collectionName,colorArray:colorArray,customerName:customerName,dimensions:dimensions,tiling:tiling});_context48.p=1;_context48.n=2;return generatePatternProof(patternName,collectionName,colorArray,appState.currentScale);case 2:proofCanvas=_context48.v;// Create a new canvas with extra height for info strip
 // Calculate required height based on actual content:
 // - Top margin: 30px
 // - Customer name: ~40px (font + spacing)
@@ -3645,7 +3685,7 @@ if(targetPattern.layers&&targetPattern.layers.length>0){targetPattern.layers.for
 colorArray.forEach(function(color,index){var label=index===0?'Background':"Layer ".concat(index);layerLabels.push({label:label,color:color});});}// Display each color with its layer label
 console.log('🎨 Displaying layer labels on proof:',layerLabels);console.log('🎨 Starting yPosition:',yPosition,'smallFontSize:',smallFontSize);console.log('🎨 Canvas height:',finalCanvas.height,'Info strip height:',infoStripHeight);layerLabels.forEach(function(_ref35){var label=_ref35.label,color=_ref35.color;console.log("  Drawing: \"".concat(label,": ").concat(color,"\" at y=").concat(yPosition));finalCtx.fillText("  ".concat(label,": ").concat(color),leftMargin+20,yPosition);yPosition+=smallFontSize+4;});}// Right side info - show dimensions and tiling type
 if(dimensions){finalCtx.textAlign='right';rightMargin=finalCanvas.width-30;yPosition=proofCanvas.height+topMargin;finalCtx.font="".concat(smallFontSize,"px Arial");finalCtx.fillText("Dimensions: ".concat(dimensions),rightMargin,yPosition);yPosition+=smallFontSize+6;// Add tiling type if half-drop
-tilingType=(targetPattern===null||targetPattern===void 0?void 0:targetPattern.tilingType)||'';if(isHalfDropTiling(tilingType)){finalCtx.fillText("Tiling: Half-Drop",rightMargin,yPosition);yPosition+=smallFontSize+6;}}console.log('✅ Pattern proof with info generated');return _context48.a(2,finalCanvas);case 3:_context48.p=3;_t59=_context48.v;console.error('❌ Error in generatePatternProofWithInfo:',_t59);throw _t59;case 4:return _context48.a(2);}},_callee38,null,[[1,3]]);}));return _generatePatternProofWithInfo.apply(this,arguments);}window.generatePatternProofWithInfo=generatePatternProofWithInfo;/**
+tilingType=(targetPattern===null||targetPattern===void 0?void 0:targetPattern.tilingType)||'';if(isHalfDropTiling(tilingType)){finalCtx.fillText("Tiling: Half-Drop",rightMargin,yPosition);yPosition+=smallFontSize+6;}}console.log('✅ Pattern proof with info generated');return _context48.a(2,finalCanvas);case 3:_context48.p=3;_t60=_context48.v;console.error('❌ Error in generatePatternProofWithInfo:',_t60);throw _t60;case 4:return _context48.a(2);}},_callee38,null,[[1,3]]);}));return _generatePatternProofWithInfo.apply(this,arguments);}window.generatePatternProofWithInfo=generatePatternProofWithInfo;/**
  * Generate proof-with-info as a JPEG data URL (for upload flows).
  */function generatePatternProofWithInfoDataUrl(_x27,_x28,_x29,_x30,_x31,_x32,_x33){return _generatePatternProofWithInfoDataUrl.apply(this,arguments);}function _generatePatternProofWithInfoDataUrl(){_generatePatternProofWithInfoDataUrl=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee39(patternName,collectionName,colorArray,customerName,dimensions,tiling,quality){var canvas,jpegQuality;return _regenerator().w(function(_context49){while(1)switch(_context49.n){case 0:_context49.n=1;return generatePatternProofWithInfo(patternName,collectionName,colorArray,customerName,dimensions,tiling);case 1:canvas=_context49.v;jpegQuality=typeof quality==='number'?quality:0.9;return _context49.a(2,canvas.toDataURL('image/jpeg',jpegQuality));}},_callee39);}));return _generatePatternProofWithInfoDataUrl.apply(this,arguments);}window.generatePatternProofWithInfoDataUrl=generatePatternProofWithInfoDataUrl;/**
  * Generate standard proof as a JPEG data URL (no metadata strip).
@@ -3673,11 +3713,11 @@ window.downloadCurrentPatternProof=downloadCurrentPatternProof;window.downloadCu
  * Helper functions for cart item updates
  */// Fabric pricing utility functions
 function getFabricSpecByMaterialId(materialId){// Convert material ID to fabric spec key
-if(materialId==='wallpaper'){return FABRIC_SPECIFICATIONS['WALLPAPER'];}var wallpaperMap={'wallpaper-prepasted':'WALLPAPER-PREPASTED','wallpaper-peel-stick':'WALLPAPER-PEEL-STICK','wallpaper-unpasted':'WALLPAPER-UNPASTED','wallpaper-grasscloth':'WALLPAPER'};var wallpaperKey=wallpaperMap[materialId];if(wallpaperKey&&FABRIC_SPECIFICATIONS[wallpaperKey]){return FABRIC_SPECIFICATIONS[wallpaperKey];}var fabricMap={'fabric-soft-velvet':'SOFT VELVET','fabric-decorator-linen':'DECORATOR LINEN','fabric-drapery-sheer':'DRAPERY SHEER','fabric-lightweight-linen':'LIGHTWEIGHT LINEN','fabric-faux-suede':'FAUX SUEDE','fabric-drapery-light-block':'DRAPERY LIGHT BLOCK'};var fabricKey=fabricMap[materialId];return fabricKey?FABRIC_SPECIFICATIONS[fabricKey]:null;}function calculateMaterialPrice(materialId,quantity){var spec=getFabricSpecByMaterialId(materialId);if(!spec){return{error:'Unknown material type',total:0};}if(spec.material==='fabric'){var actualYards=Math.max(quantity,spec.minimumYards);return{materialType:'fabric',unit:'yards',requestedQuantity:quantity,actualQuantity:actualYards,pricePerUnit:spec.pricePerYard,minimumMet:quantity>=spec.minimumYards,total:actualYards*spec.pricePerYard,width:spec.width,description:spec.description};}else{// Wallpaper
+if(materialId==='wallpaper'){return FABRIC_SPECIFICATIONS['WALLPAPER'];}var wallpaperMap={'wallpaper-custom-sample':'CUSTOM-SAMPLE-WALLPAPER','wallpaper-prepasted':'WALLPAPER-PREPASTED','wallpaper-peel-stick':'WALLPAPER-PEEL-STICK','wallpaper-unpasted':'WALLPAPER-UNPASTED','wallpaper-grasscloth':'WALLPAPER'};var wallpaperKey=wallpaperMap[materialId];if(wallpaperKey&&FABRIC_SPECIFICATIONS[wallpaperKey]){return FABRIC_SPECIFICATIONS[wallpaperKey];}var fabricMap={'fabric-custom-sample':'CUSTOM-SAMPLE-FABRIC','fabric-soft-velvet':'SOFT VELVET','fabric-decorator-linen':'DECORATOR LINEN','fabric-drapery-sheer':'DRAPERY SHEER','fabric-lightweight-linen':'LIGHTWEIGHT LINEN','fabric-faux-suede':'FAUX SUEDE','fabric-drapery-light-block':'DRAPERY LIGHT BLOCK'};var fabricKey=fabricMap[materialId];return fabricKey?FABRIC_SPECIFICATIONS[fabricKey]:null;}function calculateMaterialPrice(materialId,quantity){var spec=getFabricSpecByMaterialId(materialId);if(!spec){return{error:'Unknown material type',total:0};}if(spec.material==='fabric'){var actualYards=Math.max(quantity,spec.minimumYards);return{materialType:'fabric',unit:'yards',requestedQuantity:quantity,actualQuantity:actualYards,pricePerUnit:spec.pricePerYard,minimumMet:quantity>=spec.minimumYards,total:actualYards*spec.pricePerYard,width:spec.width,description:spec.description};}else{// Wallpaper
 var actualRolls=Math.max(quantity,spec.minimumRolls);return{materialType:'wallpaper',unit:'rolls',requestedQuantity:quantity,actualQuantity:actualRolls,pricePerUnit:spec.pricePerRoll,minimumMet:quantity>=spec.minimumRolls,total:actualRolls*spec.pricePerRoll,coverage:spec.coverage,description:spec.description};}}// Get display name for material types
-function getMaterialDisplayName(materialId){var spec=getFabricSpecByMaterialId(materialId);if(spec){return materialId.includes('fabric-')?materialId.replace('fabric-','').replace(/-/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase();})+' Fabric':'Wallpaper';}// Legacy fallback
+function getMaterialDisplayName(materialId){if(materialId==='wallpaper-custom-sample'||materialId==='fabric-custom-sample'){return'Custom Sample';}var spec=getFabricSpecByMaterialId(materialId);if(spec){return materialId.includes('fabric-')?materialId.replace('fabric-','').replace(/-/g,' ').replace(/\b\w/g,function(l){return l.toUpperCase();})+' Fabric':'Wallpaper';}// Legacy fallback
 var materials={'wallpaper-peel-stick':'Peel & Stick Wallpaper','wallpaper-traditional':'Traditional Wallpaper','wallpaper-textured':'Textured Wallpaper','fabric-cotton':'Cotton Fabric','fabric-linen':'Linen Fabric'};return materials[materialId]||materialId;}// Get pricing for material types
-function getMaterialPrice(materialId){var spec=getFabricSpecByMaterialId(materialId);if(spec){return spec.material==='fabric'?"$".concat(spec.pricePerYard.toFixed(2),"/yard"):"$".concat(spec.pricePerRoll.toFixed(2),"/roll");}// Legacy fallback
+function getMaterialPrice(materialId){if(materialId==='wallpaper-custom-sample'||materialId==='fabric-custom-sample'){return'$12.00/sample';}var spec=getFabricSpecByMaterialId(materialId);if(spec){return spec.material==='fabric'?"$".concat(spec.pricePerYard.toFixed(2),"/yard"):"$".concat(spec.pricePerRoll.toFixed(2),"/roll");}// Legacy fallback
 var prices={'wallpaper-prepasted':'$249.00','wallpaper-peel-stick':'$319.00','wallpaper-traditional':'$249.00','wallpaper-textured':'$99.99','fabric-cotton':'$69.99','fabric-linen':'$79.99'};return prices[materialId]||'$249.00';}// Update cart item via Shopify API
 function updateCartItemViaAPI(_x39){return _updateCartItemViaAPI.apply(this,arguments);}// ============================================================================
 // SECTION 12: UTILITIES & GLOBAL EXPORTS
@@ -3686,12 +3726,12 @@ function updateCartItemViaAPI(_x39){return _updateCartItemViaAPI.apply(this,argu
 // for external access from unified-pattern-modal.js and theme.liquid.
 // ============================================================================
 // Show success notification
-function _updateCartItemViaAPI(){_updateCartItemViaAPI=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee42(itemData){var getScaleDisplayText,cartResponse,cartData,itemToUpdate,thumbKey,updatePayload,updateResponse,result,_t60;return _regenerator().w(function(_context52){while(1)switch(_context52.p=_context52.n){case 0:_context52.p=0;// Get scale display text
-getScaleDisplayText=function getScaleDisplayText(currentScale){if(currentScale===50)return'0.5X';if(currentScale===100)return'1X';if(currentScale===200)return'2X';if(currentScale===300)return'3X';if(currentScale===400)return'4X';return'Normal';};console.log('🛒 Attempting cart update via API:',itemData);// Get current cart to find the item to update
-_context52.n=1;return fetch('/cart.js');case 1:cartResponse=_context52.v;if(cartResponse.ok){_context52.n=2;break;}throw new Error('Failed to fetch current cart');case 2:_context52.n=3;return cartResponse.json();case 3:cartData=_context52.v;console.log('📦 Current cart data:',cartData);// Find the ColorFlex item to update (by properties)
-itemToUpdate=cartData.items.find(function(item){return item.properties&&(item.properties['Custom Pattern']===itemData.pattern||item.properties['ColorFlex Source']||item.title.toLowerCase().includes('custom wallpaper'));});if(itemToUpdate){_context52.n=4;break;}throw new Error('Could not find ColorFlex item in cart to update');case 4:console.log('🎯 Found item to update:',itemToUpdate);thumbKey=itemData.patternId?'cart_thumbnail_'+String(itemData.patternId).replace(/[^a-zA-Z0-9-]/g,'_'):"cart_thumbnail_".concat(itemData.pattern,"_").concat(itemData.collectionName);// Build update payload
+function _updateCartItemViaAPI(){_updateCartItemViaAPI=_asyncToGenerator(/*#__PURE__*/_regenerator().m(function _callee42(itemData){var getScaleDisplayText,cartResponse,cartData,itemToUpdate,thumbKey,updatePayload,updateResponse,result,_t61;return _regenerator().w(function(_context52){while(1)switch(_context52.p=_context52.n){case 0:_context52.p=0;// Get scale display text
+getScaleDisplayText=function getScaleDisplayText(currentScale){if(currentScale===50)return'0.5X';if(currentScale===100)return'1X';if(currentScale===200)return'2X';if(currentScale===300)return'3X';if(currentScale===400)return'4X';return'Normal';};if(!isColorFlexDemoOffline()){_context52.n=1;break;}console.log('[ColorFlex demo] Cart update API skipped');return _context52.a(2,{success:false,error:'Cart updates disabled in offline demo'});case 1:console.log('🛒 Attempting cart update via API:',itemData);// Get current cart to find the item to update
+_context52.n=2;return fetch('/cart.js');case 2:cartResponse=_context52.v;if(cartResponse.ok){_context52.n=3;break;}throw new Error('Failed to fetch current cart');case 3:_context52.n=4;return cartResponse.json();case 4:cartData=_context52.v;console.log('📦 Current cart data:',cartData);// Find the ColorFlex item to update (by properties)
+itemToUpdate=cartData.items.find(function(item){return item.properties&&(item.properties['Custom Pattern']===itemData.pattern||item.properties['ColorFlex Source']||item.title.toLowerCase().includes('custom wallpaper'));});if(itemToUpdate){_context52.n=5;break;}throw new Error('Could not find ColorFlex item in cart to update');case 5:console.log('🎯 Found item to update:',itemToUpdate);thumbKey=itemData.patternId?'cart_thumbnail_'+String(itemData.patternId).replace(/[^a-zA-Z0-9-]/g,'_'):"cart_thumbnail_".concat(itemData.pattern,"_").concat(itemData.collectionName);// Build update payload
 updatePayload={id:itemToUpdate.key,quantity:itemToUpdate.quantity,properties:{'Custom Pattern':itemData.pattern,'Pattern Collection':toTitleCase(itemData.collectionName),'Custom Colors':itemData.colors.map(function(c){return normalizeColorToSwFormat(c.color||c.name);}).join(', '),'ColorFlex Source':'Cart Update - ColorFlex Page','Product Type':itemData.productTypeName,'Pattern Scale':getScaleDisplayText(itemData.currentScale),'Pattern ID':itemData.patternId||itemToUpdate.properties['Pattern ID']||'','Thumbnail Key':thumbKey}};// Update the cart item
-_context52.n=5;return fetch('/cart/change.js',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify(updatePayload)});case 5:updateResponse=_context52.v;if(updateResponse.ok){_context52.n=6;break;}throw new Error("Cart update failed: ".concat(updateResponse.status));case 6:_context52.n=7;return updateResponse.json();case 7:result=_context52.v;console.log('✅ Cart update successful:',result);return _context52.a(2,{success:true,result:result});case 8:_context52.p=8;_t60=_context52.v;console.error('❌ Cart update failed:',_t60);return _context52.a(2,{success:false,error:_t60.message});}},_callee42,null,[[0,8]]);}));return _updateCartItemViaAPI.apply(this,arguments);}function showSuccessNotification(message){showNotification(message,'success');}// Show error notification
+_context52.n=6;return fetch('/cart/change.js',{method:'POST',headers:{'Content-Type':'application/json','X-Requested-With':'XMLHttpRequest'},body:JSON.stringify(updatePayload)});case 6:updateResponse=_context52.v;if(updateResponse.ok){_context52.n=7;break;}throw new Error("Cart update failed: ".concat(updateResponse.status));case 7:_context52.n=8;return updateResponse.json();case 8:result=_context52.v;console.log('✅ Cart update successful:',result);return _context52.a(2,{success:true,result:result});case 9:_context52.p=9;_t61=_context52.v;console.error('❌ Cart update failed:',_t61);return _context52.a(2,{success:false,error:_t61.message});}},_callee42,null,[[0,9]]);}));return _updateCartItemViaAPI.apply(this,arguments);}function showSuccessNotification(message){showNotification(message,'success');}// Show error notification
 function showErrorNotification(message){showNotification(message,'error');}// Generic notification function
 function showNotification(message){var type=arguments.length>1&&arguments[1]!==undefined?arguments[1]:'info';var notification=document.createElement('div');var bgColor=type==='success'?'#22543d':type==='error'?'#742a2a':'#2d3748';var textColor=type==='success'?'#68d391':type==='error'?'#feb2b2':'#e2e8f0';var icon=type==='success'?'✅':type==='error'?'❌':'ℹ️';notification.style.cssText="\n        position: fixed;\n        top: 20px;\n        right: 20px;\n        background: ".concat(bgColor,";\n        color: ").concat(textColor,";\n        padding: 15px 20px;\n        border-radius: 8px;\n        border: 2px solid ").concat(textColor,";\n        font-family: 'Special Elite', monospace;\n        font-weight: bold;\n        z-index: 10002;\n        max-width: 400px;\n        word-wrap: break-word;\n        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);\n    ");notification.innerHTML="\n        <div style=\"display: flex; align-items: center; gap: 10px;\">\n            <span style=\"font-size: 18px;\">".concat(icon,"</span>\n            <span>").concat(message,"</span>\n            <button onclick=\"this.parentElement.parentElement.remove()\" style=\"\n                background: transparent;\n                border: none;\n                color: ").concat(textColor,";\n                font-size: 18px;\n                cursor: pointer;\n                margin-left: auto;\n            \">\xD7</button>\n        </div>\n    ");document.body.appendChild(notification);// Auto-remove after 5 seconds for non-success messages
 if(type!=='success'){setTimeout(function(){if(notification.parentElement){notification.remove();}},5000);}}var IDLE_POPUP_KEY='colorflex_idle_popup_dismissed';var IDLE_DELAY_MS=15000;var IDLE_AUTO_DISMISS_MS=8000;function setupIdleUsagePopup(){if(typeof sessionStorage==='undefined')return;if(sessionStorage.getItem(IDLE_POPUP_KEY)==='true')return;var idleTimer=null;var popupEl=null;function showIdlePopup(){if(popupEl&&popupEl.parentNode)return;if(sessionStorage.getItem(IDLE_POPUP_KEY)==='true')return;popupEl=document.createElement('div');popupEl.id='colorflexIdleUsagePopup';popupEl.setAttribute('role','dialog');popupEl.setAttribute('aria-label','ColorFlex quick tips');popupEl.style.cssText="\n            position: fixed;\n            bottom: 24px;\n            left: 50%;\n            transform: translateX(-50%) translateY(20px);\n            width: min(360px, calc(100vw - 32px));\n            background: rgba(0,0,0,0.92);\n            color: #e2e8f0;\n            font-family: 'Special Elite', monospace;\n            font-size: 13px;\n            line-height: 1.45;\n            padding: 16px 20px;\n            border-radius: 8px;\n            border: 1px solid #d4af37;\n            box-shadow: 0 8px 24px rgba(0,0,0,0.4);\n            z-index: 10003;\n            opacity: 0;\n            transition: opacity 0.35s ease, transform 0.35s ease;\n            pointer-events: auto;\n        ";popupEl.innerHTML="\n            <div style=\"margin-bottom: 10px; color: #d4af37; font-weight: bold;\">Quick tips</div>\n            <ul style=\"margin: 0; padding-left: 18px;\">\n                <li>Pick a pattern from the collection</li>\n                <li>Choose colors from the Color Layers type a color name</li>\n                <li>Use scale (Normal, 2X, \u2026) to adjust size</li>\n                <li>Lock colors to keep them when switching patterns</li>\n                <li>Save to My Designs to revisit later</li>\n            </ul>\n            <label style=\"display: flex; align-items: center; gap: 8px; margin-top: 12px; cursor: pointer;\">\n                <input type=\"checkbox\" id=\"colorflexIdleDontShowAgain\">\n                <span>Don't show again this session</span>\n            </label>\n        ";document.body.appendChild(popupEl);requestAnimationFrame(function(){popupEl.style.opacity='1';popupEl.style.transform='translateX(-50%) translateY(0)';});var dismiss=function dismiss(){if(!popupEl||!popupEl.parentNode)return;var dontShow=document.getElementById('colorflexIdleDontShowAgain');if(dontShow&&dontShow.checked&&typeof sessionStorage!=='undefined'){sessionStorage.setItem(IDLE_POPUP_KEY,'true');}popupEl.style.opacity='0';popupEl.style.transform='translateX(-50%) translateY(10px)';setTimeout(function(){if(popupEl&&popupEl.parentNode)popupEl.remove();popupEl=null;},350);};popupEl.addEventListener('click',function(e){e.stopPropagation();});document.addEventListener('click',dismiss,{once:true});document.addEventListener('keydown',dismiss,{once:true});setTimeout(dismiss,IDLE_AUTO_DISMISS_MS);}function resetIdleTimer(){if(idleTimer)clearTimeout(idleTimer);if(popupEl&&popupEl.parentNode)return;idleTimer=setTimeout(showIdlePopup,IDLE_DELAY_MS);}['click','keydown','touchstart'].forEach(function(ev){document.addEventListener(ev,resetIdleTimer,{passive:true});});resetIdleTimer();}var ONBOARDING_KEY='colorflex_onboarding_done';function runOnboardingSequence(){if(typeof sessionStorage!=='undefined'&&sessionStorage.getItem(ONBOARDING_KEY)==='true')return;if(window.COLORFLEX_SIMPLE_MODE===true)return;var layerInputsContainer=document.getElementById('layerInputsContainer');var curatedColorsContainer=document.getElementById('curatedColorsContainer');var firstLayerCircle=layerInputsContainer&&layerInputsContainer.querySelector('.circle-input');if(!firstLayerCircle||!curatedColorsContainer)return;var overlay=document.getElementById('colorflexOnboardingOverlay');if(overlay&&overlay.parentNode)return;overlay=document.createElement('div');overlay.id='colorflexOnboardingOverlay';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-live','polite');overlay.style.cssText='position:fixed;left:0;top:0;width:100%;height:100%;pointer-events:none;z-index:10004;';var card=document.createElement('div');card.style.cssText="\n        position: fixed;\n        min-width: 200px;\n        max-width: 280px;\n        padding: 12px 16px;\n        background: rgba(26, 32, 44, 0.96);\n        color: #e2e8f0;\n        font-family: 'Special Elite', monospace;\n        font-size: 0.85rem;\n        line-height: 1.4;\n        border-radius: 8px;\n        border: 1px solid #d4af37;\n        box-shadow: 0 8px 24px rgba(0,0,0,0.4);\n        pointer-events: auto;\n        transition: opacity 0.25s ease;\n    ";var arrow=document.createElement('div');arrow.style.cssText="\n        position: fixed;\n        width: 0;\n        height: 0;\n        border-left: 10px solid transparent;\n        border-right: 10px solid transparent;\n        border-top: 12px solid #d4af37;\n        pointer-events: none;\n    ";var skipBtn=document.createElement('button');skipBtn.textContent='Skip';skipBtn.style.cssText='margin-top:8px;background:transparent;border:1px solid #718096;color:#a0aec0;padding:4px 10px;border-radius:4px;cursor:pointer;font-size:0.75rem;font-family:inherit;';skipBtn.addEventListener('click',finishOnboarding);function positionTooltip(targetEl,text){var rect=targetEl.getBoundingClientRect();var cardWidth=260;var cardHeight=80;var gap=12;var left=rect.left+rect.width/2-cardWidth/2;left=Math.max(12,Math.min(left,window.innerWidth-cardWidth-12));var top=rect.top-cardHeight-gap-14;card.style.left=left+'px';card.style.top=Math.max(12,top)+'px';card.innerHTML='';card.appendChild(document.createTextNode(text));card.appendChild(skipBtn);arrow.style.left=rect.left+rect.width/2-10+'px';arrow.style.top=rect.top-gap-14+'px';}function finishOnboarding(){if(typeof sessionStorage!=='undefined')sessionStorage.setItem(ONBOARDING_KEY,'true');if(overlay&&overlay.parentNode)overlay.remove();}function goToStep2(){card.textContent='';card.appendChild(document.createTextNode('Now select a color from the curated collection.'));card.appendChild(skipBtn);var rect=curatedColorsContainer.getBoundingClientRect();var cardWidth=260;var gap=12;var left=rect.left+rect.width/2-cardWidth/2;left=Math.max(12,Math.min(left,window.innerWidth-cardWidth-12));var top=rect.top-70;card.style.left=left+'px';card.style.top=Math.max(12,top)+'px';arrow.style.left=rect.left+rect.width/2-10+'px';arrow.style.top=rect.top-gap-14+'px';var _onCuratedClick=function onCuratedClick(e){if(!curatedColorsContainer.contains(e.target))return;document.removeEventListener('click',_onCuratedClick);finishOnboarding();};document.addEventListener('click',_onCuratedClick);setTimeout(function(){document.removeEventListener('click',_onCuratedClick);finishOnboarding();},30000);}positionTooltip(firstLayerCircle,'Click on a layer to change its color.');overlay.appendChild(card);overlay.appendChild(arrow);document.body.appendChild(overlay);var _onLayerClick=function onLayerClick(e){var el=e.target;if(!layerInputsContainer.contains(el))return;if(!el.classList.contains('circle-input')&&!el.closest('.layer-input-container'))return;document.removeEventListener('click',_onLayerClick);goToStep2();};document.addEventListener('click',_onLayerClick);}// Generate shareable URL from pattern data
@@ -3742,12 +3782,2299 @@ var currentScale=appState.selectedFurnitureScale||'1.0';if(typeof currentScale==
 currentScale=currentScale.replace(/X$/i,'');if(!currentScale.includes('.')){currentScale=currentScale+'.0';}var currentIndex=scales.indexOf(currentScale);console.log("\uD83E\uDE91 Increment: Current scale \"".concat(appState.selectedFurnitureScale,"\" normalized to \"").concat(currentScale,"\", index: ").concat(currentIndex));if(currentIndex<scales.length-1){setFurnitureScale(scales[currentIndex+1]);}else{console.log("  \u26A0\uFE0F Already at maximum scale: ".concat(scales[scales.length-1]));}};window.decrementFurnitureScale=function(){var scales=['0.5','1.0','1.25','1.5','2.0'];// ✅ FIX: Normalize current scale to match array format
 var currentScale=appState.selectedFurnitureScale||'1.0';if(typeof currentScale==='number'){currentScale=currentScale.toString();}// Remove "X" suffix and ensure ".0" format
 currentScale=currentScale.replace(/X$/i,'');if(!currentScale.includes('.')){currentScale=currentScale+'.0';}var currentIndex=scales.indexOf(currentScale);console.log("\uD83E\uDE91 Decrement: Current scale \"".concat(appState.selectedFurnitureScale,"\" normalized to \"").concat(currentScale,"\", index: ").concat(currentIndex));if(currentIndex>0){setFurnitureScale(scales[currentIndex-1]);}else{console.log("  \u26A0\uFE0F Already at minimum scale: ".concat(scales[0]));}};// Expose saved pattern functions globally for unified modal system
-window.loadSavedPatternToUI=loadSavedPatternToUI;window.showMaterialSelectionModal=showMaterialSelectionModal;window.lookupColor=lookupColor;window.generateShareableUrl=generateShareableUrl;window.copyShareableUrl=copyShareableUrl;window.addBackToPatternsButton=addBackToPatternsButton;// 🎄 PROMO CODE DIAGNOSTIC FUNCTION
+window.loadSavedPatternToUI=loadSavedPatternToUI;window.showMaterialSelectionModal=showMaterialSelectionModal;window.lookupColor=lookupColor;window.colorflexResolveHexToSWDisplay=resolveHexToSWDisplay;window.generateShareableUrl=generateShareableUrl;window.copyShareableUrl=copyShareableUrl;window.addBackToPatternsButton=addBackToPatternsButton;// 🎄 PROMO CODE DIAGNOSTIC FUNCTION
 window.testPromoCode=function(){console.log('🔍 ===== PROMO CODE SYSTEM DIAGNOSTIC =====');console.log('📍 Current page:',window.location.pathname);console.log('');// Check sessionStorage
 var promoCode=sessionStorage.getItem('cfm_promo_code');var promoUsed=sessionStorage.getItem('cfm_promo_used');console.log('💾 SessionStorage:');console.log('  cfm_promo_code:',promoCode||'(not set)');console.log('  cfm_promo_used:',promoUsed||'(not set)');console.log('');// Check if promo UI exists
 var promoInput=document.getElementById('cfm-promo-input');var promoButton=document.getElementById('cfm-promo-apply-btn');var promoFeedback=document.getElementById('cfm-promo-feedback');console.log('🎨 Promo UI Elements:');console.log('  Input field:',promoInput?'✅ Found':'❌ Missing');console.log('  Apply button:',promoButton?'✅ Found':'❌ Missing');console.log('  Feedback area:',promoFeedback?'✅ Found':'❌ Missing');console.log('');// Check if functions exist
 console.log('🔧 Functions:');console.log('  showMaterialSelectionModal:',typeof showMaterialSelectionModal!=='undefined'?'✅ Loaded':'❌ Missing');console.log('  fallbackDirectRedirect:',typeof fallbackDirectRedirect!=='undefined'?'✅ Loaded':'❌ Missing');console.log('');// Test promo code validation
 console.log('🧪 Testing promo code validation:');var testCode='FIRSTROLL25';console.log('  Test code:',testCode);console.log('  Valid:',testCode==='FIRSTROLL25'?'✅ Yes':'❌ No');console.log('');console.log('📋 Instructions:');console.log('  1. Click "Select Your Material" to open modal');console.log('  2. Check if promo section appears at top');console.log('  3. Enter FIRSTROLL25 and click Apply');console.log('  4. Select material and click "Proceed to Cart"');console.log('  5. Watch for redirect logs in console');console.log('');console.log('🎄 To set promo code manually:');console.log('  sessionStorage.setItem("cfm_promo_code", "FIRSTROLL25")');console.log('  sessionStorage.setItem("cfm_promo_used", "true")');console.log('==========================================');};console.log('🎄 Promo diagnostic loaded! Run window.testPromoCode() to check system');window.initializeTryFurnitureFeature=initializeTryFurnitureFeature;
+
+/***/ },
+
+/***/ "./src/color/artistStyles.js"
+/*!***********************************!*\
+  !*** ./src/color/artistStyles.js ***!
+  \***********************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   DEFAULT_ARTIST_STRENGTH: () => (/* binding */ DEFAULT_ARTIST_STRENGTH),
+/* harmony export */   ENGINE_ARTIST_BLURBS: () => (/* binding */ ENGINE_ARTIST_BLURBS),
+/* harmony export */   ENGINE_ARTIST_IDS: () => (/* binding */ ENGINE_ARTIST_IDS),
+/* harmony export */   applyArtistToPaletteHsl: () => (/* binding */ applyArtistToPaletteHsl)
+/* harmony export */ });
+function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+/**
+ * artistStyles.js — deterministic “artist influence” HSL shaping (color behavior only).
+ * Applied after harmony + design style. Full transform is blended toward original by
+ * `artistStrength` (default 0.35) so artist stays a lighter layer than style.
+ */
+
+var SLOTS = ['primary', 'secondary', 'accent', 'neutral', 'background'];
+var DEFAULT_ARTIST_STRENGTH = 0.35;
+
+/** One-line blurbs for UI (plain English, not reproduction). */
+var ENGINE_ARTIST_BLURBS = {
+  none: '',
+  monet: 'Luminous atmosphere: softened complements, blue-violet shadows, lifted lights.',
+  picasso: 'Structured emotion: cool shadow blues, ochre counterpoints, sharper value splits.',
+  dali: 'Theatrical warmth: desert light, lifted highlights, deep but warm shadows.',
+  sargent: 'Refined balance: restrained chroma, warm neutrals, elegant darks.',
+  lichtenstein: 'Graphic pop: primaries, high saturation, poster-like separation.',
+  vangogh: 'Energetic complements: gold lights, blue shadows, expressive saturation.',
+  matisse: 'Decorative joy: high chroma blocks, warm/cool play, cheerful mids.',
+  okeeffe: 'Organic desert-floral: muted jewels, warm earth, smooth tonal steps.'
+};
+function clamp(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
+}
+function lerp(a, b, t) {
+  return a + (b - a) * t;
+}
+function hueAdd(h, deg) {
+  return ((h + deg) % 360 + 360) % 360;
+}
+function lerpHue(h, target, t) {
+  var d = target - h;
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  return hueAdd(h, d * clamp(t, 0, 1));
+}
+
+/** Shortest-arc hue blend from `from` toward `to` by amount t in [0,1]. */
+function lerpHsl(from, to, t) {
+  var tt = clamp(t, 0, 1);
+  return {
+    h: lerpHue(from.h, to.h, tt),
+    s: lerp(from.s, to.s, tt),
+    l: lerp(from.l, to.l, tt)
+  };
+}
+
+/** @typedef {{ baseHue: number }} ArtistCtx */
+
+function nearestAnchorHue(h, anchors) {
+  var best = anchors[0];
+  var bd = 999;
+  var _iterator = _createForOfIteratorHelper(anchors),
+    _step;
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var a = _step.value;
+      var d = Math.abs(h - a);
+      if (d > 180) d = 360 - d;
+      if (d < bd) {
+        bd = d;
+        best = a;
+      }
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+  return best;
+}
+
+/** ---------- Monet: luminous, atmospheric, colored shadows ---------- */
+function artistMonetFull(hsl, slotKey, ctx) {
+  var bh = ctx.baseHue;
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  var corridor = [210, 125, 58, 15, 345];
+  h = lerpHue(h, nearestAnchorHue(h, corridor), 0.22);
+  l = clamp(l + 0.14 * (0.55 + 0.45 * (1 - l)), 0.08, 0.97);
+  s = clamp(s * 0.88, 0.04, 0.8);
+  var isDark = l < 0.42;
+  if (isDark || slotKey === 'neutral') {
+    h = lerpHue(h, 268, isDark ? 0.38 : 0.18);
+    s = clamp(s * 0.75 + 0.12, 0.06, 0.55);
+    l = clamp(l + (isDark ? 0.1 : 0.04), 0.12, 0.72);
+  }
+  if (slotKey === 'accent') {
+    h = lerpHue(h, hueAdd(bh, 165), 0.28);
+    s = clamp(s * 0.9, 0.08, 0.72);
+    l = clamp(l + 0.06, 0.2, 0.68);
+  }
+  if (slotKey === 'secondary') {
+    h = lerpHue(h, hueAdd(bh, -32), 0.12);
+  }
+  if (slotKey === 'background') {
+    s = clamp(s * 0.68, 0.02, 0.22);
+    l = clamp(l + 0.04, 0.9, 0.98);
+  }
+  l = clamp(0.5 + (l - 0.5) * 0.88, 0.06, 0.98);
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+
+/** ---------- Picasso: cool shadows, ochre warmth, reduced naturalism ---------- */
+function artistPicassoFull(hsl, slotKey, ctx) {
+  var bh = ctx.baseHue;
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  var inBlueFamily = bh >= 185 && bh <= 275;
+  if (l < 0.45 || slotKey === 'accent') {
+    h = lerpHue(h, 218, 0.28);
+    s = clamp(s * 0.82 + 0.08, 0.1, 0.75);
+    l = slotKey === 'accent' ? clamp(l * 0.82 - 0.05, 0.08, 0.42) : clamp(l * 0.94, 0.1, 0.48);
+  }
+  if (slotKey === 'secondary' || slotKey === 'primary' && !inBlueFamily) {
+    h = lerpHue(h, 38, 0.16);
+    l = clamp(l + 0.03, 0.22, 0.78);
+  }
+  if (slotKey === 'neutral') {
+    h = lerpHue(h, inBlueFamily ? 215 : 42, 0.2);
+    s = clamp(s * 0.72, 0.04, 0.26);
+    l = clamp(0.5 + (l - 0.5) * 1.08, 0.42, 0.62);
+  }
+  if (slotKey === 'background') {
+    s = clamp(s * 0.85, 0.03, 0.24);
+    l = clamp(l * 0.98 + 0.01, 0.86, 0.96);
+  }
+  if (l >= 0.55) {
+    l = clamp(0.52 + (l - 0.52) * 1.12, 0.5, 0.94);
+  } else if (l <= 0.4) {
+    l = clamp(0.08 + l * 0.85, 0.08, 0.44);
+  }
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+
+/** ---------- Dalí: golden desert, theatrical contrast, one sharper accent ---------- */
+function artistDaliFull(hsl, slotKey, ctx) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  h = lerpHue(h, 44, 0.24);
+  if (l > 0.58 || slotKey === 'background') {
+    l = clamp(l + 0.12 * (slotKey === 'background' ? 0.8 : 1), 0.72, 0.98);
+    s = clamp(s * 1.05 + 0.04, 0.06, 0.38);
+  }
+  if (l < 0.42 || slotKey === 'accent') {
+    l = clamp(l * 0.78 - (slotKey === 'accent' ? 0.08 : 0.04), 0.07, 0.44);
+    h = lerpHue(h, 28, slotKey === 'accent' ? 0.2 : 0.1);
+    s = clamp(s * (slotKey === 'accent' ? 1.35 : 1.05), 0.12, 1);
+  }
+  if (slotKey === 'accent') {
+    h = hueAdd(h, 14);
+    s = clamp(s * 1.15, 0.2, 1);
+  }
+  if (slotKey === 'neutral') {
+    h = lerpHue(h, 55, 0.15);
+    s = clamp(s * 0.9, 0.05, 0.32);
+    l = clamp(l * 0.96 + 0.02, 0.4, 0.62);
+  }
+  if (slotKey === 'secondary') {
+    l = clamp(l + 0.05, 0.25, 0.82);
+  }
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+
+/** ---------- Sargent: restrained chroma, warm neutrals, rich darks ---------- */
+function artistSargentFull(hsl, slotKey, ctx) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  h = lerpHue(h, 34, 0.12);
+  s = clamp(s * 0.72, 0.03, 0.58);
+  if (slotKey === 'neutral' || slotKey === 'background') {
+    h = lerpHue(h, 32, 0.18);
+    s = clamp(s * 0.78, 0.02, 0.16);
+    l = slotKey === 'background' ? clamp(l * 0.96 + 0.02, 0.82, 0.94) : clamp(0.5 + (l - 0.5) * 0.9, 0.44, 0.62);
+  }
+  if (slotKey === 'accent') {
+    s = clamp(s * 0.88, 0.06, 0.45);
+    l = clamp(l * 0.92, 0.14, 0.48);
+  }
+  if (slotKey === 'primary' || slotKey === 'secondary') {
+    l = clamp(0.48 + (l - 0.48) * 1.04, 0.18, 0.72);
+  }
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+
+/** ---------- Lichtenstein: graphic primaries, poster contrast ---------- */
+function artistLichtensteinFull(hsl, slotKey, ctx) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  var prim = [0, 120, 240];
+  var nearest = prim[0];
+  var bd = 999;
+  for (var _i = 0, _prim = prim; _i < _prim.length; _i++) {
+    var p = _prim[_i];
+    var d = Math.abs(h - p);
+    if (d > 180) d = 360 - d;
+    if (d < bd) {
+      bd = d;
+      nearest = p;
+    }
+  }
+  h = lerpHue(h, nearest, 0.38);
+  s = clamp(s * 1.42, 0.28, 1);
+  if (l <= 0.48) {
+    l = clamp(0.05 + l * 0.68, 0.06, 0.42);
+  } else {
+    l = clamp(0.56 + (l - 0.48) * 1.25, 0.52, 0.96);
+  }
+  if (slotKey === 'neutral') {
+    h = lerpHue(h, nearest, 0.25);
+    s = clamp(s * 0.95, 0.15, 0.52);
+    l = clamp(l + 0.02, 0.48, 0.68);
+  }
+  if (slotKey === 'background') {
+    s = clamp(s * 0.65, 0.02, 0.2);
+    l = clamp(l + 0.03, 0.9, 0.99);
+  }
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+
+/** ---------- van Gogh: gold lights, blue shadows, complementary tension ---------- */
+function artistVangoghFull(hsl, slotKey, ctx) {
+  var bh = ctx.baseHue;
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  var comp = hueAdd(bh, 172);
+  if (l > 0.52 || slotKey === 'secondary') {
+    h = lerpHue(h, 54, slotKey === 'secondary' ? 0.22 : 0.18);
+    s = clamp(s * 1.18, 0.15, 1);
+    l = clamp(l + 0.04, 0.22, 0.92);
+  }
+  if (l < 0.48 || slotKey === 'accent') {
+    h = lerpHue(h, 228, slotKey === 'accent' ? 0.32 : 0.2);
+    s = clamp(s * 1.12, 0.12, 1);
+    l = clamp(l * 0.88 - (slotKey === 'accent' ? 0.06 : 0.02), 0.08, 0.52);
+  }
+  if (slotKey === 'primary') {
+    h = lerpHue(h, lerpHue(bh, comp, 0.4), 0.1);
+    s = clamp(s * 1.1, 0.12, 1);
+  }
+  if (slotKey === 'neutral') {
+    h = lerpHue(h, 235, 0.12);
+    s = clamp(s * 0.85, 0.05, 0.35);
+  }
+  if (slotKey === 'background') {
+    l = clamp(l + 0.02, 0.88, 0.98);
+    s = clamp(s * 0.9, 0.05, 0.35);
+  }
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+
+/** ---------- Matisse: high chroma, decorative separation ---------- */
+function artistMatisseFull(hsl, slotKey, ctx) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  var warmT = 78;
+  var coolT = hueAdd(h, -95);
+  if (slotKey === 'accent') {
+    h = lerpHue(h, coolT, 0.28);
+    s = clamp(s * 1.35, 0.25, 1);
+    l = clamp(0.42 + (l - 0.42) * 1.15, 0.22, 0.68);
+  } else if (slotKey === 'secondary') {
+    h = lerpHue(h, warmT, 0.22);
+    s = clamp(s * 1.28, 0.2, 1);
+    l = clamp(l + 0.05, 0.35, 0.78);
+  } else {
+    h = lerpHue(h, hueAdd(h, 55), 0.14);
+    s = clamp(s * 1.22, 0.14, 1);
+  }
+  if (slotKey === 'neutral') {
+    s = clamp(s * 1.15, 0.12, 0.5);
+    l = clamp(l + 0.03, 0.5, 0.7);
+    h = lerpHue(h, 340, 0.08);
+  }
+  if (slotKey === 'background') {
+    s = clamp(s * 1.2, 0.08, 0.42);
+    l = clamp(l + 0.02, 0.84, 0.97);
+  }
+  if (l > 0.55) l = clamp(0.54 + (l - 0.55) * 1.15, 0.52, 0.93);
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+
+/** ---------- O'Keeffe: warm earth, muted jewel, smooth transitions ---------- */
+function artistOkeeffeFull(hsl, slotKey, ctx) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  h = lerpHue(h, 22, 0.16);
+  s = clamp(s * 0.78, 0.04, 0.65);
+  if (slotKey === 'accent') {
+    h = lerpHue(h, 355, 0.12);
+    s = clamp(s * 1.08, 0.1, 0.52);
+    l = clamp(0.4 + (l - 0.4) * 0.88, 0.28, 0.58);
+  }
+  if (slotKey === 'neutral') {
+    h = lerpHue(h, 35, 0.14);
+    s = clamp(s * 0.85, 0.03, 0.2);
+    l = clamp(l * 0.97 + 0.02, 0.48, 0.64);
+  }
+  if (slotKey === 'background') {
+    h = lerpHue(h, 48, 0.1);
+    s = clamp(s * 0.75, 0.02, 0.18);
+    l = clamp(l * 0.99 + 0.01, 0.9, 0.97);
+  }
+  l = clamp(0.5 + (l - 0.5) * 0.88, 0.08, 0.96);
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+var ARTIST_MODIFIERS = {
+  monet: artistMonetFull,
+  picasso: artistPicassoFull,
+  dali: artistDaliFull,
+  sargent: artistSargentFull,
+  lichtenstein: artistLichtensteinFull,
+  vangogh: artistVangoghFull,
+  matisse: artistMatisseFull,
+  okeeffe: artistOkeeffeFull
+};
+var ENGINE_ARTIST_IDS = ['none', 'monet', 'picasso', 'dali', 'sargent', 'lichtenstein', 'vangogh', 'matisse', 'okeeffe'];
+
+/**
+ * @param {Record<string, { h: number, s: number, l: number }>} hslSlots
+ * @param {string} artistId
+ * @param {number} baseHue
+ * @param {number} [artistStrength] 0..1 blend toward full artist transform; default DEFAULT_ARTIST_STRENGTH
+ */
+function applyArtistToPaletteHsl(hslSlots, artistId, baseHue, artistStrength) {
+  if (!artistId || artistId === 'none') return hslSlots;
+  var fn = ARTIST_MODIFIERS[artistId];
+  if (!fn) return hslSlots;
+  var t = artistStrength == null || Number.isNaN(Number(artistStrength)) ? DEFAULT_ARTIST_STRENGTH : Number(artistStrength);
+  t = clamp(t, 0, 1);
+  var ctx = {
+    baseHue: (baseHue % 360 + 360) % 360
+  };
+  var out = {};
+  var _iterator2 = _createForOfIteratorHelper(SLOTS),
+    _step2;
+  try {
+    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+      var k = _step2.value;
+      var src = hslSlots[k];
+      if (!src) continue;
+      var full = fn({
+        h: src.h,
+        s: src.s,
+        l: src.l
+      }, k, ctx);
+      out[k] = lerpHsl(src, full, t);
+    }
+  } catch (err) {
+    _iterator2.e(err);
+  } finally {
+    _iterator2.f();
+  }
+  return out;
+}
+
+/***/ },
+
+/***/ "./src/color/colorDeltaE.js"
+/*!**********************************!*\
+  !*** ./src/color/colorDeltaE.js ***!
+  \**********************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   deltaE76Hex: () => (/* binding */ deltaE76Hex),
+/* harmony export */   labFromHex: () => (/* binding */ labFromHex)
+/* harmony export */ });
+/**
+ * colorDeltaE.js — deterministic sRGB → CIELAB and ΔE (CIE76).
+ * Uses D65 white point; sRGB inverse gamma (IEC 61966-2-1).
+ */
+
+/**
+ * @param {string} hex #rrggbb
+ * @returns {{ L: number, a: number, b: number } | null}
+ */
+function labFromHex(hex) {
+  var h = String(hex || '').replace(/^#/, '').trim().toLowerCase();
+  var rStr = h;
+  if (h.length === 3) {
+    rStr = h[0] + h[0] + h[1] + h[1] + h[2] + h[2];
+  }
+  if (rStr.length !== 6) return null;
+  var r = parseInt(rStr.slice(0, 2), 16);
+  var g = parseInt(rStr.slice(2, 4), 16);
+  var b = parseInt(rStr.slice(4, 6), 16);
+  if ([r, g, b].some(function (x) {
+    return Number.isNaN(x);
+  })) return null;
+  var R = srgbToLinear(r / 255);
+  var G = srgbToLinear(g / 255);
+  var B = srgbToLinear(b / 255);
+  var X = R * 0.4124564 + G * 0.3575761 + B * 0.1804375;
+  var Y = R * 0.2126729 + G * 0.7151522 + B * 0.072175;
+  var Z = R * 0.0193339 + G * 0.119192 + B * 0.9503041;
+  var Xn = 0.95047;
+  var Yn = 1.0;
+  var Zn = 1.08883;
+  var xr = X / Xn;
+  var yr = Y / Yn;
+  var zr = Z / Zn;
+  var f = function f(t) {
+    return t > 0.008856 ? Math.cbrt(t) : 7.787 * t + 16 / 116;
+  };
+  var fx = f(xr);
+  var fy = f(yr);
+  var fz = f(zr);
+  var L = 116 * fy - 16;
+  var a = 500 * (fx - fy);
+  var bLab = 200 * (fy - fz);
+  return {
+    L: L,
+    a: a,
+    b: bLab
+  };
+}
+function srgbToLinear(u) {
+  return u <= 0.04045 ? u / 12.92 : Math.pow((u + 0.055) / 1.055, 2.4);
+}
+
+/**
+ * CIE76 ΔE in LAB space (0 = identical; ~1–2 often “just noticeable”).
+ * @param {string} hexA
+ * @param {string} hexB
+ */
+function deltaE76Hex(hexA, hexB) {
+  var A = labFromHex(hexA);
+  var B = labFromHex(hexB);
+  if (!A || !B) return Number.POSITIVE_INFINITY;
+  var dL = A.L - B.L;
+  var da = A.a - B.a;
+  var db = A.b - B.b;
+  return Math.sqrt(dL * dL + da * da + db * db);
+}
+
+/***/ },
+
+/***/ "./src/color/colorPrimitives.js"
+/*!**************************************!*\
+  !*** ./src/color/colorPrimitives.js ***!
+  \**************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   hexToRgb: () => (/* binding */ hexToRgb),
+/* harmony export */   hslToRgb: () => (/* binding */ hslToRgb),
+/* harmony export */   rgbToHex: () => (/* binding */ rgbToHex),
+/* harmony export */   rgbToHsl: () => (/* binding */ rgbToHsl)
+/* harmony export */ });
+/**
+ * colorPrimitives.js — shared RGB/HEX/HSL helpers (no palette logic).
+ * Used by paletteEngine, harmonyPalettes, and other color modules.
+ */
+
+function clamp(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
+}
+
+/** @param {string} hex */
+function hexToRgb(hex) {
+  var h = String(hex).replace(/^#/, '').trim();
+  if (h.length === 3) {
+    return {
+      r: parseInt(h[0] + h[0], 16),
+      g: parseInt(h[1] + h[1], 16),
+      b: parseInt(h[2] + h[2], 16)
+    };
+  }
+  if (h.length !== 6 || /[^0-9a-fA-F]/.test(h)) {
+    throw new Error('colorPrimitives: expected #RRGGBB or RRGGBB, got ' + hex);
+  }
+  return {
+    r: parseInt(h.slice(0, 2), 16),
+    g: parseInt(h.slice(2, 4), 16),
+    b: parseInt(h.slice(4, 6), 16)
+  };
+}
+
+/** @returns {string} #RRGGBB */
+function rgbToHex(r, g, b) {
+  var x = function x(n) {
+    return clamp(Math.round(n), 0, 255).toString(16).padStart(2, '0');
+  };
+  return '#' + x(r) + x(g) + x(b);
+}
+
+/**
+ * HSL in [0,360), [0,1], [0,1]
+ * @param {number} r
+ * @param {number} g
+ * @param {number} b
+ */
+function rgbToHsl(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  var max = Math.max(r, g, b);
+  var min = Math.min(r, g, b);
+  var d = max - min;
+  var h = 0;
+  var l = (max + min) / 2;
+  var s = 0;
+  if (d > 1e-8) {
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+        break;
+      case g:
+        h = ((b - r) / d + 2) / 6;
+        break;
+      default:
+        h = ((r - g) / d + 4) / 6;
+        break;
+    }
+  }
+  return {
+    h: h * 360,
+    s: s,
+    l: l
+  };
+}
+
+/**
+ * @param {number} h 0..360
+ * @param {number} s 0..1
+ * @param {number} l 0..1
+ */
+function hslToRgb(h, s, l) {
+  h = (h % 360 + 360) % 360;
+  s = clamp(s, 0, 1);
+  l = clamp(l, 0, 1);
+  if (s < 1e-8) {
+    var v = Math.round(l * 255);
+    return {
+      r: v,
+      g: v,
+      b: v
+    };
+  }
+  var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  var p = 2 * l - q;
+  var hk = h / 360;
+  var t = function t(_t) {
+    var tt = _t;
+    if (tt < 0) tt += 1;
+    if (tt > 1) tt -= 1;
+    if (tt < 1 / 6) return p + (q - p) * 6 * tt;
+    if (tt < 1 / 2) return q;
+    if (tt < 2 / 3) return p + (q - p) * (2 / 3 - tt) * 6;
+    return p;
+  };
+  var r = Math.round(255 * t(hk + 1 / 3));
+  var g = Math.round(255 * t(hk));
+  var b = Math.round(255 * t(hk - 1 / 3));
+  return {
+    r: r,
+    g: g,
+    b: b
+  };
+}
+
+/***/ },
+
+/***/ "./src/color/ensureLayerContrast.js"
+/*!******************************************!*\
+  !*** ./src/color/ensureLayerContrast.js ***!
+  \******************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ensureLayerContrast: () => (/* binding */ ensureLayerContrast)
+/* harmony export */ });
+/* harmony import */ var _colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./colorPrimitives.js */ "./src/color/colorPrimitives.js");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+/**
+ * ensureLayerContrast.js — deterministic lightness separation for low-layer patterns.
+ *
+ * This is a final practical adjustment (post style/artist, pre mapping to layers).
+ * It only nudges HSL lightness to improve contrast without changing hue structure.
+ */
+
+
+function clamp01(n) {
+  return Math.max(0, Math.min(1, n));
+}
+function hexToHsl(hex) {
+  var _hexToRgb = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(hex),
+    r = _hexToRgb.r,
+    g = _hexToRgb.g,
+    b = _hexToRgb.b;
+  return (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHsl)(r, g, b);
+}
+function hslToHex(h, s, l) {
+  var _hslToRgb = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hslToRgb)(h, s, l),
+    r = _hslToRgb.r,
+    g = _hslToRgb.g,
+    b = _hslToRgb.b;
+  return (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHex)(r, g, b);
+}
+
+/**
+ * Adjust a pair to meet a minimum lightness gap.
+ * @param {{ a: {h:number,s:number,l:number}, b: {h:number,s:number,l:number} }} pair
+ * @param {number} minGap
+ * @returns {{ a: {h:number,s:number,l:number}, b: {h:number,s:number,l:number} }}
+ */
+function ensureGap2(pair, minGap) {
+  var a = _objectSpread({}, pair.a);
+  var b = _objectSpread({}, pair.b);
+
+  // Prefer a darker "dominant" and b lighter "support" without swapping roles.
+  // First try to push b lighter; if we hit the ceiling, also pull a darker.
+  var gap = b.l - a.l;
+  if (gap >= minGap) return {
+    a: a,
+    b: b
+  };
+  var wantB = a.l + minGap;
+  var bNew = clamp01(wantB);
+  b.l = bNew;
+  var newGap = b.l - a.l;
+  if (newGap >= minGap) return {
+    a: a,
+    b: b
+  };
+
+  // Still short: pull a down just enough (bounded) to reach the gap.
+  var needed = minGap - newGap;
+  a.l = clamp01(a.l - needed);
+  return {
+    a: a,
+    b: b
+  };
+}
+
+/**
+ * Spread 3 lightness values to avoid the same band.
+ * Keeps hues/sats intact; preserves relative ordering by lightness.
+ * @param {{ p:{h:number,s:number,l:number}, s:{h:number,s:number,l:number}, a:{h:number,s:number,l:number} }} tri
+ * @param {number} minGap
+ */
+function ensureGap3(tri, minGap) {
+  var p = _objectSpread({}, tri.p);
+  var s = _objectSpread({}, tri.s);
+  var a = _objectSpread({}, tri.a);
+  var items = [{
+    k: 'p',
+    v: p
+  }, {
+    k: 's',
+    v: s
+  }, {
+    k: 'a',
+    v: a
+  }].sort(function (x, y) {
+    return x.v.l - y.v.l;
+  });
+  var lo = items[0].v;
+  var mid = items[1].v;
+  var hi = items[2].v;
+
+  // First: ensure lo-mid gap by pushing mid up (then pulling lo down if needed).
+  var g1 = mid.l - lo.l;
+  if (g1 < minGap) {
+    var need = minGap - g1;
+    var midUp = Math.min(0.97, mid.l + need);
+    mid.l = midUp;
+    g1 = mid.l - lo.l;
+    if (g1 < minGap) {
+      lo.l = Math.max(0.06, lo.l - (minGap - g1));
+    }
+  }
+
+  // Second: ensure mid-hi gap by pushing hi up (then pulling mid down if needed).
+  var g2 = hi.l - mid.l;
+  if (g2 < minGap) {
+    var _need = minGap - g2;
+    var hiUp = Math.min(0.98, hi.l + _need);
+    hi.l = hiUp;
+    g2 = hi.l - mid.l;
+    if (g2 < minGap) {
+      mid.l = Math.max(0.08, mid.l - (minGap - g2));
+    }
+  }
+
+  // Final clamp to sane ranges (keep background/neutral logic elsewhere).
+  var _iterator = _createForOfIteratorHelper(items),
+    _step;
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var it = _step.value;
+      it.v.l = clamp01(it.v.l);
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+  return {
+    p: p,
+    s: s,
+    a: a
+  };
+}
+
+/**
+ * @param {{primary:string, secondary:string, accent:string, neutral:string, background:string} & Record<string, unknown>} palette
+ * @param {number} layerCount
+ * @returns {typeof palette & { _contrastAdjusted?: { layerCount: number, minGap: number } }}
+ */
+function ensureLayerContrast(palette, layerCount) {
+  if (!palette || _typeof(palette) !== 'object') return palette;
+  var lc = Number(layerCount) || 0;
+  if (lc !== 2 && lc !== 3) return palette;
+  var out = _objectSpread({}, palette);
+
+  // Only adjust the slots that are actually mapped early for low-layer patterns.
+  var p = hexToHsl(out.primary);
+  var s = hexToHsl(out.secondary);
+  var a = hexToHsl(out.accent);
+  if (lc === 2) {
+    var _minGap = 0.4; // ~40 L points
+    var pair = ensureGap2({
+      a: p,
+      b: s
+    }, _minGap);
+    out.primary = hslToHex(pair.a.h, pair.a.s, pair.a.l);
+    out.secondary = hslToHex(pair.b.h, pair.b.s, pair.b.l);
+    out._contrastAdjusted = {
+      layerCount: 2,
+      minGap: _minGap
+    };
+    return out;
+  }
+
+  // lc === 3
+  var minGap = 0.25; // ~25 L points
+  var tri = ensureGap3({
+    p: p,
+    s: s,
+    a: a
+  }, minGap);
+  out.primary = hslToHex(tri.p.h, tri.p.s, tri.p.l);
+  out.secondary = hslToHex(tri.s.h, tri.s.s, tri.s.l);
+  out.accent = hslToHex(tri.a.h, tri.a.s, tri.a.l);
+  out._contrastAdjusted = {
+    layerCount: 3,
+    minGap: minGap
+  };
+  return out;
+}
+
+/***/ },
+
+/***/ "./src/color/harmonyPalettes.js"
+/*!**************************************!*\
+  !*** ./src/color/harmonyPalettes.js ***!
+  \**************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ENGINE_HARMONY_IDS: () => (/* binding */ ENGINE_HARMONY_IDS),
+/* harmony export */   HARMONY_DEFINITIONS: () => (/* binding */ HARMONY_DEFINITIONS),
+/* harmony export */   analogousPalette: () => (/* binding */ analogousPalette),
+/* harmony export */   complementaryPalette: () => (/* binding */ complementaryPalette),
+/* harmony export */   generateAllHarmonyPalettes: () => (/* binding */ generateAllHarmonyPalettes),
+/* harmony export */   harmonyPaletteToHslSlots: () => (/* binding */ harmonyPaletteToHslSlots),
+/* harmony export */   monochromaticPalette: () => (/* binding */ monochromaticPalette),
+/* harmony export */   splitComplementaryPalette: () => (/* binding */ splitComplementaryPalette),
+/* harmony export */   triadicPalette: () => (/* binding */ triadicPalette),
+/* harmony export */   warmNeutralPalette: () => (/* binding */ warmNeutralPalette)
+/* harmony export */ });
+/* harmony import */ var _colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./colorPrimitives.js */ "./src/color/colorPrimitives.js");
+function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+/**
+ * harmonyPalettes.js — Kuler-style deterministic harmony sets from one base HEX.
+ *
+ * Pure HSL math (via paletteEngine rgb/hsl helpers). Same base → same output every time.
+ * Each harmony returns five slots: primary, secondary, accent, neutral, background
+ * (ready for a future paint-library conform step per slot).
+ */
+
+
+function clamp(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
+}
+function hueAdd(h, deg) {
+  return ((h + deg) % 360 + 360) % 360;
+}
+
+/** Shortest-arc lerp between hues (degrees). t in [0,1]. */
+function lerpHue(h, target, t) {
+  var d = target - h;
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  return hueAdd(h, d * t);
+}
+function hslToHex(h, s, l) {
+  var _hslToRgb = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hslToRgb)(h, s, l),
+    r = _hslToRgb.r,
+    g = _hslToRgb.g,
+    b = _hslToRgb.b;
+  return (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHex)(r, g, b);
+}
+
+/** @returns {{ h: number, s: number, l: number }} */
+function baseHsl(baseHex) {
+  var _hexToRgb = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(baseHex),
+    r = _hexToRgb.r,
+    g = _hexToRgb.g,
+    b = _hexToRgb.b;
+  return (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHsl)(r, g, b);
+}
+function neutralFromH(h, l) {
+  return hslToHex(h, clamp(0.08, 0.02, 0.2), l);
+}
+function backgroundFromH(h, sBase) {
+  return hslToHex(h, clamp(sBase * 0.18, 0.02, 0.28), 0.93);
+}
+
+/**
+ * @param {string} baseHex
+ * @returns {{ primary: string, secondary: string, accent: string, neutral: string, background: string }}
+ */
+function analogousPalette(baseHex) {
+  var _baseHsl = baseHsl(baseHex),
+    h = _baseHsl.h,
+    s = _baseHsl.s,
+    l = _baseHsl.l;
+  var primary = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHex)((0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(baseHex).r, (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(baseHex).g, (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(baseHex).b);
+  var secondary = hslToHex(hueAdd(h, 28), clamp(s * 0.9, 0.1, 0.95), clamp(l, 0.12, 0.82));
+  var accent = hslToHex(hueAdd(h, -28), clamp(s * 0.9, 0.1, 0.95), clamp(l + 0.06, 0.15, 0.88));
+  return {
+    primary: primary,
+    secondary: secondary,
+    accent: accent,
+    neutral: neutralFromH(h, 0.54),
+    background: backgroundFromH(h, s)
+  };
+}
+function complementaryPalette(baseHex) {
+  var _baseHsl2 = baseHsl(baseHex),
+    h = _baseHsl2.h,
+    s = _baseHsl2.s,
+    l = _baseHsl2.l;
+  var _hexToRgb2 = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(baseHex),
+    r = _hexToRgb2.r,
+    g = _hexToRgb2.g,
+    b = _hexToRgb2.b;
+  var primary = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHex)(r, g, b);
+  var hC = hueAdd(h, 180);
+  var secondary = hslToHex(hC, clamp(s * 0.92, 0.12, 1), clamp(l, 0.22, 0.72));
+  var accent = hslToHex(hC, clamp(s * 0.72, 0.1, 0.85), clamp(l + 0.14, 0.2, 0.85));
+  var midHue = hueAdd(h, 90);
+  return {
+    primary: primary,
+    secondary: secondary,
+    accent: accent,
+    neutral: hslToHex(midHue, 0.09, 0.52),
+    background: backgroundFromH(h, s)
+  };
+}
+function splitComplementaryPalette(baseHex) {
+  var _baseHsl3 = baseHsl(baseHex),
+    h = _baseHsl3.h,
+    s = _baseHsl3.s,
+    l = _baseHsl3.l;
+  var _hexToRgb3 = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(baseHex),
+    r = _hexToRgb3.r,
+    g = _hexToRgb3.g,
+    b = _hexToRgb3.b;
+  var primary = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHex)(r, g, b);
+  var secondary = hslToHex(hueAdd(h, 150), clamp(s * 0.88, 0.1, 0.95), clamp(l, 0.18, 0.78));
+  var accent = hslToHex(hueAdd(h, 210), clamp(s * 0.88, 0.1, 0.95), clamp(l + 0.05, 0.2, 0.82));
+  return {
+    primary: primary,
+    secondary: secondary,
+    accent: accent,
+    neutral: neutralFromH(h, 0.53),
+    background: backgroundFromH(h, s)
+  };
+}
+function triadicPalette(baseHex) {
+  var _baseHsl4 = baseHsl(baseHex),
+    h = _baseHsl4.h,
+    s = _baseHsl4.s,
+    l = _baseHsl4.l;
+  var _hexToRgb4 = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(baseHex),
+    r = _hexToRgb4.r,
+    g = _hexToRgb4.g,
+    b = _hexToRgb4.b;
+  var primary = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHex)(r, g, b);
+  var secondary = hslToHex(hueAdd(h, 120), clamp(s * 0.9, 0.1, 0.95), clamp(l, 0.18, 0.78));
+  var accent = hslToHex(hueAdd(h, 240), clamp(s * 0.9, 0.1, 0.95), clamp(l + 0.04, 0.2, 0.8));
+  return {
+    primary: primary,
+    secondary: secondary,
+    accent: accent,
+    neutral: neutralFromH(h, 0.55),
+    background: backgroundFromH(h, s)
+  };
+}
+function monochromaticPalette(baseHex) {
+  var _baseHsl5 = baseHsl(baseHex),
+    h = _baseHsl5.h,
+    s = _baseHsl5.s,
+    l = _baseHsl5.l;
+  var _hexToRgb5 = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(baseHex),
+    r = _hexToRgb5.r,
+    g = _hexToRgb5.g,
+    b = _hexToRgb5.b;
+  var primary = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHex)(r, g, b);
+  var secondary = hslToHex(h, clamp(s * 0.78, 0.06, 0.9), clamp(l + 0.12, 0.12, 0.88));
+  var accent = hslToHex(h, clamp(s * 0.55, 0.05, 0.75), clamp(l - 0.14, 0.08, 0.75));
+  return {
+    primary: primary,
+    secondary: secondary,
+    accent: accent,
+    neutral: hslToHex(h, 0.1, 0.56),
+    background: hslToHex(h, clamp(s * 0.22, 0.04, 0.35), 0.94)
+  };
+}
+
+/** Warm-biased neutrals; base still drives the family. */
+function warmNeutralPalette(baseHex) {
+  var _baseHsl6 = baseHsl(baseHex),
+    h = _baseHsl6.h;
+  var _hexToRgb6 = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(baseHex),
+    r = _hexToRgb6.r,
+    g = _hexToRgb6.g,
+    b = _hexToRgb6.b;
+  var primary = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHex)(r, g, b);
+  var warmH = lerpHue(h, 38, 0.45);
+  var secondary = hslToHex(warmH, 0.14, 0.42);
+  var accent = hslToHex(warmH, 0.2, 0.64);
+  return {
+    primary: primary,
+    secondary: secondary,
+    accent: accent,
+    neutral: hslToHex(warmH, 0.07, 0.52),
+    background: hslToHex(warmH, 0.06, 0.9)
+  };
+}
+
+/** Ordered list for UI + stable iteration. */
+var HARMONY_DEFINITIONS = [{
+  id: 'analogous',
+  label: 'Analogous',
+  fn: analogousPalette
+}, {
+  id: 'complementary',
+  label: 'Complementary',
+  fn: complementaryPalette
+}, {
+  id: 'splitComplementary',
+  label: 'Split-complementary',
+  fn: splitComplementaryPalette
+}, {
+  id: 'triadic',
+  label: 'Triadic',
+  fn: triadicPalette
+}, {
+  id: 'monochromatic',
+  label: 'Monochromatic',
+  fn: monochromaticPalette
+}, {
+  id: 'warmNeutral',
+  label: 'Neutral / warm-neutral',
+  fn: warmNeutralPalette
+}];
+
+/**
+ * All harmonies at once (deterministic record for debugging or export).
+ * @param {string} baseHex
+ */
+function generateAllHarmonyPalettes(baseHex) {
+  var out = {};
+  var _iterator = _createForOfIteratorHelper(HARMONY_DEFINITIONS),
+    _step;
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var _step$value = _step.value,
+        id = _step$value.id,
+        fn = _step$value.fn;
+      out[id] = fn(baseHex);
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+  return out;
+}
+
+/** Engine / API ids (`neutral` maps to warm-neutral palette geometry). */
+var ENGINE_HARMONY_IDS = ['analogous', 'complementary', 'splitComplementary', 'triadic', 'monochromatic', 'neutral'];
+var HARMONY_GENERATORS = {
+  analogous: analogousPalette,
+  complementary: complementaryPalette,
+  splitComplementary: splitComplementaryPalette,
+  triadic: triadicPalette,
+  monochromatic: monochromaticPalette,
+  neutral: warmNeutralPalette
+};
+
+/** @param {string} harmonyId */
+function normalizeEngineHarmonyId(harmonyId) {
+  var s = String(harmonyId || 'analogous').trim().toLowerCase();
+  if (s === 'none' || s === '') return 'analogous';
+  if (s === 'warmneutral') return 'neutral';
+  if (Object.prototype.hasOwnProperty.call(HARMONY_GENERATORS, s)) return s;
+  return 'analogous';
+}
+
+/**
+ * Five-slot HSL (same slot keys as palette engine) from color-theory harmony, pre style/artist.
+ * @param {string} baseHex
+ * @param {string} [harmonyId]
+ * @returns {Record<'primary'|'secondary'|'accent'|'neutral'|'background', { h: number, s: number, l: number }>}
+ */
+function harmonyPaletteToHslSlots(baseHex, harmonyId) {
+  var key = normalizeEngineHarmonyId(harmonyId);
+  var gen = HARMONY_GENERATORS[key];
+  var pal = gen(baseHex);
+  /** @param {string} hex */
+  function slot(hex) {
+    var _hexToRgb7 = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(hex),
+      r = _hexToRgb7.r,
+      g = _hexToRgb7.g,
+      b = _hexToRgb7.b;
+    return (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHsl)(r, g, b);
+  }
+  return {
+    primary: slot(pal.primary),
+    secondary: slot(pal.secondary),
+    accent: slot(pal.accent),
+    neutral: slot(pal.neutral),
+    background: slot(pal.background)
+  };
+}
+
+/***/ },
+
+/***/ "./src/color/paintLibraryMatcher.js"
+/*!******************************************!*\
+  !*** ./src/color/paintLibraryMatcher.js ***!
+  \******************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   PALETTE_SLOT_ORDER: () => (/* binding */ PALETTE_SLOT_ORDER),
+/* harmony export */   conformPaletteToPaintLibrary: () => (/* binding */ conformPaletteToPaintLibrary),
+/* harmony export */   matchToPaintLibrary: () => (/* binding */ matchToPaintLibrary),
+/* harmony export */   normalizeMatchHex: () => (/* binding */ normalizeMatchHex),
+/* harmony export */   rgbColorDistance: () => (/* binding */ rgbColorDistance)
+/* harmony export */ });
+/* harmony import */ var _colorDeltaE_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./colorDeltaE.js */ "./src/color/colorDeltaE.js");
+function ownKeys(e, r) { var t = Object.keys(e); if (Object.getOwnPropertySymbols) { var o = Object.getOwnPropertySymbols(e); r && (o = o.filter(function (r) { return Object.getOwnPropertyDescriptor(e, r).enumerable; })), t.push.apply(t, o); } return t; }
+function _objectSpread(e) { for (var r = 1; r < arguments.length; r++) { var t = null != arguments[r] ? arguments[r] : {}; r % 2 ? ownKeys(Object(t), !0).forEach(function (r) { _defineProperty(e, r, t[r]); }) : Object.getOwnPropertyDescriptors ? Object.defineProperties(e, Object.getOwnPropertyDescriptors(t)) : ownKeys(Object(t)).forEach(function (r) { Object.defineProperty(e, r, Object.getOwnPropertyDescriptor(t, r)); }); } return e; }
+function _defineProperty(e, r, t) { return (r = _toPropertyKey(r)) in e ? Object.defineProperty(e, r, { value: t, enumerable: !0, configurable: !0, writable: !0 }) : e[r] = t, e; }
+function _toPropertyKey(t) { var i = _toPrimitive(t, "string"); return "symbol" == _typeof(i) ? i : i + ""; }
+function _toPrimitive(t, r) { if ("object" != _typeof(t) || !t) return t; var e = t[Symbol.toPrimitive]; if (void 0 !== e) { var i = e.call(t, r || "default"); if ("object" != _typeof(i)) return i; throw new TypeError("@@toPrimitive must return a primitive value."); } return ("string" === r ? String : Number)(t); }
+function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+/**
+ * paintLibraryMatcher.js — deterministic paint-library conforming.
+ * Uses CIE76 ΔE in LAB (perceptual) for ranking; supports coordinated multi-slot
+ * assignment to reduce duplicate swatches; RGB distance kept as legacy export.
+ */
+
+
+
+/**
+ * @param {string} hex
+ * @returns {{ r: number, g: number, b: number } | null}
+ */
+function hexToRgb(hex) {
+  var h = String(hex || '').replace(/^#/, '').trim().toLowerCase();
+  if (h.length === 3) {
+    var _r = parseInt(h[0] + h[0], 16);
+    var _g = parseInt(h[1] + h[1], 16);
+    var _b = parseInt(h[2] + h[2], 16);
+    if ([_r, _g, _b].some(function (x) {
+      return Number.isNaN(x);
+    })) return null;
+    return {
+      r: _r,
+      g: _g,
+      b: _b
+    };
+  }
+  if (h.length !== 6) return null;
+  var r = parseInt(h.slice(0, 2), 16);
+  var g = parseInt(h.slice(2, 4), 16);
+  var b = parseInt(h.slice(4, 6), 16);
+  if ([r, g, b].some(function (x) {
+    return Number.isNaN(x);
+  })) return null;
+  return {
+    r: r,
+    g: g,
+    b: b
+  };
+}
+
+/**
+ * @param {string} hex
+ * @returns {string | null} normalized #rrggbb or null
+ */
+function normalizeMatchHex(hex) {
+  var rgb = hexToRgb(hex);
+  if (!rgb) return null;
+  var x = function x(n) {
+    return n.toString(16).padStart(2, '0');
+  };
+  return '#' + x(rgb.r) + x(rgb.g) + x(rgb.b);
+}
+
+/**
+ * Euclidean distance in RGB (0–~441). Legacy / diagnostics only.
+ * @param {string} hexA
+ * @param {string} hexB
+ */
+function rgbColorDistance(hexA, hexB) {
+  var a = hexToRgb(hexA);
+  var b = hexToRgb(hexB);
+  if (!a || !b) return Number.POSITIVE_INFINITY;
+  var dr = a.r - b.r;
+  var dg = a.g - b.g;
+  var db = a.b - b.b;
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
+
+/** @typedef {{ name: string, code?: string, hex: string }} PaintLibraryEntry */
+
+/** @typedef {{ maxDeltaE?: number, maxRgbDistance?: number, avoidHexes?: Set<string> }} MatchOptions */
+
+var PALETTE_SLOT_ORDER = ['primary', 'secondary', 'accent', 'neutral', 'background'];
+
+/**
+ * @param {MatchOptions | undefined} options
+ * @returns {number | null}
+ */
+function resolvedMaxDeltaE(options) {
+  if (!options || _typeof(options) !== 'object') return null;
+  if (typeof options.maxDeltaE === 'number' && Number.isFinite(options.maxDeltaE)) {
+    return options.maxDeltaE;
+  }
+  // Legacy: RGB Euclidean caps → rough ΔE scale (tunable)
+  if (typeof options.maxRgbDistance === 'number' && Number.isFinite(options.maxRgbDistance)) {
+    return options.maxRgbDistance / 3.35;
+  }
+  return null;
+}
+
+/**
+ * @param {string} inputHex normalized #rrggbb
+ * @param {PaintLibraryEntry[]} lib
+ * @returns {{ entry: PaintLibraryEntry, candHex: string, deltaE: number }[]}
+ */
+function rankLibraryByDeltaE(inputHex, lib) {
+  var out = [];
+  var _iterator = _createForOfIteratorHelper(lib),
+    _step;
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var entry = _step.value;
+      if (!entry || typeof entry.hex !== 'string') continue;
+      var candHex = normalizeMatchHex(entry.hex);
+      if (!candHex) continue;
+      var deltaE = (0,_colorDeltaE_js__WEBPACK_IMPORTED_MODULE_0__.deltaE76Hex)(inputHex, candHex);
+      out.push({
+        entry: entry,
+        candHex: candHex,
+        deltaE: deltaE
+      });
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+  out.sort(function (a, b) {
+    return a.deltaE - b.deltaE;
+  });
+  return out;
+}
+
+/**
+ * @param {{ entry: PaintLibraryEntry, candHex: string, deltaE: number }[]} ranked
+ * @param {Set<string>} avoidHexes
+ */
+function pickCandidate(ranked, avoidHexes) {
+  var avoid = avoidHexes instanceof Set ? avoidHexes : new Set();
+  var _iterator2 = _createForOfIteratorHelper(ranked),
+    _step2;
+  try {
+    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+      var r = _step2.value;
+      if (!avoid.has(r.candHex)) {
+        return {
+          picked: r,
+          hadToReuse: false
+        };
+      }
+    }
+  } catch (err) {
+    _iterator2.e(err);
+  } finally {
+    _iterator2.f();
+  }
+  return {
+    picked: ranked[0],
+    hadToReuse: ranked.length > 0
+  };
+}
+
+/**
+ * @param {string} hexColor
+ * @param {PaintLibraryEntry[] | null | undefined} paintLibrary
+ * @param {MatchOptions | undefined} [options]
+ * @returns {{
+ *   inputHex: string,
+ *   matchedName: string | null,
+ *   matchedHex: string,
+ *   distance: number,
+ *   matchedCode?: string | null,
+ *   usedFallback?: boolean,
+ *   warning?: string,
+ *   duplicateSlot?: boolean
+ * }}
+ */
+function matchToPaintLibrary(hexColor, paintLibrary, options) {
+  var inputHex = normalizeMatchHex(hexColor);
+  if (!inputHex) {
+    return {
+      inputHex: String(hexColor || '').trim() || '#000000',
+      matchedName: null,
+      matchedHex: '#000000',
+      distance: 0,
+      matchedCode: null,
+      usedFallback: true,
+      warning: 'Invalid hex; could not match to library.'
+    };
+  }
+  var lib = Array.isArray(paintLibrary) ? paintLibrary : [];
+  if (lib.length === 0) {
+    return {
+      inputHex: inputHex,
+      matchedName: null,
+      matchedHex: inputHex,
+      distance: 0,
+      matchedCode: null,
+      usedFallback: true,
+      warning: 'No paint library entries; using ideal color.'
+    };
+  }
+  var ranked = rankLibraryByDeltaE(inputHex, lib);
+  if (!ranked.length) {
+    return {
+      inputHex: inputHex,
+      matchedName: null,
+      matchedHex: inputHex,
+      distance: 0,
+      matchedCode: null,
+      usedFallback: true,
+      warning: 'No valid library swatches; using ideal color.'
+    };
+  }
+  var avoidHexes = options && options.avoidHexes instanceof Set ? options.avoidHexes : new Set();
+  var _pickCandidate = pickCandidate(ranked, avoidHexes),
+    picked = _pickCandidate.picked,
+    hadToReuse = _pickCandidate.hadToReuse;
+  var best = picked.entry;
+  var bestDE = picked.deltaE;
+  var matchedName = typeof best.name === 'string' ? best.name : null;
+  var matchedCode = typeof best.code === 'string' ? best.code : null;
+  var maxDE = resolvedMaxDeltaE(options);
+  var warnings = [];
+  if (hadToReuse) {
+    warnings.push('Another slot already used the nearest swatch; reused best match for this role.');
+  }
+  if (maxDE != null && bestDE > maxDE) {
+    warnings.push('Nearest library color exceeds fidelity cap for this role; kept ideal hex. (Try a larger catalog or relax caps.)');
+    return {
+      inputHex: inputHex,
+      matchedName: matchedName,
+      matchedCode: matchedCode,
+      matchedHex: inputHex,
+      distance: Math.round(bestDE * 100) / 100,
+      usedFallback: true,
+      warning: warnings.join(' ')
+    };
+  }
+  var matchedHex = picked.candHex;
+  if (warnings.length) {
+    return {
+      inputHex: inputHex,
+      matchedName: matchedName,
+      matchedHex: matchedHex,
+      distance: Math.round(bestDE * 100) / 100,
+      matchedCode: matchedCode,
+      usedFallback: false,
+      duplicateSlot: hadToReuse,
+      warning: warnings.join(' ')
+    };
+  }
+  return {
+    inputHex: inputHex,
+    matchedName: matchedName,
+    matchedHex: matchedHex,
+    distance: Math.round(bestDE * 100) / 100,
+    matchedCode: matchedCode,
+    usedFallback: false
+  };
+}
+
+/**
+ * Conform palette string-hex fields to the library. Resolves slots in a fixed order
+ * so primary → background each avoid reusing the same library hex when another
+ * nearly-as-good option exists.
+ *
+ * @param {Record<string, unknown>} palette
+ * @param {PaintLibraryEntry[]} paintLibrary
+ * @param {Record<string, MatchOptions>} [optionsByKey]
+ * @returns {Record<string, unknown> & { _paintLibraryMeta?: Record<string, ReturnType<typeof matchToPaintLibrary>> }}
+ */
+function conformPaletteToPaintLibrary(palette, paintLibrary, optionsByKey) {
+  if (!palette || _typeof(palette) !== 'object') {
+    return {};
+  }
+  var hexKey = /^#?[0-9a-f]{3}([0-9a-f]{3})?$/i;
+  var out = _objectSpread({}, palette);
+  /** @type {Record<string, ReturnType<typeof matchToPaintLibrary>>} */
+  var meta = {};
+  var byKey = optionsByKey && _typeof(optionsByKey) === 'object' ? optionsByKey : {};
+  var usedLibraryHexes = new Set();
+  var runKey = function runKey(key) {
+    if (key.startsWith('_')) return;
+    var val = palette[key];
+    if (typeof val !== 'string' || !hexKey.test(val.trim())) return;
+    var baseOpts = byKey[key] && _typeof(byKey[key]) === 'object' ? byKey[key] : {};
+    var m = matchToPaintLibrary(val, paintLibrary, _objectSpread(_objectSpread({}, baseOpts), {}, {
+      avoidHexes: usedLibraryHexes
+    }));
+    out[key] = m.matchedHex;
+    meta[key] = m;
+    if (!m.usedFallback) {
+      var h = normalizeMatchHex(m.matchedHex);
+      if (h) usedLibraryHexes.add(h);
+    }
+  };
+  var _iterator3 = _createForOfIteratorHelper(PALETTE_SLOT_ORDER),
+    _step3;
+  try {
+    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+      var _key = _step3.value;
+      if (!Object.prototype.hasOwnProperty.call(palette, _key)) continue;
+      runKey(_key);
+    }
+  } catch (err) {
+    _iterator3.e(err);
+  } finally {
+    _iterator3.f();
+  }
+  for (var _i = 0, _Object$keys = Object.keys(palette); _i < _Object$keys.length; _i++) {
+    var key = _Object$keys[_i];
+    if (PALETTE_SLOT_ORDER.includes(key)) continue;
+    runKey(key);
+  }
+  out._paintLibraryMeta = meta;
+  return out;
+}
+
+
+/***/ },
+
+/***/ "./src/color/paletteEngine.js"
+/*!************************************!*\
+  !*** ./src/color/paletteEngine.js ***!
+  \************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   clearLockedPalette: () => (/* binding */ clearLockedPalette),
+/* harmony export */   generatePalette: () => (/* binding */ generatePalette),
+/* harmony export */   getLockedPalette: () => (/* binding */ getLockedPalette),
+/* harmony export */   hexToRgb: () => (/* reexport safe */ _colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb),
+/* harmony export */   hslToRgb: () => (/* reexport safe */ _colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hslToRgb),
+/* harmony export */   lockPalette: () => (/* binding */ lockPalette),
+/* harmony export */   rgbToHex: () => (/* reexport safe */ _colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHex),
+/* harmony export */   rgbToHsl: () => (/* reexport safe */ _colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHsl)
+/* harmony export */ });
+/* harmony import */ var _colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./colorPrimitives.js */ "./src/color/colorPrimitives.js");
+/* harmony import */ var _harmonyPalettes_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./harmonyPalettes.js */ "./src/color/harmonyPalettes.js");
+/* harmony import */ var _paletteStyles_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./paletteStyles.js */ "./src/color/paletteStyles.js");
+/* harmony import */ var _artistStyles_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./artistStyles.js */ "./src/color/artistStyles.js");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+/**
+ * paletteEngine.js — minimal deterministic palette from one base hex.
+ *
+ * Phase 1: generate + lock. Palette generation is independent; a future
+ * paintLibraryMatcher (local JSON, no APIs) can conform each hex afterward
+ * without changing this module’s contract.
+ *
+ * Pipeline: harmony (color theory) → optional `style` (design/historical) →
+ * optional `artist` (expressive HSL shaping, blended by `artistStrength`) → HEX.
+ * Defaults: harmony analogous, style none, artist none, `artistStrength` 0.35 when artist is set.
+ *
+ * Legacy exact `primary` hex is preserved when both style and artist are unset/`none`.
+ */
+
+
+
+
+
+
+var _lockedPalette = null;
+function clamp01(n) {
+  return Math.max(0, Math.min(1, n));
+}
+function hexToHsl(hex) {
+  var _hexToRgb = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(hex),
+    r = _hexToRgb.r,
+    g = _hexToRgb.g,
+    b = _hexToRgb.b;
+  return (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHsl)(r, g, b);
+}
+function hslToHex(h, s, l) {
+  var _hslToRgb = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hslToRgb)(h, s, l),
+    r = _hslToRgb.r,
+    g = _hslToRgb.g,
+    b = _hslToRgb.b;
+  return (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHex)(r, g, b);
+}
+function hslSlotsToHex(slots) {
+  return {
+    primary: hslToHex(slots.primary.h, slots.primary.s, slots.primary.l),
+    secondary: hslToHex(slots.secondary.h, slots.secondary.s, slots.secondary.l),
+    accent: hslToHex(slots.accent.h, slots.accent.s, slots.accent.l),
+    neutral: hslToHex(slots.neutral.h, slots.neutral.s, slots.neutral.l),
+    background: hslToHex(slots.background.h, slots.background.s, slots.background.l)
+  };
+}
+
+/**
+ * Deterministic 5-color palette from a single base hex.
+ * Structure leaves room for a later pass: each slot can be replaced by
+ * matchToPaintLibrary(hex, library) without regenerating the whole palette.
+ *
+ * @param {string} baseHex
+ * @param {{
+ *   harmony?: string,
+ *   style?: string,
+ *   artist?: string,
+ *   artistStrength?: number
+ * } | undefined} [options]
+ * @returns {{ primary: string, secondary: string, accent: string, neutral: string, background: string }}
+ */
+function generatePalette(baseHex, options) {
+  var rawHarmony = options && _typeof(options) === 'object' && typeof options.harmony === 'string' ? options.harmony.trim().toLowerCase() : '';
+  var harmony = !rawHarmony || rawHarmony === 'none' ? 'analogous' : rawHarmony;
+  var slots = (0,_harmonyPalettes_js__WEBPACK_IMPORTED_MODULE_1__.harmonyPaletteToHslSlots)(baseHex, harmony);
+  var _hexToHsl = hexToHsl(baseHex),
+    baseHue = _hexToHsl.h;
+  var style = options && _typeof(options) === 'object' && typeof options.style === 'string' ? options.style.trim().toLowerCase() : '';
+  var artist = options && _typeof(options) === 'object' && typeof options.artist === 'string' ? options.artist.trim().toLowerCase() : '';
+  if (style && style !== 'none') {
+    slots = (0,_paletteStyles_js__WEBPACK_IMPORTED_MODULE_2__.applyStyleToPaletteHsl)(slots, style, baseHue);
+  }
+  if (artist && artist !== 'none') {
+    var artistStrength;
+    if (options && _typeof(options) === 'object' && options.artistStrength != null) {
+      var n = Number(options.artistStrength);
+      if (!Number.isNaN(n)) artistStrength = clamp01(n);
+    }
+    slots = (0,_artistStyles_js__WEBPACK_IMPORTED_MODULE_3__.applyArtistToPaletteHsl)(slots, artist, baseHue, artistStrength);
+  }
+  var out = hslSlotsToHex(slots);
+  // Legacy primary used exact RGB from the base hex (HSL round-trip can differ by 1 step).
+  if ((!style || style === 'none') && (!artist || artist === 'none')) {
+    var _hexToRgb2 = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(baseHex),
+      r = _hexToRgb2.r,
+      g = _hexToRgb2.g,
+      b = _hexToRgb2.b;
+    out.primary = (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.rgbToHex)(r, g, b);
+  }
+  return out;
+}
+
+/**
+ * Freeze palette for the session (e.g. so swapping source images does not alter colors).
+ * @param {{ primary: string, secondary: string, accent: string, neutral: string, background: string }} palette
+ */
+function lockPalette(palette) {
+  if (!palette || _typeof(palette) !== 'object') {
+    throw new Error('lockPalette: invalid palette');
+  }
+  var keys = ['primary', 'secondary', 'accent', 'neutral', 'background'];
+  for (var _i = 0, _keys = keys; _i < _keys.length; _i++) {
+    var k = _keys[_i];
+    if (!palette[k] || typeof palette[k] !== 'string') {
+      throw new Error('lockPalette: missing key ' + k);
+    }
+    (0,_colorPrimitives_js__WEBPACK_IMPORTED_MODULE_0__.hexToRgb)(palette[k]);
+  }
+  _lockedPalette = Object.freeze({
+    primary: palette.primary,
+    secondary: palette.secondary,
+    accent: palette.accent,
+    neutral: palette.neutral,
+    background: palette.background
+  });
+}
+
+/** @returns {Readonly<{ primary, secondary, accent, neutral, background }> | null} */
+function getLockedPalette() {
+  return _lockedPalette;
+}
+
+/** Clear lock (optional reset for demos). */
+function clearLockedPalette() {
+  _lockedPalette = null;
+}
+
+/***/ },
+
+/***/ "./src/color/paletteStyles.js"
+/*!************************************!*\
+  !*** ./src/color/paletteStyles.js ***!
+  \************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   ENGINE_STYLE_DESCRIPTIONS: () => (/* binding */ ENGINE_STYLE_DESCRIPTIONS),
+/* harmony export */   ENGINE_STYLE_IDS: () => (/* binding */ ENGINE_STYLE_IDS),
+/* harmony export */   ENGINE_STYLE_LABELS: () => (/* binding */ ENGINE_STYLE_LABELS),
+/* harmony export */   applyStyleToPaletteHsl: () => (/* binding */ applyStyleToPaletteHsl)
+/* harmony export */ });
+function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+/**
+ * paletteStyles.js — design-style modifiers on HSL (post-harmony, pre-artist).
+ * Each style applies slot-aware rules, then shared refinement: clamp extremes,
+ * preserve roles, enforce separation, subtle cohesion toward base hue.
+ */
+
+var SLOTS = ['primary', 'secondary', 'accent', 'neutral', 'background'];
+var ENGINE_STYLE_IDS = ['none', 'renaissance', 'bauhaus', 'minimal', 'scandinavian', 'coastal', 'earth', 'luxury', 'pastel'];
+
+/** Short dropdown labels */
+var ENGINE_STYLE_LABELS = {
+  none: 'None (harmony only)',
+  renaissance: 'Renaissance',
+  bauhaus: 'Bauhaus',
+  minimal: 'Minimal',
+  scandinavian: 'Scandinavian',
+  coastal: 'Coastal',
+  earth: 'Earth',
+  luxury: 'Luxury',
+  pastel: 'Pastel'
+};
+
+/** One-line descriptions for demo UI */
+var ENGINE_STYLE_DESCRIPTIONS = {
+  none: '',
+  renaissance: 'Warm, muted; compressed geometry; earthy neutrals.',
+  bauhaus: 'Bold planes; high saturation; strong light/dark split.',
+  minimal: 'Heavy calm; neutrals lead; narrow chroma.',
+  scandinavian: 'Bright, neutral, calm — cool bias, soft contrast.',
+  coastal: 'Coastal aquas/sand; primary stays close to your chosen base; airy, soft contrast.',
+  earth: 'Warm organic clay, olive, ochre; grounded, mid saturation.',
+  luxury: 'Deep darks, crisp lights; refined gold accent; no neon.',
+  pastel: 'Soft, light, gentle — low saturation, airy background.'
+};
+function clamp(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
+}
+function hueAdd(h, deg) {
+  return ((h + deg) % 360 + 360) % 360;
+}
+function lerpHue(h, target, t) {
+  var d = target - h;
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  return hueAdd(h, d * clamp(t, 0, 1));
+}
+function cloneSlots(slots) {
+  /** @type {Record<string, { h: number, s: number, l: number }>} */
+  var o = {};
+  var _iterator = _createForOfIteratorHelper(SLOTS),
+    _step;
+  try {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      var k = _step.value;
+      if (!slots[k]) continue;
+      o[k] = {
+        h: slots[k].h,
+        s: slots[k].s,
+        l: slots[k].l
+      };
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+  return o;
+}
+
+/** Normalized HSL distance in [0, ~1.2] */
+function hslDistance(a, b) {
+  var dh = Math.abs(a.h - b.h);
+  if (dh > 180) dh = 360 - dh;
+  dh /= 360;
+  var ds = a.s - b.s;
+  var dl = a.l - b.l;
+  return Math.sqrt(dh * dh + ds * ds + dl * dl);
+}
+
+/**
+ * @param {Record<string, { h: number, s: number, l: number }>} slots
+ * @param {string} styleId
+ * @param {number} baseHue
+ */
+function refinePaletteAfterStyle(slots, styleId, baseHue) {
+  var _cohesionByStyle$styl;
+  var baseH = (baseHue % 360 + 360) % 360;
+  var s = cloneSlots(slots);
+  var _iterator2 = _createForOfIteratorHelper(SLOTS),
+    _step2;
+  try {
+    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+      var k = _step2.value;
+      if (!s[k]) continue;
+      s[k].s = clamp(s[k].s, 0.03, 0.94);
+      s[k].l = clamp(s[k].l, 0.06, 0.97);
+    }
+  } catch (err) {
+    _iterator2.e(err);
+  } finally {
+    _iterator2.f();
+  }
+  if (s.background.l < 0.76) {
+    s.background.l = clamp(s.background.l + 0.07, 0.78, 0.98);
+  }
+  if (s.background.s > 0.34) {
+    s.background.s = clamp(s.background.s * 0.85, 0.02, 0.32);
+  }
+  if (s.neutral.s > s.primary.s * 0.75 && s.primary.s > 0.12) {
+    s.neutral.s = clamp(s.primary.s * 0.52, 0.03, 0.36);
+  }
+  if (s.primary.s < s.secondary.s * 0.88 && s.secondary.s > 0.06) {
+    s.primary.s = clamp(s.secondary.s * 0.96 + 0.02, 0.07, 0.92);
+  }
+  var lowAccentPunch = new Set(['scandinavian', 'minimal', 'pastel']);
+  if (!lowAccentPunch.has(styleId) && s.accent.s < 0.11 && s.primary.s > 0.14) {
+    s.accent.s = clamp(s.accent.s + 0.1, 0.12, 0.78);
+  }
+  if (hslDistance(s.accent, s.secondary) < 0.075) {
+    var bump = styleId === 'pastel' ? 10 : 20;
+    s.accent.h = hueAdd(s.accent.h, bump);
+  }
+  if (Math.abs(s.accent.l - s.secondary.l) < 0.055) {
+    s.accent.l = clamp(s.accent.l + (s.secondary.l >= 0.52 ? -0.08 : 0.08), 0.1, 0.9);
+  }
+  var dh = Math.abs(s.primary.h - s.secondary.h);
+  if (dh > 180) dh = 360 - dh;
+  if (dh < 14) {
+    s.secondary.h = hueAdd(s.secondary.h, 15);
+  }
+  if (s.neutral.l > s.background.l - 0.06) {
+    s.neutral.l = clamp(s.background.l - 0.14, 0.36, 0.72);
+  }
+  var cohesionByStyle = {
+    scandinavian: 0.062,
+    coastal: 0.058,
+    earth: 0.068,
+    luxury: 0.042,
+    pastel: 0.072,
+    renaissance: 0.058,
+    bauhaus: 0.038,
+    minimal: 0.052
+  };
+  var c0 = (_cohesionByStyle$styl = cohesionByStyle[styleId]) !== null && _cohesionByStyle$styl !== void 0 ? _cohesionByStyle$styl : 0.054;
+  var _iterator3 = _createForOfIteratorHelper(SLOTS),
+    _step3;
+  try {
+    for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+      var _k = _step3.value;
+      if (!s[_k]) continue;
+      var t = _k === 'background' ? c0 * 0.48 : _k === 'accent' ? c0 * 0.88 : _k === 'neutral' ? c0 * 0.58 : c0 * 0.62;
+      s[_k].h = lerpHue(s[_k].h, baseH, t);
+    }
+  } catch (err) {
+    _iterator3.e(err);
+  } finally {
+    _iterator3.f();
+  }
+  var _iterator4 = _createForOfIteratorHelper(SLOTS),
+    _step4;
+  try {
+    for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+      var _k2 = _step4.value;
+      if (!s[_k2]) continue;
+      s[_k2].s = clamp(s[_k2].s, 0.025, 0.95);
+      s[_k2].l = clamp(s[_k2].l, 0.05, 0.98);
+    }
+  } catch (err) {
+    _iterator4.e(err);
+  } finally {
+    _iterator4.f();
+  }
+  return s;
+}
+
+/**
+ * @param {{ h: number, s: number, l: number }} hsl
+ * @param {string} slotKey
+ * @param {number} baseHue
+ */
+function styleRenaissance(hsl, slotKey, baseHue) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  h = lerpHue(h, 38, 0.11);
+  s = clamp(s * 0.76, 0.05, 0.85);
+  l = 0.47 + (l - 0.47) * 0.7;
+  if (slotKey === 'neutral' || slotKey === 'background') {
+    s = clamp(s * 0.8, 0.03, 0.32);
+    l = slotKey === 'background' ? clamp(l * 0.97 + 0.02, 0.83, 0.96) : clamp(l * 0.98, 0.43, 0.61);
+  }
+  if (slotKey === 'accent') {
+    h = lerpHue(h, hueAdd(baseHue, 162), 0.08);
+    s = clamp(s * 0.92, 0.08, 0.72);
+  }
+  l = clamp(0.5 + (l - 0.5) * 0.9, 0.08, 0.95);
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+function styleBauhaus(hsl, slotKey, baseHue) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  if (s < 0.22) {
+    s = clamp(s * 1.1, 0.05, 0.32);
+  } else {
+    s = clamp(s * 1.18, 0.14, 0.95);
+  }
+  if (l <= 0.48) {
+    l = clamp(0.1 + l * 0.76, 0.08, 0.45);
+  } else {
+    l = clamp(0.53 + (l - 0.48) * 1.2, 0.52, 0.93);
+  }
+  if (slotKey === 'neutral') {
+    s = clamp(s * 0.9, 0.07, 0.38);
+    l = clamp(l, 0.46, 0.62);
+  }
+  if (slotKey === 'background') {
+    s = clamp(s * 0.75, 0.02, 0.18);
+    l = clamp(l + 0.02, 0.9, 0.98);
+  }
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+function styleMinimal(hsl, slotKey, baseHue) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  h = lerpHue(h, hueAdd(h, 14), 0.05);
+  s = clamp(s * 0.34, 0.03, 0.36);
+  l = clamp(0.5 + (l - 0.5) * 0.44, 0.36, 0.72);
+  if (slotKey === 'background') {
+    l = clamp(l + 0.2, 0.8, 0.96);
+    s = clamp(s * 0.82, 0.02, 0.16);
+  }
+  if (slotKey === 'neutral') {
+    s = clamp(s * 0.88, 0.03, 0.2);
+    l = clamp(l * 0.96 + 0.02, 0.46, 0.63);
+  }
+  if (slotKey === 'accent') {
+    s = clamp(s * 1.05, 0.06, 0.32);
+  }
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+function styleScandinavian(hsl, slotKey, baseHue) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  var cool = 218;
+  h = lerpHue(h, cool, slotKey === 'background' ? 0.06 : 0.14);
+  s = clamp(s * 0.58, 0.04, slotKey === 'primary' ? 0.48 : 0.38);
+  l = clamp(0.56 + (l - 0.5) * 0.55, 0.48, 0.94);
+  if (slotKey === 'neutral') {
+    s = clamp(s * 0.75, 0.02, 0.16);
+    l = clamp(0.52 + (l - 0.52) * 0.75, 0.48, 0.68);
+  }
+  if (slotKey === 'background') {
+    s = clamp(s * 0.65, 0.02, 0.12);
+    l = clamp(l + 0.06, 0.9, 0.98);
+  }
+  if (slotKey === 'accent') {
+    h = lerpHue(h, hueAdd(baseHue, 158), 0.1);
+    s = clamp(s * 0.85, 0.08, 0.42);
+    l = clamp(l + 0.02, 0.55, 0.88);
+  }
+  l = clamp(0.5 + (l - 0.5) * 0.82, 0.12, 0.96);
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+function styleCoastal(hsl, slotKey, baseHue) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  var sea = 202;
+  var sand = 78;
+  if (slotKey === 'primary') {
+    // Preserve recognizability: keep base color as primary (only small airy lift).
+    h = lerpHue(h, baseHue, 0.06);
+    s = clamp(s * 0.96, 0.1, 0.78);
+    l = clamp(l + 0.04, 0.34, 0.84);
+  } else if (slotKey === 'secondary') {
+    // Supporting coastal sea tone can drift more than primary.
+    h = lerpHue(h, sea, 0.22);
+    s = clamp(s * 0.86, 0.1, 0.68);
+    l = clamp(l + 0.06, 0.4, 0.88);
+  }
+  if (slotKey === 'accent') {
+    h = lerpHue(h, 188, 0.15);
+    s = clamp(s * 0.95, 0.12, 0.68);
+    l = clamp(l + 0.04, 0.42, 0.82);
+  }
+  if (slotKey === 'neutral') {
+    h = lerpHue(h, sand, 0.22);
+    s = clamp(s * 0.72, 0.05, 0.28);
+    l = clamp(0.5 + (l - 0.5) * 0.88, 0.46, 0.64);
+  }
+  if (slotKey === 'background') {
+    h = lerpHue(h, 48, 0.12);
+    s = clamp(s * 0.7, 0.04, 0.22);
+    l = clamp(l + 0.05, 0.9, 0.98);
+  }
+  l = clamp(0.5 + (l - 0.5) * 0.86, 0.1, 0.97);
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+function styleEarth(hsl, slotKey, baseHue) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  var warm = 32;
+  var olive = 88;
+  var clay = 22;
+  h = lerpHue(h, warm, 0.12);
+  s = clamp(s * 0.82, 0.08, 0.62);
+  l = clamp(0.48 + (l - 0.48) * 0.92, 0.18, 0.78);
+  if (slotKey === 'secondary') {
+    h = lerpHue(h, clay, 0.14);
+    s = clamp(s * 0.92, 0.12, 0.58);
+  }
+  if (slotKey === 'accent') {
+    h = lerpHue(h, olive, 0.16);
+    s = clamp(s * 0.88, 0.1, 0.55);
+    l = clamp(l * 0.96, 0.22, 0.62);
+  }
+  if (slotKey === 'neutral') {
+    h = lerpHue(h, 42, 0.1);
+    s = clamp(s * 0.75, 0.04, 0.26);
+    l = clamp(l * 0.97 + 0.01, 0.44, 0.6);
+  }
+  if (slotKey === 'background') {
+    h = lerpHue(h, 55, 0.08);
+    s = clamp(s * 0.8, 0.04, 0.2);
+    l = clamp(l + 0.03, 0.88, 0.96);
+  }
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+function styleLuxury(hsl, slotKey, baseHue) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  var gold = 46;
+  if (slotKey === 'primary' || slotKey === 'secondary') {
+    if (l > 0.48) {
+      l = clamp(0.52 + (l - 0.48) * 1.15, 0.5, 0.92);
+    } else {
+      l = clamp(0.08 + l * 0.72, 0.1, 0.42);
+    }
+    s = clamp(s * 0.92, 0.1, 0.72);
+  }
+  if (slotKey === 'accent') {
+    h = lerpHue(h, gold, 0.28);
+    s = clamp(s * 1.02, 0.18, 0.68);
+    l = clamp(0.38 + (l - 0.4) * 0.9, 0.32, 0.72);
+  }
+  if (slotKey === 'neutral') {
+    h = lerpHue(h, hueAdd(baseHue, -8), 0.08);
+    s = clamp(s * 0.78, 0.05, 0.28);
+    l = clamp(0.48 + (l - 0.48) * 0.95, 0.4, 0.58);
+  }
+  if (slotKey === 'background') {
+    s = clamp(s * 0.65, 0.02, 0.14);
+    l = clamp(l + 0.02, 0.9, 0.99);
+  }
+  s = clamp(s, 0.06, 0.72);
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+function stylePastel(hsl, slotKey, baseHue) {
+  var h = hsl.h,
+    s = hsl.s,
+    l = hsl.l;
+  s = clamp(s * 0.48, 0.05, 0.42);
+  l = clamp(0.64 + (l - 0.5) * 0.45, 0.52, 0.93);
+  if (slotKey === 'accent') {
+    h = lerpHue(h, hueAdd(baseHue, 168), 0.22);
+    s = clamp(s * 1.08, 0.1, 0.45);
+    l = clamp(l - 0.04, 0.48, 0.82);
+  }
+  if (slotKey === 'secondary') {
+    h = lerpHue(h, hueAdd(baseHue, -36), 0.12);
+    s = clamp(s * 1.02, 0.08, 0.4);
+  }
+  if (slotKey === 'neutral') {
+    s = clamp(s * 0.85, 0.04, 0.22);
+    l = clamp(0.55 + (l - 0.55) * 0.85, 0.5, 0.72);
+  }
+  if (slotKey === 'background') {
+    s = clamp(s * 0.7, 0.02, 0.14);
+    l = clamp(l + 0.04, 0.9, 0.98);
+  }
+  l = clamp(0.5 + (l - 0.5) * 0.88, 0.2, 0.97);
+  return {
+    h: h,
+    s: s,
+    l: l
+  };
+}
+var STYLE_MODIFIERS = {
+  renaissance: styleRenaissance,
+  bauhaus: styleBauhaus,
+  minimal: styleMinimal,
+  scandinavian: styleScandinavian,
+  coastal: styleCoastal,
+  earth: styleEarth,
+  luxury: styleLuxury,
+  pastel: stylePastel
+};
+
+/**
+ * @param {Record<string, { h: number, s: number, l: number }>} hslSlots
+ * @param {string} styleId
+ * @param {number} [baseHue] base color hue for cohesion; defaults to primary slot
+ * @returns {Record<string, { h: number, s: number, l: number }>}
+ */
+function applyStyleToPaletteHsl(hslSlots, styleId, baseHue) {
+  if (!styleId || styleId === 'none') return hslSlots;
+  var fn = STYLE_MODIFIERS[styleId];
+  if (!fn) return hslSlots;
+  var bh = baseHue != null && !Number.isNaN(baseHue) ? (baseHue % 360 + 360) % 360 : hslSlots.primary ? hslSlots.primary.h : 0;
+  var out = {};
+  var _iterator5 = _createForOfIteratorHelper(SLOTS),
+    _step5;
+  try {
+    for (_iterator5.s(); !(_step5 = _iterator5.n()).done;) {
+      var k = _step5.value;
+      var src = hslSlots[k];
+      if (!src) continue;
+      out[k] = fn({
+        h: src.h,
+        s: src.s,
+        l: src.l
+      }, k, bh);
+    }
+  } catch (err) {
+    _iterator5.e(err);
+  } finally {
+    _iterator5.f();
+  }
+  return refinePaletteAfterStyle(out, styleId, bh);
+}
+
+/***/ },
+
+/***/ "./src/color/sherwinWilliamsTestPalette.js"
+/*!*************************************************!*\
+  !*** ./src/color/sherwinWilliamsTestPalette.js ***!
+  \*************************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   SHERWIN_WILLIAMS_TEST_PALETTE: () => (/* binding */ SHERWIN_WILLIAMS_TEST_PALETTE),
+/* harmony export */   SHERWIN_WILLIAMS_TEST_PALETTE_DISCLAIMER: () => (/* binding */ SHERWIN_WILLIAMS_TEST_PALETTE_DISCLAIMER)
+/* harmony export */ });
+/**
+ * Placeholder / demo paint list only — NOT a complete Sherwin-Williams catalog.
+ * For Palette Engine Test UI and local deterministic matching.
+ */
+
+/** @typedef {{ name: string, code: string, hex: string }} SherwinWilliamsTestEntry */
+
+/** @type {SherwinWilliamsTestEntry[]} */
+var SHERWIN_WILLIAMS_TEST_PALETTE = [
+// Blues / aquas / teals (demo approximations — improves matches for bright primaries)
+{
+  name: 'Hyper Blue',
+  code: 'SW 6965',
+  hex: '#0067C7'
+}, {
+  name: 'Brilliant Blue',
+  code: 'SW 6814',
+  hex: '#2178C7'
+}, {
+  name: 'Daphne',
+  code: 'SW 9078',
+  hex: '#3A7CA5'
+}, {
+  name: 'Honest Blue',
+  code: 'SW 6810',
+  hex: '#2F6FAD'
+}, {
+  name: 'Jacaranda',
+  code: 'SW 6802',
+  hex: '#4B6FA8'
+}, {
+  name: 'Larkspur',
+  code: 'SW 6745',
+  hex: '#5B8FC4'
+}, {
+  name: 'Open Seas',
+  code: 'SW 6500',
+  hex: '#4A8FA8'
+}, {
+  name: 'Aquarium',
+  code: 'SW 6767',
+  hex: '#4AB8C4'
+}, {
+  name: 'Tidewater',
+  code: 'SW 6473',
+  hex: '#6BA8B0'
+}, {
+  name: 'Rain',
+  code: 'SW 6219',
+  hex: '#7BA7B2'
+}, {
+  name: 'Accessible Beige',
+  code: 'SW 7036',
+  hex: '#D1C7B8'
+}, {
+  name: 'Agreeable Gray',
+  code: 'SW 7029',
+  hex: '#D1CCC4'
+}, {
+  name: 'Alabaster',
+  code: 'SW 7008',
+  hex: '#EDEAE0'
+}, {
+  name: 'Urbane Bronze',
+  code: 'SW 7048',
+  hex: '#54504A'
+}, {
+  name: 'Iron Ore',
+  code: 'SW 7069',
+  hex: '#4A4843'
+}, {
+  name: 'Sea Salt',
+  code: 'SW 6204',
+  hex: '#CDD2CA'
+}, {
+  name: 'Rainwashed',
+  code: 'SW 6211',
+  hex: '#C5D5CA'
+}, {
+  name: 'Tradewind',
+  code: 'SW 6218',
+  hex: '#B9C8C4'
+}, {
+  name: 'Naval',
+  code: 'SW 6244',
+  hex: '#2F3D4C'
+}, {
+  name: 'Cyberspace',
+  code: 'SW 7076',
+  hex: '#43464B'
+}, {
+  name: 'Peppercorn',
+  code: 'SW 7674',
+  hex: '#585858'
+}, {
+  name: 'Repose Gray',
+  code: 'SW 7015',
+  hex: '#CCC9C0'
+}, {
+  name: 'Mindful Gray',
+  code: 'SW 7016',
+  hex: '#BCB8AF'
+}, {
+  name: 'Dovetail',
+  code: 'SW 7018',
+  hex: '#908A83'
+}, {
+  name: 'Gauntlet Gray',
+  code: 'SW 7019',
+  hex: '#78736E'
+}, {
+  name: 'Red Bay',
+  code: 'SW 6321',
+  hex: '#8B3A3A'
+}, {
+  name: 'Fireweed',
+  code: 'SW 6328',
+  hex: '#6B2E2C'
+}, {
+  name: 'Coral Reef',
+  code: 'SW 6606',
+  hex: '#E8A598'
+}, {
+  name: 'Invigorate',
+  code: 'SW 6886',
+  hex: '#E07C4C'
+}, {
+  name: 'Oceanside',
+  code: 'SW 6496',
+  hex: '#1F4E5A'
+}, {
+  name: 'Jasper',
+  code: 'SW 6216',
+  hex: '#4A6670'
+}, {
+  name: 'Clary Sage',
+  code: 'SW 6178',
+  hex: '#B5B9A4'
+}, {
+  name: 'Svelte Sage',
+  code: 'SW 6164',
+  hex: '#A8A78E'
+}, {
+  name: 'Dried Thyme',
+  code: 'SW 6186',
+  hex: '#6B6C5A'
+}, {
+  name: 'Basque Green',
+  code: 'SW 6246',
+  hex: '#2A403A'
+}, {
+  name: 'Cavern Clay',
+  code: 'SW 7701',
+  hex: '#B87D5A'
+}, {
+  name: 'Amber Wave',
+  code: 'SW 6657',
+  hex: '#D4A574'
+}, {
+  name: 'Honeybee',
+  code: 'SW 6670',
+  hex: '#E8C89A'
+}, {
+  name: 'Lemon Twist',
+  code: 'SW 6909',
+  hex: '#F4E87C'
+}, {
+  name: 'Brilliant Yellow',
+  code: 'SW 6904',
+  hex: '#F2D56E'
+}, {
+  name: 'Inky Blue',
+  code: 'SW 9149',
+  hex: '#2B3549'
+}, {
+  name: 'Pure White',
+  code: 'SW 7005',
+  hex: '#EDEDE8'
+}, {
+  name: 'Extra White',
+  code: 'SW 7006',
+  hex: '#E8E8E4'
+}, {
+  name: 'Snowbound',
+  code: 'SW 7004',
+  hex: '#E3E1DC'
+}];
+var SHERWIN_WILLIAMS_TEST_PALETTE_DISCLAIMER = 'Demo only: this is a small local sample list, not the full Sherwin-Williams catalog.';
 
 /***/ },
 
@@ -4151,6 +6478,612 @@ if (typeof window !== 'undefined') {
 
 /***/ },
 
+/***/ "./src/demo/colorflexPaletteHook.js"
+/*!******************************************!*\
+  !*** ./src/demo/colorflexPaletteHook.js ***!
+  \******************************************/
+(__unused_webpack_module, __webpack_exports__, __webpack_require__) {
+
+__webpack_require__.r(__webpack_exports__);
+/* harmony export */ __webpack_require__.d(__webpack_exports__, {
+/* harmony export */   initColorFlexPaletteHook: () => (/* binding */ initColorFlexPaletteHook)
+/* harmony export */ });
+/* harmony import */ var _color_paletteEngine_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../color/paletteEngine.js */ "./src/color/paletteEngine.js");
+/* harmony import */ var _color_paintLibraryMatcher_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ../color/paintLibraryMatcher.js */ "./src/color/paintLibraryMatcher.js");
+/* harmony import */ var _color_ensureLayerContrast_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ../color/ensureLayerContrast.js */ "./src/color/ensureLayerContrast.js");
+/* harmony import */ var _color_sherwinWilliamsTestPalette_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ../color/sherwinWilliamsTestPalette.js */ "./src/color/sherwinWilliamsTestPalette.js");
+/* harmony import */ var _color_harmonyPalettes_js__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! ../color/harmonyPalettes.js */ "./src/color/harmonyPalettes.js");
+/* harmony import */ var _color_paletteStyles_js__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! ../color/paletteStyles.js */ "./src/color/paletteStyles.js");
+/* harmony import */ var _color_artistStyles_js__WEBPACK_IMPORTED_MODULE_6__ = __webpack_require__(/*! ../color/artistStyles.js */ "./src/color/artistStyles.js");
+function _typeof(o) { "@babel/helpers - typeof"; return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && "function" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? "symbol" : typeof o; }, _typeof(o); }
+function _createForOfIteratorHelper(r, e) { var t = "undefined" != typeof Symbol && r[Symbol.iterator] || r["@@iterator"]; if (!t) { if (Array.isArray(r) || (t = _unsupportedIterableToArray(r)) || e && r && "number" == typeof r.length) { t && (r = t); var _n = 0, F = function F() {}; return { s: F, n: function n() { return _n >= r.length ? { done: !0 } : { done: !1, value: r[_n++] }; }, e: function e(r) { throw r; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var o, a = !0, u = !1; return { s: function s() { t = t.call(r); }, n: function n() { var r = t.next(); return a = r.done, r; }, e: function e(r) { u = !0, o = r; }, f: function f() { try { a || null == t["return"] || t["return"](); } finally { if (u) throw o; } } }; }
+function _unsupportedIterableToArray(r, a) { if (r) { if ("string" == typeof r) return _arrayLikeToArray(r, a); var t = {}.toString.call(r).slice(8, -1); return "Object" === t && r.constructor && (t = r.constructor.name), "Map" === t || "Set" === t ? Array.from(r) : "Arguments" === t || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(t) ? _arrayLikeToArray(r, a) : void 0; } }
+function _arrayLikeToArray(r, a) { (null == a || a > r.length) && (a = r.length); for (var e = 0, n = Array(a); e < a; e++) n[e] = r[e]; return n; }
+/**
+ * colorflexPaletteHook.js — test-only palette engine UI inside ColorFlex.
+ *
+ * STRICT: does not modify the rendering pipeline or layer loading. It only fills existing
+ * layer color inputs after the user clicks Apply, using CFM’s applyColorsToLayerInputs
+ * (assigned to window in CFM.js so this module stays decoupled from broad refactors).
+ *
+ * Enable: ?paletteEngineTest=1  or  localStorage.setItem("paletteEngineTest", "1")
+ */
+
+
+
+
+
+
+
+
+var SLOT_KEYS = ['primary', 'secondary', 'accent', 'neutral', 'background'];
+function clamp(n, lo, hi) {
+  return Math.max(lo, Math.min(hi, n));
+}
+function normalizeHex(v) {
+  var h = String(v || '').trim();
+  if (!h) return '#5a7d9a';
+  if (h[0] !== '#') h = '#' + h;
+  if (h.length === 4) h = '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+  if (h.length !== 7) return '#5a7d9a';
+  return h.toLowerCase();
+}
+function el(tag, cls, text) {
+  var e = document.createElement(tag);
+  if (cls) e.className = cls;
+  if (text != null) e.textContent = text;
+  return e;
+}
+function engineHarmonyLabels() {
+  return {
+    analogous: 'Analogous',
+    complementary: 'Complementary',
+    splitComplementary: 'Split-complementary',
+    triadic: 'Triadic',
+    monochromatic: 'Monochromatic',
+    neutral: 'Neutral (warm-neutral)'
+  };
+}
+function engineArtistLabels() {
+  return {
+    none: 'None',
+    monet: 'Monet',
+    picasso: 'Picasso',
+    dali: 'Dalí',
+    sargent: 'Sargent',
+    lichtenstein: 'Lichtenstein',
+    vangogh: 'van Gogh',
+    matisse: 'Matisse',
+    okeeffe: "O'Keeffe"
+  };
+}
+function rgbClampByte(n) {
+  var x = Math.round(n);
+  return x < 0 ? 0 : x > 255 ? 255 : x;
+}
+function hexToRgb(hex) {
+  var h = String(hex).replace(/^#/, '').trim();
+  if (h.length !== 6) return {
+    r: 0,
+    g: 0,
+    b: 0
+  };
+  return {
+    r: parseInt(h.slice(0, 2), 16),
+    g: parseInt(h.slice(2, 4), 16),
+    b: parseInt(h.slice(4, 6), 16)
+  };
+}
+function rgbToHex(r, g, b) {
+  var x = function x(n) {
+    return rgbClampByte(n).toString(16).padStart(2, '0');
+  };
+  return '#' + x(r) + x(g) + x(b);
+}
+function rgbToHsl(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  var max = Math.max(r, g, b);
+  var min = Math.min(r, g, b);
+  var d = max - min;
+  var h = 0;
+  var l = (max + min) / 2;
+  var s = 0;
+  if (d > 1e-8) {
+    s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+    switch (max) {
+      case r:
+        h = ((g - b) / d + (g < b ? 6 : 0)) / 6;
+        break;
+      case g:
+        h = ((b - r) / d + 2) / 6;
+        break;
+      default:
+        h = ((r - g) / d + 4) / 6;
+        break;
+    }
+  }
+  return {
+    h: h * 360,
+    s: s,
+    l: l
+  };
+}
+function hslToRgb(h, s, l) {
+  h = (h % 360 + 360) % 360;
+  s = clamp(s, 0, 1);
+  l = clamp(l, 0, 1);
+  if (s < 1e-8) {
+    var v = Math.round(l * 255);
+    return {
+      r: v,
+      g: v,
+      b: v
+    };
+  }
+  var q = l < 0.5 ? l * (1 + s) : l + s - l * s;
+  var p = 2 * l - q;
+  var hk = h / 360;
+  var t = function t(tt) {
+    var x = tt;
+    if (x < 0) x += 1;
+    if (x > 1) x -= 1;
+    if (x < 1 / 6) return p + (q - p) * 6 * x;
+    if (x < 1 / 2) return q;
+    if (x < 2 / 3) return p + (q - p) * (2 / 3 - x) * 6;
+    return p;
+  };
+  return {
+    r: Math.round(255 * t(hk + 1 / 3)),
+    g: Math.round(255 * t(hk)),
+    b: Math.round(255 * t(hk - 1 / 3))
+  };
+}
+function variantDarker(hex) {
+  var _hexToRgb = hexToRgb(hex),
+    r = _hexToRgb.r,
+    g = _hexToRgb.g,
+    b = _hexToRgb.b;
+  var hsl = rgbToHsl(r, g, b);
+  var out = hslToRgb(hsl.h, hsl.s * 0.95, hsl.l * 0.72);
+  return rgbToHex(out.r, out.g, out.b);
+}
+function variantLighter(hex) {
+  var _hexToRgb2 = hexToRgb(hex),
+    r = _hexToRgb2.r,
+    g = _hexToRgb2.g,
+    b = _hexToRgb2.b;
+  var hsl = rgbToHsl(r, g, b);
+  var nl = clamp(hsl.l + (1 - hsl.l) * 0.38, 0, 1);
+  var out = hslToRgb(hsl.h, hsl.s * 0.88, nl);
+  return rgbToHex(out.r, out.g, out.b);
+}
+function variantMutedAccent(hex) {
+  var _hexToRgb3 = hexToRgb(hex),
+    r = _hexToRgb3.r,
+    g = _hexToRgb3.g,
+    b = _hexToRgb3.b;
+  var hsl = rgbToHsl(r, g, b);
+  var out = hslToRgb(hsl.h, clamp(hsl.s * 0.55, 0.06, 0.45), clamp(hsl.l * 1.02, 0, 1));
+  return rgbToHex(out.r, out.g, out.b);
+}
+function variantWarmNeutral(hex) {
+  var _hexToRgb4 = hexToRgb(hex),
+    r = _hexToRgb4.r,
+    g = _hexToRgb4.g,
+    b = _hexToRgb4.b;
+  var hsl = rgbToHsl(r, g, b);
+  var out = hslToRgb(38, clamp(hsl.s * 0.18, 0.03, 0.22), clamp(0.5 + (hsl.l - 0.5) * 0.85, 0.36, 0.72));
+  return rgbToHex(out.r, out.g, out.b);
+}
+function variantCoolNeutral(hex) {
+  var _hexToRgb5 = hexToRgb(hex),
+    r = _hexToRgb5.r,
+    g = _hexToRgb5.g,
+    b = _hexToRgb5.b;
+  var hsl = rgbToHsl(r, g, b);
+  var out = hslToRgb(220, clamp(hsl.s * 0.18, 0.03, 0.22), clamp(0.5 + (hsl.l - 0.5) * 0.85, 0.36, 0.72));
+  return rgbToHex(out.r, out.g, out.b);
+}
+
+/** Build up to 12 colors for layer fill mapping. */
+function expandPaletteTo12(palette) {
+  var p = palette.primary;
+  var s = palette.secondary;
+  var a = palette.accent;
+  var n = palette.neutral;
+  var b = palette.background;
+  return [p, s, a, n, b, variantDarker(p), variantLighter(p), variantDarker(s), variantLighter(s), variantMutedAccent(a), variantWarmNeutral(n), variantCoolNeutral(n)];
+}
+function getColorableLayerCount() {
+  var st = window.appState;
+  if (!st) return 0;
+  if (Array.isArray(st.layerInputs) && st.layerInputs.length) return st.layerInputs.length;
+  if (Array.isArray(st.currentLayers) && st.currentLayers.length) {
+    return st.currentLayers.filter(function (l) {
+      return l && l.color != null && l.isShadow !== true;
+    }).length;
+  }
+  return 0;
+}
+function getPatternName() {
+  var _window$appState, _window$appState2;
+  return ((_window$appState = window.appState) === null || _window$appState === void 0 || (_window$appState = _window$appState.currentPattern) === null || _window$appState === void 0 ? void 0 : _window$appState.name) || ((_window$appState2 = window.appState) === null || _window$appState2 === void 0 || (_window$appState2 = _window$appState2.targetPattern) === null || _window$appState2 === void 0 ? void 0 : _window$appState2.name) || '';
+}
+function getLayerInputs() {
+  var _window$appState3;
+  return Array.isArray((_window$appState3 = window.appState) === null || _window$appState3 === void 0 ? void 0 : _window$appState3.layerInputs) ? window.appState.layerInputs : [];
+}
+function computeProposedLayerColors(expanded12, layerCount) {
+  var colors = [];
+  var max = Math.min(layerCount, 12);
+  for (var i = 0; i < max; i++) colors.push(expanded12[i]);
+  return colors;
+}
+
+/** Indexed by appState.currentLayers index (matches CFM applyColorsToLayerInputs). */
+function buildColorsArrayForApply(proposedForInputs) {
+  var _window$appState4;
+  var layers = Array.isArray((_window$appState4 = window.appState) === null || _window$appState4 === void 0 ? void 0 : _window$appState4.currentLayers) ? window.appState.currentLayers : [];
+  var out = new Array(layers.length).fill(null);
+  var inputs = getLayerInputs();
+  var colorableIdx = 0;
+  var _iterator = _createForOfIteratorHelper(inputs),
+    _step;
+  try {
+    var _loop = function _loop() {
+      var inp = _step.value;
+      var clIdx = layers.findIndex(function (l) {
+        return l && l.label === inp.label;
+      });
+      if (clIdx === -1) return 1; // continue
+      var hex = proposedForInputs[colorableIdx];
+      if (hex) out[clIdx] = hex;
+      colorableIdx++;
+    };
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
+      if (_loop()) continue;
+    }
+  } catch (err) {
+    _iterator.e(err);
+  } finally {
+    _iterator.f();
+  }
+  return out;
+}
+function renderSwatches(list) {
+  var row = el('div', 'peh-swatch-row');
+  var _iterator2 = _createForOfIteratorHelper(list),
+    _step2;
+  try {
+    for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
+      var hex = _step2.value;
+      var cell = el('div', 'peh-swatch');
+      cell.style.background = hex;
+      cell.title = hex;
+      row.appendChild(cell);
+    }
+  } catch (err) {
+    _iterator2.e(err);
+  } finally {
+    _iterator2.f();
+  }
+  return row;
+}
+function enabledByFlag() {
+  var sp = new URLSearchParams(window.location.search || '');
+  if (sp.get('paletteEngineTest') === '1') return true;
+  try {
+    return window.localStorage.getItem('paletteEngineTest') === '1';
+  } catch (_e) {
+    return false;
+  }
+}
+function buildGenerateOptions(harmony, style, artist, strength) {
+  var opt = {
+    harmony: harmony && harmony !== 'none' ? harmony : 'analogous'
+  };
+  if (style && style !== 'none') opt.style = style;
+  if (artist && artist !== 'none') {
+    opt.artist = artist;
+    opt.artistStrength = strength;
+  }
+  return opt;
+}
+function initColorFlexPaletteHook() {
+  if (typeof document === 'undefined') return;
+  if (!enabledByFlag()) return;
+  if (document.getElementById('paletteEngineHookRoot')) return;
+  var container = document.getElementById('colorControls') || document.getElementById('layerInputsContainer') || document.body;
+  var root = el('section', 'peh-root');
+  root.id = 'paletteEngineHookRoot';
+  root.appendChild(el('div', 'peh-title', 'Palette Engine Test'));
+  root.appendChild(el('div', 'peh-note', 'Preview only until you click Apply. Demo Sherwin match is always on (no toggle). Full catalog names on layer inputs require ColorFlex color data loaded. Enable with ?paletteEngineTest=1'));
+  var controls = el('div', 'peh-controls');
+  var baseLab = el('label', 'peh-lab', 'Base');
+  var baseColor = document.createElement('input');
+  baseColor.type = 'color';
+  baseColor.value = '#5a7d9a';
+  var baseHex = document.createElement('input');
+  baseHex.type = 'text';
+  baseHex.value = '#5a7d9a';
+  baseHex.className = 'peh-hex';
+  baseHex.spellcheck = false;
+  baseLab.appendChild(baseColor);
+  baseLab.appendChild(baseHex);
+  controls.appendChild(baseLab);
+  function addSelect(label, ids, labels, def) {
+    var lab = el('label', 'peh-lab', label);
+    var sel = document.createElement('select');
+    sel.className = 'peh-select';
+    var _iterator3 = _createForOfIteratorHelper(ids),
+      _step3;
+    try {
+      for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
+        var id = _step3.value;
+        var o = document.createElement('option');
+        o.value = id;
+        o.textContent = labels[id] || id;
+        sel.appendChild(o);
+      }
+    } catch (err) {
+      _iterator3.e(err);
+    } finally {
+      _iterator3.f();
+    }
+    sel.value = def;
+    lab.appendChild(sel);
+    controls.appendChild(lab);
+    return sel;
+  }
+  var harmonySel = addSelect('Harmony', _color_harmonyPalettes_js__WEBPACK_IMPORTED_MODULE_4__.ENGINE_HARMONY_IDS, engineHarmonyLabels(), 'analogous');
+  var styleSel = addSelect('Style', _color_paletteStyles_js__WEBPACK_IMPORTED_MODULE_5__.ENGINE_STYLE_IDS, _color_paletteStyles_js__WEBPACK_IMPORTED_MODULE_5__.ENGINE_STYLE_LABELS, 'none');
+  var artistSel = addSelect('Artist', _color_artistStyles_js__WEBPACK_IMPORTED_MODULE_6__.ENGINE_ARTIST_IDS, engineArtistLabels(), 'none');
+  var strengthLab = el('label', 'peh-lab', 'Artist strength');
+  var strengthRange = document.createElement('input');
+  strengthRange.type = 'range';
+  strengthRange.min = '0';
+  strengthRange.max = '1';
+  strengthRange.step = '0.05';
+  strengthRange.value = String(_color_artistStyles_js__WEBPACK_IMPORTED_MODULE_6__.DEFAULT_ARTIST_STRENGTH);
+  strengthRange.className = 'peh-range';
+  var strengthOut = el('span', 'peh-range-out', String(_color_artistStyles_js__WEBPACK_IMPORTED_MODULE_6__.DEFAULT_ARTIST_STRENGTH));
+  strengthLab.appendChild(strengthRange);
+  strengthLab.appendChild(strengthOut);
+  controls.appendChild(strengthLab);
+  var refreshBtn = el('button', 'peh-btn', 'Refresh layer detection');
+  controls.appendChild(refreshBtn);
+  var baseCatalogHint = el('div', 'peh-base-hint', '');
+  controls.appendChild(baseCatalogHint);
+  root.appendChild(controls);
+  var styleDesc = el('div', 'peh-desc', '');
+  root.appendChild(styleDesc);
+  var artistDesc = el('div', 'peh-desc', '');
+  root.appendChild(artistDesc);
+  var info = el('div', 'peh-info', '');
+  root.appendChild(info);
+  var preview = el('div', 'peh-preview');
+  root.appendChild(preview);
+  var mapList = el('div', 'peh-map');
+  root.appendChild(mapList);
+  var actions = el('div', 'peh-actions');
+  var applyBtn = el('button', 'peh-btn peh-apply', 'Apply Palette to Layers');
+  var warn = el('div', 'peh-warn', '');
+  actions.appendChild(applyBtn);
+  actions.appendChild(warn);
+  root.appendChild(actions);
+  var styleEl = document.createElement('style');
+  styleEl.textContent = "\n    .peh-root{margin:12px 0;padding:12px 14px;border:1px solid #3a3a3a;border-radius:10px;background:#151515;color:#eaeaea;max-width:820px}\n    .peh-title{font-weight:700;font-size:0.95rem;margin-bottom:4px;color:#d4c896}\n    .peh-note{font-size:0.8rem;color:#a0a0a0;line-height:1.4;margin-bottom:10px}\n    .peh-controls{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;margin-bottom:10px}\n    .peh-lab{display:flex;flex-direction:column;gap:4px;font-size:0.72rem;color:#a0a0a0;font-weight:600}\n    .peh-lab input[type=\"color\"]{width:48px;height:34px;padding:0;border:1px solid #444;background:#000}\n    .peh-hex{width:7.5rem;padding:6px 8px;border-radius:6px;border:1px solid #444;background:#1e1e1e;color:#eee;font-family:ui-monospace,monospace}\n    .peh-select{min-width:11rem;padding:6px 8px;border-radius:6px;border:1px solid #444;background:#1e1e1e;color:#eee}\n    .peh-range{width:10rem}\n    .peh-range-out{font-family:ui-monospace,monospace;color:#b8b8a0;font-size:0.78rem}\n    .peh-desc{font-size:0.78rem;color:#a0a090;line-height:1.4;margin:2px 0}\n    .peh-info{font-size:0.78rem;color:#9a9a8a;margin:10px 0 8px;line-height:1.4}\n    .peh-swatch-row{display:flex;gap:6px;flex-wrap:wrap;margin:6px 0 10px}\n    .peh-swatch{width:26px;height:18px;border-radius:5px;border:1px solid rgba(255,255,255,0.16)}\n    .peh-map{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}\n    .peh-map-line{font-size:0.78rem;color:#cfcfcf;display:flex;gap:10px;align-items:center}\n    .peh-chip{width:16px;height:16px;border-radius:4px;border:1px solid rgba(255,255,255,0.16)}\n    .peh-actions{display:flex;gap:12px;align-items:center;flex-wrap:wrap}\n    .peh-btn{padding:8px 10px;border-radius:8px;border:1px solid #555;background:#222;color:#eee;cursor:pointer;font-weight:700}\n    .peh-btn:hover{border-color:#777}\n    .peh-btn:disabled{opacity:0.45;cursor:not-allowed}\n    .peh-warn{font-size:0.78rem;color:#e0b070;line-height:1.35}\n    .peh-base-hint{flex-basis:100%;font-size:0.68rem;color:#8a9aac;line-height:1.35;max-width:36rem;margin-top:2px}\n    .peh-prev-label{font-size:0.72rem;color:#a0a0a0;margin-top:8px;margin-bottom:4px}\n    .peh-map-detail{display:flex;flex-direction:column;gap:2px;align-items:flex-start;padding:6px 0;border-bottom:1px solid rgba(255,255,255,0.06)}\n    .peh-map-detail .peh-map-line{border:none;padding:0;margin:0}\n    .peh-map-sub{font-size:0.72rem;color:#b0b0a0;padding-left:22px;line-height:1.45}\n    .peh-map-warn{font-size:0.7rem;color:#d9a070;padding-left:22px}\n  ";
+  root.appendChild(styleEl);
+  container.prepend(root);
+  var lastComputed = null;
+  function readStrength() {
+    var v = parseFloat(strengthRange.value);
+    var t = Number.isNaN(v) ? _color_artistStyles_js__WEBPACK_IMPORTED_MODULE_6__.DEFAULT_ARTIST_STRENGTH : clamp(v, 0, 1);
+    strengthOut.textContent = t.toFixed(2);
+    return t;
+  }
+  function compute() {
+    var hex = normalizeHex(baseHex.value);
+    baseHex.value = hex;
+    try {
+      baseColor.value = hex;
+    } catch (_e) {}
+    var harmony = harmonySel.value || 'analogous';
+    var style = styleSel.value || 'none';
+    var artist = artistSel.value || 'none';
+    var strength = readStrength();
+    var pal = (0,_color_paletteEngine_js__WEBPACK_IMPORTED_MODULE_0__.generatePalette)(hex, buildGenerateOptions(harmony, style, artist, strength));
+    (0,_color_paletteEngine_js__WEBPACK_IMPORTED_MODULE_0__.lockPalette)(pal);
+    var locked = (0,_color_paletteEngine_js__WEBPACK_IMPORTED_MODULE_0__.getLockedPalette)();
+    if (!locked) throw new Error('palette lock failed');
+    var catHint = '';
+    if (typeof window.colorflexResolveHexToSWDisplay === 'function') {
+      var r = window.colorflexResolveHexToSWDisplay(hex);
+      if (r && r.display) {
+        catHint = 'Full catalog (ColorFlex): ' + r.display + ' — ' + r.circleHex;
+      }
+    }
+    baseCatalogHint.textContent = catHint || 'Full catalog label: appears here after ColorFlex finishes loading its color list; base field stays hex for editing.';
+    var layerCount = getColorableLayerCount();
+    var ideal = (0,_color_ensureLayerContrast_js__WEBPACK_IMPORTED_MODULE_2__.ensureLayerContrast)(locked, layerCount) || locked;
+    var expanded12 = expandPaletteTo12(ideal);
+    var demoMatchOpts = {
+      primary: {
+        maxDeltaE: 12
+      },
+      secondary: {
+        maxDeltaE: 18
+      },
+      accent: {
+        maxDeltaE: 18
+      },
+      neutral: {
+        maxDeltaE: 22
+      },
+      background: {
+        maxDeltaE: 22
+      }
+    };
+    var conformedBase = (0,_color_paintLibraryMatcher_js__WEBPACK_IMPORTED_MODULE_1__.conformPaletteToPaintLibrary)(ideal, _color_sherwinWilliamsTestPalette_js__WEBPACK_IMPORTED_MODULE_3__.SHERWIN_WILLIAMS_TEST_PALETTE, demoMatchOpts);
+    var baseMeta = conformedBase && _typeof(conformedBase) === 'object' && conformedBase._paintLibraryMeta || {};
+    var baseMatched5 = [conformedBase.primary || ideal.primary, conformedBase.secondary || ideal.secondary, conformedBase.accent || ideal.accent, conformedBase.neutral || ideal.neutral, conformedBase.background || ideal.background];
+    var baseMatches5 = [baseMeta.primary || (0,_color_paintLibraryMatcher_js__WEBPACK_IMPORTED_MODULE_1__.matchToPaintLibrary)(ideal.primary, _color_sherwinWilliamsTestPalette_js__WEBPACK_IMPORTED_MODULE_3__.SHERWIN_WILLIAMS_TEST_PALETTE), baseMeta.secondary || (0,_color_paintLibraryMatcher_js__WEBPACK_IMPORTED_MODULE_1__.matchToPaintLibrary)(ideal.secondary, _color_sherwinWilliamsTestPalette_js__WEBPACK_IMPORTED_MODULE_3__.SHERWIN_WILLIAMS_TEST_PALETTE), baseMeta.accent || (0,_color_paintLibraryMatcher_js__WEBPACK_IMPORTED_MODULE_1__.matchToPaintLibrary)(ideal.accent, _color_sherwinWilliamsTestPalette_js__WEBPACK_IMPORTED_MODULE_3__.SHERWIN_WILLIAMS_TEST_PALETTE), baseMeta.neutral || (0,_color_paintLibraryMatcher_js__WEBPACK_IMPORTED_MODULE_1__.matchToPaintLibrary)(ideal.neutral, _color_sherwinWilliamsTestPalette_js__WEBPACK_IMPORTED_MODULE_3__.SHERWIN_WILLIAMS_TEST_PALETTE), baseMeta.background || (0,_color_paintLibraryMatcher_js__WEBPACK_IMPORTED_MODULE_1__.matchToPaintLibrary)(ideal.background, _color_sherwinWilliamsTestPalette_js__WEBPACK_IMPORTED_MODULE_3__.SHERWIN_WILLIAMS_TEST_PALETTE)];
+    var usedLibHexes = new Set();
+    var _iterator4 = _createForOfIteratorHelper(SLOT_KEYS),
+      _step4;
+    try {
+      for (_iterator4.s(); !(_step4 = _iterator4.n()).done;) {
+        var k = _step4.value;
+        var _m = baseMeta[k];
+        if (_m && !_m.usedFallback) {
+          var hx = (0,_color_paintLibraryMatcher_js__WEBPACK_IMPORTED_MODULE_1__.normalizeMatchHex)(_m.matchedHex);
+          if (hx) usedLibHexes.add(hx);
+        }
+      }
+    } catch (err) {
+      _iterator4.e(err);
+    } finally {
+      _iterator4.f();
+    }
+    var variantMatches = expanded12.slice(5).map(function (h) {
+      var m = (0,_color_paintLibraryMatcher_js__WEBPACK_IMPORTED_MODULE_1__.matchToPaintLibrary)(h, _color_sherwinWilliamsTestPalette_js__WEBPACK_IMPORTED_MODULE_3__.SHERWIN_WILLIAMS_TEST_PALETTE, {
+        avoidHexes: usedLibHexes,
+        maxDeltaE: 24
+      });
+      if (!m.usedFallback) {
+        var hx = (0,_color_paintLibraryMatcher_js__WEBPACK_IMPORTED_MODULE_1__.normalizeMatchHex)(m.matchedHex);
+        if (hx) usedLibHexes.add(hx);
+      }
+      return m;
+    });
+    var matchResults12 = baseMatches5.concat(variantMatches);
+    var matchedExpanded12 = baseMatched5.concat(variantMatches.map(function (m) {
+      return m.matchedHex;
+    }));
+    styleDesc.textContent = style === 'none' ? '' : _color_paletteStyles_js__WEBPACK_IMPORTED_MODULE_5__.ENGINE_STYLE_DESCRIPTIONS[style] || '';
+    styleDesc.hidden = !styleDesc.textContent;
+    var ab = _color_artistStyles_js__WEBPACK_IMPORTED_MODULE_6__.ENGINE_ARTIST_BLURBS[artist];
+    artistDesc.textContent = artist === 'none' ? '' : ab || '';
+    artistDesc.hidden = !artistDesc.textContent;
+    preview.innerHTML = '';
+    var contrastNote = ideal && ideal._contrastAdjusted && (ideal._contrastAdjusted.layerCount === 2 || ideal._contrastAdjusted.layerCount === 3) ? " (contrast adjusted for ".concat(ideal._contrastAdjusted.layerCount, "-layer patterns)") : '';
+    preview.appendChild(el('div', 'peh-prev-label', 'Ideal palette' + contrastNote));
+    preview.appendChild(renderSwatches([ideal.primary, ideal.secondary, ideal.accent, ideal.neutral, ideal.background]));
+    preview.appendChild(el('div', 'peh-prev-label', 'Matched (demo SW sample — not full catalog)'));
+    preview.appendChild(renderSwatches([matchedExpanded12[0], matchedExpanded12[1], matchedExpanded12[2], matchedExpanded12[3], matchedExpanded12[4]]));
+    var pname = getPatternName();
+    var infoText = 'Detected color layers: ' + layerCount + (pname ? ' · Pattern: ' + pname : '') + ' · Mapping supports up to 12 layers.';
+    infoText += ' · ' + _color_sherwinWilliamsTestPalette_js__WEBPACK_IMPORTED_MODULE_3__.SHERWIN_WILLIAMS_TEST_PALETTE_DISCLAIMER;
+    info.textContent = infoText;
+    mapList.innerHTML = '';
+    var max = Math.min(layerCount, 12);
+    var roleLabel = function roleLabel(i) {
+      return i < 5 ? SLOT_KEYS[i][0].toUpperCase() + SLOT_KEYS[i].slice(1) : ['Darker primary', 'Lighter primary', 'Darker secondary', 'Lighter secondary', 'Muted accent', 'Warm neutral', 'Cool neutral'][i - 5];
+    };
+    for (var i = 0; i < max; i++) {
+      var idealHex = expanded12[i];
+      var m = matchResults12[i];
+      var role = roleLabel(i);
+      var block = el('div', 'peh-map-detail');
+      var top = el('div', 'peh-map-line');
+      var chip = el('span', 'peh-chip');
+      chip.style.background = m.matchedHex;
+      top.appendChild(chip);
+      top.appendChild(el('span', '', 'Layer ' + (i + 1) + ' — ' + role));
+      block.appendChild(top);
+      block.appendChild(el('div', 'peh-map-sub', 'Ideal: ' + idealHex));
+      var codePart = m.matchedCode ? m.matchedCode + ' ' : '';
+      var namePart = m.matchedName || '(library name missing)';
+      block.appendChild(el('div', 'peh-map-sub', 'Matched: ' + codePart + namePart + ' — ' + m.matchedHex));
+      block.appendChild(el('div', 'peh-map-sub', 'ΔE (LAB 1976): ' + String(m.distance)));
+      if (m.usedFallback && m.warning) {
+        block.appendChild(el('div', 'peh-map-warn', m.warning));
+      }
+      mapList.appendChild(block);
+    }
+    var warnParts = [];
+    if (layerCount > 12) {
+      warnParts.push('This pattern has ' + layerCount + ' layers. Palette auto-fill currently supports up to 12. Please review manually.');
+    }
+    if (typeof window.applyColorsToLayerInputs !== 'function') {
+      warnParts.push('applyColorsToLayerInputs is not available on window (needs CFM bridge).');
+    }
+    if (matchResults12.slice(0, max).some(function (r) {
+      return r.usedFallback && r.warning;
+    })) {
+      warnParts.push('Some slots used the ideal color (no library match). See per-layer notes.');
+    }
+    warn.textContent = warnParts.join(' ');
+    applyBtn.disabled = layerCount < 1 || layerCount > 12 || typeof window.applyColorsToLayerInputs !== 'function';
+    lastComputed = {
+      locked: locked,
+      layerCount: layerCount,
+      expanded12: expanded12,
+      matchedExpanded12: matchedExpanded12,
+      matchResults12: matchResults12
+    };
+  }
+  function applyToLayers() {
+    if (!lastComputed) compute();
+    if (!window.appState) {
+      warn.textContent = 'ColorFlex appState not found.';
+      return;
+    }
+    var layerCount = lastComputed.layerCount;
+    if (layerCount < 1) {
+      warn.textContent = 'No color layers detected yet. Select a ColorFlex pattern, then Refresh.';
+      return;
+    }
+    if (layerCount > 12) {
+      warn.textContent = 'This pattern has ' + layerCount + ' layers. Palette auto-fill supports up to 12. Please set colors manually.';
+      return;
+    }
+    if (typeof window.applyColorsToLayerInputs !== 'function') {
+      warn.textContent = 'applyColorsToLayerInputs() not on window. Cannot inject safely.';
+      return;
+    }
+    var source12 = lastComputed.matchedExpanded12;
+    var proposed = computeProposedLayerColors(source12, layerCount);
+    var colorsArray = buildColorsArrayForApply(proposed);
+    window.applyColorsToLayerInputs(colorsArray, []);
+    warn.textContent = 'Applied. Use existing ColorFlex controls to tweak or undo.';
+  }
+  baseColor.addEventListener('input', function () {
+    baseHex.value = baseColor.value;
+    compute();
+  });
+  baseHex.addEventListener('change', compute);
+  baseHex.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter') compute();
+  });
+  harmonySel.addEventListener('change', compute);
+  styleSel.addEventListener('change', compute);
+  artistSel.addEventListener('change', compute);
+  strengthRange.addEventListener('input', compute);
+  refreshBtn.addEventListener('click', compute);
+  applyBtn.addEventListener('click', applyToLayers);
+  compute();
+}
+function schedulePaletteHookInit() {
+  var run = function run() {
+    try {
+      initColorFlexPaletteHook();
+    } catch (e) {
+      console.warn('[PaletteEngineHook] init failed:', e);
+    }
+  };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', run);
+  } else {
+    run();
+  }
+}
+schedulePaletteHookInit();
+
+/***/ },
+
 /***/ "./src/index.js"
 /*!**********************!*\
   !*** ./src/index.js ***!
@@ -4455,8 +7388,10 @@ var __webpack_exports__ = {};
   \***************************/
 __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var _index_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./index.js */ "./src/index.js");
+/* harmony import */ var _demo_colorflexPaletteHook_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./demo/colorflexPaletteHook.js */ "./src/demo/colorflexPaletteHook.js");
 // Core entry (default): expose target and load main app
 window.ColorFlexBuildTarget = 'core';
+
 
 })();
 
