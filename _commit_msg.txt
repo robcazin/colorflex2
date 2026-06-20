@@ -1,0 +1,17 @@
+fix(colorflex): canonical layer compositing and documented CORS policy
+
+ColorFlex / theme snapshot with production-safe layer rendering and explicit policy documentation.
+
+Layer pipeline (src/CFM.js)
+- processImage again uses the straightforward path: Image with crossOrigin anonymous, getImageData for the soft luminance mask, then source-in fill with lookupColor hex.
+- Removed production-inappropriate workarounds: B2-specific crossOrigin omission branches, fetch+ImageBitmap decode forks, tainted-canvas color-blend fallbacks, and CSS filter tinting. Those caused wrong hues or violated the no-hacks rule for shipped code.
+- Thumbnails, image cache, room mockup, and coordinate loaders again set crossOrigin where required for canvas use; no conditional omit for B2 in final code.
+- lookupColor returns hex from colors.json as before the temporary hex-normalize helper.
+
+Documentation
+- Added docs/ColorFlex-layer-pipeline-and-CORS-policy.md: policy (no compositing hacks in production), summary of canonical processImage behavior, where real CORS fixes belong (bucket headers / same-origin assets), build note, and brief historical context.
+
+Assets and theme
+- Rebuilt color-flex-core.min.js (wallpaper build). Updated collections.json, section-main-product.css, main-product and related liquid/snippets/templates, pipeline scripts (cf-dl, incremental-update), collection workflow docs, api/deploy helpers, and product JSON as in the current working tree.
+
+Operational note: If getImageData fails due to tainted canvas, fix CORS or hosting; do not add new client-side tint approximations for production.

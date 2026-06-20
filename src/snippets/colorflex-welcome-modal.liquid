@@ -1,0 +1,163 @@
+{% comment %}
+  First-time welcome overlay for ColorFlex (wallpaper / main app).
+  Optional: {% render 'colorflex-welcome-modal', storage_key: 'colorflexFurnitureWelcomeSeen' %}
+{% endcomment %}
+{% assign cf_welcome_storage_key = storage_key | default: 'colorflexWelcomeSeen' %}
+<!-- First-Time Visitor Welcome Modal -->
+<div id="welcomeModal" style="
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  z-index: 200050;
+  align-items: center;
+  justify-content: center;
+">
+  <div style="
+    background: #000;
+    border: 3px solid #d4af37;
+    border-radius: 16px;
+    padding: 2.5rem;
+    max-width: 580px;
+    width: 90%;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+    position: relative;
+    color: white;
+  ">
+    <button id="closeWelcomeModal" type="button" style="
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      border: 2px solid #d4af37;
+      color: #d4af37;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      cursor: pointer;
+      font-size: 1.2rem;
+      line-height: 1;
+      transition: all 0.3s ease;
+    " onmouseover="this.style.background='rgba(212, 175, 55, 0.2)'" onmouseout="this.style.background='transparent'">
+      ×
+    </button>
+
+    <h2 style="
+      color: #d4af37;
+      font-size: 2.5rem;
+      margin-bottom: 1.5rem;
+      font-family: 'Island Moments', cursive;
+      text-align: center;
+    ">Welcome to ColorFlex!</h2>
+
+    <div style="font-size: 1.3rem; line-height: 1.6; color: #e2e8f0; margin-bottom: 2rem;">
+      <p style="margin-bottom: 1rem;">
+        <strong style="color: #d4af37;">✨ Customize Your Perfect Pattern</strong><br>
+        Choose from our beautiful collections, then personalize every color to match your space perfectly.
+      </p>
+
+      <p style="margin-bottom: 1rem;">
+        <strong style="color: #d4af37;">🎨 Quick Start Guide:</strong>
+      </p>
+
+      <ul style="margin: 0 0 1rem 1.5rem; padding: 0; list-style: none;">
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">1.</span> Click the <strong>Collection</strong> header to switch collections
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">2.</span> Browse <strong>Patterns</strong> using thumbnails on the left
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">3.</span> Click <strong>Color Layers</strong> to customize each element
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color:rgb(62, 224, 44);">4.</span><strong> NEW! </strong> Drag and Drop from top color row onto design circles
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">5.</span> Adjust <strong>Scale</strong> and <strong>Room Mockup</strong> to visualize
+        </li>
+        <li style="margin-bottom: 0.5rem;">
+          <span style="color: #d4af37;">6.</span> <strong>Save to My Designs</strong> or select your material!
+        </li>
+      </ul>
+
+      <p style="margin-bottom: 0; color: #cbd5e0; font-size: 1.1rem; font-style: italic;">
+        💡 Tip: Use "My Designs" to view and edit all your saved patterns anytime.
+      </p>
+    </div>
+
+    <button id="startCustomizing" type="button" style="
+      width: 100%;
+      padding: 0.875rem 1.5rem;
+      background: linear-gradient(135deg, #d4af37 0%, #c69a2d 100%);
+      border: none;
+      border-radius: 8px;
+      color: #1a202c;
+      font-size: 1.1rem;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.3);
+    " onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 16px rgba(212, 175, 55, 0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 12px rgba(212, 175, 55, 0.3)'">
+      Start Customizing →
+    </button>
+
+    <div style="text-align: center; margin-top: 1rem;">
+      <label style="display: flex; align-items: center; justify-content: center; gap: 0.5rem; cursor: pointer; font-size: 0.85rem; color: #a0aec0;">
+        <input type="checkbox" id="dontShowAgain" style="cursor: pointer;">
+        Don't show this again
+      </label>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const welcomeStorageKey = {{ cf_welcome_storage_key | json }};
+  const modal = document.getElementById('welcomeModal');
+  const closeBtn = document.getElementById('closeWelcomeModal');
+  const startBtn = document.getElementById('startCustomizing');
+  const dontShowCheckbox = document.getElementById('dontShowAgain');
+  if (!modal || !closeBtn || !startBtn || !dontShowCheckbox) return;
+
+  const hasSeenWelcome = localStorage.getItem(welcomeStorageKey);
+  const params = new URLSearchParams(window.location.search);
+  const source = (params.get('source') || '').toLowerCase();
+  const openedFromCartEdit =
+    source === 'cart' ||
+    source === 'cart_saved_pattern' ||
+    source === 'cart_edit' ||
+    source === 'colorflex_saved_patterns' ||
+    !!params.get('saved_pattern_id') ||
+    !!params.get('pattern_id');
+
+  if (!hasSeenWelcome && !openedFromCartEdit) {
+    modal.style.display = 'flex';
+  }
+
+  function closeModal() {
+    modal.style.display = 'none';
+    if (dontShowCheckbox.checked) {
+      localStorage.setItem(welcomeStorageKey, 'true');
+    }
+  }
+
+  closeBtn.addEventListener('click', closeModal);
+  startBtn.addEventListener('click', closeModal);
+
+  modal.addEventListener('click', function(e) {
+    if (e.target === modal) {
+      closeModal();
+    }
+  });
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape' && modal.style.display === 'flex') {
+      closeModal();
+    }
+  });
+})();
+</script>

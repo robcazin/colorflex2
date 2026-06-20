@@ -1,0 +1,94 @@
+{
+  "carpets": [
+    {
+      "id": "mohawk-demo-01",
+      "name": "Warm Sand Loop",
+      "thumbnail": "",
+      "sourceImage": "",
+      "roles": {
+        "background": "#c4a574",
+        "linework": "#5c4a38",
+        "accent": "#8b6f47"
+      },
+      "weights": {
+        "field": 0.38,
+        "structure": 0.22,
+        "motif": 0.18,
+        "secondary": 0.12,
+        "accent": 0.1
+      }
+    },
+    {
+      "id": "mohawk-demo-02",
+      "name": "Cool Slate Plaid",
+      "thumbnail": "",
+      "sourceImage": "",
+      "roles": {
+        "background": "#9aa7b0",
+        "linework": "#2f3d47",
+        "accent": "#6b8fa3"
+      },
+      "weights": {
+        "field": 0.35,
+        "structure": 0.25,
+        "motif": 0.2,
+        "secondary": 0.12,
+        "accent": 0.08
+      }
+    },
+    {
+      "id": "mohawk-demo-03",
+      "name": "Spice Medallion",
+      "thumbnail": "",
+      "sourceImage": "",
+      "roles": {
+        "background": "#8b4513",
+        "linework": "#3d2914",
+        "accent": "#d4a84b"
+      },
+      "weights": {
+        "field": 0.32,
+        "structure": 0.2,
+        "motif": 0.22,
+        "secondary": 0.14,
+        "accent": 0.12
+      }
+    },
+    {
+      "id": "mohawk-demo-04",
+      "name": "Mist Gray Texture",
+      "thumbnail": "",
+      "sourceImage": "",
+      "roles": {
+        "background": "#d8d4ce",
+        "linework": "#6b6560",
+        "accent": "#a89888"
+      },
+      "weights": {
+        "field": 0.42,
+        "structure": 0.2,
+        "motif": 0.14,
+        "secondary": 0.14,
+        "accent": 0.1
+      }
+    },
+    {
+      "id": "mohawk-demo-05",
+      "name": "Deep Indigo Loop",
+      "thumbnail": "",
+      "sourceImage": "",
+      "roles": {
+        "background": "#1e2a44",
+        "linework": "#0d121f",
+        "accent": "#4a6fa5"
+      },
+      "weights": {
+        "field": 0.3,
+        "structure": 0.24,
+        "motif": 0.2,
+        "secondary": 0.14,
+        "accent": 0.12
+      }
+    }
+  ]
+}

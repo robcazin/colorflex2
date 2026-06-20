@@ -1,0 +1,416 @@
+{% comment %}
+  ColorFlex Harmony Generator — used only by templates/page.colorflex-harmony.json
+  (OS 2.0 requires JSON templates for alternate pages to appear in the admin picker.)
+{% endcomment %}
+{% # theme-check-disable RemoteAsset %}
+<link href="https://fonts.googleapis.com/css2?family=IM+Fell+English:ital@0;1&family=Island+Moments&family=Special+Elite&display=swap" rel="stylesheet">
+{% # theme-check-enable RemoteAsset %}
+
+<style>
+  .sc-trade-page {
+    background: radial-gradient(circle at top, #252b35 0%, #12161d 48%, #0b0d12 100%);
+    color: #f5f1e8;
+    font-family: 'Special Elite', monospace;
+    margin: 0;
+    padding: 0;
+  }
+
+  .sc-trade-wrap {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 2.5rem 1.25rem 4rem;
+  }
+
+  .sc-trade-hero {
+    text-align: center;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 16px;
+    padding: 2.5rem 1.5rem;
+    box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+  }
+
+  .sc-trade-kicker {
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #d4af37;
+    font-size: 0.9rem;
+    margin-bottom: 0.6rem;
+  }
+
+  .sc-trade-title {
+    font-family: 'Island Moments', cursive;
+    font-size: clamp(2.8rem, 7vw, 5rem);
+    line-height: 0.95;
+    margin: 0;
+    color: #f3ead4;
+    text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
+  }
+
+  .sc-trade-subtitle {
+    font-family: 'IM Fell English', serif;
+    font-size: 1.25rem;
+    color: #d8d3c7;
+    margin: 1rem auto 0;
+    max-width: 760px;
+    line-height: 1.45;
+  }
+
+  .sc-trade-btn-row {
+    display: flex;
+    gap: 0.8rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+  }
+
+  .sc-trade-btn {
+    display: inline-block;
+    text-decoration: none;
+    border-radius: 999px;
+    padding: 0.85rem 1.35rem;
+    font-weight: bold;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .sc-trade-btn:hover {
+    transform: translateY(-2px);
+  }
+
+  .sc-trade-btn-secondary {
+    background: transparent;
+    border: 1px solid rgba(212, 175, 55, 0.7);
+    color: #f3ead4;
+  }
+
+  .sc-trade-section {
+    margin-top: 2rem;
+    background: rgba(0, 0, 0, 0.24);
+    border: 1px solid rgba(140, 120, 60, 0.35);
+    border-radius: 14px;
+    padding: 1.4rem 1.2rem 2rem;
+  }
+
+  .sc-trade-footer {
+    text-align: center;
+    margin-top: 2rem;
+    color: #9ea7b3;
+    font-size: 0.9rem;
+  }
+
+  .sc-harmony-generator .engine-panel {
+    margin-bottom: 1.5rem;
+    background: rgba(15, 19, 25, 0.78);
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    border-radius: 12px;
+    padding: 12px 14px 14px;
+  }
+
+  .sc-harmony-generator .harm-title {
+    font-size: 0.95rem;
+    margin: 0 0 10px;
+    color: #ead8a5;
+    font-weight: 600;
+  }
+
+  .sc-harmony-generator .engine-intro,
+  .sc-harmony-generator .engine-hint {
+    margin-top: 0;
+    font-size: 0.85rem;
+    color: #d5d8dd;
+    line-height: 1.45;
+    max-width: 52rem;
+  }
+
+  .sc-harmony-generator .engine-hint {
+    margin-top: -6px;
+    font-size: 0.8rem;
+    color: #b8beca;
+  }
+
+  .sc-harmony-generator .style-desc {
+    margin: 0 0 10px;
+    font-size: 0.8rem;
+    max-width: 48rem;
+    color: #a0a090;
+    line-height: 1.45;
+  }
+
+  .sc-harmony-generator .engine-toolbar {
+    display: flex;
+    align-items: flex-end;
+    gap: 14px;
+    flex-wrap: wrap;
+    margin-bottom: 12px;
+  }
+
+  .sc-harmony-generator .engine-combo {
+    font-size: 0.82rem;
+    font-family: ui-monospace, monospace;
+    color: #c9c9a8;
+    margin-bottom: 12px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+
+  .sc-harmony-generator .style-lab {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 600;
+    font-size: 0.88rem;
+    color: #e8debf;
+  }
+
+  .sc-harmony-generator .style-select {
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    background: rgba(30, 30, 30, 0.95);
+    color: #eee;
+    min-width: 11rem;
+  }
+
+  .sc-harmony-generator .base-lab {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 600;
+    color: #e8debf;
+  }
+
+  .sc-harmony-generator .base-lab input[type='color'] {
+    width: 52px;
+    height: 40px;
+    padding: 0;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    background: #000;
+    cursor: pointer;
+    border-radius: 6px;
+  }
+
+  .sc-harmony-generator .hex-text {
+    width: 8.5rem;
+    font-family: ui-monospace, monospace;
+    padding: 8px 10px;
+    border-radius: 6px;
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    background: rgba(30, 30, 30, 0.95);
+    color: #eee;
+  }
+
+  .sc-harmony-generator .meta {
+    font-size: 0.82rem;
+    color: #b8beca;
+    margin-bottom: 1.25rem;
+    line-height: 1.45;
+  }
+
+  .sc-harmony-generator .harmonies {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+    gap: 16px;
+  }
+
+  .sc-harmony-generator .harm-card {
+    background: rgba(15, 19, 25, 0.78);
+    border: 1px solid rgba(212, 175, 55, 0.28);
+    border-radius: 12px;
+    padding: 12px 14px 14px;
+  }
+
+  .sc-harmony-generator .swatch-row {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .sc-harmony-generator .swatch-cell {
+    width: calc(20% - 7px);
+    min-width: 44px;
+    flex: 1 1 44px;
+  }
+
+  .sc-harmony-generator .swatch-chip {
+    height: 44px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .sc-harmony-generator .swatch-cap {
+    font-size: 0.65rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #a8a078;
+    margin-top: 4px;
+  }
+
+  .sc-harmony-generator .swatch-hex {
+    font-size: 0.62rem;
+    font-family: ui-monospace, monospace;
+    color: #888;
+    word-break: break-all;
+  }
+
+  .sc-harmony-generator .secondary-wrap {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+  }
+
+  .sc-harmony-generator .section-kicker {
+    font-size: 1rem;
+    color: #ead8a5;
+    margin-bottom: 0.35rem;
+    font-family: 'IM Fell English', serif;
+  }
+
+  .sc-harmony-generator .muted {
+    font-size: 0.85rem;
+    color: #d5d8dd;
+    line-height: 1.45;
+    margin-bottom: 12px;
+    max-width: 48rem;
+  }
+
+  .sc-harmony-generator .img-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .sc-harmony-generator .img-pair {
+    display: flex;
+    gap: 14px;
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .sc-harmony-generator .slot .img-label {
+    display: block;
+    font-size: 0.75rem;
+    color: #9ea7b3;
+    margin-bottom: 4px;
+  }
+
+  .sc-harmony-generator .slot canvas {
+    border: 1px solid rgba(212, 175, 55, 0.35);
+    display: block;
+    border-radius: 6px;
+  }
+
+  .sc-harmony-generator .strength-lab {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    max-width: 14rem;
+  }
+
+  .sc-harmony-generator .strength-lab-tit {
+    font-weight: 600;
+    font-size: 0.78rem;
+    color: #b8beca;
+  }
+
+  .sc-harmony-generator .artist-strength-range {
+    width: 10rem;
+    accent-color: #d4af37;
+  }
+
+  .sc-harmony-generator .strength-out {
+    font-family: ui-monospace, monospace;
+    font-size: 0.8rem;
+    color: #d8d3c7;
+    min-width: 2.5rem;
+  }
+
+  .sc-harmony-generator .artist-compare-wrap {
+    margin-top: 1.25rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(212, 175, 55, 0.2);
+  }
+
+  .sc-harmony-generator .artist-compare-lede {
+    margin-top: 0.25rem;
+    margin-bottom: 14px;
+    max-width: 52rem;
+    color: #d5d8dd;
+    font-size: 0.85rem;
+  }
+
+  .sc-harmony-generator .artist-compare-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+    gap: 12px;
+  }
+
+  .sc-harmony-generator .artist-compare-card {
+    padding: 10px 10px 12px;
+    background: rgba(10, 14, 18, 0.75);
+    border-radius: 10px;
+    border: 1px solid rgba(212, 175, 55, 0.18);
+  }
+
+  .sc-harmony-generator .artist-compare-name {
+    font-size: 0.82rem;
+    margin: 0 0 6px;
+    color: #ead8a5;
+    font-weight: 600;
+  }
+
+  .sc-harmony-generator .artist-compare-blurb {
+    font-size: 0.68rem;
+    color: #9ea7b3;
+    line-height: 1.35;
+    margin: 0 0 8px;
+    min-height: 2.6em;
+  }
+
+  .sc-harmony-generator .swatch-row--mini .swatch-chip {
+    height: 28px;
+  }
+
+  .sc-harmony-generator .swatch-row--mini .swatch-cap {
+    font-size: 0.58rem;
+  }
+
+  .sc-harmony-generator .swatch-row--mini .swatch-hex {
+    font-size: 0.55rem;
+  }
+</style>
+
+<div class="sc-trade-page">
+  <div class="sc-trade-wrap">
+    <section class="sc-trade-hero">
+      <div class="sc-trade-kicker">ColorFlex</div>
+      <h1 class="sc-trade-title">ColorFlex Harmony Generator</h1>
+      <p class="sc-trade-subtitle">
+        Explore deterministic harmony palettes from one base color — harmony rules, optional historical design styles,
+        and artist-influence blending. Swatches read left to right from background through primary (same order as the palette engine preview).
+        Everything runs in your browser; no Adobe or APIs.
+      </p>
+      <div class="sc-trade-btn-row">
+        <a class="sc-trade-btn sc-trade-btn-secondary" href="/pages/colorflex">Browse wallpaper patterns</a>
+      </div>
+    </section>
+
+    <section class="sc-trade-section sc-harmony-generator" aria-label="Harmony generator">
+      <div id="harmony-demo-mount"></div>
+    </section>
+
+    <p class="sc-trade-footer">
+      © {{ 'now' | date: '%Y' }} Saffron Cottage — ColorFlex Harmony Generator
+    </p>
+  </div>
+</div>
+
+<script src="{{ 'color-flex-harmony.min.js' | asset_url }}" defer></script>
+
+{% schema %}
+{
+  "name": "ColorFlex Harmony Generator",
+  "tag": "section",
+  "class": "section--harmony-generator",
+  "settings": []
+}
+{% endschema %}

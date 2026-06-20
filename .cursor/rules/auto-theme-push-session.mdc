@@ -1,0 +1,22 @@
+---
+description: Auto-push theme after ColorFlex theme source edits until user revokes
+alwaysApply: true
+---
+
+# Auto theme push (session preference)
+
+Until the user explicitly says **stop auto-push**, **disable theme push**, or similar:
+
+After edits under `src/sections/`, `src/layout/`, `src/templates/`, or `src/snippets/`:
+
+- Run `npm run theme:push:changed`
+
+After edits **only** under `src/assets/` (and no other theme paths in the same change set):
+
+- Run `npm run theme:push:changed:assets`
+
+Do not skip push solely because minified webpack bundles were not rebuilt; Liquid and standalone assets under `src/assets/` are pushed as source.
+
+**Revert deployments:** use `git revert <commit>` for the change, then run the appropriate push command again to publish the reverted files. The repo remains the source of truth.
+
+This is additive to `deploy-after-build.mdc` (production webpack builds still trigger asset push as that rule describes).

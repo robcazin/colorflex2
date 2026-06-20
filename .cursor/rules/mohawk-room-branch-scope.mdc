@@ -1,0 +1,32 @@
+---
+description: >-
+  Mohawk room branch scope — frozen compositor baseline 14651357; carpet palette + layer inputs only;
+  no blend frameworks, debug UI, extra fallbacks, standard mockups, or Bassett.
+alwaysApply: true
+---
+
+# Mohawk room branch — frozen architecture
+
+**Baseline:** treat git commit `14651357` (*Establish Mohawk room layer compositor checkpoint*) as the **architectural floor**. Only extend with **minimal, targeted** changes that serve the branch purpose below. Do not “improve” or replace the compositor stack from that checkpoint unless the user explicitly reverses this rule.
+
+## Single purpose of this branch
+
+1. User selects a **Mohawk carpet thumbnail**.
+2. **Carpet image** drives **extracted palette**.
+3. Palette **populates ColorFlex layer inputs** (existing wiring).
+4. **Existing Mohawk compositor** (`renderMohawkRoomComposite` / related assets) **renders the room**.
+5. **Wallpaper changes do not recompute** the carpet palette (session-stable until user picks another carpet).
+
+## Do not (unless user explicitly overrides this rule file)
+
+- **Redesign** Mohawk compositing / layer order / stack semantics.
+- Add **generalized blend frameworks**, tunable composite operation registries, or “compositing config” systems beyond what exists at the baseline.
+- Add **debug UIs**, in-browser tuning panels, or dev-only overlay systems for compositing.
+- Add **new fallback paths** for data loading, collections, or mockups that broaden behavior beyond the checkpoint (avoid “if X fails, try Y, Z…”).
+- Merge or enable **standard ColorFlex `mockups.json`** / white-dresser / generic wallpaper room mockups in Mohawk room mode.
+- Introduce **Bassett** (or other mode) abstractions into the Mohawk room path.
+
+## Implementation guidance
+
+- Prefer **small diffs** in `src/CFM.js`, `src/mohawk/`, and trade-show wiring **only** where they directly implement the five steps above.
+- When unsure, **diff against `14651357`** for compositor-adjacent files and match its structure and assumptions.

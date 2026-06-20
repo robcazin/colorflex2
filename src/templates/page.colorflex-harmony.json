@@ -1,0 +1,9 @@
+{
+  "sections": {
+    "main": {
+      "type": "harmony-generator-page",
+      "settings": {}
+    }
+  },
+  "order": ["main"]
+}

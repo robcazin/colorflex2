@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Saffron Cottage ColorFlex — Work Summary May 2026</title>
+  <style>
+    @page { size: letter; margin: 0.75in; }
+    * { box-sizing: border-box; }
+    body {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 11pt;
+      line-height: 1.45;
+      color: #1a1a1a;
+      max-width: 7in;
+      margin: 0 auto;
+      padding: 0.5in 0;
+    }
+    h1 {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 22pt;
+      font-weight: 600;
+      color: #2c2416;
+      margin: 0 0 0.15in 0;
+      line-height: 1.2;
+    }
+    .subtitle {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 10pt;
+      color: #6b5b45;
+      margin-bottom: 0.35in;
+      border-bottom: 2px solid #d4af37;
+      padding-bottom: 0.15in;
+    }
+    h2 {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 13pt;
+      font-weight: 600;
+      color: #3d3428;
+      margin: 0.28in 0 0.12in 0;
+      page-break-after: avoid;
+    }
+    h3 {
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 11pt;
+      font-weight: 600;
+      color: #5c4f3a;
+      margin: 0.18in 0 0.08in 0;
+    }
+    p { margin: 0 0 0.12in 0; }
+    ul { margin: 0.08in 0 0.14in 0; padding-left: 0.22in; }
+    li { margin-bottom: 0.06in; }
+    .lead {
+      font-size: 11.5pt;
+      color: #333;
+      margin-bottom: 0.2in;
+    }
+    .callout {
+      background: #faf8f3;
+      border-left: 3px solid #d4af37;
+      padding: 0.12in 0.15in;
+      margin: 0.15in 0;
+      font-style: italic;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 9.5pt;
+      margin: 0.12in 0 0.18in 0;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 0.08in 0.1in;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #f0ebe0; font-weight: 600; }
+    .footer {
+      margin-top: 0.35in;
+      padding-top: 0.12in;
+      border-top: 1px solid #ddd;
+      font-family: "Helvetica Neue", Arial, sans-serif;
+      font-size: 9pt;
+      color: #777;
+    }
+    .page-break { page-break-before: always; }
+    @media print {
+      body { padding: 0; }
+    }
+  </style>
+</head>
+<body>
+
+<h1>Saffron Cottage / ColorFlex on Shopify</h1>
+<p class="subtitle">Work Summary &nbsp;·&nbsp; May 1 – May 27, 2026</p>
+
+<p class="lead">This report summarizes development work on the <strong>Saffron Cottage Shopify store</strong> and the ColorFlex customization platform that powers it. A separate Mohawk Room demo (for trade shows) shares the same engine but is not the main shop.</p>
+
+<h2>The big picture</h2>
+<p>Most of May focused on the <strong>live Shopify store</strong> — where customers customize wallpaper and fabrics, save designs, and order custom samples. In parallel, we built a standalone Mohawk Room preview demo for carpet + room coordination, hosted outside the main checkout flow.</p>
+
+<h2>Part 1 — Fixing the live Shopify store (early May)</h2>
+<p>These were production fixes on <strong>saffroncottage.shop</strong> — issues customers would notice if they broke.</p>
+
+<h3>Custom sample &amp; Add to cart</h3>
+<p>When someone designs a pattern in ColorFlex and opens the <strong>custom sample product page</strong>, they must add their design to the cart with the correct colors and thumbnail.</p>
+<ul>
+  <li><strong>Add to cart sometimes did nothing</strong> — caused by invalid nested forms on the product page. The buy button was effectively outside the real cart form.</li>
+  <li><strong>Cart thumbnail and pattern details</strong> — improved how the saved pattern image and color data travel into the cart.</li>
+  <li><strong>Stronger protection of custom line-item data</strong> — so theme scripts are less likely to strip ColorFlex’s saved color information.</li>
+</ul>
+<p class="callout">In plain terms: customers can again add a customized sample to the cart and trust that what they see is what gets ordered.</p>
+
+<h3>Deploy confidence on Shopify</h3>
+<ul>
+  <li>Added a simple <strong>version marker</strong> (CF-REV) in the theme so you can confirm new code loaded after an update.</li>
+  <li>Improved deployment workflow so fixes reach the live theme faster and more consistently.</li>
+</ul>
+
+<h2>Part 2 — ColorFlex on Shopify (mid–late May)</h2>
+<p>ColorFlex on Shopify is <strong>theme files + JavaScript bundles + product/collection data</strong> working together.</p>
+
+<table>
+  <tr><th>Area</th><th>What we did</th></tr>
+  <tr><td>ColorFlex app</td><td>Continued improving the main customization engine: patterns, color layers, room preview, and Mohawk-related hooks where needed.</td></tr>
+  <tr><td>Theme templates</td><td>Updated ColorFlex page templates so Mohawk/trade options can run when enabled.</td></tr>
+  <tr><td>Built assets</td><td>Rebuilt and deployed minified JS/CSS bundles to Shopify theme assets — what the live store loads.</td></tr>
+  <tr><td>Data &amp; loading</td><td>Kept pattern images loading from the canonical cloud source with proper browser access for previews.</td></tr>
+  <tr><td>Documentation</td><td>Updated guides for cart behavior, product-page pitfalls, and theme deploy.</td></tr>
+</table>
+
+<h3>Mohawk work in relation to Shopify</h3>
+<p>Mohawk Room extends the same ColorFlex codebase: carpet thumbnails drive pattern colors and a furnished room preview. It can be enabled on Shopify ColorFlex pages when desired. The <strong>standalone demo URL</strong> is packaged for trade shows — not a replacement for the Shopify store.</p>
+
+<div class="page-break"></div>
+
+<h2>Part 3 — Standalone Mohawk demo (late May)</h2>
+<p>A static demo (hosted separately from Shopify) lets Mohawk show carpet + wallpaper + room preview without a full store session. It shares the ColorFlex engine but has <strong>no cart or checkout</strong> — a showroom version, not the main shop.</p>
+
+<h2>What to tell stakeholders about Saffron Cottage</h2>
+<ul>
+  <li>We fixed critical Shopify checkout issues on the custom sample product — add to cart and cart line details work reliably again.</li>
+  <li>We improved how deployed code is verified on the live theme, so updates are traceable.</li>
+  <li>ColorFlex’s core app on Shopify continued to evolve — better previews, data loading, and foundation for carpet-driven color coordination.</li>
+  <li>Mohawk Room demo work shares the same engine; the live store remained the priority for production stability in early May.</li>
+</ul>
+
+<h2>What’s live where</h2>
+<table>
+  <tr><th></th><th>Saffron Cottage Shopify</th><th>Static Mohawk demo</th></tr>
+  <tr><td>Customize wallpaper</td><td>Yes — main product</td><td>Yes — demo only</td></tr>
+  <tr><td>Cart &amp; checkout</td><td>Yes</td><td>No</td></tr>
+  <tr><td>Custom sample orders</td><td>Yes (fixed May 6–7)</td><td>No</td></tr>
+  <tr><td>Mohawk carpet + room</td><td>Optional in theme code</td><td>Primary focus</td></tr>
+  <tr><td>Updates</td><td>Theme / asset deploy</td><td>Manual file upload</td></tr>
+</table>
+
+<h2>Rough split of effort (May 1–27)</h2>
+<table>
+  <tr><th>Focus</th><th>Approx. share</th></tr>
+  <tr><td>Shopify store reliability (cart, product page, theme, deploy)</td><td>~25%</td></tr>
+  <tr><td>ColorFlex on Shopify (app, bundles, templates, data)</td><td>~45%</td></tr>
+  <tr><td>Mohawk features + static demo</td><td>~30%</td></tr>
+</table>
+
+<h2>Notes for planning</h2>
+<ul>
+  <li>Whether Mohawk runs on the <strong>main Shopify site</strong> or only on the demo URL is a business/deploy choice — the code exists; production enablement is separate.</li>
+  <li>The static demo updates by uploading files; it does not auto-update when the Shopify theme updates unless both are deployed intentionally.</li>
+</ul>
+
+<p class="footer">Prepared from repository work on branch <em>mohawk-room-palette-engine</em> · May 2026 · Saffron Cottage / ColorFlex</p>
+
+</body>
+</html>

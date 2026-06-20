@@ -1,0 +1,30 @@
+{
+  "outW": 2000,
+  "outH": 2000,
+  "wallpaperTileInches": [24, 24],
+  "floorDetailOpacity": 1,
+  "assets": {
+    "wallpaper": "willow-pattern-preview.png",
+    "carpet": "D111362.jpg",
+    "floorDetail": "floor-detail.png",
+    "wallMask": "wall-mask.png",
+    "pinnedWallMask": "pinned-wall.png",
+    "trim": "trim.png",
+    "panelMask": "panel-mask.png",
+    "sofaDetail": "sofa-detail.png",
+    "sofaMask": "sofa-mask.png",
+    "pillowMask": "pillow-mask.png",
+    "floorMatte": "floor-tile.png"
+  },
+  "floorPinned": {
+    "cornersNormalized": [[0, 0.71], [1, 0.71], [1.4, 1], [-0.45, 1]],
+    "tileRepeat": 5,
+    "matteFile": null
+  },
+  "semantic": {
+    "trim": { "hex": "#e8e2d4", "blend": "color" },
+    "panels": { "hex": "#d8d0c4", "blend": "multiply" },
+    "sofa": { "hex": "#747a4e", "blend": "multiply" },
+    "pillow": { "hex": "#c4b8a8", "blend": "multiply" }
+  }
+}
