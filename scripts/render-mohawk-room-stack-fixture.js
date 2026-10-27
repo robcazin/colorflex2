@@ -1,47 +1,74 @@
 #!/usr/bin/env node
 /**
- * Visual fixture: full Mohawk room stack using your real layer PNGs + wallpaper + carpet thumbnail.
+ * Visual fixture: full Mohawk room stack from your real layer PNGs + wallpaper + carpet thumbnail.
  * Mirrors the draw order of `runMohawkExplicitNineStepRoom` in the Bassett CFM branch (floor detail,
  * wallpaper through wall + pinned-wall masks, pinned Mohawk carpet, semantic trim/panels/sofa/pillow,
  * sofa detail plate). Does not import CFM.
  *
- * Place assets under MOHAWK_ROOM_FIXTURE_DIR (default: tmp/mohawk-room-assets):
- *   floor-detail.png, wall-mask.png, pinned-wall.png, trim.png, panel-mask.png,
- *   sofa-detail.png, sofa-mask.png, pillow-mask.png,
- *   wallpaper.png (ColorFlex pattern tile / preview), mohawk-carpet.png (carpet SKU thumbnail)
- * Optional: floor-matte.png OR floor-tile.png — matte for pinned carpet (same role as mockup floorMatteMask)
- * Optional: fixture-config.json — see scripts/mohawk-room-fixture.config.example.json
+ * Source assets are read in place (no copy into the repo). Set:
+ *
+ *   MOHAWK_ROOM_FIXTURE_DIR=/absolute/path/to/your/mockups/mohawk
+ *
+ * to the same directory your ColorFlex Mohawk mockup already uses on disk (the folder behind
+ * `design.mockup.layersBaseUrl`, e.g. `<COLORFLEX_DATA_PATH>/data/mockups/mohawk` when using local cf-data).
+ *
+ * If MOHAWK_ROOM_FIXTURE_DIR is unset, the script falls back to tmp/mohawk-room-assets (empty unless you use it).
+ *
+ * Filenames are never fixed: map production names in JSON (see scripts/mohawk-room-fixture.config.example.json).
+ * Config is merged from, in order: defaults → `<MOHAWK_ROOM_FIXTURE_DIR>/fixture-config.json` → optional
+ * `MOHAWK_ROOM_FIXTURE_CONFIG` (path to another JSON file, overrides).
+ *
+ * Use an `assets` object and/or the same keys at the root of the JSON (e.g. `"trimMask": "trim-mask.png"`).
+ * Required logical keys: floorDetail, wallMask, pinnedWallMask, trim (detail plate), trimMask (optional tint mask; falls back to trim for legacy folders), panelMask, sofaDetail, sofaMask,
+ * pillowMask, wallpaper, carpet (or mohawkCarpet), floorMatte (carpet pin matte — same role as mockup floor matte / floor-tile).
  *
  * Requires optional `canvas` package: npm install canvas
- * Output: tmp/mohawk-room-stack-fixture.png
+ * Output only: tmp/mohawk-room-stack-fixture.png
  *
- * Run: node scripts/render-mohawk-room-stack-fixture.js
+ * Run: MOHAWK_ROOM_FIXTURE_DIR=/path/to/mockups/mohawk node scripts/render-mohawk-room-stack-fixture.js
  */
 
 const fs = require('fs');
 const path = require('path');
 const { pathToFileURL } = require('url');
 
-const REQUIRED_FILES = {
+/** Logical roles → default basename (only used when config omits that key). */
+const DEFAULT_ASSETS = {
   floorDetail: 'floor-detail.png',
   wallMask: 'wall-mask.png',
   pinnedWallMask: 'pinned-wall.png',
   trim: 'trim.png',
+  trimMask: 'trim-mask.png',
   panelMask: 'panel-mask.png',
   sofaDetail: 'sofa-detail.png',
   sofaMask: 'sofa-mask.png',
   pillowMask: 'pillow-mask.png',
   wallpaper: 'wallpaper.png',
-  mohawkCarpet: 'mohawk-carpet.png',
+  carpet: 'mohawk-carpet.png',
+  floorMatte: 'floor-tile.png',
 };
 
-const MATTE_CANDIDATES = ['floor-matte.png', 'floor-tile.png'];
+const ASSET_ROLE_ORDER = [
+  'floorDetail',
+  'wallMask',
+  'pinnedWallMask',
+  'trim',
+  'trimMask',
+  'panelMask',
+  'sofaDetail',
+  'sofaMask',
+  'pillowMask',
+  'wallpaper',
+  'carpet',
+  'floorMatte',
+];
 
 const DEFAULT_CONFIG = {
   outW: 2000,
   outH: 2000,
   wallpaperTileInches: [24, 24],
   floorDetailOpacity: 1,
+  assets: Object.assign({}, DEFAULT_ASSETS),
   floorPinned: {
     cornersNormalized: [
       [0.0, 0.71],
@@ -59,6 +86,67 @@ const DEFAULT_CONFIG = {
     pillow: { hex: '#c4b8a8', blend: 'multiply' },
   },
 };
+
+/**
+ * Build filename map: defaults < cfg.assets < recognized root-level string keys (trimMask → trim, etc.).
+ */
+function buildResolvedAssets(cfg) {
+  const out = Object.assign({}, DEFAULT_ASSETS, (cfg.assets && typeof cfg.assets === 'object') ? cfg.assets : {});
+  const fromRoot = [
+    ['wallpaper', 'wallpaper'],
+    ['pattern', 'wallpaper'],
+    ['wallpaperPattern', 'wallpaper'],
+    ['carpet', 'carpet'],
+    ['mohawkCarpet', 'carpet'],
+    ['floorTile', 'carpet'],
+    ['floorDetail', 'floorDetail'],
+    ['wallMask', 'wallMask'],
+    ['pinnedWallMask', 'pinnedWallMask'],
+    ['trim', 'trim'],
+    ['trimMask', 'trimMask'],
+    ['panelMask', 'panelMask'],
+    ['sofaDetail', 'sofaDetail'],
+    ['sofaMask', 'sofaMask'],
+    ['pillowMask', 'pillowMask'],
+    ['floorMatte', 'floorMatte'],
+    ['floorMatteMask', 'floorMatte'],
+  ];
+  for (let i = 0; i < fromRoot.length; i++) {
+    const k = fromRoot[i][0];
+    const role = fromRoot[i][1];
+    const v = cfg[k];
+    if (typeof v === 'string' && v.trim()) out[role] = v.trim();
+  }
+  return out;
+}
+
+function loadJsonConfigFile(filePath, label) {
+  try {
+    return JSON.parse(fs.readFileSync(filePath, 'utf8'));
+  } catch (e) {
+    console.error('[mohawk-room-fixture] Invalid JSON in ' + label + ':', filePath, e.message);
+    process.exit(1);
+  }
+}
+
+function resolveMattePath(assetDir, cfg, assets) {
+  const tryPath = function (rel) {
+    if (!rel || typeof rel !== 'string' || !rel.trim()) return null;
+    const p = path.join(assetDir, rel.trim());
+    return fs.existsSync(p) ? p : null;
+  };
+  let p = tryPath(assets.floorMatte);
+  if (p) return p;
+  if (cfg.floorPinned && typeof cfg.floorPinned.matteFile === 'string' && cfg.floorPinned.matteFile.trim()) {
+    p = tryPath(cfg.floorPinned.matteFile);
+    if (p) return p;
+  }
+  if (typeof cfg.floorMatte === 'string' && cfg.floorMatte.trim()) {
+    p = tryPath(cfg.floorMatte);
+    if (p) return p;
+  }
+  return null;
+}
 
 function installCanvasGlobals() {
   let createCanvas;
@@ -238,10 +326,10 @@ function applySemanticMaskColorize(mkCtx, outW, outH, mkImg, hexCss, blendMode) 
   colorizeMaskSoftware(mkCtx, outW, outH, mkImg, fillHex);
 }
 
-async function drawWallpaperThroughMask(ctx, outW, outH, maskImg, patternImg, tileInches) {
+async function drawWallpaperThroughMask(createCanvas, ctx, outW, outH, maskImg, patternImg, tileInches) {
   const ww = maskImg.naturalWidth || maskImg.width;
   const wh = maskImg.naturalHeight || maskImg.height;
-  const wallTile = require('canvas').createCanvas(ww, wh);
+  const wallTile = createCanvas(ww, wh);
   const wctx = wallTile.getContext('2d');
   wctx.imageSmoothingEnabled = true;
   wctx.imageSmoothingQuality = 'high';
@@ -270,68 +358,101 @@ async function drawWallpaperThroughMask(ctx, outW, outH, maskImg, patternImg, ti
   ctx.drawImage(wallTile, 0, 0, outW, outH);
 }
 
-function resolveMatteFile(assetDir, cfg) {
-  if (cfg.floorPinned && cfg.floorPinned.matteFile) {
-    const p = path.join(assetDir, cfg.floorPinned.matteFile);
-    if (fs.existsSync(p)) return p;
-  }
-  for (const name of MATTE_CANDIDATES) {
-    const p = path.join(assetDir, name);
-    if (fs.existsSync(p)) return p;
-  }
-  return null;
-}
-
 async function main() {
-  const assetDir = process.env.MOHAWK_ROOM_FIXTURE_DIR
-    ? path.resolve(process.env.MOHAWK_ROOM_FIXTURE_DIR)
+  const envDir = process.env.MOHAWK_ROOM_FIXTURE_DIR;
+  const assetDirFromEnv = !!(envDir && String(envDir).trim());
+  const assetDir = assetDirFromEnv
+    ? path.resolve(String(envDir).trim())
     : path.join(__dirname, '..', 'tmp', 'mohawk-room-assets');
 
-  const missing = [];
-  for (const [, fname] of Object.entries(REQUIRED_FILES)) {
-    if (!fs.existsSync(path.join(assetDir, fname))) missing.push(path.join(assetDir, fname));
-  }
-  if (missing.length) {
-    console.error('[mohawk-room-fixture] Missing required files:\n  ' + missing.join('\n  '));
-    console.error('\nCopy your room PNGs + wallpaper.png + mohawk-carpet.png into:\n  ' + assetDir);
-    console.error('Optional matte for carpet pin: floor-matte.png or floor-tile.png');
-    process.exit(1);
+  if (!assetDirFromEnv) {
+    console.warn(
+      '[mohawk-room-fixture] MOHAWK_ROOM_FIXTURE_DIR is unset; using fallback directory:\n  ' +
+        assetDir +
+        '\n  Set MOHAWK_ROOM_FIXTURE_DIR to your existing Mohawk mockup path (same folder as layersBaseUrl on disk).'
+    );
   }
 
   let cfg = Object.assign({}, DEFAULT_CONFIG);
   const configPath = path.join(assetDir, 'fixture-config.json');
   if (fs.existsSync(configPath)) {
-    try {
-      cfg = deepMerge(cfg, JSON.parse(fs.readFileSync(configPath, 'utf8')));
-    } catch (e) {
-      console.error('[mohawk-room-fixture] Invalid fixture-config.json:', e.message);
+    cfg = deepMerge(cfg, loadJsonConfigFile(configPath, 'fixture-config.json'));
+  }
+  const envConfigPath = process.env.MOHAWK_ROOM_FIXTURE_CONFIG;
+  if (envConfigPath && String(envConfigPath).trim()) {
+    const abs = path.resolve(String(envConfigPath).trim());
+    if (!fs.existsSync(abs)) {
+      console.error('[mohawk-room-fixture] MOHAWK_ROOM_FIXTURE_CONFIG file not found:', abs);
       process.exit(1);
     }
+    cfg = deepMerge(cfg, loadJsonConfigFile(abs, 'MOHAWK_ROOM_FIXTURE_CONFIG'));
   }
 
-  const mattePath = resolveMatteFile(assetDir, cfg);
+  const assets = buildResolvedAssets(cfg);
+  const missing = [];
+  for (let i = 0; i < ASSET_ROLE_ORDER.length; i++) {
+    const role = ASSET_ROLE_ORDER[i];
+    const fname = assets[role];
+    if (!fname || typeof fname !== 'string' || !fname.trim()) {
+      missing.push(role + ' (not set in fixture config)');
+      continue;
+    }
+    const full = path.join(assetDir, fname.trim());
+    if (!fs.existsSync(full)) {
+      if (role === 'trimMask') {
+        console.warn('[mohawk-room-fixture] Optional asset missing:', full, '— trim tint will use trim.png');
+        continue;
+      }
+      missing.push(full);
+    }
+  }
+  if (missing.length) {
+    console.error('[mohawk-room-fixture] Missing or unresolved assets:\n  ' + missing.join('\n  '));
+    console.error(
+      '\nSet filenames in fixture-config.json (or MOHAWK_ROOM_FIXTURE_CONFIG), e.g. assets.wallpaper, assets.carpet, assets.trimMask, …'
+    );
+    console.error(
+      'Point MOHAWK_ROOM_FIXTURE_DIR at your Mohawk mockup directory. Example:\n' +
+        '  MOHAWK_ROOM_FIXTURE_DIR=/path/to/cf-data/data/mockups/mohawk npm run render:mohawk-room-fixture'
+    );
+    if (!assetDirFromEnv) {
+      console.error('\nFallback was tmp/mohawk-room-assets because MOHAWK_ROOM_FIXTURE_DIR was unset.');
+    }
+    process.exit(1);
+  }
+
+  const mattePath = resolveMattePath(assetDir, cfg, assets);
   if (!mattePath) {
     console.error(
-      '[mohawk-room-fixture] No floor carpet matte image. Add one of:\n' +
-        '  ' +
-        MATTE_CANDIDATES.join(', ') +
-        '\n  or set floorPinned.matteFile in fixture-config.json'
+      '[mohawk-room-fixture] No floor carpet matte file resolved. Set assets.floorMatte (or floorMatte / floorPinned.matteFile) to your production matte filename under MOHAWK_ROOM_FIXTURE_DIR.'
     );
     process.exit(1);
   }
 
   const { createCanvas, loadImage } = installCanvasGlobals();
-  const outW = cfg.outW | 0 || 2000;
-  const outH = cfg.outH | 0 || 2000;
+  const outW =
+    Number.isFinite(Number(cfg.outW)) && Number(cfg.outW) > 0 ? Math.floor(Number(cfg.outW)) : 2000;
+  const outH =
+    Number.isFinite(Number(cfg.outH)) && Number(cfg.outH) > 0 ? Math.floor(Number(cfg.outH)) : 2000;
 
   const paths = {};
-  for (const [key, fname] of Object.entries(REQUIRED_FILES)) {
-    paths[key] = path.join(assetDir, fname);
+  for (let i = 0; i < ASSET_ROLE_ORDER.length; i++) {
+    const role = ASSET_ROLE_ORDER[i];
+    if (role === 'floorMatte') continue;
+    const rel = assets[role];
+    if (!rel || typeof rel !== 'string' || !rel.trim()) continue;
+    const full = path.join(assetDir, rel.trim());
+    if (role === 'trimMask' && !fs.existsSync(full)) continue;
+    paths[role] = full;
   }
 
   const imgs = {};
-  for (const key of Object.keys(REQUIRED_FILES)) {
-    imgs[key] = await loadImage(paths[key]);
+  const imageRoles = ASSET_ROLE_ORDER.filter(function (r) {
+    return r !== 'floorMatte' && paths[r];
+  });
+  for (let i = 0; i < imageRoles.length; i++) {
+    const role = imageRoles[i];
+    imgs[role] = await loadImage(paths[role]);
   }
   const matteImg = await loadImage(mattePath);
 
@@ -351,8 +472,8 @@ async function main() {
   ctx.globalAlpha = 1;
 
   const tileInches = cfg.wallpaperTileInches || [24, 24];
-  await drawWallpaperThroughMask(ctx, outW, outH, imgs.wallMask, imgs.wallpaper, tileInches);
-  await drawWallpaperThroughMask(ctx, outW, outH, imgs.pinnedWallMask, imgs.wallpaper, tileInches);
+  await drawWallpaperThroughMask(createCanvas, ctx, outW, outH, imgs.wallMask, imgs.wallpaper, tileInches);
+  await drawWallpaperThroughMask(createCanvas, ctx, outW, outH, imgs.pinnedWallMask, imgs.wallpaper, tileInches);
 
   const moduleUrl = pathToFileURL(path.join(__dirname, '..', 'src', 'mohawk', 'mohawkPinnedSurface.js')).href;
   const { applyPinnedSurfaceComposite } = await import(moduleUrl);
@@ -366,7 +487,7 @@ async function main() {
     {
       corners,
       matteImage: matteImg,
-      tileImage: imgs.mohawkCarpet,
+      tileImage: imgs.carpet,
       tileRepeat: typeof cfg.floorPinned.tileRepeat === 'number' ? cfg.floorPinned.tileRepeat : 5,
     },
     null,
@@ -374,16 +495,26 @@ async function main() {
   );
 
   const sem = cfg.semantic || {};
-  function drawSem(maskKey, role) {
-    const m = imgs[maskKey];
+  function drawSemImg(maskImg, role) {
     const spec = sem[role] || { hex: '#888888', blend: 'multiply' };
     const mkCanvas = createCanvas(outW, outH);
     const mkCtx = mkCanvas.getContext('2d');
-    applySemanticMaskColorize(mkCtx, outW, outH, m, spec.hex, spec.blend);
+    applySemanticMaskColorize(mkCtx, outW, outH, maskImg, spec.hex, spec.blend);
     ctx.drawImage(mkCanvas, 0, 0);
   }
+  function drawSem(maskKey, role) {
+    const m = imgs[maskKey];
+    drawSemImg(m, role);
+  }
 
-  drawSem('trim', 'trim');
+  const td = imgs.trim;
+  const tdw = td.naturalWidth || td.width;
+  const tdh = td.naturalHeight || td.height;
+  ctx.globalCompositeOperation = 'source-over';
+  ctx.drawImage(td, 0, 0, tdw, tdh, 0, 0, outW, outH);
+
+  const trimMaskSrc = imgs.trimMask || imgs.trim;
+  drawSemImg(trimMaskSrc, 'trim');
   drawSem('panelMask', 'panels');
 
   const sd = imgs.sofaDetail;
@@ -400,7 +531,7 @@ async function main() {
   fs.mkdirSync(outDir, { recursive: true });
   fs.writeFileSync(outFile, comp.toBuffer('image/png'));
   console.log('Wrote', path.relative(process.cwd(), outFile));
-  console.log('  assets:', assetDir);
+  console.log('  source assets (read in place):', assetDir);
   console.log('  floor matte:', path.relative(process.cwd(), mattePath));
 }
 

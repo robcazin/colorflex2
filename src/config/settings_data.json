@@ -127,26 +127,26 @@
     "show_cart_note": true,
     "cart_drawer_collection": "",
     "cart_color_scheme": "scheme-1",
-    "sections": {
-      "main-password-header": {
-        "type": "main-password-header",
-        "settings": {
-          "color_scheme": "scheme-1"
-        }
-      },
-      "main-password-footer": {
-        "type": "main-password-footer",
-        "settings": {
-          "color_scheme": "scheme-1"
-        }
-      }
-    },
     "content_for_index": [],
     "blocks": {
       "9227748197609970840": {
         "type": "shopify://apps/pin-it-pinterest-save-button/blocks/app-embed/b4ccbe83-a934-440a-a7cb-4c563c1a8dc3",
         "disabled": false,
         "settings": {}
+      },
+      "15683396631634586217": {
+        "type": "shopify://apps/inbox/blocks/chat/841fc607-4181-4ad1-842d-e24d7f8bad6b",
+        "disabled": false,
+        "settings": {
+          "button_color": "#000000",
+          "secondary_color": "#FFFFFF",
+          "ternary_color": "#6A6A6A",
+          "button_icon": "chat_bubble",
+          "button_text": "chat_with_us",
+          "button_horizontal_position": "bottom_right",
+          "button_vertical_position": "lowest",
+          "greeting_message": ""
+        }
       }
     },
     "color_schemes": {
@@ -155,7 +155,7 @@
           "background": "#000000",
           "background_gradient": "",
           "text": "#ffffff",
-          "button": "#9b046f",
+          "button": "#8d600b",
           "button_label": "#efd197",
           "secondary_button_label": "#2e2a39",
           "shadow": "#2e2a39"
@@ -404,29 +404,15 @@
       "show_vendor": false,
       "show_cart_note": true,
       "cart_drawer_collection": "",
-      "cart_color_scheme": "scheme-1",
-      "sections": {
-        "main-password-header": {
-          "type": "main-password-header",
-          "settings": {
-            "color_scheme": "scheme-1"
-          }
-        },
-        "main-password-footer": {
-          "type": "main-password-footer",
-          "settings": {
-            "color_scheme": "scheme-1"
-          }
-        }
-      }
+      "cart_color_scheme": "scheme-1"
     }
   },
   "platform_customizations": {
     "custom_css": [
       "/* Hide all price elements */.price,.price__container,.product-price,.money,[class*=\"price\"],[class*=\"Price\"] {display: none !important;}",
       " /* Hide specific price-related elements */.product-form__cart-submit [class*=\"price\"],.card__information .price,.product__info-container .price {display: none !important;}",
-      "/* For headings */h1,h2,h3 {font-family: \"Island Moments\", cursive;}",
-      "/* For body or specific elements */.your-class-here {font-family: \"Special Elite\", monospace;}"
+      " /* For headings */h1,h2,h3 {font-family: \"Island Moments\", cursive;}",
+      " /* For body or specific elements */.your-class-here {font-family: \"Special Elite\", monospace;}"
     ]
   }
 }

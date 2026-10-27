@@ -10,6 +10,7 @@
     "wallMask": "wall-mask.png",
     "pinnedWallMask": "pinned-wall.png",
     "trim": "trim.png",
+    "trimMask": "trim-mask.png",
     "panelMask": "panel-mask.png",
     "sofaDetail": "sofa-detail.png",
     "sofaMask": "sofa-mask.png",

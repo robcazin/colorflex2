@@ -1273,17 +1273,33 @@
                 mediaWrap.style.paddingTop = '';
                 return;
               }
+              function colorflexPdpLayoutTargetIsVisible(el) {
+                if (!el) return false;
+                const st = getComputedStyle(el);
+                if (st.display === 'none' || st.visibility === 'hidden') return false;
+                const r = el.getBoundingClientRect();
+                return r.width > 2 && r.height > 2;
+              }
+              // Align media column with the ColorFlex summary strip: custom swatches (#colorflexCustomColors)
+              // or standard pattern card (#patternInfo). Avoid using #colorflexMaterialInfo (much lower).
+              const patternInfo = document.getElementById('patternInfo');
               const colorsBox = document.getElementById('colorflexCustomColors');
               const title = document.querySelector('.product__info-container .product__title');
-              const target =
-                colorsBox && colorsBox.getClientRects().length > 0 ? colorsBox : title;
+              let target = null;
+              if (colorflexPdpLayoutTargetIsVisible(colorsBox)) {
+                target = colorsBox;
+              } else if (colorflexPdpLayoutTargetIsVisible(patternInfo)) {
+                target = patternInfo;
+              } else {
+                target = title;
+              }
               if (!target) return;
               const delta = Math.round(target.getBoundingClientRect().top - mediaWrap.getBoundingClientRect().top);
               mediaWrap.style.paddingTop = delta > 2 ? delta + 'px' : '';
             };
             window.colorflexMatchInfoBoxesToAddToCart = function () {
               const btn = document.querySelector('.product-form__buttons button[name="add"], .product-form__buttons .product-form__submit[type="submit"]');
-              ['colorflexCustomColors', 'colorflexMaterialInfo'].forEach(function (id) {
+              ['colorflexCustomColors', 'patternInfo', 'colorflexMaterialInfo'].forEach(function (id) {
                 const el = document.getElementById(id);
                 if (!el || !btn) return;
                 const w = Math.round(btn.getBoundingClientRect().width);
@@ -1448,7 +1464,21 @@
               }
             };
 
-            const material = materialInfo[preferredMaterial];
+            let material = materialInfo[preferredMaterial];
+            const sampleForRaw = urlParams.get('sample_for');
+            if (sampleForRaw && (preferredMaterial === 'wallpaper-custom-sample' || preferredMaterial === 'fabric-custom-sample')) {
+              let sfr = sampleForRaw;
+              if (sfr === 'wallpaper-unpasted') sfr = 'wallpaper-prepasted';
+              const sub = materialInfo[sfr];
+              const sampleDef = materialInfo[preferredMaterial];
+              if (sub && sampleDef) {
+                material = {
+                  name: sampleDef.name + ' — ' + sub.name,
+                  price: sampleDef.price,
+                  specs: ['Substrate: ' + sub.name + ' (' + sub.price + ')'].concat(sampleDef.specs)
+                };
+              }
+            }
             console.log('🔍 Material lookup result:', material);
 
             if (material) {
@@ -1546,12 +1576,13 @@
                     {%- endif -%}
                   </div>
                 {%- endif -%}
-                <div {{ block.shopify_attributes }}>
-                  {%- assign product_form_installment_id = 'product-form-installment-' | append: section.id -%}
-                  {%- form 'product', product, id: product_form_installment_id, class: 'installment caption-large' -%}
-                    <input type="hidden" name="id" value="{{ product.selected_or_first_available_variant.id }}">
-                    {{ form | payment_terms }}
-                  {%- endform -%}
+                {%- comment -%}
+                  Shop Pay installments: use {{ form | payment_terms }} inside the ONE main product form only.
+                  A nested {% form 'product' %} is invalid HTML (inner <form> ignored; inner </form> closes the outer form),
+                  which leaves quantity + buy buttons outside the cart form — Add to cart does nothing.
+                {%- endcomment -%}
+                <div class="installment caption-large" {{ block.shopify_attributes }}>
+                  {{ form | payment_terms }}
                 </div>
 
               {%- comment -%}
@@ -1635,7 +1666,7 @@
                   const urlParams = new URLSearchParams(window.location.search);
                   console.log('🔍 Full URL:', window.location.href);
                   console.log('🔍 Search params:', window.location.search);
-                  const preferredMaterial = urlParams.get('preferred_material');
+                  let preferredMaterial = urlParams.get('preferred_material');
                   console.log('🔍 preferredMaterial value:', preferredMaterial);
 
                   if (!preferredMaterial) {
@@ -1769,7 +1800,21 @@
                     }
                   };
 
-                  const material = materialInfo[preferredMaterial];
+                  let material = materialInfo[preferredMaterial];
+                  const sampleForRaw = urlParams.get('sample_for');
+                  if (sampleForRaw && (preferredMaterial === 'wallpaper-custom-sample' || preferredMaterial === 'fabric-custom-sample')) {
+                    let sfr = sampleForRaw;
+                    if (sfr === 'wallpaper-unpasted') sfr = 'wallpaper-prepasted';
+                    const sub = materialInfo[sfr];
+                    const sampleDef = materialInfo[preferredMaterial];
+                    if (sub && sampleDef) {
+                      material = {
+                        name: sampleDef.name + ' — ' + sub.name,
+                        price: sampleDef.price,
+                        specs: ['Substrate: ' + sub.name + ' (' + sub.price + ')'].concat(sampleDef.specs)
+                      };
+                    }
+                  }
                   console.log('🔍 Material lookup result:', material);
 
                   if (material) {
@@ -4277,11 +4322,51 @@ window.replaceMainProductImage = function(urlParams) {
   const collection = urlParams.get('collection');
   const material = urlParams.get('material');
   const customColors = urlParams.get('custom_colors');
+  const urlPatternId = urlParams.get('pattern_id') || urlParams.get('saved_pattern_id');
   let thumbnail = urlParams.get('thumbnail');
-  
-  // If no thumbnail in URL, check localStorage
+
+  function colorflexReadCartThumbnailByPatternId(pid) {
+    if (!pid || !String(pid).trim()) return '';
+    try {
+      const suffix = typeof window.colorflexSanitizeCartThumbSuffix === 'function'
+        ? window.colorflexSanitizeCartThumbSuffix(pid)
+        : String(pid).replace(/[^a-zA-Z0-9-]/g, '_');
+      const cartKey = 'cart_thumbnail_' + suffix;
+      const raw = localStorage.getItem(cartKey);
+      if (raw) {
+        const data = JSON.parse(raw);
+        if (data && data.thumbnail) {
+          console.log('🖼️ Retrieved thumbnail from cart storage key:', cartKey);
+          return data.thumbnail;
+        }
+      }
+    } catch (_e) { /* ignore */ }
+    return '';
+  }
+
+  // Prefer per-colorway cart bucket when URL pins pattern_id (avoids stale global colorflexCurrentThumbnail).
+  if (!thumbnail || thumbnail.trim() === '') {
+    if (urlPatternId) {
+      thumbnail = colorflexReadCartThumbnailByPatternId(urlPatternId);
+      if (thumbnail) {
+        try {
+          localStorage.setItem('colorflexCurrentThumbnail', thumbnail);
+          localStorage.setItem('colorflexCurrentThumbnailPatternId', String(urlPatternId).trim());
+        } catch (_sync) {}
+      }
+    }
+  }
+
+  // If no thumbnail in URL / cart bucket, check localStorage (skip when pattern_id disagrees with stored meta)
   if (!thumbnail || thumbnail.trim() === '') {
     thumbnail = localStorage.getItem('colorflexCurrentThumbnail');
+    if (thumbnail && urlPatternId) {
+      const thumbPid = localStorage.getItem('colorflexCurrentThumbnailPatternId');
+      if (thumbPid && String(thumbPid) !== String(urlPatternId).trim()) {
+        thumbnail = '';
+        console.warn('🖼️ Ignoring stale colorflexCurrentThumbnail (pattern_id mismatch)');
+      }
+    }
     if (thumbnail) {
       console.log('🖼️ Retrieved thumbnail from localStorage');
     } else {
@@ -4297,7 +4382,12 @@ window.replaceMainProductImage = function(urlParams) {
             thumbnail = matchingPattern.thumbnail;
             console.log('🖼️ Retrieved thumbnail from saved patterns');
             // Store it in localStorage for future use
-            localStorage.setItem('colorflexCurrentThumbnail', thumbnail);
+            try {
+              localStorage.setItem('colorflexCurrentThumbnail', thumbnail);
+              if (urlPatternId) {
+                localStorage.setItem('colorflexCurrentThumbnailPatternId', String(urlPatternId).trim());
+              }
+            } catch (_sp) {}
           } else {
             console.warn('⚠️ No thumbnail found in localStorage or saved patterns');
           }
@@ -4305,27 +4395,6 @@ window.replaceMainProductImage = function(urlParams) {
           console.error('❌ Error checking saved patterns:', error);
         }
       }
-    }
-  }
-
-  // Cart stores the same thumbnail under cart_thumbnail_<patternId> (used by cart restoration)
-  if (!thumbnail || thumbnail.trim() === '') {
-    const pid = urlParams.get('pattern_id') || urlParams.get('saved_pattern_id');
-    if (pid) {
-      try {
-        const suffix = typeof window.colorflexSanitizeCartThumbSuffix === 'function'
-          ? window.colorflexSanitizeCartThumbSuffix(pid)
-          : String(pid).replace(/[^a-zA-Z0-9-]/g, '_');
-        const cartKey = 'cart_thumbnail_' + suffix;
-        const raw = localStorage.getItem(cartKey);
-        if (raw) {
-          const data = JSON.parse(raw);
-          if (data && data.thumbnail) {
-            thumbnail = data.thumbnail;
-            console.log('🖼️ Retrieved thumbnail from cart storage key:', cartKey);
-          }
-        }
-      } catch (_e) { /* ignore */ }
     }
   }
   
@@ -4431,12 +4500,13 @@ window.replaceMainProductImage = function(urlParams) {
     // Only show custom colors display for ColorFlex patterns
     if (!isStandardPattern) {
       // Add custom colors display under product name instead of overlay
-      addCustomColorsDisplay(patternName, collection, material, customColors);
+      addCustomColorsDisplay(patternName, collection, material, customColors, urlParams);
 
       // Don't show "Customize Options" button - pattern already customized
       console.log('🎨 ColorFlex pattern detected - showing colors display, hiding customize button');
     } else {
       console.log('🎨 Standard pattern detected - hiding custom colors display and customize button');
+      addPatternInfoDisplay(patternName, collection, urlParams);
     }
 
     console.log('✅ Main product image replaced with custom pattern thumbnail');
@@ -4449,16 +4519,20 @@ window.replaceMainProductImage = function(urlParams) {
     // Only show custom colors display for ColorFlex patterns
     if (!isStandardPattern) {
       // Still show custom colors display even without thumbnail
-      addCustomColorsDisplay(patternName, collection, material, customColors);
+      addCustomColorsDisplay(patternName, collection, material, customColors, urlParams);
 
       // Don't show "Customize Options" button - pattern already customized
       console.log('🎨 ColorFlex pattern detected (no thumbnail) - showing colors display, hiding customize button');
     } else {
       console.log('🎨 Standard pattern detected - hiding custom colors display and customize button');
+      addPatternInfoDisplay(patternName, collection, urlParams);
     }
 
   } else {
     console.warn('❌ Could not find main product image to replace');
+    if (isStandardPattern) {
+      addPatternInfoDisplay(patternName, collection, urlParams);
+    }
   }
 
   if (typeof window.colorflexSyncPdpLayout === 'function') {
@@ -4471,8 +4545,105 @@ window.replaceMainProductImage = function(urlParams) {
   }
 }
 
+function colorflexEscapeHtmlForPdp(str) {
+  if (str == null) return '';
+  const d = document.createElement('div');
+  d.textContent = String(str);
+  return d.innerHTML;
+}
+
+/** Human-readable repeat line from URL (scale / scale_multiplier). Empty string = default ×1 at 100%. */
+function colorflexPdpRepeatLabelFromParams(urlParams) {
+  const params =
+    urlParams && typeof urlParams.get === 'function'
+      ? urlParams
+      : new URLSearchParams(typeof window !== 'undefined' && window.location ? window.location.search : '');
+  const scaleRaw = params.get('scale');
+  const mulRaw = params.get('scale_multiplier');
+  let scalePct = scaleRaw != null && String(scaleRaw).trim() !== '' ? parseInt(scaleRaw, 10) : 100;
+  if (isNaN(scalePct)) scalePct = 100;
+  let scaleMul = mulRaw != null && String(mulRaw).trim() !== '' ? parseFloat(mulRaw) : 1;
+  if (isNaN(scaleMul) || scaleMul <= 0) scaleMul = 1;
+
+  if (scalePct === 50) return 'Pattern repeats: ½×';
+  if (scalePct === 200) return 'Pattern repeats: ×2';
+  if (scalePct === 300) return 'Pattern repeats: ×3';
+  if (scalePct === 400) return 'Pattern repeats: ×4';
+  if (scalePct !== 100) return 'Pattern repeats: ×' + scalePct / 100;
+  if (scaleMul !== 1) return 'Pattern repeats: ×' + scaleMul;
+  return '';
+}
+
+/** Standard ColorFlex PDP: pattern + collection + scale (URL), same slot as custom colors for layout sync. */
+function addPatternInfoDisplay(patternName, collection, urlParams) {
+  if (document.getElementById('colorflexCustomColors')) return;
+  const old = document.getElementById('patternInfo');
+  if (old) old.remove();
+
+  const productTitle = document.querySelector('.product__title, h1, .product-single__title');
+  if (!productTitle || !patternName) return;
+
+  const repeatLine = colorflexPdpRepeatLabelFromParams(urlParams);
+  const scaleLine = repeatLine
+    ? `<div class="colorflex-pattern-info__scale">${colorflexEscapeHtmlForPdp(repeatLine)}</div>`
+    : '';
+
+  const matHint =
+    urlParams && typeof urlParams.get === 'function'
+      ? urlParams.get('preferred_material') || urlParams.get('selected_category') || urlParams.get('material') || ''
+      : '';
+  const matBit = matHint
+    ? ` <span style="color: rgba(239,238,234,0.55);">· ${colorflexEscapeHtmlForPdp(matHint.replace(/-/g, ' '))}</span>`
+    : '';
+
+  const baseUrl = (function () {
+    var b = (window.COLORFLEX_DATA_BASE_URL || 'https://s3.us-east-005.backblazeb2.com/cf-data').replace(/\/$/, '');
+    return b && !/^https?:\/\//i.test(b) ? 'https://' + b : b;
+  })();
+
+  const el = document.createElement('div');
+  el.id = 'patternInfo';
+  el.className = 'colorflex-pattern-info';
+  el.style.cssText = 'box-sizing: border-box;';
+  el.innerHTML =
+    '<div style="display: flex; align-items: center; gap: 12px; margin-bottom: 4px;">' +
+    '<img src="' +
+    baseUrl +
+    '/img/camelion-sm-r.jpg" style="width: 32px; height: 32px; border-radius: 50%; border: 2px solid rgba(212, 175, 55, 0.75); box-shadow: 0 2px 8px rgba(0,0,0,0.45);" alt="ColorFlex">' +
+    '<div style="font-size: 14px;">' +
+    '<strong>' +
+    colorflexEscapeHtmlForPdp(patternName) +
+    '</strong> <span style="color: rgba(239,238,234,0.78);">from ' +
+    colorflexEscapeHtmlForPdp(collection || '') +
+    ' collection</span>' +
+    matBit +
+    '</div></div>' +
+    scaleLine;
+
+  productTitle.parentNode.insertBefore(el, productTitle.nextSibling);
+  console.log('✅ patternInfo added for standard ColorFlex PDP');
+
+  setTimeout(function () {
+    const materialInfoBox = document.getElementById('colorflexMaterialInfo');
+    if (materialInfoBox && materialInfoBox.style.display !== 'none') {
+      el.parentNode.insertBefore(materialInfoBox, el.nextSibling);
+      console.log('✅ Material info repositioned after patternInfo');
+    }
+    if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+  }, 100);
+  setTimeout(function () {
+    if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+  }, 350);
+  setTimeout(function () {
+    if (typeof window.colorflexSyncPdpLayout === 'function') window.colorflexSyncPdpLayout();
+  }, 700);
+}
+
 // Add custom colors display under product name
-function addCustomColorsDisplay(patternName, collection, material, customColors) {
+function addCustomColorsDisplay(patternName, collection, material, customColors, urlParams) {
+  const rmPatternInfo = document.getElementById('patternInfo');
+  if (rmPatternInfo) rmPatternInfo.remove();
+
   // Parse custom colors
   let colorArray = [];
   if (customColors && customColors.trim() !== '') {
@@ -4497,6 +4668,11 @@ function addCustomColorsDisplay(patternName, collection, material, customColors)
       </div>
     </div>
   `;
+
+  const repeatLine = colorflexPdpRepeatLabelFromParams(urlParams);
+  if (repeatLine) {
+    displayHTML += `<div class="colorflex-pattern-info__scale">${colorflexEscapeHtmlForPdp(repeatLine)}</div>`;
+  }
   
   if (colorArray.length > 0) {
     displayHTML += `
@@ -5328,6 +5504,19 @@ function formatPreferredMaterial(pm) {
   return map[pm] || pm.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
 }
 
+/** Cart line Material Type when arriving from material modal sample links (preferred_material + sample_for). */
+function colorflexMaterialTypeLabelForCart(urlParams) {
+  const sampleFor = urlParams.get('sample_for');
+  const pm = urlParams.get('preferred_material');
+  if (sampleFor && (pm === 'wallpaper-custom-sample' || pm === 'fabric-custom-sample')) {
+    let sf = sampleFor;
+    if (sf === 'wallpaper-unpasted') sf = 'wallpaper-prepasted';
+    const sampleName = pm === 'fabric-custom-sample' ? 'Fabric Custom Sample' : 'Wallpaper Custom Sample';
+    return sampleName + ' — ' + formatPreferredMaterial(sf);
+  }
+  return urlParams.get('application') || urlParams.get('material') || formatPreferredMaterial(urlParams.get('preferred_material')) || '';
+}
+
 /**
  * Shrink huge data-URL previews (~2MB+) so localStorage cart_thumbnail_* JSON fits quota and <img src> is reliable.
  * Persists the smaller URL back to colorflexCurrentThumbnail when compression runs.
@@ -5391,11 +5580,24 @@ async function populateColorFlexProperties(urlParams) {
   const patternName = urlParams.get('pattern_name');
   const collection = urlParams.get('collection');
   const rawCustomColors = urlParams.get('custom_colors') || '';
+  /** Decode + comma-split only — keep SW/SC codes for pattern ID extraction (clean list strips numeric prefixes). */
+  function colorflexRawCustomColorsCommaList(raw) {
+    if (!raw) return '';
+    var decoded;
+    try {
+      decoded = decodeURIComponent(String(raw).replace(/\+/g, '%20'));
+    } catch (e) {
+      decoded = String(raw).replace(/\+/g, ' ');
+    }
+    return decoded.split(',').map(function (s) { return s.trim(); }).filter(Boolean).join(', ');
+  }
+  const customColorsForPatternId = colorflexRawCustomColorsCommaList(rawCustomColors);
   // Use the same color cleaning function as the cart properties
   const customColors = rawCustomColors ? rawCustomColors.split(',')
     .map(color => color.trim().replace(/^(SW|SC|SWs|SCs|Sw|Sc|swsw|SWsw|SCsc|SCcs|Swsc|swsc)\d+\s*/i, "").trim())
     .join(', ') : '';
   const patternScale = urlParams.get('scale') || '100';
+  const patternScaleMultiplierRaw = urlParams.get('scale_multiplier') || '';
 
   // Generate pattern ID using same logic as saved patterns (pattern name + SW numbers)
   function generatePatternId(patternName, customColors) {
@@ -5416,7 +5618,7 @@ async function populateColorFlexProperties(urlParams) {
         const trimmedColor = color.trim();
         console.log(`🎨 Processing color ${index}: "${trimmedColor}"`);
 
-        // Look for SW/SC numbers in the color name
+        // SW0001 / SC 1234 — cleaned display names omit codes; use customColorsForPatternId for extraction
         const swMatch = trimmedColor.match(/\b(SW|SC)\s*(\d+)\b/i);
         console.log(`🔍 SW match for "${trimmedColor}":`, swMatch);
 
@@ -5447,14 +5649,15 @@ async function populateColorFlexProperties(urlParams) {
     return id; // Return format like: agnes-7069-0055
   }
 
-  // Use pattern ID if available, otherwise generate new one
+  // Use pattern ID if available, otherwise generate new one (use raw colors so SW numbers survive cleaning)
   const urlPatternId = urlParams.get('pattern_id') || urlParams.get('saved_pattern_id');
-  const patternId = urlPatternId || generatePatternId(patternName, customColors);
+  const generatedPatternIdFallback = generatePatternId(patternName, customColorsForPatternId);
+  const patternId = urlPatternId || generatedPatternIdFallback;
 
   console.log('🆔 Pattern ID logic:');
   console.log('  Pattern ID from URL (pattern_id):', urlParams.get('pattern_id'));
   console.log('  Pattern ID from URL (saved_pattern_id):', urlParams.get('saved_pattern_id'));
-  console.log('  Generated pattern ID:', generatePatternId(patternName, customColors));
+  console.log('  Generated pattern ID:', generatedPatternIdFallback);
   console.log('  Final pattern ID used:', patternId);
 
   // Generate cart thumbnail key for restoration script (patternId includes colorway — avoids stale thumbs)
@@ -5523,11 +5726,12 @@ async function populateColorFlexProperties(urlParams) {
       }
     }
   } else {
-    console.warn('⚠️ Cannot store cart thumbnail:', {
-      noThumbnail: !thumbnail,
-      noCartKey: !cartThumbnailKey,
-      suggestions: thumbnail ? 'Check cartThumbnailKey generation' : 'Check colorflexCurrentThumbnail storage in CFM.js'
-    });
+    console.warn(
+      '⚠️ Cannot store cart thumbnail (no colorflexCurrentThumbnail yet). Keys:',
+      'noThumbnail=' + !thumbnail,
+      'noCartKey=' + !cartThumbnailKey,
+      thumbnail ? '(check cartThumbnailKey)' : '(open design in ColorFlex first, or use saved-pattern fallback below)'
+    );
 
     // FALLBACK: Try to find matching saved pattern and use its thumbnail
     if (!thumbnail && patternName && collection) {
@@ -5598,20 +5802,21 @@ async function populateColorFlexProperties(urlParams) {
     'colorflex-custom-colors': customColors,
     'colorflex-source': sourceLabel,
     'colorflex-thumbnail-key': cartThumbnailKey,
-    'colorflex-material-type': urlParams.get('application') || urlParams.get('material') || formatPreferredMaterial(urlParams.get('preferred_material')),
+    'colorflex-material-type': colorflexMaterialTypeLabelForCart(urlParams),
     'colorflex-design': 'Yes',
     'colorflex-pattern-id': patternId, // Use generated ID instead of URL parameter
     'colorflex-save-date': new Date().toISOString(),
     'colorflex-pattern-scale': (() => {
       const scale = parseInt(patternScale) || 100;
-      switch (scale) {
-        case 50: return '0.5X';
-        case 100: return 'Normal';
-        case 200: return '2X';
-        case 300: return '3X';
-        case 400: return '4X';
-        default: return `${scale}%`;
-      }
+      const mul = parseFloat(patternScaleMultiplierRaw);
+      const mulOk = !isNaN(mul) && mul > 0 && mul !== 1;
+      if (scale === 50) return '½×';
+      if (scale === 200) return '×2';
+      if (scale === 300) return '×3';
+      if (scale === 400) return '×4';
+      if (scale !== 100) return '×' + (scale / 100);
+      if (mulOk) return '×' + mul;
+      return '×1';
     })()
   };
   
@@ -5763,10 +5968,35 @@ function protectColorFlexProperties() {
     const productForm = document.querySelector('form[action*="/cart/add"]');
     if (!productForm) return;
 
-    // Check if we have ColorFlex properties in the form
-    const colorflexFields = productForm.querySelectorAll('input[name*="properties"][name*="Custom"], input[name*="properties"][name*="Pattern"], input[name*="properties"][name*="ColorFlex"]');
+    // Include Thumbnail Key, Material Type, Save Date (narrow name* filters used to miss these on submit/FormData paths).
+    const colorflexFields = Array.from(
+      productForm.querySelectorAll('input[type="hidden"][name^="properties["]')
+    ).filter(function (field) {
+      var n = field.name || '';
+      return (
+        n.indexOf('Custom Pattern') !== -1 ||
+        n.indexOf('Pattern Collection') !== -1 ||
+        n.indexOf('Custom Colors') !== -1 ||
+        n.indexOf('ColorFlex') !== -1 ||
+        n.indexOf('Thumbnail Key') !== -1 ||
+        n.indexOf('Material Type') !== -1 ||
+        n.indexOf('Pattern ID') !== -1 ||
+        n.indexOf('Pattern Scale') !== -1 ||
+        n.indexOf('Save Date') !== -1 ||
+        n.indexOf('Promo Code') !== -1 ||
+        n.indexOf('Discount') !== -1
+      );
+    });
 
     if (colorflexFields.length > 0) {
+      if (window.__colorflexPropertyProtectionInstalled) {
+        clearInterval(protectionInterval);
+        return;
+      }
+      window.__colorflexPropertyProtectionInstalled = true;
+
+      const nativeAddEventListener = EventTarget.prototype.addEventListener;
+
       console.log('🛡️ ColorFlex protection: Found', colorflexFields.length, 'ColorFlex properties');
 
       // Store ColorFlex properties in memory for protection
@@ -5784,11 +6014,16 @@ function protectColorFlexProperties() {
         return originalSubmit.apply(this, arguments);
       };
 
-      // Also intercept form submit events
-      productForm.addEventListener('submit', function(event) {
-        console.log('🛡️ Submit event intercepted - ensuring ColorFlex properties');
-        restorePropertiesBeforeSubmission();
-      }, true); // Use capture phase to run before other handlers
+      // Capture phase on native addEventListener only — never route through a patched form.addEventListener
+      nativeAddEventListener.call(
+        productForm,
+        'submit',
+        function (event) {
+          console.log('🛡️ Submit event intercepted - ensuring ColorFlex properties');
+          restorePropertiesBeforeSubmission();
+        },
+        true
+      );
 
       function restorePropertiesBeforeSubmission() {
         console.log('🛡️ restorePropertiesBeforeSubmission called with', Object.keys(protectedProperties).length, 'stored properties');
@@ -5834,18 +6069,16 @@ function protectColorFlexProperties() {
         }
       }
 
-      // Also protect against addEventListener form submissions
-      const originalAddEventListener = productForm.addEventListener;
-      productForm.addEventListener = function(type, listener, options) {
+      // Wrap form.addEventListener so future submit listeners still get property verification.
+      // Always delegate to EventTarget.prototype — never chain onto an already-patched method.
+      productForm.addEventListener = function (type, listener, options) {
         if (type === 'submit') {
-          const protectedListener = function(event) {
+          const protectedListener = function (event) {
             console.log('🛡️ Submit event intercepted - verifying ColorFlex properties');
 
-            // Double-check properties are still present
-            Object.keys(protectedProperties).forEach(name => {
+            Object.keys(protectedProperties).forEach((name) => {
               let field = productForm.querySelector(`input[name="${name}"]`);
               if (!field || field.value !== protectedProperties[name]) {
-                // Restore if missing or changed
                 if (!field) {
                   field = document.createElement('input');
                   field.type = 'hidden';
@@ -5860,16 +6093,24 @@ function protectColorFlexProperties() {
             return listener.apply(this, arguments);
           };
 
-          return originalAddEventListener.call(this, type, protectedListener, options);
-        } else {
-          return originalAddEventListener.apply(this, arguments);
+          return nativeAddEventListener.call(this, type, protectedListener, options);
         }
+        return nativeAddEventListener.apply(this, arguments);
       };
 
-      // Also intercept FormData creation to ensure properties are included
-      const originalFormData = window.FormData;
-      window.FormData = function(form) {
-        const formData = new originalFormData(form);
+      // Also intercept FormData creation to ensure properties are included (real constructor cached once)
+      const NativeFormData =
+        window.__colorflexNativeFormDataReal || (window.__colorflexNativeFormDataReal = window.FormData);
+      window.FormData = function ColorFlexFormData() {
+        var formData;
+        if (arguments.length === 0) {
+          formData = new NativeFormData();
+        } else if (arguments.length === 1) {
+          formData = new NativeFormData(arguments[0]);
+        } else {
+          formData = new NativeFormData(arguments[0], arguments[1]);
+        }
+        var form = arguments[0];
 
         // If this is our product form, ensure ColorFlex properties are included
         if (form === productForm && Object.keys(protectedProperties).length > 0) {
@@ -5895,6 +6136,10 @@ function protectColorFlexProperties() {
 
         return formData;
       };
+      window.FormData.prototype = NativeFormData.prototype;
+      try {
+        Object.setPrototypeOf(window.FormData, NativeFormData);
+      } catch (eProto) {}
 
       // Only intercept fetch when thumbnail upload API is enabled (otherwise cart add can hang)
       const THUMBNAIL_UPLOAD_API_ENABLED = false;
@@ -6641,6 +6886,13 @@ if (document.readyState === 'loading') {
 }
 
 // ColorFlex URL Parameter Processing
+window.__COLORFLEX_MAIN_PRODUCT_REVISION = 'CF-REV-2026-05-06-11';
+console.info('COLORFLEX_DEPLOY_REVISION', window.__COLORFLEX_MAIN_PRODUCT_REVISION, 'source=main-product.liquid');
+console.log(
+  '%cColorFlex revision%c main-product (section) → ' + window.__COLORFLEX_MAIN_PRODUCT_REVISION + ' — must match product-form.js',
+  'font-weight:700;background:#fff3e0;color:#e65100;padding:2px 6px;border-radius:3px',
+  'color:#333'
+);
 console.log('🎨🎨🎨 COLORFLEX SCRIPT LOADED 🎨🎨🎨');
 console.log('🎨 Processing ColorFlex URL parameters...');
 console.log('🔍 DEBUG: main-product.liquid script loaded');
@@ -6683,6 +6935,17 @@ if (patternName && collection) {
 
   const cleanedCustomColors = cleanColorsForCart(customColors);
 
+  const rawCustomColorsForPatternIdEarly = (function () {
+    if (!customColors) return '';
+    var decoded;
+    try {
+      decoded = decodeURIComponent(String(customColors).replace(/\+/g, '%20'));
+    } catch (e) {
+      decoded = String(customColors).replace(/\+/g, ' ');
+    }
+    return decoded.split(',').map(function (s) { return s.trim(); }).filter(Boolean).join(', ');
+  })();
+
   function productPageDerivePatternId(pn, ccStr, up) {
     const fromUrl = up.get('pattern_id') || up.get('saved_pattern_id');
     if (fromUrl && String(fromUrl).trim()) return String(fromUrl).trim();
@@ -6697,7 +6960,7 @@ if (patternName && collection) {
     if (swNumbers.length > 0) id += '-' + swNumbers.join('-');
     return id;
   }
-  const resolvedPatternId = productPageDerivePatternId(patternName, cleanedCustomColors, urlParams);
+  const resolvedPatternId = productPageDerivePatternId(patternName, rawCustomColorsForPatternIdEarly, urlParams);
   const sanitizeThumb = window.colorflexSanitizeCartThumbSuffix || function (s) {
     return String(s || '').replace(/[^a-zA-Z0-9-]/g, '_');
   };
@@ -6846,7 +7109,7 @@ if (patternName && collection) {
       'properties[Custom Colors]': cleanedCustomColors,
       'properties[ColorFlex Source]': 'ColorFlex Saved Pattern',
       'properties[Thumbnail Key]': formCartThumbnailKey,
-      'properties[Material Type]': urlParams.get('application') || urlParams.get('material') || formatPreferredMaterial(urlParams.get('preferred_material')),
+      'properties[Material Type]': colorflexMaterialTypeLabelForCart(urlParams),
       'properties[ColorFlex Design]': 'Yes',
       'properties[Pattern ID]': resolvedPatternId,
       'properties[Save Date]': new Date().toISOString(),

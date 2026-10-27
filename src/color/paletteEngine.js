@@ -6,8 +6,8 @@
  * without changing this module’s contract.
  *
  * Pipeline: harmony (color theory) → optional `style` (design/historical) →
- * optional `artist` (expressive HSL shaping) → HEX. Defaults: harmony analogous,
- * style none, artist none.
+ * optional `artist` (expressive HSL shaping, blended by `artistStrength`) → HEX.
+ * Defaults: harmony analogous, style none, artist none, `artistStrength` 0.35 when artist is set.
  *
  * Legacy exact `primary` hex is preserved when both style and artist are unset/`none`.
  */
@@ -26,8 +26,8 @@ import { applyArtistToPaletteHsl } from './artistStyles.js';
 
 let _lockedPalette = null;
 
-function clamp(n, lo, hi) {
-  return Math.max(lo, Math.min(hi, n));
+function clamp01(n) {
+  return Math.max(0, Math.min(1, n));
 }
 
 function hexToHsl(hex) {
@@ -59,7 +59,8 @@ function hslSlotsToHex(slots) {
  * @param {{
  *   harmony?: string,
  *   style?: string,
- *   artist?: string
+ *   artist?: string,
+ *   artistStrength?: number
  * } | undefined} [options]
  * @returns {{ primary: string, secondary: string, accent: string, neutral: string, background: string }}
  */
@@ -71,6 +72,7 @@ export function generatePalette(baseHex, options) {
   const harmony = !rawHarmony || rawHarmony === 'none' ? 'analogous' : rawHarmony;
 
   let slots = harmonyPaletteToHslSlots(baseHex, harmony);
+  const { h: baseHue } = hexToHsl(baseHex);
   const style =
     options && typeof options === 'object' && typeof options.style === 'string'
       ? options.style.trim().toLowerCase()
@@ -80,11 +82,15 @@ export function generatePalette(baseHex, options) {
       ? options.artist.trim().toLowerCase()
       : '';
   if (style && style !== 'none') {
-    slots = applyStyleToPaletteHsl(slots, style);
+    slots = applyStyleToPaletteHsl(slots, style, baseHue);
   }
   if (artist && artist !== 'none') {
-    const { h: baseHue } = hexToHsl(baseHex);
-    slots = applyArtistToPaletteHsl(slots, artist, baseHue);
+    let artistStrength;
+    if (options && typeof options === 'object' && options.artistStrength != null) {
+      const n = Number(options.artistStrength);
+      if (!Number.isNaN(n)) artistStrength = clamp01(n);
+    }
+    slots = applyArtistToPaletteHsl(slots, artist, baseHue, artistStrength);
   }
   const out = hslSlotsToHex(slots);
   // Legacy primary used exact RGB from the base hex (HSL round-trip can differ by 1 step).
@@ -93,6 +99,61 @@ export function generatePalette(baseHex, options) {
     out.primary = rgbToHex(r, g, b);
   }
   return out;
+}
+
+/**
+ * Normalize hex for internal use (lowercase #RRGGBB).
+ * @param {string} hex
+ */
+function normalizeMohawkHex(hex) {
+  let h = String(hex || '').trim();
+  if (!h) throw new Error('generatePaletteFromMohawkRoles: empty hex');
+  if (h[0] !== '#') h = '#' + h;
+  if (h.length === 4) {
+    h = '#' + h[1] + h[1] + h[2] + h[2] + h[3] + h[3];
+  }
+  if (h.length !== 7) throw new Error('generatePaletteFromMohawkRoles: expected #RRGGBB');
+  hexToRgb(h);
+  return h.toLowerCase();
+}
+
+/** RGB linear mix for role blending (deterministic). */
+function mixHexRgb(aHex, bHex, t) {
+  const u = Math.max(0, Math.min(1, t));
+  const a = hexToRgb(aHex);
+  const b = hexToRgb(bHex);
+  return rgbToHex(
+    Math.round(a.r + (b.r - a.r) * u),
+    Math.round(a.g + (b.g - a.g) * u),
+    Math.round(a.b + (b.b - a.b) * u)
+  );
+}
+
+/**
+ * Adapter: run the same harmony → style → artist pipeline from the Mohawk **accent** as the
+ * creative base, then nudge slots toward extracted **background** (field) and **linework**
+ * (structure) without replacing `generatePalette`.
+ *
+ * @param {{ background: string, linework: string, accent: string }} mohawkRoles
+ * @param {Parameters<typeof generatePalette>[1]} [options]
+ * @returns {ReturnType<typeof generatePalette>}
+ */
+export function generatePaletteFromMohawkRoles(mohawkRoles, options) {
+  if (!mohawkRoles || typeof mohawkRoles !== 'object') {
+    throw new Error('generatePaletteFromMohawkRoles: expected roles object');
+  }
+  const field = normalizeMohawkHex(mohawkRoles.background);
+  const line = normalizeMohawkHex(mohawkRoles.linework);
+  const motif = normalizeMohawkHex(mohawkRoles.accent);
+
+  const pal = generatePalette(motif, options);
+  return {
+    primary: pal.primary,
+    secondary: mixHexRgb(pal.secondary, line, 0.48),
+    accent: pal.accent,
+    neutral: mixHexRgb(pal.neutral, field, 0.38),
+    background: field
+  };
 }
 
 /**

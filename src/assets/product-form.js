@@ -4,6 +4,20 @@
  * for the line thumbnail; replacing that requires a Checkout UI extension that reads this property.
  */
 
+/** Bump when deploying — filter console by "ColorFlex revision" to confirm this file is current. */
+var COLORFLEX_PRODUCT_FORM_REVISION = 'CF-REV-2026-05-06-11';
+if (typeof window !== 'undefined') {
+  window.__COLORFLEX_PRODUCT_FORM_REVISION = COLORFLEX_PRODUCT_FORM_REVISION;
+  console.info('COLORFLEX_DEPLOY_REVISION', COLORFLEX_PRODUCT_FORM_REVISION, 'source=product-form.js (asset)');
+  console.log(
+    '%cColorFlex revision%c product-form.js → ' +
+      COLORFLEX_PRODUCT_FORM_REVISION +
+      ' (missing line = old cached theme asset)',
+    'font-weight:700;background:#e8f5e9;color:#1b5e20;padding:2px 6px;border-radius:3px',
+    'color:#333'
+  );
+}
+
 if (typeof window !== 'undefined' && typeof window.colorflexDumpDiagnostics !== 'function') {
   window.colorflexDumpDiagnostics = function () {
     let persisted = null;
@@ -653,10 +667,12 @@ async function ensureColorFlexPatternPreviewOnFormData(formData) {
     const fallbackThumb = readStoredCartThumbnail(formData);
     if (fallbackThumb) thumb = fallbackThumb;
   }
+  // Do not reject moderately small thumbs: cart_thumbnail_* entries may be quota-compressed (~560px max side)
+  // and saved-pattern previews are often <600px. ensureDataUrlSize() upscales before upload anyway.
   if (thumb && thumb.startsWith('data:image') && thumb.length >= 256) {
     const dims = await getDataUrlDimensions(thumb);
-    if (dims && (dims.width < 600 || dims.height < 600)) {
-      pushDiag('thumb-rejected-low-resolution', dims);
+    if (dims && dims.width > 0 && dims.height > 0 && (dims.width < 32 || dims.height < 32)) {
+      pushDiag('thumb-rejected-tiny', dims);
       thumb = null;
     }
   }
@@ -801,10 +817,21 @@ if (!customElements.get('product-form')) {
         super();
 
         this.form = this.querySelector('form');
-        this.variantIdInput.disabled = false;
+        if (!this.form) {
+          console.error('ColorFlex: product-form has no inner form');
+          return;
+        }
+        const vid = this.variantIdInput;
+        if (vid) {
+          vid.disabled = false;
+        }
         this.form.addEventListener('submit', this.onSubmitHandler.bind(this));
         this.cart = document.querySelector('cart-notification') || document.querySelector('cart-drawer');
         this.submitButton = this.querySelector('[type="submit"]');
+        if (!this.submitButton) {
+          console.error('ColorFlex: product-form has no submit button');
+          return;
+        }
         this.submitButtonText = this.submitButton.querySelector('span');
 
         if (document.querySelector('cart-drawer')) this.submitButton.setAttribute('aria-haspopup', 'dialog');
@@ -833,7 +860,7 @@ if (!customElements.get('product-form')) {
         const self = this;
         (async function () {
           try {
-            const config = fetchConfig('javascript');
+            const config = fetchConfig('json');
             config.headers['X-Requested-With'] = 'XMLHttpRequest';
             delete config.headers['Content-Type'];
 
@@ -860,7 +887,10 @@ if (!customElements.get('product-form')) {
             // Never block checkout forever on preview/proof generation.
             // If render/upload takes too long, continue add-to-cart without waiting.
             const previewTimeoutMs = 12000;
-            const previewTask = ensureColorFlexPatternPreviewOnFormData(formData);
+            const previewTask = ensureColorFlexPatternPreviewOnFormData(formData).catch((err) => {
+              console.warn('ColorFlex: preview/proof preparation rejected (continuing cart add):', err);
+              return null;
+            });
             const timeoutTask = new Promise((resolve) => {
               setTimeout(() => resolve('timeout'), previewTimeoutMs);
             });
@@ -896,6 +926,24 @@ if (!customElements.get('product-form')) {
             console.log('  Pattern:', pattern);
             console.log('  Colors:', colors);
 
+            const variantIdForCart = formData.get('id');
+            if (!variantIdForCart) {
+              console.error(
+                'ColorFlex: cart add blocked — FormData has no variant id. Disabled or missing input[name="id"] is omitted from FormData.'
+              );
+              publish(PUB_SUB_EVENTS.cartError, {
+                source: 'product-form',
+                productVariantId: null,
+                errors: 'missing_variant_id',
+                message: 'Missing variant id',
+              });
+              self.handleErrorMessage(
+                'Unable to add to cart: missing product variant. Try refreshing the page or choosing an option.'
+              );
+              resetButton();
+              return;
+            }
+
             if (!quantity || quantity === '1') {
               console.warn('⚠️ Quantity issue in Shopify submission');
             }
@@ -918,9 +966,41 @@ if (!customElements.get('product-form')) {
             }
             config.body = formData;
 
+            console.log(
+              '%cColorFlex cart add%c revision=' +
+                COLORFLEX_PRODUCT_FORM_REVISION +
+                ' POST ' +
+                routes.cart_add_url +
+                ' variantId=' +
+                (formData.get('id') || '(none)'),
+              'font-weight:700;background:#e3f2fd;color:#0d47a1;padding:2px 6px;border-radius:3px',
+              ''
+            );
+
             fetch(`${routes.cart_add_url}`, config)
-              .then((response) => response.json())
-              .then((response) => {
+              .then(async (res) => {
+                console.info(
+                  'COLORFLEX_DEPLOY_REVISION',
+                  'cart_fetch_http',
+                  res.status,
+                  res.ok,
+                  COLORFLEX_PRODUCT_FORM_REVISION
+                );
+                const text = await res.text();
+                let response = null;
+                try {
+                  response = text ? JSON.parse(text) : {};
+                } catch (parseErr) {
+                  console.error(
+                    'ColorFlex: /cart/add response is not JSON',
+                    parseErr,
+                    text ? text.slice(0, 400) : '(empty)'
+                  );
+                  throw new Error('Cart response was not valid JSON (HTTP ' + res.status + ')');
+                }
+                return { response };
+              })
+              .then(({ response }) => {
                 if (response.status) {
                   publish(PUB_SUB_EVENTS.cartError, {
                     source: 'product-form',
@@ -953,23 +1033,30 @@ if (!customElements.get('product-form')) {
                   });
                 self.error = false;
                 const quickAddModal = self.closest('quick-add-modal');
+                const paintCartUi = () => {
+                  try {
+                    self.cart.renderContents(response);
+                  } catch (renderErr) {
+                    console.error(
+                      'ColorFlex: cart drawer/notification update failed; falling back to cart page',
+                      renderErr
+                    );
+                    window.location.href = window.routes.cart_url;
+                  }
+                };
                 if (quickAddModal) {
                   document.body.addEventListener(
                     'modalClosed',
                     () => {
                       setTimeout(() => {
-                        CartPerformance.measure('add:paint-updated-sections', () => {
-                          self.cart.renderContents(response);
-                        });
+                        CartPerformance.measure('add:paint-updated-sections', paintCartUi);
                       });
                     },
                     { once: true }
                   );
                   quickAddModal.hide(true);
                 } else {
-                  CartPerformance.measure('add:paint-updated-sections', () => {
-                    self.cart.renderContents(response);
-                  });
+                  CartPerformance.measure('add:paint-updated-sections', paintCartUi);
                 }
               })
               .catch((e) => {
@@ -1009,10 +1096,14 @@ if (!customElements.get('product-form')) {
       toggleSubmitButton(disable = true, text) {
         if (disable) {
           this.submitButton.setAttribute('disabled', 'disabled');
-          if (text) this.submitButtonText.textContent = text;
+          this.submitButton.setAttribute('aria-disabled', 'true');
+          if (text && this.submitButtonText) this.submitButtonText.textContent = text;
         } else {
           this.submitButton.removeAttribute('disabled');
-          this.submitButtonText.textContent = window.variantStrings.addToCart;
+          this.submitButton.removeAttribute('aria-disabled');
+          if (this.submitButtonText) {
+            this.submitButtonText.textContent = window.variantStrings.addToCart;
+          }
         }
       }
 

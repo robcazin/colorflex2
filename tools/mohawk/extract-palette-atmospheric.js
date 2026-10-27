@@ -250,7 +250,11 @@ function synthesizeFillers(chosen, need) {
 function pickField(clusters) {
   return clusters
     .slice()
-    .sort((a, b) => Math.log(b.w) * 2.2 - b.chroma * 0.06 - (Math.log(a.w) * 2.2 - a.chroma * 0.06))[0];
+    .sort((a, b) => {
+      const score = (e) =>
+        Math.log(Math.max(1, e.w)) * 2.4 - e.chroma * 0.1 - Math.abs(e.L - 36) * 0.03;
+      return score(b) - score(a);
+    })[0];
 }
 
 function pickStructure(pool, field) {
@@ -258,14 +262,16 @@ function pickStructure(pool, field) {
     pool,
     [field],
     (c) => {
-      const darkness = Math.pow(1 - c.L / 100, 1.5) * 5.5;
-      const lowChroma = Math.max(0, 1 - c.chroma / 50) * 1.4;
-      const contrast = labDE(c, field) * 0.25;
-      const area = Math.log(Math.max(1, c.w)) * 0.35;
-      return darkness + lowChroma + contrast + area;
+      const darkness = Math.pow(1 - c.L / 100, 2.4) * 9;
+      const lowChroma = Math.max(0, 1 - c.chroma / 22) * 4;
+      const contrast = labDE(c, field) * 0.12;
+      const area = Math.log(Math.max(1, c.w)) * 0.25;
+      const vividPenalty = c.chroma > 22 ? (c.chroma - 22) * 0.22 : 0;
+      const lightPenalty = c.L > 42 ? (c.L - 42) * 0.12 : 0;
+      return darkness + lowChroma + contrast + area - vividPenalty - lightPenalty;
     },
     MIN_PALETTE_DE,
-    12
+    10
   );
 }
 
@@ -348,15 +354,24 @@ function pickBridge(pool, chosen, field, warm) {
 }
 
 function pickShadow(pool, chosen, structure, field) {
-  const synth = shiftLab(structure || field, -8, 0.5, 0.5);
-  if (!tooCloseToChosen(synth, chosen, 7, 10)) return synth;
-  return bestCandidate(
-    pool,
+  const base = structure || field;
+  const darkPool = pool.filter((c) => c.L <= (base.L || 40) + 6 && c.chroma < 28);
+  const usePool = darkPool.length ? darkPool : pool;
+  const picked = bestCandidate(
+    usePool,
     chosen,
-    (c) => (1 - c.L / 100) * 6 + Math.log(Math.max(1, c.w)) * 0.25 + minDistToChosen(c, chosen) * 0.08,
-    MIN_PALETTE_DE - 3,
-    10
+    (c) =>
+      (1 - c.L / 100) * 7 +
+      Math.max(0, 1 - c.chroma / 24) * 1.5 +
+      Math.log(Math.max(1, c.w)) * 0.2 +
+      minDistToChosen(c, chosen) * 0.06,
+    MIN_PALETTE_DE - 4,
+    8
   );
+  if (picked) return picked;
+  const synth = shiftLab(base, -10, 0.5, 0.5);
+  if (!tooCloseToChosen(synth, chosen, 7, 8)) return synth;
+  return synth;
 }
 
 function pickMotifAlt(pool, chosen) {
@@ -412,11 +427,12 @@ function rankAtmosphericPalette(clusters, targetCount) {
   while (chosen.length < targetCount) {
     const fillers = synthesizeFillers(chosen, targetCount - chosen.length);
     if (!fillers.length) break;
+    let added = 0;
     for (const f of fillers) {
       if (chosen.length >= targetCount) break;
-      take(f);
+      if (take(f)) added++;
     }
-    if (fillers.length === 0) break;
+    if (added === 0) break;
   }
 
   while (chosen.length < targetCount) {

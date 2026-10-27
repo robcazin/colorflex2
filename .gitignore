@@ -43,7 +43,17 @@ config/local.env
 # Blender can produce huge text logs; GitHub limit is 100MB per file
 src/blender/render-log.txt
 tmp/
+tools/mohawk/compare-out/
+
+# Regenerated static demo archive (not source)
+dist-mohawk-room.zip
 
 # Optional: uncomment if you don't want to track built/minified assets
 # src/assets/*.min.js
 # src/assets/*.min.css
+
+# Assembled Windows golden-master handoff (copy to PC; npm install there)
+ColorFlexTradeShow/
+
+# Local homepage / marketing video assets (not in theme repo)
+homePageVideos/

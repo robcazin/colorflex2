@@ -12,6 +12,7 @@ Note: **`DEPLOYMENT_QUICK_REF.md`** and **`WORKFLOW.md`** are older; prefer **`D
 Additional drift note:
 
 - **`CART_INTEGRATION_GUIDE.md`**, **`IMPLEMENTATION_PLAN.md`**, and **`PRODUCT_CONFIGURATION_FLOW.md`** are useful architecture history, but include legacy examples. Confirm live behavior against `COLORFLEX_MANAGER_PREVIEW_STEPS.md` before implementing changes.
+- **`CART_AND_CHAMELEON_NOTES.md`** — Operational fixes (cart page quirks, chameleon placement, **PDP add-to-cart / nested form pitfall** — May 2026).
 - **`CLAUDE.md`** is a long-running session record with mixed-era guidance; treat it as supplemental context, not source of truth.
 
 ---

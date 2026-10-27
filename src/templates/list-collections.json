@@ -11,6 +11,7 @@
   "sections": {
     "main": {
       "type": "main-list-collections",
+      "custom_css": [],
       "settings": {
         "title": "Collections",
         "sort": "products_high",

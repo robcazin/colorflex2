@@ -6,7 +6,7 @@
  * (ready for a future paint-library conform step per slot).
  */
 
-import { hexToRgb, rgbToHex, rgbToHsl, hslToRgb } from './paletteEngine.js';
+import { hexToRgb, rgbToHex, rgbToHsl, hslToRgb } from './colorPrimitives.js';
 
 function clamp(n, lo, hi) {
   return Math.max(lo, Math.min(hi, n));
@@ -14,6 +14,14 @@ function clamp(n, lo, hi) {
 
 function hueAdd(h, deg) {
   return ((h + deg) % 360 + 360) % 360;
+}
+
+/** Shortest-arc lerp between hues (degrees). t in [0,1]. */
+function lerpHue(h, target, t) {
+  let d = target - h;
+  if (d > 180) d -= 360;
+  if (d < -180) d += 360;
+  return hueAdd(h, d * t);
 }
 
 function hslToHex(h, s, l) {
@@ -117,10 +125,10 @@ export function monochromaticPalette(baseHex) {
 
 /** Warm-biased neutrals; base still drives the family. */
 export function warmNeutralPalette(baseHex) {
-  const { h, s, l } = baseHsl(baseHex);
+  const { h } = baseHsl(baseHex);
   const { r, g, b } = hexToRgb(baseHex);
   const primary = rgbToHex(r, g, b);
-  const warmH = hueAdd(h * 0.35 + 38 * 0.65, 0);
+  const warmH = lerpHue(h, 38, 0.45);
   const secondary = hslToHex(warmH, 0.14, 0.42);
   const accent = hslToHex(warmH, 0.2, 0.64);
   return {
@@ -134,7 +142,7 @@ export function warmNeutralPalette(baseHex) {
 
 /** Ordered list for UI + stable iteration. */
 export const HARMONY_DEFINITIONS = [
-  { id: 'analogous', label: 'Analogous', fn: analogousPalette },
+  { id: 'analogous', label: 'Similar colors', fn: analogousPalette },
   { id: 'complementary', label: 'Complementary', fn: complementaryPalette },
   { id: 'splitComplementary', label: 'Split-complementary', fn: splitComplementaryPalette },
   { id: 'triadic', label: 'Triadic', fn: triadicPalette },
@@ -152,4 +160,58 @@ export function generateAllHarmonyPalettes(baseHex) {
     out[id] = fn(baseHex);
   }
   return out;
+}
+
+/** Engine / API ids (`neutral` maps to warm-neutral palette geometry). */
+export const ENGINE_HARMONY_IDS = [
+  'analogous',
+  'complementary',
+  'splitComplementary',
+  'triadic',
+  'monochromatic',
+  'neutral'
+];
+
+const HARMONY_GENERATORS = {
+  analogous: analogousPalette,
+  complementary: complementaryPalette,
+  splitComplementary: splitComplementaryPalette,
+  triadic: triadicPalette,
+  monochromatic: monochromaticPalette,
+  neutral: warmNeutralPalette
+};
+
+/** @param {string} harmonyId */
+function normalizeEngineHarmonyId(harmonyId) {
+  const s = String(harmonyId || 'analogous')
+    .trim()
+    .toLowerCase();
+  if (s === 'none' || s === '') return 'analogous';
+  if (s === 'warmneutral') return 'neutral';
+  if (Object.prototype.hasOwnProperty.call(HARMONY_GENERATORS, s)) return s;
+  return 'analogous';
+}
+
+/**
+ * Five-slot HSL (same slot keys as palette engine) from color-theory harmony, pre style/artist.
+ * @param {string} baseHex
+ * @param {string} [harmonyId]
+ * @returns {Record<'primary'|'secondary'|'accent'|'neutral'|'background', { h: number, s: number, l: number }>}
+ */
+export function harmonyPaletteToHslSlots(baseHex, harmonyId) {
+  const key = normalizeEngineHarmonyId(harmonyId);
+  const gen = HARMONY_GENERATORS[key];
+  const pal = gen(baseHex);
+  /** @param {string} hex */
+  function slot(hex) {
+    const { r, g, b } = hexToRgb(hex);
+    return rgbToHsl(r, g, b);
+  }
+  return {
+    primary: slot(pal.primary),
+    secondary: slot(pal.secondary),
+    accent: slot(pal.accent),
+    neutral: slot(pal.neutral),
+    background: slot(pal.background)
+  };
 }

@@ -6,6 +6,8 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width,initial-scale=1">
     <meta name="theme-color" content="">
+    {%- assign colorflex_deploy_revision = 'CF-REV-2026-05-06-11' -%}
+    <meta name="colorflex-deploy-revision" content="{{ colorflex_deploy_revision }}">
     <link rel="canonical" href="{{ canonical_url }}">
 
     {%- if settings.favicon != blank -%}
@@ -322,6 +324,8 @@
     <!-- ColorFlex Shopify Configuration -->
     <script>
       console.log('🔧🔧🔧 COLORFLEX CONFIG LOADED 🔧🔧🔧');
+      window.__COLORFLEX_THEME_LIQUID_REVISION = {{ colorflex_deploy_revision | json }};
+      console.info('COLORFLEX_DEPLOY_REVISION', window.__COLORFLEX_THEME_LIQUID_REVISION, 'source=theme.liquid (filter console for this)');
       // Data base URL for pattern images/collections (Backblaze B2). Main site must not use so-animation.
       {% assign colorflex_data_base = settings.colorflex_data_base_url %}
       {% if colorflex_data_base == blank %}{% assign colorflex_data_base = 'https://s3.us-east-005.backblazeb2.com/cf-data' %}{% endif %}
@@ -340,6 +344,39 @@
       {% endif %}
       
       console.log('🔧 COLORFLEX_API_URL set:', window.COLORFLEX_API_URL);
+    </script>
+
+    <script>
+      (function () {
+        function colorflexDeployCheck() {
+          try {
+            var t = window.__COLORFLEX_THEME_LIQUID_REVISION || '';
+            var p = window.__COLORFLEX_PRODUCT_FORM_REVISION || '';
+            var s = window.__COLORFLEX_MAIN_PRODUCT_REVISION || '';
+            var m = document.querySelector('meta[name="colorflex-deploy-revision"]');
+            var meta = m ? m.getAttribute('content') : '';
+            console.info('COLORFLEX_DEPLOY_CHECK', {
+              meta_tag: meta,
+              theme_liquid: t,
+              main_product_section: s || '(not loaded)',
+              product_form_js: p || '(not loaded yet)',
+              all_match: !!(t && meta === t && (!s || s === t) && (!p || p === t)),
+            });
+            if (document.querySelector('product-form') && !p) {
+              console.warn(
+                'COLORFLEX_DEPLOY_REVISION: <product-form> on page but product-form.js revision missing — hard-refresh or old cached asset; View Source and confirm meta colorflex-deploy-revision'
+              );
+            }
+          } catch (e) {}
+        }
+        if (document.readyState === 'loading') {
+          document.addEventListener('DOMContentLoaded', function () {
+            setTimeout(colorflexDeployCheck, 2500);
+          });
+        } else {
+          setTimeout(colorflexDeployCheck, 2500);
+        }
+      })();
     </script>
     
     <script>
@@ -673,6 +710,8 @@
     {%- endif -%}
 
     {%- if settings.cart_type == 'drawer' -%}
+      <script src="{{ 'cart.js' | asset_url }}" defer="defer"></script>
+      <script src="{{ 'quantity-popover.js' | asset_url }}" defer="defer"></script>
       <script src="{{ 'cart-drawer.js' | asset_url }}" defer="defer"></script>
     {%- endif -%}
     

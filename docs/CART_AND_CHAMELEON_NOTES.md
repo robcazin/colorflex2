@@ -120,4 +120,24 @@ After editing, deploy the section (and asset if you change CSS files), e.g. `./d
 
 ---
 
-*Last updated: Feb 2026*
+## PDP (custom-sample / saved pattern): Add to cart does nothing
+
+**Symptom:** On `/products/custom-sample` (or similar) with ColorFlex URL params, the Add to cart button appears normal, ColorFlex protection logs run, deploy revisions match, but clicking the button has no effect (no `product-form` submit logs, no cart request).
+
+**Primary cause (May 2026):** A **nested** `{% form 'product' %}` inside the main add-to-cart form—typically the **Shop Pay installments** block (`{% form 'product' %} … {{ form | payment_terms }} … {% endform %}`) placed inside the **price** block while that block is already inside the single main `{% form 'product' %}`.
+
+HTML forbids nested `<form>` elements. Parsers **ignore** the inner `<form>` start tag but still process the inner **`</form>`**, which **closes the outer cart form** too early. The quantity field and submit button then sit **outside** `/cart/add`, so submit never reaches `<product-form>`.
+
+**Fix:** Inside the main product form only, render installments as a **div** with `{{ form | payment_terms }}` (same Liquid `form` context)—**no** second `{% form 'product' %}`. See `src/sections/main-product.liquid` (price block) and the comment there.
+
+**Also fixed in the same effort (supporting issues):**
+
+- **`protectColorFlexProperties()`** must run **once**: use `window.__colorflexPropertyProtectionInstalled` and delegate `addEventListener` to `EventTarget.prototype.addEventListener`; cache real `FormData` in `window.__colorflexNativeFormDataReal`. Re-installing patches stacked broken wrappers.
+- **Submit vs `aria-disabled`:** `toggleSubmitButton(false)` should clear `aria-disabled` as well as `disabled` (`src/assets/product-form.js`).
+- **Stub snippets:** `product-variant-picker`, `product-variant-options`, `swatch` were empty—restored from Dawn; missing **`component-*.css`** under `src/assets/` caused stylesheet MIME errors (404 HTML).
+
+**Deploy revision:** Theme and `product-form.js` log `CF-REV-2026-05-06-11` (bump when you change this pipeline again). Filter the console for `COLORFLEX_DEPLOY_REVISION` / `COLORFLEX_DEPLOY_CHECK`.
+
+---
+
+*Last updated: May 2026*

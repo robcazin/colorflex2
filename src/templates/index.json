@@ -7,7 +7,7 @@
  * made to this file may be overwritten.
  * ------------------------------------------------------------
  */
- {
+{
   "sections": {
     "collections_with_video_c46fKJ": {
       "type": "collections-with-video",
@@ -91,7 +91,7 @@
         "show_video": true,
         "video_heading": "",
         "video_heading_size": 16,
-        "video_playlist": "https://so-animation.com/colorflex/videos/179v3.mp4\nhttps://so-animation.com/colorflex/videos/IBERIA-V4.mp4",
+        "video_playlist": "https://so-animation.com/colorflex/videos/179v3.mp4\nhttps://so-animation.com/colorflex/videos/IBERIA-V4.mp4\nhttps://so-animation.com/colorflex/videos/bombayTicking_vertical.mp4\nhttps://so-animation.com/colorflex/videos/birdcage_vertical.mp4\nhttps://so-animation.com/colorflex/videos/royalCranes_vertical.mp4\nhttps://so-animation.com/colorflex/videos/DaisyDemo.mp4\n3_ways.mp4",
         "video_orientation": "portrait",
         "video_description": "",
         "video_border_radius": 8
@@ -153,6 +153,7 @@
         "text_KEqQm4",
         "button_XHyPxH"
       ],
+      "custom_css": [],
       "name": "t:sections.rich-text.presets.name",
       "settings": {
         "desktop_content_position": "center",

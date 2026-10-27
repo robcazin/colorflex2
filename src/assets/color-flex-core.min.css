@@ -45,6 +45,10 @@
   margin: 0 !important;
   color-scheme: light only !important;
 }
+/* Allow tooltips to render outside circles (some legacy styles set overflow:hidden later) */
+.curated-color-circle[data-tooltip] {
+  overflow: visible !important;
+}
 
 .curated-color-circle:hover {
   transform: scale(1.1) !important;
@@ -156,13 +160,13 @@ button[data-multiplier] {
   left: 50%;
   bottom: 100%;
   transform: translateX(-50%) translateY(-8px);
-  padding: 6px 10px;
-  min-width: 200px;
-  max-width: 280px;
-  font-size: 0.75rem;
+  padding: 10px 12px;
+  min-width: 220px;
+  max-width: 340px;
+  font-size: 0.88rem;
   line-height: 1.3;
   color: #f5f5f5;
-  background: rgba(26, 32, 44, 0.96);
+  background: rgba(26, 32, 44, 0.96) !important;
   border-radius: 6px;
   white-space: normal;
   text-align: center;
@@ -172,10 +176,34 @@ button[data-multiplier] {
   pointer-events: none;
   transition: opacity 0.2s ease 0.35s, visibility 0.2s ease 0.35s;
   z-index: 9999;
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
 }
-[data-tooltip]:hover::after {
+/* Custom tips only when Help mode is on (hover or proximity) */
+html.cf-help-on [data-tooltip]:hover::after,
+html.cf-help-on [data-tooltip].cf-help-active::after {
   opacity: 1;
   visibility: visible;
+}
+html.cf-help-on [data-tooltip]::after {
+  transition-delay: 0s;
+}
+/* Discoverability: Help switch always shows its own tip on hover */
+#helpModeToggleWrap[data-tooltip]:hover::after {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+html:not(.cf-help-on) [data-tooltip]:hover::after {
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+html:not(.cf-help-on) #helpModeToggleWrap[data-tooltip]:hover::after {
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+/* Safety: never show proximity tooltips unless help mode is on */
+html:not(.cf-help-on) [data-tooltip].cf-help-active::after {
+  opacity: 0 !important;
+  visibility: hidden !important;
 }
 /* Tooltip above when element is near top; show below for left sidebar */
 #leftSidebar [data-tooltip]::after,
@@ -184,9 +212,48 @@ button[data-multiplier] {
   top: 100%;
   transform: translateX(-50%) translateY(8px);
 }
-#leftSidebar [data-tooltip]:hover::after,
-#collectionHeaderContainer [data-tooltip]:hover::after {
+html.cf-help-on #leftSidebar [data-tooltip]:hover::after,
+html.cf-help-on #collectionHeaderContainer [data-tooltip]:hover::after {
   transform: translateX(-50%) translateY(6px);
+}
+
+/* Curated colors: show tooltip BELOW row so header never covers it */
+#curatedColorsContainer [data-tooltip]::after {
+  bottom: auto;
+  top: 100%;
+  transform: translateX(-50%) translateY(8px);
+}
+html.cf-help-on #curatedColorsContainer [data-tooltip]:hover::after {
+  transform: translateX(-50%) translateY(6px);
+}
+/* Curated row tooltip: anchor to container, below the row */
+#curatedColorsContainer[data-tooltip] {
+  position: relative;
+  overflow: visible !important;
+  z-index: 1000;
+}
+#curatedColorsContainer[data-tooltip]::after {
+  left: 50%;
+  bottom: auto;
+  top: 100%;
+  transform: translateX(-50%) translateY(8px);
+  z-index: 100000 !important;
+}
+
+/* Fixed chameleon (My Designs): keep tip below so it is not clipped at top of viewport */
+#colorflexMenuIcon[data-tooltip] {
+  overflow: visible !important;
+}
+#colorflexMenuIcon[data-tooltip]::after,
+#colorflexMenuIcon[data-tooltip]:hover::after {
+  bottom: auto;
+  top: 100%;
+  left: auto;
+  right: 0;
+  max-width: min(320px, calc(100vw - 40px));
+  transform: translateX(-20px) translateY(8px);
+  z-index: 120001 !important;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
 }
 
 /* ==============================================

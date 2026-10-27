@@ -107,6 +107,13 @@
 
 // Import mode configuration
 import { getCurrentConfig, detectMode, getMaterials, getScaleOptions, isFeatureEnabled } from './config/colorFlex-modes.js';
+import { renderMohawkRoomComposite } from './mohawk/mohawkRoomCompositor.js';
+import {
+  applyMohawkCarpetPaletteBridge,
+  buildMohawkRolesStoredPalette,
+  randomizeMohawkSemanticColorsFromStoredPalette
+} from './demo/colorflexPaletteHook.js';
+import { extractMohawkCarpetPaletteAtmospheric } from './mohawk/carpetPaletteAtmospheric.js';
 
 // Initialize configuration based on detected mode
 const colorFlexConfig = getCurrentConfig();
@@ -118,6 +125,22 @@ console.log(`🎨 ColorFlex Mode: ${colorFlexMode}`, colorFlexConfig);
 if (typeof window !== 'undefined') {
   window.colorFlexConfig = colorFlexConfig;
   window.colorFlexMode = colorFlexMode;
+}
+
+/** Trade-show / localhost demo: skip Shopify cart, cloud save, and aggressive remote data fallbacks. */
+function isColorFlexDemoOffline() {
+    return typeof window !== 'undefined' &&
+        (window.COLORFLEX_DEMO_OFFLINE === true || window.COLORFLEX_TRADE_SHOW === true);
+}
+
+/** Mohawk room / offline demo never uses furniture mockup config — skip fetch to avoid 404 noise. */
+function isFurnitureConfigNeeded() {
+    if (typeof window === 'undefined') return true;
+    if (window.COLORFLEX_MOHAWK_ROOM === true) return false;
+    if (isColorFlexDemoOffline()) return false;
+    if (window.COLORFLEX_MODE === 'FURNITURE' || window.COLORFLEX_MODE === 'CLOTHING') return true;
+    if (appState && (appState.isInFurnitureMode || appState.isInFabricMode)) return true;
+    return false;
 }
 
 // 🎛️ DEBUG CONTROL FLAGS - Set to false to disable console logs by category
@@ -160,9 +183,13 @@ console.log('🚨 CFM Runtime Marker:', CFM_RUNTIME_MARKER);
 // ✅ BUILD TIMESTAMP - Injected at build time by webpack DefinePlugin
 // Webpack replaces process.env.* with actual string values during build
 // These will be literal strings in the final bundle (e.g., "2025-01-20T12:34:56.789Z")
-const BUILD_TIMESTAMP = process.env.BUILD_TIMESTAMP || 'DEV_BUILD';
-const BUILD_DATE = process.env.BUILD_DATE || 'DEV_BUILD';
-const BUILD_MODE = process.env.BUILD_MODE || 'unknown';
+const __CF_BUILD_ENV =
+    typeof process !== 'undefined' && process && process.env && typeof process.env === 'object'
+        ? process.env
+        : {};
+const BUILD_TIMESTAMP = __CF_BUILD_ENV.BUILD_TIMESTAMP || 'DEV_BUILD';
+const BUILD_DATE = __CF_BUILD_ENV.BUILD_DATE || 'DEV_BUILD';
+const BUILD_MODE = __CF_BUILD_ENV.BUILD_MODE || 'unknown';
 
 console.log('📦 ========================================');
 console.log('📦 COLORFLEX BUILD INFORMATION');
@@ -684,7 +711,7 @@ function patternIsStandard(pattern, collection) {
 // #region agent log
 function cfAgentDebug(location, message, hypothesisId, data) {
     if (typeof fetch !== 'function') return;
-    fetch('http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
+    (typeof window !== 'undefined' && window.COLORFLEX_DEBUG_INGEST === true) && fetch('http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'X-Debug-Session-Id': '0b8664' },
         body: JSON.stringify({
@@ -808,28 +835,44 @@ function capturePatternThumbnail() {
             if (el && arr.indexOf(el) === -1) arr.push(el);
         };
 
+        const collectCanvasesUnder = (root) => {
+            const list = [];
+            if (!root) return list;
+            if (root.tagName === 'CANVAS') list.push(root);
+            root.querySelectorAll('canvas').forEach((c) => addUnique(list, c));
+            return list;
+        };
+
         const candidates = [];
-        const previewRoots = [
-            '#preview',
-            '#pattern-preview',
-            '.pattern-preview',
-            '#colorflex-preview',
-            '.colorflex-preview',
-            '#pattern-display',
-            '.pattern-display',
-            '#roomMockup',
-        ];
+        // When #preview has a live canvas, it is the flat "Pattern Preview" — never prefer #roomMockup,
+        // which often has a huge backing buffer and wins the area score while showing a room composite.
+        const previewHost = (typeof dom !== 'undefined' && dom.preview) || document.getElementById('preview');
+        const scopedPreview = collectCanvasesUnder(previewHost).filter(isVisible);
 
-        previewRoots.forEach((selector) => {
-            const root = document.querySelector(selector);
-            if (root) {
-                if (root.tagName === 'CANVAS') addUnique(candidates, root);
-                root.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
-            }
-        });
+        if (scopedPreview.length > 0) {
+            scopedPreview.forEach((c) => addUnique(candidates, c));
+        } else {
+            const previewRoots = [
+                '#preview',
+                '#pattern-preview',
+                '.pattern-preview',
+                '#colorflex-preview',
+                '.colorflex-preview',
+                '#pattern-display',
+                '.pattern-display',
+                '#roomMockup',
+            ];
 
-        // Global fallback scan (still filtered by visibility/size).
-        document.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
+            previewRoots.forEach((selector) => {
+                const root = document.querySelector(selector);
+                if (root) {
+                    if (root.tagName === 'CANVAS') addUnique(candidates, root);
+                    root.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
+                }
+            });
+
+            document.querySelectorAll('canvas').forEach((c) => addUnique(candidates, c));
+        }
 
         const usableCanvases = candidates.filter(isVisible);
         // #region agent log
@@ -875,35 +918,25 @@ function capturePatternThumbnail() {
 
         const srcW = previewCanvas.width || 1;
         const srcH = previewCanvas.height || 1;
-        const scale = appState.scaleMultiplier || 1.0;
 
-        if (scale !== 1.0 && appState.currentPattern) {
-            // Tile for zoomed patterns so thumbnail reflects scale detail.
-            const tileWidth = 800 / scale;
-            const tileHeight = 800 / scale;
-            for (let x = 0; x < 800; x += tileWidth) {
-                for (let y = 0; y < 800; y += tileHeight) {
-                    ctx.drawImage(previewCanvas, 0, 0, srcW, srcH, x, y, tileWidth, tileHeight);
-                }
-            }
-        } else {
-            // Cover-fit to avoid tiny centered preview and preserve detail.
-            const srcAspect = srcW / srcH;
-            const dstAspect = 1; // 800x800
-            let cropW = srcW;
-            let cropH = srcH;
-            let cropX = 0;
-            let cropY = 0;
+        // Always center-crop from the live preview canvas. The on-screen preview already applies
+        // currentScale / tiling; re-tiling here by scaleMultiplier broke captures when multiplier < 1
+        // (e.g. 0.25 → destination tiles wider than the output canvas → clipped / off-center zoom).
+        const srcAspect = srcW / srcH;
+        const dstAspect = 1; // 800x800
+        let cropW = srcW;
+        let cropH = srcH;
+        let cropX = 0;
+        let cropY = 0;
 
-            if (srcAspect > dstAspect) {
-                cropW = srcH * dstAspect;
-                cropX = (srcW - cropW) / 2;
-            } else if (srcAspect < dstAspect) {
-                cropH = srcW / dstAspect;
-                cropY = (srcH - cropH) / 2;
-            }
-            ctx.drawImage(previewCanvas, cropX, cropY, cropW, cropH, 0, 0, 800, 800);
+        if (srcAspect > dstAspect) {
+            cropW = srcH * dstAspect;
+            cropX = (srcW - cropW) / 2;
+        } else if (srcAspect < dstAspect) {
+            cropH = srcW / dstAspect;
+            cropY = (srcH - cropH) / 2;
         }
+        ctx.drawImage(previewCanvas, cropX, cropY, cropW, cropH, 0, 0, 800, 800);
 
         // Convert to base64 data URL at higher quality for better detail.
         const dataUrl = canvas.toDataURL('image/jpeg', 0.88);
@@ -915,6 +948,8 @@ function capturePatternThumbnail() {
         return null;
     }
 }
+
+window.capturePatternThumbnail = capturePatternThumbnail;
 
 // 🎯 NORMALIZE COLOR TO SW FORMAT
 // Converts color names to consistent "SW#### COLORNAME" format for cart display
@@ -1157,6 +1192,23 @@ function cartThumbnailStorageKeyFromPattern(pattern) {
     return '';
 }
 
+/**
+ * Persist global PDP thumbnail together with pattern id so product pages can ignore stale cross-pattern data.
+ */
+function colorflexStoreCurrentThumbnailForPattern(pattern, dataUrl) {
+    if (!dataUrl || typeof dataUrl !== 'string') return;
+    try {
+        localStorage.setItem('colorflexCurrentThumbnail', dataUrl);
+        const rawId = pattern && (pattern.id || pattern.patternId);
+        const pid = rawId != null && String(rawId).trim() !== '' ? String(rawId).trim() : '';
+        if (pid) {
+            localStorage.setItem('colorflexCurrentThumbnailPatternId', pid);
+        } else {
+            localStorage.removeItem('colorflexCurrentThumbnailPatternId');
+        }
+    } catch (_) {}
+}
+
 // CFM-SEARCH: SAVED_PRESET_ENTRY_ID
 // Use a per-save entry ID so duplicate pattern IDs can still be deleted individually.
 function createSavedPatternEntryId() {
@@ -1250,7 +1302,7 @@ window.saveToMyList = async function() {
         const customerId = getCustomerId();
         const customerAccessToken = getCustomerAccessToken();
 
-        if (customerId && customerAccessToken) {
+        if (!isColorFlexDemoOffline() && customerId && customerAccessToken) {
             saveToShopifyMetafields(currentState).then(function() {
                 console.log('✅ Saved to Shopify customer metafields');
             }).catch(function(error) {
@@ -1260,8 +1312,10 @@ window.saveToMyList = async function() {
                 });
             });
         } else {
-            // Fall back to localStorage for development/testing
-            console.log('📱 Customer not authenticated, saving to localStorage');
+            // Fall back to localStorage for development/testing (and offline trade-show demo)
+            console.log(isColorFlexDemoOffline()
+                ? '📱 Offline demo: saving to localStorage only'
+                : '📱 Customer not authenticated, saving to localStorage');
             saveToLocalStorageNoDuplicateCheck(currentState).catch(function(e) {
                 console.error('❌ localStorage save failed:', e);
             });
@@ -1347,6 +1401,10 @@ window.saveToMyList = async function() {
 function saveToShopifyMetafields(patternData) {
     return new Promise(function(resolve, reject) {
         try {
+            if (isColorFlexDemoOffline()) {
+                reject(new Error('Shopify metafield save disabled in offline demo'));
+                return;
+            }
             var customerId = getCustomerId();
             var customerAccessToken = getCustomerAccessToken();
             
@@ -1409,6 +1467,9 @@ function saveToShopifyMetafields(patternData) {
 // Clean up old cart thumbnails to prevent localStorage bloat
 function cleanupOldCartThumbnails() {
     try {
+        if (isColorFlexDemoOffline()) {
+            return;
+        }
         console.log('🧹 Starting cart thumbnail cleanup...');
 
         const cartThumbnails = [];
@@ -3250,20 +3311,22 @@ window.switchCollection = function(collectionName) {
         }
     }
 
-    // Update curated colors for the new collection (clear if none, else populate)
+    // Update curated colors for the new collection — always wipe the strip first so
+    // we never show the previous collection's swatches when the new branch skips populateCuratedColors.
+    const curatedColorsContainer = dom.curatedColorsContainer || document.getElementById("curatedColorsContainer");
+    if (curatedColorsContainer) {
+        curatedColorsContainer.innerHTML = "";
+    }
+
     const hasColorFlexPatterns = targetCollection.patterns?.some(p => p.colorFlex === true);
     const hasCuratedColors = (targetCollection.curatedColors || []).length > 0;
     const isBassett = window.COLORFLEX_MODE === 'BASSETT';
     if (!hasColorFlexPatterns && !(isBassett && hasCuratedColors)) {
-        console.log('🧹 Clearing curated colors for standard collection');
-        const curatedColorsContainer = document.getElementById('curatedColorsContainer');
-        if (curatedColorsContainer) {
-            curatedColorsContainer.innerHTML = '';
-        }
+        console.log("🧹 Curated colors cleared for collection (no ColorFlex patterns / not Bassett palette case)");
         appState.curatedColors = [];
     } else {
         appState.curatedColors = targetCollection.curatedColors || [];
-        if (appState.curatedColors.length && dom.curatedColorsContainer && Array.isArray(appState.colorsData) && appState.colorsData.length) {
+        if (appState.curatedColors.length && curatedColorsContainer && Array.isArray(appState.colorsData) && appState.colorsData.length) {
             populateCuratedColors(appState.curatedColors);
         }
     }
@@ -3607,6 +3670,83 @@ const FABRIC_SPECIFICATIONS = {
  * @see updateCartItemViaAPI - Updates existing cart items
  * @see getMaterialDisplayName - Gets user-friendly material names
  */
+
+/** Colors for sample PDP URL (same priority as proceed-to-cart / fallback redirect). */
+function colorflexEffectiveColorsForProductUrl(pattern) {
+    try {
+        const coordMapped = colorflexCoordinateMappedRuntimeColors();
+        if (coordMapped && coordMapped.length) return coordMapped;
+
+        if (Array.isArray(appState.layerInputs) && appState.layerInputs.length) {
+            const fromInputs = appState.layerInputs
+                .map((li, i) => ({
+                    label: (li && li.label) || `Layer ${i + 1}`,
+                    color: normalizeColorToSwFormat(li && li.input ? li.input.value : '')
+                }))
+                .filter((c) => c.color && c.color !== 'Unknown Color');
+            if (fromInputs.length) return fromInputs;
+        }
+        if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
+            const fromLayers = appState.currentLayers
+                .filter((l) => l && l.isShadow !== true)
+                .map((l, i) => ({
+                    label: l.label || `Layer ${i + 1}`,
+                    color: normalizeColorToSwFormat(l.color || '')
+                }))
+                .filter((c) => c.color && c.color !== 'Unknown Color');
+            if (fromLayers.length) return fromLayers;
+        }
+    } catch (e) { /* ignore */ }
+    return Array.isArray(pattern.colors) ? pattern.colors : [];
+}
+
+/**
+ * Fabric-only: physical sample PDP (custom-sample) with fabric-custom-sample + sample_for
+ * so cart / PDP show "Fabric Custom Sample — {substrate}" and the same ColorFlex URL params as proceed-to-cart.
+ */
+function buildColorflexFabricSampleProductUrl(pattern, fabricSubstrateId) {
+    let substrate = String(fabricSubstrateId || '').trim();
+    if (!substrate.startsWith('fabric-')) {
+        substrate = 'fabric-soft-velvet';
+    }
+    const effectiveColors = colorflexEffectiveColorsForProductUrl(pattern);
+    const customColorsParam = effectiveColors
+        .filter((c) => c && c.color != null && String(c.color).trim() !== '')
+        .map((c) => normalizeColorToSwFormat(c.color))
+        .filter((s) => s && s !== 'Unknown Color')
+        .join(',');
+
+    const collection =
+        (pattern && (pattern.collection || pattern.collectionName)) ||
+        (typeof appState !== 'undefined' && appState.selectedCollection && appState.selectedCollection.name) ||
+        '';
+
+    const params = new URLSearchParams({
+        pattern_name: pattern.name || pattern.patternName || '',
+        collection: collection,
+        pattern_id: pattern.id || '',
+        custom_colors: customColorsParam,
+        scale: pattern.currentScale || 100,
+        source: 'colorflex_saved_patterns',
+        preferred_material: 'fabric-custom-sample',
+        sample_for: substrate,
+        save_date: pattern.timestamp || pattern.saveDate || new Date().toISOString()
+    });
+    const sm = pattern.scaleMultiplier != null ? Number(pattern.scaleMultiplier) : NaN;
+    if (!isNaN(sm) && sm > 0 && sm !== 1) {
+        params.set('scale_multiplier', String(sm));
+    }
+
+    const productUrl = '/products/custom-sample?' + params.toString();
+
+    const promoCode = sessionStorage.getItem('cfm_promo_code');
+    const promoUsed = sessionStorage.getItem('cfm_promo_used') === 'true';
+    if (promoCode && promoUsed && String(promoCode).toUpperCase() === 'FIRSTROLL25') {
+        return '/discount/' + promoCode + '?redirect=' + encodeURIComponent(productUrl);
+    }
+    return productUrl;
+}
+
 function showMaterialSelectionModal(pattern) {
     console.log('🎄 showMaterialSelectionModal called - promo section will be added');
 
@@ -3615,6 +3755,9 @@ function showMaterialSelectionModal(pattern) {
     if (existingModal) {
         existingModal.remove();
     }
+
+    ensureCollectionThumbnailsInLeftSidebar();
+    resetStandardSidebarThumbnailStripLayout();
 
     // Create modal overlay
     var modal = document.createElement('div');
@@ -3815,14 +3958,8 @@ function showMaterialSelectionModal(pattern) {
         }
     }, 100);
 
-    // Group materials by category
+    // Wallpaper: rolls + wallpaper sample radio. Fabric: each variant has roll radio + separate sample radio (small text, not a link).
     var wallpaperOptions = [
-        {
-            value: 'wallpaper-custom-sample',
-            label: 'Custom Sample',
-            price: '$12/sample',
-            description: 'Sample of your specified paper type with your custom ColorFlex design'
-        },
         {
             value: 'wallpaper-prepasted',
             label: 'Prepasted Wallpaper',
@@ -3846,16 +3983,16 @@ function showMaterialSelectionModal(pattern) {
             label: 'Grasscloth Wallpaper',
             price: 'Contact for pricing',
             description: 'Natural Grass Cloth • 24" wide x 27\' long • Quietly elevates any space'
+        },
+        {
+            value: 'wallpaper-custom-sample',
+            label: 'Wallpaper Custom Sample',
+            price: '$12/sample',
+            description: 'Physical sample of your pattern • Confirm color and scale before ordering rolls'
         }
     ];
 
     var fabricOptions = [
-        {
-            value: 'fabric-custom-sample',
-            label: 'Custom Sample',
-            price: '$12/sample',
-            description: 'Sample of your specified fabric type with your custom ColorFlex design'
-        },
         {
             value: 'fabric-soft-velvet',
             label: 'Soft Velvet',
@@ -3898,8 +4035,7 @@ function showMaterialSelectionModal(pattern) {
     var accordionContainer = document.createElement('div');
     accordionContainer.style.cssText = 'display: flex; flex-direction: column; gap: 10px;';
 
-    // Helper function to create accordion section (scrollContainer: modal content to autoscroll after choice)
-    function createAccordionSection(title, icon, options, isOpen, scrollContainer) {
+    function createAccordionSection(title, icon, options, isOpen, scrollContainer, patternForSamples) {
         var section = document.createElement('div');
         section.style.cssText = 'border: 2px solid #4a5568; border-radius: 8px; overflow: hidden;';
 
@@ -3940,6 +4076,7 @@ function showMaterialSelectionModal(pattern) {
 
         // Add options
         options.forEach(function(option, index) {
+            var radioSample = null;
             var optionDiv = document.createElement('div');
             optionDiv.style.cssText = `
                 border: 1px solid #4a5568;
@@ -3955,9 +4092,9 @@ function showMaterialSelectionModal(pattern) {
             radio.name = 'material';
             radio.value = option.value;
             radio.id = 'material_' + option.value;
-            radio.style.cssText = 'margin-right: 10px;';
+            radio.style.cssText = 'margin-top: 4px; flex-shrink: 0;';
 
-            // Default: Prepasted Wallpaper (not first row when Custom Sample is listed first)
+            // Default: Prepasted Wallpaper
             if (title === 'Wallpaper' && option.value === 'wallpaper-prepasted') {
                 radio.checked = true;
             }
@@ -3970,8 +4107,37 @@ function showMaterialSelectionModal(pattern) {
                 <span style="color: #d4af37; font-size: 14px;">${option.price}</span>
             `;
 
-            optionDiv.appendChild(radio);
-            optionDiv.appendChild(label);
+            var row = document.createElement('div');
+            row.style.cssText = 'display: flex; align-items: flex-start; gap: 10px; width: 100%;';
+            var col = document.createElement('div');
+            col.style.cssText = 'flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px;';
+            col.appendChild(label);
+
+            if (title === 'Fabric') {
+                var sampleSubRow = document.createElement('div');
+                sampleSubRow.className = 'colorflex-modal-fabric-sample-subrow';
+                sampleSubRow.style.cssText =
+                    'margin-top: 8px; padding-left: 28px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; cursor: pointer;';
+
+                radioSample = document.createElement('input');
+                radioSample.type = 'radio';
+                radioSample.name = 'material';
+                radioSample.value = 'fabric-sample:' + option.value;
+                radioSample.id = 'material_fabric_sample_' + String(option.value).replace(/[^a-zA-Z0-9-]/g, '_');
+                radioSample.style.cssText = 'flex-shrink: 0; margin-top: 0;';
+
+                var sampleHint = document.createElement('span');
+                sampleHint.textContent = 'Order a physical sample (this material)';
+                sampleHint.style.cssText = 'font-size: 11px; color: #a0aec0; line-height: 1.35; user-select: none;';
+
+                sampleSubRow.appendChild(sampleHint);
+                sampleSubRow.appendChild(radioSample);
+                col.appendChild(sampleSubRow);
+            }
+
+            row.appendChild(radio);
+            row.appendChild(col);
+            optionDiv.appendChild(row);
 
             // Hover effects
             optionDiv.addEventListener('mouseenter', function() {
@@ -3980,14 +4146,41 @@ function showMaterialSelectionModal(pattern) {
             });
 
             optionDiv.addEventListener('mouseleave', function() {
-                if (!radio.checked) {
+                var any = radio.checked;
+                if (radioSample) {
+                    any = any || radioSample.checked;
+                }
+                if (!any) {
                     optionDiv.style.borderColor = '#4a5568';
                     optionDiv.style.background = '#2d3748';
                 }
             });
 
-            // Click to select
+            // Click: fabric sample sub-row selects sample radio only; rest of card selects roll/wallpaper radio
             optionDiv.addEventListener('click', function(e) {
+                if (radioSample && e.target && e.target.closest && e.target.closest('.colorflex-modal-fabric-sample-subrow')) {
+                    if (e.target !== radioSample) {
+                        radioSample.checked = true;
+                    }
+                    accordionContainer.querySelectorAll('input[type="radio"]').forEach(function(r) {
+                        var container = r.closest('div[style*="border: 1px"]');
+                        if (container) {
+                            if (r.checked) {
+                                container.style.borderColor = '#d4af37';
+                                container.style.background = '#374151';
+                            } else {
+                                container.style.borderColor = '#4a5568';
+                                container.style.background = '#2d3748';
+                            }
+                        }
+                    });
+                    if (scrollContainer) {
+                        setTimeout(function() {
+                            scrollContainer.scrollTo({ top: scrollContainer.scrollHeight, behavior: 'smooth' });
+                        }, 200);
+                    }
+                    return;
+                }
                 if (e.target !== radio) {
                     radio.checked = true;
                 }
@@ -4042,9 +4235,9 @@ function showMaterialSelectionModal(pattern) {
         return section;
     }
 
-    // Create wallpaper and fabric sections (both collapsed by default); pass modalContent for autoscroll after choice
-    var wallpaperSection = createAccordionSection('Wallpaper', '🗂️', wallpaperOptions, false, modalContent);
-    var fabricSection = createAccordionSection('Fabric', '🧵', fabricOptions, false, modalContent);
+    // Wallpaper open by default so prepasted is visible.
+    var wallpaperSection = createAccordionSection('Wallpaper', '🗂️', wallpaperOptions, true, modalContent, pattern);
+    var fabricSection = createAccordionSection('Fabric', '🧵', fabricOptions, false, modalContent, pattern);
 
     accordionContainer.appendChild(wallpaperSection);
     accordionContainer.appendChild(fabricSection);
@@ -4124,19 +4317,73 @@ function showMaterialSelectionModal(pattern) {
         var selectedMaterial = selectedMaterialInput.value;
         console.log('✅ Selected material:', selectedMaterial);
 
+        // #region agent log
+        try {
+            const _tn = pattern && pattern.thumbnail ? String(pattern.thumbnail) : "";
+            const _sameCur = pattern === appState.currentPattern;
+            const _sameCat = !!(appState.selectedCollection && Array.isArray(appState.selectedCollection.patterns) && appState.selectedCollection.patterns.some((p) => p === pattern));
+            (typeof window !== 'undefined' && window.COLORFLEX_DEBUG_INGEST === true) && fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+                body: JSON.stringify({
+                    sessionId: "0b8664",
+                    runId: "pre",
+                    hypothesisId: "H1-H5",
+                    location: "CFM.js:proceed-to-cart:start",
+                    message: "Proceed to cart click",
+                    data: {
+                        stdFromCurrent: !!(appState.currentPattern && patternIsStandard(appState.currentPattern, appState.selectedCollection)),
+                        thumbPrefix: _tn.slice(0, 16),
+                        thumbLen: _tn.length,
+                        sameRefAsCurrentPattern: _sameCur,
+                        sameRefAsCatalogPattern: _sameCat,
+                        patternName: pattern && (pattern.name || pattern.patternName),
+                        collection: appState.selectedCollection && appState.selectedCollection.name,
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(function () {});
+        } catch (_e) {}
+        // #endregion
+
         // Rebuild pattern payload from live runtime state at click-time.
         // This prevents stale saved-pattern data (colors/thumbnail) from overriding correct preview output.
         try {
+            try {
+                localStorage.removeItem('colorflexCurrentThumbnail');
+                localStorage.removeItem('colorflexCurrentThumbnailPatternId');
+                sessionStorage.removeItem('colorflexProceedProofDataUrl');
+                sessionStorage.removeItem('colorflexProceedProofMeta');
+                localStorage.removeItem('colorflexProceedProofDataUrl');
+                localStorage.removeItem('colorflexProceedProofMeta');
+            } catch (_clearStale) {}
             if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
-                const runtimeColors = appState.currentLayers
-                    .filter((l) => l && l.isShadow !== true && l.color != null && String(l.color).trim() !== '')
-                    .map((l, idx) => ({
-                        label: l.label || `Layer ${idx + 1}`,
-                        color: normalizeColorToSwFormat(l.color)
-                    }))
-                    .filter((c) => c.color && c.color !== 'Unknown Color');
+                const mappedCoord = colorflexCoordinateMappedRuntimeColors();
+                const runtimeColors =
+                    mappedCoord && mappedCoord.length
+                        ? mappedCoord
+                        : appState.currentLayers
+                              .filter((l) => l && l.isShadow !== true && l.color != null && String(l.color).trim() !== '')
+                              .map((l, idx) => ({
+                                  label: l.label || `Layer ${idx + 1}`,
+                                  color: normalizeColorToSwFormat(l.color)
+                              }))
+                              .filter((c) => c.color && c.color !== 'Unknown Color');
                 if (runtimeColors.length) {
                     pattern.colors = runtimeColors;
+                    if (mappedCoord && mappedCoord.length) {
+                        const pName =
+                            pattern.name || pattern.patternName || appState.currentPattern?.name || '';
+                        if (pName) {
+                            const scale =
+                                typeof appState.currentScale === 'number' && appState.currentScale > 0
+                                    ? appState.currentScale
+                                    : pattern.currentScale || 100;
+                            const newId = generatePatternId(pName, runtimeColors, scale);
+                            pattern.id = newId;
+                            pattern.patternId = newId;
+                        }
+                    }
                     console.log('✅ Proceed-to-cart runtime colors applied:', runtimeColors);
                 }
             }
@@ -4145,7 +4392,7 @@ function showMaterialSelectionModal(pattern) {
                 const runtimeProofDataUrl = await window.generatePrintPreviewDataUrl();
                 if (runtimeProofDataUrl && typeof runtimeProofDataUrl === 'string' && runtimeProofDataUrl.startsWith('data:image')) {
                     pattern.thumbnail = runtimeProofDataUrl;
-                    try { localStorage.setItem('colorflexCurrentThumbnail', runtimeProofDataUrl); } catch (_) {}
+                    colorflexStoreCurrentThumbnailForPattern(pattern, runtimeProofDataUrl);
                     try {
                         const lockedColors = Array.isArray(pattern.colors)
                             ? pattern.colors.map((c) => (c && c.color ? String(c.color) : '')).filter(Boolean)
@@ -4164,12 +4411,12 @@ function showMaterialSelectionModal(pattern) {
                     } catch (_) {}
                     console.log('✅ Proceed-to-cart runtime proof captured via generatePrintPreviewDataUrl');
                 }
-            } else if (typeof window.capturePatternThumbnail === 'function') {
+            } else if (typeof capturePatternThumbnail === 'function') {
                 // Fallback only when proof helper is unavailable.
-                const runtimeThumb = window.capturePatternThumbnail();
+                const runtimeThumb = capturePatternThumbnail();
                 if (runtimeThumb && typeof runtimeThumb === 'string' && runtimeThumb.startsWith('data:image')) {
                     pattern.thumbnail = runtimeThumb;
-                    try { localStorage.setItem('colorflexCurrentThumbnail', runtimeThumb); } catch (_) {}
+                    colorflexStoreCurrentThumbnailForPattern(pattern, runtimeThumb);
                     try {
                         const lockedColors = Array.isArray(pattern.colors)
                             ? pattern.colors.map((c) => (c && c.color ? String(c.color) : '')).filter(Boolean)
@@ -4205,11 +4452,55 @@ function showMaterialSelectionModal(pattern) {
             console.warn('⚠️ Proceed-to-cart runtime sync failed, continuing with existing pattern payload:', runtimeSyncError);
         }
 
+        // #region agent log
+        try {
+            const _t2 = pattern && pattern.thumbnail ? String(pattern.thumbnail) : "";
+            const _sameCat2 = !!(appState.selectedCollection && Array.isArray(appState.selectedCollection.patterns) && appState.selectedCollection.patterns.some((p) => p === pattern));
+            (typeof window !== 'undefined' && window.COLORFLEX_DEBUG_INGEST === true) && fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+                body: JSON.stringify({
+                    sessionId: "0b8664",
+                    runId: "pre",
+                    hypothesisId: "H1-H5",
+                    location: "CFM.js:proceed-to-cart:after-runtime-sync",
+                    message: "After proceed runtime thumbnail sync",
+                    data: {
+                        thumbIsDataUrl: _t2.startsWith("data:"),
+                        thumbLen: _t2.length,
+                        sameRefAsCatalogPattern: _sameCat2,
+                    },
+                    timestamp: Date.now(),
+                }),
+            }).catch(function () {});
+        } catch (_e2) {}
+        // #endregion
+
+        var fabricSampleSub = null;
+        var fabricSampleRe = /^fabric-sample:(.+)$/;
+        var fabricSampleM = fabricSampleRe.exec(selectedMaterial);
+        if (fabricSampleM) {
+            fabricSampleSub = fabricSampleM[1];
+        }
+        if (fabricSampleSub) {
+            if (isFromCartEdit) {
+                alert('Sample options cannot be updated from this dialog. Remove the line item and add a new sample from ColorFlex if needed.');
+                return;
+            }
+            modal.remove();
+            window.location.href = buildColorflexFabricSampleProductUrl(pattern, fabricSampleSub);
+            return;
+        }
+
         if (isFromCartEdit) {
             // Handle cart item update
             console.log('🔄 Updating cart item with new pattern configuration...');
 
             try {
+                if (isColorFlexDemoOffline()) {
+                    showErrorNotification('Cart updates are disabled in the offline trade-show demo.');
+                    return;
+                }
                 // Show loading state
                 configureBtn.disabled = true;
                 configureBtn.textContent = '🔄 Updating...';
@@ -4296,7 +4587,7 @@ function showMaterialSelectionModal(pattern) {
                     cleanupLocalStorage();
 
                     // Try to store the thumbnail
-                    localStorage.setItem('colorflexCurrentThumbnail', pattern.thumbnail);
+                    colorflexStoreCurrentThumbnailForPattern(pattern, pattern.thumbnail);
                     console.log('🖼️ Stored thumbnail in localStorage for product page');
                 } catch (quotaError) {
                     console.warn('⚠️ localStorage quota exceeded, trying with smaller thumbnail...');
@@ -4305,7 +4596,7 @@ function showMaterialSelectionModal(pattern) {
                     const smallerThumbnail = await createCompressedThumbnail(pattern.thumbnail);
                     if (smallerThumbnail) {
                         try {
-                            localStorage.setItem('colorflexCurrentThumbnail', smallerThumbnail);
+                            colorflexStoreCurrentThumbnailForPattern(pattern, smallerThumbnail);
                             console.log('🖼️ Stored compressed thumbnail in localStorage');
                         } catch (stillTooLarge) {
                             console.error('❌ Even compressed thumbnail too large for localStorage');
@@ -4317,8 +4608,38 @@ function showMaterialSelectionModal(pattern) {
 
             try {
                 console.log('📍 About to call redirectToProductConfiguration...');
+                ensureCollectionThumbnailsInLeftSidebar();
+                resetStandardSidebarThumbnailStripLayout();
                 redirectToProductConfiguration(pattern, selectedMaterial);
                 console.log('✅ redirectToProductConfiguration called successfully');
+                // #region agent log
+                try {
+                    const _ls = document.getElementById("leftSidebar");
+                    const _ct = document.getElementById("collectionThumbnails");
+                    let _lsW = null;
+                    let _ctDisp = null;
+                    if (_ls && typeof getComputedStyle === "function") _lsW = getComputedStyle(_ls).width;
+                    if (_ct && typeof getComputedStyle === "function") _ctDisp = getComputedStyle(_ct).display + "/" + getComputedStyle(_ct).flexDirection;
+                    (typeof window !== 'undefined' && window.COLORFLEX_DEBUG_INGEST === true) && fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+                        body: JSON.stringify({
+                            sessionId: "0b8664",
+                            runId: "pre",
+                            hypothesisId: "H3",
+                            location: "CFM.js:proceed-to-cart:before-modal-remove",
+                            message: "Layout snapshot before modal.remove",
+                            data: {
+                                bodyOverflow: document.body && document.body.style.overflow,
+                                docElOverflow: document.documentElement && document.documentElement.style.overflow,
+                                leftSidebarWidth: _lsW,
+                                collectionThumbnailsDisplayFlexDir: _ctDisp,
+                            },
+                            timestamp: Date.now(),
+                        }),
+                    }).catch(function () {});
+                } catch (_e3) {}
+                // #endregion
                 modal.remove();
             } catch (error) {
                 console.error('❌ Error during redirect:', error);
@@ -4634,32 +4955,13 @@ async function createCompressedThumbnail(originalThumbnail) {
  */
 function redirectToProductConfiguration(pattern, material) {
     try {
+        if (isColorFlexDemoOffline()) {
+            console.log('[ColorFlex demo] Product configuration / checkout flow disabled');
+            showSaveNotification('Checkout is disabled in the offline trade-show demo.');
+            return;
+        }
         console.log('⚙️ Starting ProductConfigurationFlow for:', pattern.patternName, 'Material:', material);
-        const getRuntimeCartColors = () => {
-            try {
-                if (Array.isArray(appState.layerInputs) && appState.layerInputs.length) {
-                    const fromInputs = appState.layerInputs
-                        .map((li, i) => ({
-                            label: (li && li.label) || `Layer ${i + 1}`,
-                            color: normalizeColorToSwFormat(li && li.input ? li.input.value : '')
-                        }))
-                        .filter((c) => c.color && c.color !== 'Unknown Color');
-                    if (fromInputs.length) return fromInputs;
-                }
-                if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
-                    const fromLayers = appState.currentLayers
-                        .filter((l) => l && l.isShadow !== true)
-                        .map((l, i) => ({
-                            label: l.label || `Layer ${i + 1}`,
-                            color: normalizeColorToSwFormat(l.color || '')
-                        }))
-                        .filter((c) => c.color && c.color !== 'Unknown Color');
-                    if (fromLayers.length) return fromLayers;
-                }
-            } catch (e) {}
-            return Array.isArray(pattern.colors) ? pattern.colors : [];
-        };
-        const effectiveColors = getRuntimeCartColors();
+        const effectiveColors = colorflexEffectiveColorsForProductUrl(pattern);
         if (effectiveColors.length) {
             pattern.colors = effectiveColors;
         }
@@ -4730,7 +5032,7 @@ function redirectToProductConfiguration(pattern, material) {
         if (pattern.thumbnail) {
             try {
                 console.log('🖼️ Storing pattern thumbnail for product page display');
-                localStorage.setItem('colorflexCurrentThumbnail', pattern.thumbnail);
+                colorflexStoreCurrentThumbnailForPattern(pattern, pattern.thumbnail);
             } catch (error) {
                 console.warn('⚠️ Failed to store thumbnail in localStorage:', error);
             }
@@ -4768,6 +5070,11 @@ function redirectToProductConfiguration(pattern, material) {
  * Fallback function for direct redirect when ProductConfigurationFlow fails
  */
 function fallbackDirectRedirect(pattern, material) {
+    if (isColorFlexDemoOffline()) {
+        console.log('[ColorFlex demo] Product redirect disabled');
+        showSaveNotification('Product pages are disabled in the offline trade-show demo.');
+        return;
+    }
     console.log('🔄 Using fallback direct redirect to Custom Wallpaper/Custom Fabric');
     console.log('📦 Pattern data received:', {
         name: pattern.name,
@@ -4779,40 +5086,27 @@ function fallbackDirectRedirect(pattern, material) {
         currentScale: pattern.currentScale
     });
     console.log('🎨 Material:', material);
-    const getRuntimeCartColors = () => {
-        try {
-            if (Array.isArray(appState.layerInputs) && appState.layerInputs.length) {
-                const fromInputs = appState.layerInputs
-                    .map((li, i) => ({
-                        label: (li && li.label) || `Layer ${i + 1}`,
-                        color: normalizeColorToSwFormat(li && li.input ? li.input.value : '')
-                    }))
-                    .filter((c) => c.color && c.color !== 'Unknown Color');
-                if (fromInputs.length) return fromInputs;
-            }
-            if (Array.isArray(appState.currentLayers) && appState.currentLayers.length) {
-                const fromLayers = appState.currentLayers
-                    .filter((l) => l && l.isShadow !== true)
-                    .map((l, i) => ({
-                        label: l.label || `Layer ${i + 1}`,
-                        color: normalizeColorToSwFormat(l.color || '')
-                    }))
-                    .filter((c) => c.color && c.color !== 'Unknown Color');
-                if (fromLayers.length) return fromLayers;
-            }
-        } catch (e) {}
-        return Array.isArray(pattern.colors) ? pattern.colors : [];
-    };
-    const effectiveColors = getRuntimeCartColors();
+    const effectiveColors = colorflexEffectiveColorsForProductUrl(pattern);
     if (effectiveColors.length) {
         pattern.colors = effectiveColors;
+        if (colorflexCoordinateMappedRuntimeColors()) {
+            const pName = pattern.name || pattern.patternName || appState.currentPattern?.name || '';
+            if (pName) {
+                const scale =
+                    typeof appState.currentScale === 'number' && appState.currentScale > 0
+                        ? appState.currentScale
+                        : pattern.currentScale || 100;
+                pattern.id = generatePatternId(pName, effectiveColors, scale);
+                pattern.patternId = pattern.id;
+            }
+        }
     }
 
     // Store thumbnail in localStorage for product page display
     if (pattern.thumbnail) {
         try {
             console.log('🖼️ Storing pattern thumbnail for product page display (fallback)');
-            localStorage.setItem('colorflexCurrentThumbnail', pattern.thumbnail);
+            colorflexStoreCurrentThumbnailForPattern(pattern, pattern.thumbnail);
         } catch (error) {
             console.warn('⚠️ Failed to store thumbnail in localStorage:', error);
         }
@@ -4832,7 +5126,7 @@ function fallbackDirectRedirect(pattern, material) {
         console.log('🎉 PROMO: Applying 25% discount to cart redirect');
     }
 
-    // Determine product handle based on material
+    // Sample SKUs use the unified custom-sample product; rolls use custom-wallpaper / custom-fabric.
     let productHandle = 'custom-fabric';
     if (material === 'wallpaper-custom-sample' || material === 'fabric-custom-sample') {
         productHandle = 'custom-sample';
@@ -4860,6 +5154,13 @@ function fallbackDirectRedirect(pattern, material) {
         'preferred_material': material,
         'save_date': pattern.timestamp || pattern.saveDate || new Date().toISOString()
     });
+    const sm = pattern.scaleMultiplier != null ? Number(pattern.scaleMultiplier) : NaN;
+    if (!isNaN(sm) && sm > 0 && sm !== 1) {
+        params.set('scale_multiplier', String(sm));
+    }
+    if (material === 'wallpaper-custom-sample') {
+        params.set('sample_for', 'wallpaper-prepasted');
+    }
 
     // 🎄 USE SHOPIFY'S DISCOUNT URL TO AUTO-APPLY THE CODE
     // This requires creating the discount code in Shopify Admin first:
@@ -4890,6 +5191,11 @@ function fallbackDirectRedirect(pattern, material) {
  * @param {number} index - Current handle index
  */
 function tryProductHandles(handles, urlParams, pattern, material, index) {
+    if (isColorFlexDemoOffline()) {
+        console.log('[ColorFlex demo] tryProductHandles skipped');
+        showSaveNotification('Product lookup is disabled in the offline trade-show demo.');
+        return;
+    }
     if (index >= handles.length) {
         console.warn('❌ No valid product page found for any handle');
         showSaveNotification('❌ Product page not found');
@@ -5160,6 +5466,11 @@ function showProductInstructionsModal(instructions, productHandle, pattern) {
  */
 function addPatternToCart(pattern, material) {
     try {
+        if (isColorFlexDemoOffline()) {
+            console.log('[ColorFlex demo] addPatternToCart skipped');
+            showSaveNotification('Cart is disabled in the offline trade-show demo.');
+            return;
+        }
         console.log('🛒 Adding pattern to cart:', pattern.patternName, 'Material:', material);
 
         // Generate Shopify product handle from pattern data
@@ -5288,6 +5599,14 @@ function generateProductHandle(pattern, material) {
  */
 function addToShopifyCart(cartItem, material) {
     return new Promise(function(resolve, reject) {
+        if (isColorFlexDemoOffline()) {
+            resolve({
+                success: false,
+                demoOffline: true,
+                message: 'Cart disabled in offline demo'
+            });
+            return;
+        }
         // First, try to find the product by handle
         var productHandle = cartItem.id;
         
@@ -5326,6 +5645,10 @@ function addToShopifyCart(cartItem, material) {
  */
 function tryRealShopifyCartAdd(cartItem, resolve, reject) {
     try {
+        if (isColorFlexDemoOffline()) {
+            reject(new Error('Cart add disabled in offline demo'));
+            return;
+        }
         console.log('🔍 Looking up product for cart addition:', cartItem.id);
         
         // First, look up the product by handle to get the variant ID
@@ -5442,6 +5765,10 @@ function findBestVariantForMaterial(variants, materialType) {
  */
 function lookupProductByHandle(productHandle) {
     return new Promise(function(resolve, reject) {
+        if (isColorFlexDemoOffline()) {
+            reject(new Error('Product lookup disabled in offline demo'));
+            return;
+        }
         console.log('🔍 Looking up product by handle:', productHandle);
         
         // Try to fetch product data from Shopify's product JSON endpoint
@@ -5544,6 +5871,9 @@ function showManualCartInstructions(pattern, material) {
  * Update cart badge/counter if it exists
  */
 function updateCartBadge() {
+    if (isColorFlexDemoOffline()) {
+        return;
+    }
     // Fetch current cart data to get accurate count
     fetch('/cart.js')
         .then(function(response) {
@@ -6403,6 +6733,7 @@ function ensureRoomMockupDropdown() {
 
 function normalizePath(path) {
     if (!path || typeof path !== 'string') return path;
+    if (path.indexOf('data:') === 0 || path.indexOf('blob:') === 0) return path;
     var base = getColorFlexDataBaseUrl();
     if (!_colorFlexBaseUrlLogged) {
         _colorFlexBaseUrlLogged = true;
@@ -6414,6 +6745,13 @@ function normalizePath(path) {
     }
     // If path is an absolute filesystem path (e.g. /Volumes/jobs/cf-data/collections/... or .../mockups/...), convert to relative data/... so base URL applies correctly
     if (path.startsWith('/') && !path.startsWith('//')) {
+        if (path.startsWith('/cf-data/')) {
+            var originForCfData =
+                typeof window !== "undefined" && window.location && window.location.origin
+                    ? window.location.origin.replace(/\/$/, "")
+                    : "";
+            return originForCfData ? originForCfData + path : path;
+        }
         if (path.indexOf('/data/collections/') !== -1) {
             path = path.substring(path.indexOf('/data/collections/') + 1);
         } else if (path.indexOf('/data/mockups/') !== -1) {
@@ -6437,7 +6775,19 @@ function normalizePath(path) {
             }
             return resolved;
         }
-        return path;
+        // Ensure full URLs have safely-encoded path segments (some catalogs contain absolute URLs with &, spaces, etc.)
+        try {
+            var u = new URL(path);
+            var parts = u.pathname.split('/').map(function (seg) {
+                if (!seg) return seg;
+                try { return encodeURIComponent(decodeURIComponent(seg)); }
+                catch (e) { return encodeURIComponent(seg); }
+            });
+            u.pathname = parts.join('/');
+            return u.toString();
+        } catch (e) {
+            return path;
+        }
     }
     // Strip leading ./
     if (path.startsWith('./')) path = path.substring(2);
@@ -8263,6 +8613,9 @@ document.addEventListener('DOMContentLoaded', () => {
 let furnitureConfig = null;
 
 async function loadFurnitureConfig() {
+    if (!isFurnitureConfigNeeded()) {
+        return null;
+    }
     try {
         console.log("🪑 Loading furniture configuration...");
         let response;
@@ -8375,7 +8728,7 @@ async function loadColors() {
             console.log("🎯 Using embedded Sherwin-Williams colors");
             appState.colorsData = window.ColorFlexData.colors;
             console.log("✅ Colors loaded:", appState.colorsData.length);
-            if (appState.curatedColors?.length && typeof populateCuratedColors === 'function') {
+            if (appState.curatedColors?.length && typeof populateCuratedColors === "function") {
                 populateCuratedColors(appState.curatedColors);
             }
             return;
@@ -8409,7 +8762,7 @@ async function loadColors() {
 
         const candidates = [];
         if (cfDataColorsUrl) candidates.push({ label: 'cf-data', url: cfDataColorsUrl });
-        if (!cfDataColorsUrl || cfDataColorsUrl !== canonicalB2ColorsUrl) {
+        if (!isColorFlexDemoOffline() && (!cfDataColorsUrl || cfDataColorsUrl !== canonicalB2ColorsUrl)) {
             candidates.push({ label: 'backblaze', url: canonicalB2ColorsUrl });
         }
         candidates.push({ label: 'theme-asset', url: themeColorsUrl });
@@ -8849,8 +9202,10 @@ async function checkFurnitureAvailability(patternName) {
   return { available: false };
 }
 
-// Call loadFurnitureConfig when your app initializes
-loadFurnitureConfig();
+// Furniture config loads on demand when furniture/clothing mode is active.
+if (isFurnitureConfigNeeded()) {
+    loadFurnitureConfig();
+}
 
 
 
@@ -10229,7 +10584,8 @@ function populateCuratedColors(colors) {
   console.log("  Is standard pattern:", isStandardPattern);
 
   if (isStandardPattern && !isBassett) {
-    console.log("⏭️ Standard pattern: leaving curated colors in place (not used for this pattern)");
+    console.log("🧹 Standard pattern (non-Bassett): clearing curated colors strip");
+    container.innerHTML = "";
     return;
   }
   if (isStandardPattern && isBassett) {
@@ -10385,8 +10741,27 @@ function getLayerMappingForPreview(isFurnitureCollection) {
 }
 
 /**
+ * Ordered host currentLayers indices (non-shadow) from anchor through end — one step per coordinate tint layer.
+ */
+function buildCoordinateEligibleHostIndices(layersArr, anchor) {
+    const eligible = [];
+    const len = layersArr ? layersArr.length : 0;
+    if (!layersArr || len === 0 || anchor == null || typeof anchor !== 'number' || anchor < 0 || anchor >= len) {
+        return eligible;
+    }
+    for (let i = anchor; i < len; i++) {
+        if (!layersArr[i]?.isShadow) eligible.push(i);
+    }
+    if (eligible.length === 0) {
+        eligible.push(Math.min(Math.max(0, anchor), len - 1));
+    }
+    return eligible;
+}
+
+/**
  * Map pattern JSON layer index (same index as updatePreview's layer loop) to appState.currentLayers index for tint color.
- * When coordinatePreviewColorStartIndex is set, layer 0 anchors to that slot; further layers advance to next non-shadow slots (matches updatePreview).
+ * When coordinatePreviewColorStartIndex is set: walk forward through non-shadow host slots from the anchor; when the
+ * coordinate has more tint layers than that chain, cycle (modulo) so extra layers reuse the palette in order.
  */
 function resolveCurrentLayersIndexForPatternLayer(layerIx, patternStartIndex) {
     const layersArr = appState.currentLayers;
@@ -10396,14 +10771,84 @@ function resolveCurrentLayersIndexForPatternLayer(layerIx, patternStartIndex) {
     if (anchor == null || typeof anchor !== 'number' || !layersArr) {
         return Math.min(Math.max(0, defaultIdx), Math.max(0, len - 1));
     }
-    let idx = anchor;
-    let n = layerIx;
-    while (n > 0 && idx < len - 1) {
-        idx++;
-        while (idx < len - 1 && layersArr[idx]?.isShadow) idx++;
-        n--;
+    const eligible = buildCoordinateEligibleHostIndices(layersArr, anchor);
+    if (!eligible.length) {
+        return Math.min(Math.max(0, defaultIdx), Math.max(0, len - 1));
     }
-    return Math.min(idx, Math.max(0, len - 1));
+    return eligible[layerIx % eligible.length];
+}
+
+/** Same furniture detection as updatePreview so coordinate color mapping matches the canvas. */
+function colorflexIsFurnitureCollectionForLayerMapping() {
+    const hasFurSuffix =
+        appState.selectedCollection?.name?.includes('.fur') ||
+        appState.selectedCollection?.name?.includes('-fur');
+    const isFurnitureMode =
+        appState.isInFurnitureMode ||
+        window.COLORFLEX_MODE === 'FURNITURE' ||
+        (typeof window !== 'undefined' &&
+            window.location &&
+            typeof window.location.pathname === 'string' &&
+            window.location.pathname.includes('furniture'));
+    return hasFurSuffix || (isFurnitureMode && appState.furnitureConfig && appState.selectedFurnitureType);
+}
+
+/**
+ * When a matching coordinate is active: wall (furniture) + background layer, then only the
+ * host layer colors that tint each coordinate pattern layer (same indices as updatePreview).
+ * Avoids sending unused host pattern colors to cart/PDP while keeping the canvas background.
+ * @returns {Array<{label:string,color:string}>|null} null if not in coordinate preview mode
+ */
+function colorflexCoordinateMappedRuntimeColors() {
+    const layers = appState.currentLayers;
+    const anchor = appState.coordinatePreviewColorStartIndex;
+    const coordPatternLayers =
+        appState.currentPattern && Array.isArray(appState.currentPattern.layers)
+            ? appState.currentPattern.layers
+            : null;
+    if (anchor == null || typeof anchor !== 'number' || !coordPatternLayers || coordPatternLayers.length === 0) {
+        return null;
+    }
+    if (!Array.isArray(layers) || !layers.length) return null;
+
+    const mapping = getLayerMappingForPreview(colorflexIsFurnitureCollectionForLayerMapping());
+    const out = [];
+    const seen = new Set();
+
+    function pushLayerAtIndexOnce(idx) {
+        if (typeof idx !== 'number' || idx < 0 || seen.has(idx)) return;
+        const l = layers[idx];
+        if (!l || l.isShadow === true) return;
+        if (l.color == null || String(l.color).trim() === '') return;
+        const color = normalizeColorToSwFormat(l.color);
+        if (!color || color === 'Unknown Color') return;
+        seen.add(idx);
+        out.push({ label: l.label || `Layer ${idx + 1}`, color });
+    }
+
+    function pushLayerColorForCoordinateSlot(idx) {
+        if (typeof idx !== 'number' || idx < 0) return;
+        const l = layers[idx];
+        if (!l || l.isShadow === true) return;
+        if (l.color == null || String(l.color).trim() === '') return;
+        const color = normalizeColorToSwFormat(l.color);
+        if (!color || color === 'Unknown Color') return;
+        out.push({ label: l.label || `Layer ${idx + 1}`, color });
+    }
+
+    // Preview still uses wall (furniture) + background behind the coordinate art; cart must keep them.
+    if (mapping.wallIndex != null && typeof mapping.wallIndex === 'number') {
+        pushLayerAtIndexOnce(mapping.wallIndex);
+    }
+    if (typeof mapping.backgroundIndex === 'number') {
+        pushLayerAtIndexOnce(mapping.backgroundIndex);
+    }
+
+    for (let i = 0; i < coordPatternLayers.length; i++) {
+        const idx = resolveCurrentLayersIndexForPatternLayer(i, mapping.patternStartIndex);
+        pushLayerColorForCoordinateSlot(idx);
+    }
+    return out.length ? out : null;
 }
 
 function validateLayerMapping() {
@@ -10611,6 +11056,12 @@ async function initializeApp() {
     console.log("🚀 Starting app...", initTimestamp);
     console.log("🔍 SessionStorage at app start:", sessionStorage.getItem('pendingDirectPatternLoad') ? 'EXISTS' : 'NULL');
 
+    if (isColorFlexDemoOffline()) {
+        try {
+            sessionStorage.removeItem('pendingDirectPatternLoad');
+        } catch (_) {}
+    }
+
     // 🧹 Clean up old cart thumbnails on app startup to prevent localStorage bloat
     cleanupOldCartThumbnails();
 
@@ -10627,7 +11078,14 @@ async function initializeApp() {
         // Fallback order: embedded metafield -> Shopify asset.
         let data;
         const dataBase = getColorFlexDataBaseUrl();
-        if (dataBase) {
+        const skipCfDataCollectionsFetch = isColorFlexDemoOffline() && window.ColorFlexData && window.ColorFlexData.collections;
+
+        // Mohawk Room runtime is a parallel carpet/palette source (carpet thumbnail strip
+        // + room compositor) — NOT the primary wallpaper collection dataset. Standard
+        // wallpaper collections continue to load through the cf-data / embed / Shopify
+        // chain below so the left sidebar shows real wallpaper patterns.
+
+        if ((!data || !data.collections || !data.collections.length) && dataBase && !skipCfDataCollectionsFetch) {
             const remoteUrl = dataBase.replace(/\/$/, '') + '/data/collections.json';
             const remoteRes = await fetch(remoteUrl, { method: 'GET', cache: 'no-store' }).catch(function() { return null; });
             if (remoteRes && remoteRes.ok) {
@@ -10669,6 +11127,11 @@ async function initializeApp() {
         }
 
         // ✅ Step 2.5: Load Mockups Data and merge with collections
+        const skipStandardMockups = typeof window !== 'undefined' && (window.COLORFLEX_MOHAWK_ROOM === true || window.COLORFLEX_MOHAWK_ROOM_SKIP_STANDARD_MOCKUPS === true);
+        if (skipStandardMockups) {
+            console.log("🏛️ Mohawk Room mode: skipping standard mockups.json merge and white-dresser fallback");
+            window.ColorFlexMockups = {};
+        } else {
         console.log("📦 Loading centralized mockups data...");
         try {
             const themeMockupsUrl = window.ColorFlexAssets?.mockupsUrl || "/assets/mockups.json";
@@ -10691,7 +11154,7 @@ async function initializeApp() {
             const candidates = [];
             if (cfDataMockupsUrl) candidates.push({ label: 'cf-data', url: cfDataMockupsUrl });
             // If theme base points at a proxy/worker without CORS, canonical B2 still works in-browser.
-            if (!cfDataMockupsUrl || cfDataMockupsUrl !== canonicalB2MockupsUrl) {
+            if (!isColorFlexDemoOffline() && (!cfDataMockupsUrl || cfDataMockupsUrl !== canonicalB2MockupsUrl)) {
                 candidates.push({ label: 'backblaze', url: canonicalB2MockupsUrl });
             }
             candidates.push({ label: 'theme-asset', url: themeMockupsUrl });
@@ -10757,6 +11220,7 @@ async function initializeApp() {
             console.warn("⚠️ Failed to load mockups.json:", mockupError.message);
             console.warn("   Applying white-dresser fallback for collections without mockup paths");
             applyWhiteDresserMockupToCollectionsMissingPath(data.collections);
+        }
         }
 
         // Check if a specific collection is being requested via URL (e.g., from product page)
@@ -11005,6 +11469,26 @@ async function initializeApp() {
                 }
             }
 
+            // Mohawk Room: exclude standard-only wallpaper collections (no ColorFlex layers).
+            if (typeof window !== 'undefined' && window.COLORFLEX_MOHAWK_ROOM === true) {
+                const beforeMohawkStandard = appState.collections.length;
+                appState.collections = appState.collections.filter(function (c) {
+                    const colorFlexPatterns = (c.patterns || []).filter(function (p) {
+                        return p && p.colorFlex === true && p.layers && p.layers.length > 0;
+                    });
+                    if (colorFlexPatterns.length === 0) {
+                        console.log('🚫 MOHAWK ROOM: Excluding standard collection:', c.name);
+                        return false;
+                    }
+                    c.patterns = colorFlexPatterns;
+                    return true;
+                });
+                const mohawkStandardExcluded = beforeMohawkStandard - appState.collections.length;
+                if (mohawkStandardExcluded > 0) {
+                    console.log('🏛️ MOHAWK ROOM: Excluded', mohawkStandardExcluded, 'standard-only collections');
+                }
+            }
+
             // Expose collections data to window for collections modal (designer order: by collection number)
             appState.collections = sortCollectionsByNumber(appState.collections);
             window.collectionsData = appState.collections;
@@ -11071,7 +11555,8 @@ async function initializeApp() {
         // Check for auto-load pattern data using localStorage (more reliable than sessionStorage)
         let autoLoadCollectionName = null;
         let autoLoadPatternData = null;
-        
+
+        if (!isColorFlexDemoOffline()) {
         // Always check for auto-load pattern data in localStorage (more reliable)
         const autoLoadJson = localStorage.getItem('colorflexAutoLoad');
         console.log("🔍 DEBUG: Checking localStorage for colorflexAutoLoad");
@@ -11140,6 +11625,9 @@ async function initializeApp() {
                 localStorage.removeItem('pendingPurchasePattern');
             }
         }
+        } else {
+            console.log("[ColorFlex demo] Skipping colorflexAutoLoad / pendingPurchasePattern restore");
+        }
 
         console.log("🔍 COLLECTION SELECTION DEBUG:");
         console.log("  URL collection param:", urlCollectionName);
@@ -11162,10 +11650,11 @@ async function initializeApp() {
             modeDefaultCollection = window.FURNITURE_DEFAULT_COLLECTION || 'botanicals-fur';
         }
 
-        let collectionName = window.appState?.selectedCollection?.name ||
-                             urlCollectionName ||
-                             autoLoadCollectionName ||
-                             modeDefaultCollection;
+        let collectionName =
+            window.appState?.selectedCollection?.name ||
+            urlCollectionName ||
+            autoLoadCollectionName ||
+            modeDefaultCollection;
         
         // BASSETT: prefer hip-to-be-square so we never default to another collection
         if (window.COLORFLEX_MODE === 'BASSETT' && (!collectionName || collectionName === modeDefaultCollection)) {
@@ -11670,6 +12159,10 @@ console.log("  DOM ready:", document.readyState);
 function applyURLParameters(urlParams) {
     console.log('🔗 Applying URL parameters...');
     const sourceParam = urlParams.get("source");
+    if (isColorFlexDemoOffline() && sourceParam && (sourceParam === 'cart_saved_pattern' || sourceParam === 'cart_edit' || sourceParam === 'cart_restore')) {
+        console.log('[ColorFlex demo] Skipping cart-related URL parameter handling');
+        return;
+    }
     const savedLayersParam = urlParams.get("saved_layers");
     const savedPatternId = urlParams.get("saved_pattern_id");
 
@@ -11815,6 +12308,9 @@ function applyURLParameters(urlParams) {
  * Restore colors from cart link navigation
  */
 function restoreCartColors(savedLayersParam, urlColors) {
+    if (isColorFlexDemoOffline()) {
+        return;
+    }
     console.log('🎨 restoreCartColors called with:');
     console.log('  savedLayersParam:', savedLayersParam);
     console.log('  urlColors:', urlColors);
@@ -11945,8 +12441,9 @@ function isColorFlexAppPage() {
     return document.getElementById('colorflex-app') || window.location.pathname.includes('/colorflex');
 }
 
-// Run on initial load and refresh
+// Run on initial load and refresh (trade-demo boot uses startApp on DOMContentLoaded)
 window.addEventListener('load', () => {
+    if (isColorFlexDemoOffline()) return;
     initializeApp().catch(error => console.error("Initialization failed:", error));
 });
 
@@ -11986,6 +12483,44 @@ function initThumbnailLazyLoading() {
     console.log('👁️ Thumbnail lazy loading initialized');
 }
 
+/**
+ * page.colorflex.liquid moves #collectionThumbnails into #patternsModalContent for mobile.
+ * If that modal is left open or bypassed, the strip can stay detached from #leftSidebar.
+ * Restoring uses the page's closePatternsModal when present.
+ */
+function ensureCollectionThumbnailsInLeftSidebar() {
+    try {
+        if (typeof window.closePatternsModal === 'function') {
+            window.closePatternsModal();
+        }
+    } catch (e) {
+        console.warn('ensureCollectionThumbnailsInLeftSidebar:', e);
+    }
+}
+
+/** Strip JS-applied simple-mode flex overrides so stylesheet column layout applies again. */
+function resetStandardSidebarThumbnailStripLayout() {
+    if (window.COLORFLEX_SIMPLE_MODE === true) return;
+    const el = document.getElementById('collectionThumbnails');
+    if (!el) return;
+    const containerProps = [
+        'display', 'flex-direction', 'flex-wrap', 'justify-content', 'gap',
+        'width', 'max-width', 'position', 'left', 'top', 'padding'
+    ];
+    containerProps.forEach((p) => {
+        try {
+            el.style.removeProperty(p);
+        } catch (_) {}
+    });
+    el.querySelectorAll('.thumbnail').forEach((thumb) => {
+        ['display', 'float', 'position'].forEach((p) => {
+            try {
+                thumb.style.removeProperty(p);
+            } catch (_) {}
+        });
+    });
+}
+
 // Populate pattern thumbnails in sidebar with lazy loading
 function populatePatternThumbnails(patterns) {
     console.log("populatePatternThumbnails called with patterns:", patterns);
@@ -11993,6 +12528,7 @@ function populatePatternThumbnails(patterns) {
         console.error("collectionThumbnails not found in DOM");
         return;
     }
+    ensureCollectionThumbnailsInLeftSidebar();
     if (!Array.isArray(patterns)) {
         console.error("Patterns is not an array:", patterns);
         return;
@@ -12028,6 +12564,35 @@ function populatePatternThumbnails(patterns) {
 
     dom.collectionThumbnails.innerHTML = "";
     console.log("Cleared existing thumbnails");
+    resetStandardSidebarThumbnailStripLayout();
+
+    // #region agent log
+    try {
+        const _cs = dom.collectionThumbnails && typeof getComputedStyle === "function" ? getComputedStyle(dom.collectionThumbnails) : null;
+        const _ls0 = document.getElementById("leftSidebar");
+        const _lsS = _ls0 && typeof getComputedStyle === "function" ? getComputedStyle(_ls0) : null;
+        (typeof window !== 'undefined' && window.COLORFLEX_DEBUG_INGEST === true) && fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+            body: JSON.stringify({
+                sessionId: "0b8664",
+                runId: "pre",
+                hypothesisId: "H2-H4",
+                location: "CFM.js:populatePatternThumbnails:entry",
+                message: "populatePatternThumbnails start",
+                data: {
+                    nPatterns: validPatterns.length,
+                    simpleMode: window.COLORFLEX_SIMPLE_MODE === true,
+                    collection: appState.selectedCollection && appState.selectedCollection.name,
+                    ctDisplay: _cs && _cs.display,
+                    ctFlexDir: _cs && _cs.flexDirection,
+                    leftSidebarWidth: _lsS && _lsS.width,
+                },
+                timestamp: Date.now(),
+            }),
+        }).catch(function () {});
+    } catch (_e4) {}
+    // #endregion
 
     // 🎨 SIMPLE MODE: Force horizontal layout
     const isSimpleMode = window.COLORFLEX_SIMPLE_MODE === true;
@@ -12179,6 +12744,38 @@ function populatePatternThumbnails(patterns) {
 
         console.log("✅ Horizontal layout forced on", thumbnails.length, "thumbnails");
     }
+
+    // #region agent log
+    try {
+        let _dataUrlN = 0;
+        validPatterns.forEach((p) => {
+            const u = p && p.thumbnail ? String(p.thumbnail) : "";
+            if (u.startsWith("data:")) _dataUrlN++;
+        });
+        const _cs2 = dom.collectionThumbnails && typeof getComputedStyle === "function" ? getComputedStyle(dom.collectionThumbnails) : null;
+        const _ls1 = document.getElementById("leftSidebar");
+        const _lsS2 = _ls1 && typeof getComputedStyle === "function" ? getComputedStyle(_ls1) : null;
+        (typeof window !== 'undefined' && window.COLORFLEX_DEBUG_INGEST === true) && fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+            body: JSON.stringify({
+                sessionId: "0b8664",
+                runId: "pre",
+                hypothesisId: "H2-H5",
+                location: "CFM.js:populatePatternThumbnails:after-layout",
+                message: "populatePatternThumbnails end layout",
+                data: {
+                    dataUrlThumbnailCount: _dataUrlN,
+                    simpleMode: window.COLORFLEX_SIMPLE_MODE === true,
+                    ctDisplay: _cs2 && _cs2.display,
+                    ctJustify: _cs2 && _cs2.justifyContent,
+                    leftSidebarWidth: _lsS2 && _lsS2.width,
+                },
+                timestamp: Date.now(),
+            }),
+        }).catch(function () {});
+    } catch (_e5) {}
+    // #endregion
 
     // Update collection header
     // ✅ FIX: Support both standard furniture page format (h6 element) and simple mode format
@@ -12344,6 +12941,26 @@ function scheduleBackToPatternLinkPosition(container, linkEl) {
 
 // Populate coordinates thumbnails in #coordinatesContainer
 const populateCoordinates = () => {
+    if (typeof window !== 'undefined' && window.COLORFLEX_MOHAWK_ROOM === true) {
+        const coordinatesSection = document.getElementById("coordinatesSection");
+        if (coordinatesSection) {
+            coordinatesSection.style.display = "";
+        }
+        if (dom.coordinatesContainer) {
+            disconnectBackToPatternLinkResizeObserver();
+            dom.coordinatesContainer.innerHTML = "";
+            dom.coordinatesContainer.style.display = "";
+            if (dom.coordinatesContainer.parentElement) {
+                dom.coordinatesContainer.parentElement.style.display = "";
+            }
+        }
+        try {
+            mountMohawkCarpetThumbnailStrip();
+        } catch (_eStrip) {
+            /* mount errors must not break pattern flow */
+        }
+        return;
+    }
     // ✅ Skip coordinates for fabric, clothing, furniture, and Bassett modes
     if (appState.isInFabricMode) {
         return;
@@ -12523,6 +13140,14 @@ function populateLayerInputs(pattern = appState.currentPattern) {
       return;
     }
 
+    const colorControlsEl = document.getElementById("colorControls");
+    if (colorControlsEl) {
+      colorControlsEl.classList.remove("colorControls--standard");
+    }
+    if (dom.layerInputsContainer) {
+      dom.layerInputsContainer.classList.remove("layerInputsContainer--standard");
+    }
+
     // ⚡ Standard = not ColorFlex by data, or in a standard-only collection (farmhouse, oceana, abundance). Pass through — no layer inputs.
     const isStandard = patternIsStandard(pattern, appState.selectedCollection);
     if (isStandard) {
@@ -12548,8 +13173,11 @@ function populateLayerInputs(pattern = appState.currentPattern) {
         const sizeStr = `${sizeIn[0]}×${sizeIn[1]}`;
         const fallbackHtml = `<p>Each pattern repeat is ${sizeStr} inches and can be scaled to suit your need.</p>`;
         const inner = primaryHtml || fallbackHtml;
-        dom.layerInputsContainer.style.gridTemplateColumns = "repeat(1, 1fr)";
-        dom.layerInputsContainer.innerHTML = `<div style="text-align:center;padding:30px 20px;color:#d4af37;font-family:'IM Fell English',serif;font-size:1.1rem;line-height:1.8;max-width:800px;margin:0 auto;">${inner}</div>`;
+        dom.layerInputsContainer.classList.add("layerInputsContainer--standard");
+        if (colorControlsEl) {
+          colorControlsEl.classList.add("colorControls--standard");
+        }
+        dom.layerInputsContainer.innerHTML = `<div class="cf-standard-blurb">${inner}</div>`;
       }
       handlePatternSelection(pattern.name, appState.colorsLocked);
       addSaveButton();
@@ -12868,7 +13496,17 @@ function populateLayerInputs(pattern = appState.currentPattern) {
       isShadow: l.isShadow,
       path: l.path
     })));
-    
+
+    /**
+     * Mohawk Room invariant: at least 4 non-background colorable inputs must
+     * exist so sofa/pillow/trim/panels each map to a real control. When the
+     * pattern provides fewer (e.g. Botan = 3), this appends synthetic
+     * Mohawk-only inputs to fill the deficit. No-op outside Mohawk Room mode.
+     */
+    if (typeof window !== "undefined" && window.COLORFLEX_MOHAWK_ROOM === true) {
+      try { ensureMohawkSemanticControlMinimum(); } catch (_eEnsure) {}
+    }
+
     } // End of ColorFlex pattern handling
 
     // Add save button after pattern layers are populated
@@ -13128,6 +13766,60 @@ function preloadAdjacentPatterns(currentPattern) {
     }
 }
 
+/**
+ * Display-only resolver: given a 6-digit hex string (with or without '#'),
+ * return a paint name from appState.colorsData when a reasonable match exists,
+ * otherwise return null. Used by applyColorsToLayerInputs to keep the input
+ * field showing paint names when palette engines (e.g. Mohawk carpet roles
+ * bridge) hand in raw hex strings instead of SW/SC names.
+ *
+ * Match strategy:
+ *   1. Exact hex match against colorsData[i].hex (case-insensitive, '#' optional).
+ *   2. Otherwise nearest neighbour in linear RGB space; accepted only when the
+ *      Euclidean distance ≤ RESOLVER_NEAREST_RGB_THRESHOLD (≈ perceptually close).
+ *
+ * Does not touch the swatch, the underlying stored color, or currentLayers
+ * ordering. Used purely for the human-readable input.value.
+ */
+const RESOLVER_NEAREST_RGB_THRESHOLD = 60; // RGB Euclidean distance; >60 falls back to hex.
+function resolvePaintNameForHex(hexInput) {
+    if (!hexInput || typeof hexInput !== "string") return null;
+    const m = hexInput.trim().match(/^#?([0-9A-Fa-f]{6})$/);
+    if (!m) return null;
+    if (!appState || !Array.isArray(appState.colorsData) || appState.colorsData.length === 0) return null;
+
+    const target = m[1].toLowerCase();
+    const tr = parseInt(target.slice(0, 2), 16);
+    const tg = parseInt(target.slice(2, 4), 16);
+    const tb = parseInt(target.slice(4, 6), 16);
+
+    let best = null;
+    let bestDist2 = Infinity;
+    for (const c of appState.colorsData) {
+        if (!c || typeof c.hex !== "string") continue;
+        const ch = c.hex.toLowerCase().replace(/^#/, "");
+        if (!/^[0-9a-f]{6}$/.test(ch)) continue;
+        if (ch === target) {
+            return getCleanColorName(c.color_name || c.name || "") || null;
+        }
+        const r = parseInt(ch.slice(0, 2), 16);
+        const g = parseInt(ch.slice(2, 4), 16);
+        const b = parseInt(ch.slice(4, 6), 16);
+        const dr = r - tr, dg = g - tg, db = b - tb;
+        const dist2 = dr * dr + dg * dg + db * db;
+        if (dist2 < bestDist2) {
+            bestDist2 = dist2;
+            best = c;
+        }
+    }
+    const thresholdSq = RESOLVER_NEAREST_RGB_THRESHOLD * RESOLVER_NEAREST_RGB_THRESHOLD;
+    if (best && bestDist2 <= thresholdSq) {
+        const name = getCleanColorName(best.color_name || best.name || "");
+        return name || null;
+    }
+    return null;
+}
+
 function applyColorsToLayerInputs(colors, curatedColors = []) {
     console.log("Applying colors to layer inputs:", colors, 
                 "Curated colors:", curatedColors,
@@ -13142,15 +13834,25 @@ function applyColorsToLayerInputs(colors, curatedColors = []) {
         const color = (colors.length > clIdx && colors[clIdx] != null) ? colors[clIdx] : (curatedColors[index] || (layer.isBackground ? "#FFFFFF" : "Snowbound"));
         const cleanColor = (color || "").replace(/^(SW|SC)\d+\s*/i, "").trim();
         const hex = lookupColor(color) || "#FFFFFF";
-        layer.input.value = getCleanColorName(color);
+        const isHexInput = typeof color === "string" && /^#?[0-9A-Fa-f]{6}$/.test(color.trim());
+        let displayName = getCleanColorName(color);
+        if (isHexInput) {
+            const resolvedName = resolvePaintNameForHex(color);
+            if (resolvedName) displayName = resolvedName;
+        }
+        layer.input.value = displayName;
         layer.circle.style.backgroundColor = hex;
         console.log(`Applied ${cleanColor} (${hex}) to ${layer.label} input (currentLayers[${clIdx}])`);
         
-        appState.currentLayers[clIdx].color = cleanColor;
+        appState.currentLayers[clIdx].color = hex;
     });
     console.log("Inputs after apply:", 
                 appState.layerInputs.map(l => ({ id: l.input.id, label: l.label, value: l.input.value })));
     updateDisplays();
+}
+
+if (typeof window !== "undefined") {
+    window.applyColorsToLayerInputs = applyColorsToLayerInputs;
 }
 
 // Highlight active layer
@@ -13926,6 +14628,10 @@ async function loadPatternData(collection, patternId) {
             }
         }
 
+        if (typeof window !== "undefined" && window.COLORFLEX_MOHAWK_ROOM === true) {
+            reapplyActiveMohawkCarpetPaletteAfterPatternLoad();
+        }
+
         // ✅ Restore saved scale (BEFORE final preview updates)
         // This ensures the scale is set correctly before the main preview updates at the end
         console.log(`🔍 Scale persistence: Restoring scale multiplier to ${savedScaleMultiplier}`);
@@ -13995,9 +14701,16 @@ async function loadPatternData(collection, patternId) {
         console.log(">>> Updated appState.currentPattern:", JSON.stringify(pattern, null, 2));
         appState.curatedColors = appState.selectedCollection.curatedColors || [];
         console.log(">>> Updated appState.curatedColors:", appState.curatedColors);
-        
-        // ✅ Populate curated colors when we have colors data; don't block preview/mockup on it
-        if (Array.isArray(appState.colorsData) && appState.colorsData.length && collection.curatedColors?.length) {
+
+        const isBassettMode = window.COLORFLEX_MODE === "BASSETT";
+        const standardHideCurated = patternIsStandard(pattern, collection) && !isBassettMode;
+        const curatedStrip = dom.curatedColorsContainer || document.getElementById("curatedColorsContainer");
+
+        // ✅ Curated strip: only for ColorFlex-style patterns (Bassett keeps collection palette on standards)
+        if (standardHideCurated) {
+            console.log("🧹 loadPatternData: standard pattern — curated strip cleared");
+            if (curatedStrip) curatedStrip.innerHTML = "";
+        } else if (Array.isArray(appState.colorsData) && appState.colorsData.length && collection.curatedColors?.length) {
             appState.curatedColors = collection.curatedColors;
             populateCuratedColors(appState.curatedColors);
         } else if (!Array.isArray(appState.colorsData) || appState.colorsData.length === 0) {
@@ -14061,6 +14774,9 @@ async function loadPatternData(collection, patternId) {
         // ✅ Only populate coordinates for wallpaper mode (skip clothing/furniture)
         if (window.COLORFLEX_MODE !== 'CLOTHING' && window.COLORFLEX_MODE !== 'FURNITURE') {
         populateCoordinates();
+        }
+        if (typeof window !== "undefined" && window.COLORFLEX_MOHAWK_ROOM === true) {
+            mountMohawkCarpetThumbnailStrip();
         }
 
     } else {
@@ -14438,8 +15154,10 @@ if (appState.currentPattern) {
 }
 
 
-// 2. updatePreview
-let updatePreview = async () => {
+// 2. updatePreview — serialized so callers can `updatePreview(); updateRoomMockup();` without racing
+// (Mohawk room was one pattern behind because updateRoomMockup read the canvas before preview finished).
+let __updatePreviewQueue = Promise.resolve();
+async function updatePreviewImpl() {
 
             console.log("🔍 updatePreview PATTERN DEBUG:");
         console.log("  currentPattern name:", appState.currentPattern?.name);
@@ -14966,6 +15684,18 @@ let updatePreview = async () => {
         console.error("updatePreview error:", err);
         // Loading indicator removed
     }
+}
+
+let updatePreview = async function () {
+    __updatePreviewQueue = __updatePreviewQueue.then(
+        function () {
+            return updatePreviewImpl();
+        },
+        function () {
+            return updatePreviewImpl();
+        }
+    );
+    return __updatePreviewQueue;
 };
 
 
@@ -15919,6 +16649,1205 @@ function openRoomMockupFullscreen(source) {
   document.body.appendChild(overlay);
 }
 
+/**
+ * Mohawk room tiles whatever raster we pass; square preview canvases often letterbox non-square
+ * patterns on #000 — trim near-black margins so tiling does not repeat black bars.
+ * @param {HTMLCanvasElement} sourceCanvas
+ * @returns {HTMLCanvasElement|null} smaller canvas or null if trim is unsafe
+ */
+function trimPreviewLetterboxForMohawk(sourceCanvas) {
+  if (!sourceCanvas || sourceCanvas.width < 4 || sourceCanvas.height < 4) return null;
+  const w = sourceCanvas.width;
+  const h = sourceCanvas.height;
+  let ctx;
+  try {
+    ctx = sourceCanvas.getContext("2d", { willReadFrequently: true });
+  } catch (_e) {
+    return null;
+  }
+  if (!ctx) return null;
+  let img;
+  try {
+    img = ctx.getImageData(0, 0, w, h);
+  } catch (_taint) {
+    return null;
+  }
+  const d = img.data;
+  const thr = 18;
+  let minX = w;
+  let minY = h;
+  let maxX = 0;
+  let maxY = 0;
+  for (let y = 0; y < h; y++) {
+    for (let x = 0; x < w; x++) {
+      const i = (y * w + x) * 4;
+      if (d[i + 3] < 12) continue;
+      const r = d[i];
+      const g = d[i + 1];
+      const b = d[i + 2];
+      if (r <= thr && g <= thr && b <= thr) continue;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+    }
+  }
+  if (minX >= maxX || minY >= maxY) return null;
+  const cw = maxX - minX + 1;
+  const ch = maxY - minY + 1;
+  if (cw < 16 || ch < 16) return null;
+  if (cw * ch < w * h * 0.08) return null;
+  const out = document.createElement("canvas");
+  out.width = cw;
+  out.height = ch;
+  const octx = out.getContext("2d");
+  if (!octx) return null;
+  octx.drawImage(sourceCanvas, minX, minY, cw, ch, 0, 0, cw, ch);
+  return out;
+}
+
+/** Fixed five Mohawk carpet tiles; optional `roles` drives ColorFlex layer inputs + room semantic mapping. */
+function getMohawkCarpetCatalogEntries() {
+  if (typeof window !== "undefined" && Array.isArray(window.COLORFLEX_MOHAWK_CARPET_CATALOG) && window.COLORFLEX_MOHAWK_CARPET_CATALOG.length) {
+    return window.COLORFLEX_MOHAWK_CARPET_CATALOG;
+  }
+  return [
+    { id: "d111362", name: "D111362", thumbnail: "/cf-data/data/mohawk-designs/D111362.jpg", roles: { background: "#4c2226", linework: "#3f2529", accent: "#be601f" } },
+    { id: "atmo-loop-34031", name: "Atmo Loop 34031", thumbnail: "/cf-data/data/mohawk-designs/Atmo-Loop-34031.jpeg", roles: { background: "#7b776c", linework: "#6a665b", accent: "#aca99c" } },
+    { id: "saya", name: "Saya", thumbnail: "/cf-data/data/mohawk-designs/Saya.jpg", roles: { background: "#636b6c", linework: "#6e7677", accent: "#284554" } },
+    { id: "mogul-majesty", name: "Mogul Majesty", thumbnail: "/cf-data/data/mohawk-designs/Mogul-Majesty.jpg", roles: { background: "#505a50", linework: "#3a707a", accent: "#726a41" } },
+    { id: "windsor", name: "Windsor", thumbnail: "/cf-data/data/mohawk-designs/Windsor.jpg", roles: { background: "#836b4f", linework: "#7c745c", accent: "#946e43" } }
+  ];
+}
+
+function mohawkCarpetThumbKey(url) {
+  if (url == null || url === "") return "";
+  var s = String(url).trim();
+  if (s.indexOf("http://") === 0 || s.indexOf("https://") === 0) {
+    try {
+      s = new URL(s).pathname;
+    } catch (_e) {
+      /* keep s */
+    }
+  } else {
+    s = normalizePath(s);
+  }
+  var seg = s.split("/").filter(Boolean).pop() || s;
+  return String(seg).toLowerCase();
+}
+
+/**
+ * Mohawk Room requires a minimum of four non-background colorable layer inputs
+ * so that sofa/pillow/trim/panels each map to a real, user-visible control.
+ * When the active wallpaper pattern provides fewer than four colorable layers
+ * (e.g. Botan = 3 with [Flowers, Fiddleheads, Ferns]), append synthetic
+ * Mohawk-only inputs to the END of appState.currentLayers + appState.layerInputs
+ * so the deficit roles still have valid sources.
+ *
+ * Synthetic layers do NOT participate in wallpaper rendering — they only
+ * provide UI controls + data sinks for the room mockup compositor. They are
+ * appended after natural pattern layers, so syncMohawkSemanticLayerIndicesFromPattern
+ * picks them up in role order (sofa → pillow → trim → panels).
+ *
+ * Gated by window.COLORFLEX_MOHAWK_ROOM === true; no-op otherwise.
+ */
+function ensureMohawkSemanticControlMinimum() {
+  if (typeof window === "undefined" || window.COLORFLEX_MOHAWK_ROOM !== true) return;
+  if (!Array.isArray(appState.currentLayers)) appState.currentLayers = [];
+  if (!Array.isArray(appState.layerInputs)) appState.layerInputs = [];
+
+  var layers = appState.currentLayers;
+  var naturalCount = 0;
+  for (var pi = 0; pi < layers.length; pi++) {
+    var L = layers[pi];
+    if (!L || L.isBackground || L.isShadow || L.isExtras) continue;
+    naturalCount++;
+  }
+
+  var requiredOrder = ["sofa", "pillow", "trim", "panels"];
+  var needed = requiredOrder.length - naturalCount;
+  if (needed <= 0) return;
+
+  /** Carpet palette role hex seeds — sensible defaults until the bridge re-applies. */
+  var ac = (typeof window !== "undefined" && window.activeMohawkCarpet) || null;
+  var roles = (ac && ac.roles) || {};
+  var seedByRole = {
+    sofa: roles.background || "#888888",
+    pillow: roles.accent || "#aa7766",
+    trim: roles.linework || "#444444",
+    panels: roles.linework || "#666666"
+  };
+  var labelByRole = {
+    sofa: "Mohawk Sofa",
+    pillow: "Mohawk Pillow",
+    trim: "Mohawk Trim",
+    panels: "Mohawk Panels"
+  };
+
+  /** Append synthetics in role order, starting from the first role NOT covered by natural layers. */
+  var startIdx = naturalCount;
+  for (var k = 0; k < needed; k++) {
+    var role = requiredOrder[startIdx + k];
+    if (!role) break;
+    var label = labelByRole[role];
+    var seedHex = seedByRole[role];
+    var inputId = "mohawk-syn-" + role + "-" + Date.now() + "-" + k;
+
+    appState.currentLayers.push({
+      label: label,
+      color: seedHex,
+      isBackground: false,
+      isShadow: false,
+      isExtras: false,
+      isMohawkSynthetic: true,
+      _mohawkSemanticRole: role
+    });
+
+    if (typeof createColorInput === "function" && dom && dom.layerInputsContainer) {
+      try {
+        var layerData = createColorInput(label, inputId, seedHex, false);
+        appState.layerInputs.push({
+          input: layerData.input,
+          circle: layerData.circle,
+          label: layerData.label,
+          isBackground: false,
+          color: seedHex,
+          hex: (typeof lookupColor === "function" ? (lookupColor(seedHex) || seedHex) : seedHex),
+          isMohawkSynthetic: true,
+          _mohawkSemanticRole: role
+        });
+        dom.layerInputsContainer.appendChild(layerData.container);
+      } catch (eCi) {
+        console.warn("[Mohawk room] failed to create synthetic input for role " + role + ":", eCi);
+        /** If DOM creation failed, drop the matching currentLayers entry so arrays stay parallel. */
+        appState.currentLayers.pop();
+      }
+    }
+  }
+}
+
+/**
+ * Map sofa/pillow/trim/panels → layer input row indices = first four pattern stack slots (same stack as positional fallback used).
+ * Only when Mohawk carpet palette is active.
+ *
+ * Stale-state guard: explicitly clear any prior semanticLayerInputIndex before
+ * computing a fresh one. The assignment that follows would replace it anyway,
+ * but the delete makes the window between recompute / read impossible to
+ * observe in a half-populated state.
+ */
+function syncMohawkSemanticLayerIndicesFromPattern() {
+  var cfg = (typeof window !== "undefined" && window.COLORFLEX_MOHAWK_ROOM_CONFIG) || {};
+  if (!cfg.mohawkCarpetPaletteActive) return;
+  try { delete cfg.semanticLayerInputIndex; } catch (_eDel) {}
+  var layers = appState.currentLayers || [];
+  var pat = [];
+  for (var pi = 0; pi < layers.length; pi++) {
+    var L = layers[pi];
+    if (!L || L.isBackground || L.isShadow || L.isExtras) continue;
+    pat.push({ pi: pi, L: L });
+  }
+  var order = ["sofa", "pillow", "trim", "panels"];
+  var slii = {};
+  for (var r = 0; r < order.length; r++) {
+    if (r < pat.length) slii[order[r]] = pat[r].pi;
+  }
+  window.COLORFLEX_MOHAWK_ROOM_CONFIG = window.COLORFLEX_MOHAWK_ROOM_CONFIG || {};
+  window.COLORFLEX_MOHAWK_ROOM_CONFIG.semanticLayerInputIndex = slii;
+}
+
+function reapplyActiveMohawkCarpetPaletteAfterPatternLoad() {
+  if (typeof window === "undefined" || window.COLORFLEX_MOHAWK_ROOM !== true) return;
+  var ac = window.activeMohawkCarpet;
+  if (!ac) return;
+  var hasRanked = ac.rankedColors && ac.rankedColors.length;
+  var hasRoles = ac.roles && ac.roles.background && ac.roles.linework && ac.roles.accent;
+  if (!hasRanked && !hasRoles) return;
+  try {
+    ensureMohawkSemanticControlMinimum();
+    applyMohawkCarpetPaletteBridge(ac);
+    syncMohawkSemanticLayerIndicesFromPattern();
+  } catch (eRe) {
+    console.warn("[Mohawk carpet] reapply palette after pattern load failed:", eRe);
+  }
+}
+
+function mohawkCarpetPaletteLoadUrl(thumbnailUrl) {
+  var u = String(thumbnailUrl || "").trim();
+  if (u.indexOf("http://") !== 0 && u.indexOf("https://") !== 0) {
+    u = normalizePath(u);
+  }
+  return u.indexOf("http") === 0 ? urlForCorsFetch(u) : urlForCorsFetch(u);
+}
+
+async function resolveMohawkCarpetPaletteForEntry(entry) {
+  var cfg = window.COLORFLEX_MOHAWK_ROOM_CONFIG || {};
+  var source = cfg.mohawkPaletteSource === "roles" ? "roles" : "atmospheric";
+  var roles = entry && entry.roles ? entry.roles : null;
+  var rankedColors = null;
+
+  if (source !== "roles" && entry && entry.thumbnail) {
+    try {
+      var extracted = await extractMohawkCarpetPaletteAtmospheric(mohawkCarpetPaletteLoadUrl(entry.thumbnail));
+      rankedColors = extracted.colors;
+      roles = extracted.roles;
+    } catch (eExt) {
+      console.warn("[Mohawk carpet] atmospheric extract failed:", eExt);
+    }
+  }
+
+  if ((!rankedColors || !rankedColors.length) && roles && roles.background && roles.linework && roles.accent) {
+    var biasForRoles = typeof cfg.paletteContrastBias === "number" ? cfg.paletteContrastBias : 0;
+    rankedColors = buildMohawkRolesStoredPalette(roles, biasForRoles);
+    return { roles: roles, rankedColors: rankedColors, source: "roles" };
+  }
+  if (rankedColors && rankedColors.length) {
+    return { roles: roles, rankedColors: rankedColors, source: "atmospheric" };
+  }
+  return null;
+}
+
+async function applyMohawkCarpetPaletteResolved(resolved) {
+  if (!resolved) return false;
+  window.COLORFLEX_MOHAWK_ROOM_CONFIG = window.COLORFLEX_MOHAWK_ROOM_CONFIG || {};
+  window.COLORFLEX_MOHAWK_ROOM_CONFIG.mohawkCarpetPaletteActive = true;
+  if (window.activeMohawkCarpet) {
+    window.activeMohawkCarpet.roles = resolved.roles;
+    window.activeMohawkCarpet.rankedColors = resolved.rankedColors || null;
+    window.activeMohawkCarpet.paletteSource = resolved.source;
+  }
+  ensureMohawkSemanticControlMinimum();
+  applyMohawkCarpetPaletteBridge(window.activeMohawkCarpet);
+  syncMohawkSemanticLayerIndicesFromPattern();
+  updatePreview();
+  return true;
+}
+
+async function applyMohawkCarpetThumbnailSelection(entry) {
+  if (!entry || !entry.thumbnail) return;
+  window.COLORFLEX_MOHAWK_ROOM_CONFIG = window.COLORFLEX_MOHAWK_ROOM_CONFIG || {};
+  var url = String(entry.thumbnail).trim();
+  if (url.indexOf("http://") !== 0 && url.indexOf("https://") !== 0) {
+    url = normalizePath(url);
+  }
+  window.COLORFLEX_MOHAWK_ROOM_CONFIG.carpetTileUrl = url;
+  window.COLORFLEX_MOHAWK_ROOM_CONFIG.carpetThumbnailUrl = url;
+  window.activeMohawkCarpet = {
+    id: entry.id,
+    name: entry.name,
+    thumbnail: entry.thumbnail,
+    roles: entry.roles || null,
+    rankedColors: null,
+    paletteSource: null
+  };
+  var resolved = await resolveMohawkCarpetPaletteForEntry(entry);
+  if (resolved) {
+    try {
+      await applyMohawkCarpetPaletteResolved(resolved);
+    } catch (ePal) {
+      console.warn("[Mohawk carpet] palette apply failed:", ePal);
+    }
+  } else {
+    window.COLORFLEX_MOHAWK_ROOM_CONFIG.mohawkCarpetPaletteActive = false;
+    try {
+      delete window.COLORFLEX_MOHAWK_ROOM_CONFIG.semanticLayerInputIndex;
+    } catch (_d) {}
+  }
+  mountMohawkCarpetThumbnailStrip();
+  try {
+    await updateRoomMockup();
+  } catch (eMc) {
+    console.warn("[Mohawk carpet] updateRoomMockup failed:", eMc);
+  }
+}
+
+function mountMohawkCarpetThumbnailStrip() {
+  if (typeof window === "undefined" || window.COLORFLEX_MOHAWK_ROOM !== true) return;
+  var coordHost = document.getElementById("coordinatesContainer");
+  var colorCtrl = !coordHost ? document.getElementById("colorControls") : null;
+  if (!coordHost && (!colorCtrl || !colorCtrl.parentElement)) {
+    console.warn("[Mohawk carpet] no #coordinatesContainer or #colorControls host — carpet strip not shown.");
+    return;
+  }
+  var entries = getMohawkCarpetCatalogEntries();
+  if (!entries.length) return;
+
+  var stripId = "mohawkCarpetThumbnailStrip";
+  var existing = document.getElementById(stripId);
+  if (existing) existing.remove();
+
+  var hostedInCoordinates = !!coordHost;
+
+  var wrap = document.createElement("div");
+  wrap.id = stripId;
+  wrap.setAttribute("aria-label", "Mohawk carpet");
+  wrap.style.cssText = hostedInCoordinates
+    ? "display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:10px;margin:0 auto;padding:8px 4px;"
+    : "display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:12px 0;padding:10px;border:1px solid rgba(212,175,55,0.45);border-radius:8px;background:rgba(0,0,0,0.35);";
+
+  if (!hostedInCoordinates) {
+    var title = document.createElement("div");
+    title.textContent = "Mohawk carpet";
+    title.style.cssText = "width:100%;font-weight:600;color:#d4af37;font-size:14px;margin-bottom:4px;";
+    wrap.appendChild(title);
+  }
+
+  var cfg = window.COLORFLEX_MOHAWK_ROOM_CONFIG || (window.COLORFLEX_MOHAWK_ROOM_CONFIG = {});
+  if (hostedInCoordinates) {
+    if (typeof cfg.mohawkPaletteSource !== "string" || !cfg.mohawkPaletteSource) {
+      cfg.mohawkPaletteSource = "atmospheric";
+    }
+
+    var sourceRow = document.createElement("div");
+    sourceRow.id = "mohawkPaletteSourceRow";
+    sourceRow.style.cssText =
+      "flex-basis:100%;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:0 0 4px;font-family:'Special Elite', monospace;font-size:0.72rem;color:#cccccc;letter-spacing:0.04em;";
+    var sourceLab = document.createElement("span");
+    sourceLab.textContent = "Palette source";
+    sourceLab.style.cssText = "min-width:88px;text-align:right;color:#9aa0a6;";
+    var sourceSel = document.createElement("select");
+    sourceSel.id = "mohawkPaletteSourceSelect";
+    sourceSel.style.cssText =
+      "flex:0 1 220px;max-width:220px;padding:3px 6px;background:#1e1e1e;color:#eaeaea;border:1px solid #444;border-radius:4px;font-family:inherit;font-size:0.72rem;";
+    var sourceOpts = [
+      ["atmospheric", "Atmospheric (ranked 10)"],
+      ["roles", "Catalog roles (3-anchor)"]
+    ];
+    for (var so = 0; so < sourceOpts.length; so++) {
+      var opt = document.createElement("option");
+      opt.value = sourceOpts[so][0];
+      opt.textContent = sourceOpts[so][1];
+      if (cfg.mohawkPaletteSource === sourceOpts[so][0]) opt.selected = true;
+      sourceSel.appendChild(opt);
+    }
+    sourceSel.addEventListener("change", function () {
+      cfg.mohawkPaletteSource = String(sourceSel.value) === "roles" ? "roles" : "atmospheric";
+      var activeEntry = null;
+      var activeKey = mohawkCarpetThumbKey(cfg.carpetTileUrl || cfg.carpetThumbnailUrl || "");
+      if (activeKey) {
+        for (var si = 0; si < entries.length; si++) {
+          if (mohawkCarpetThumbKey(entries[si].thumbnail) === activeKey) {
+            activeEntry = entries[si];
+            break;
+          }
+        }
+      }
+      if (activeEntry) {
+        applyMohawkCarpetThumbnailSelection(activeEntry);
+      }
+    });
+    sourceRow.appendChild(sourceLab);
+    sourceRow.appendChild(sourceSel);
+    wrap.appendChild(sourceRow);
+
+    if (typeof cfg.paletteContrastBias !== "number" || isNaN(cfg.paletteContrastBias)) {
+      cfg.paletteContrastBias = 0;
+    }
+    var contrastBias = Math.max(0, Math.min(1, cfg.paletteContrastBias));
+    var biasRow = document.createElement("div");
+    biasRow.id = "mohawkPaletteBiasRow";
+    biasRow.style.cssText =
+      "flex-basis:100%;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;padding:2px 0 6px;font-family:'Special Elite', monospace;font-size:0.72rem;color:#cccccc;letter-spacing:0.04em;";
+    var leftLab = document.createElement("span");
+    leftLab.textContent = "Faithful";
+    leftLab.style.cssText = "min-width:64px;text-align:right;color:#9aa0a6;";
+    var rightLab = document.createElement("span");
+    rightLab.textContent = "Expressive";
+    rightLab.style.cssText = "min-width:74px;text-align:left;color:#d4af37;";
+    var slider = document.createElement("input");
+    slider.type = "range";
+    slider.id = "mohawkPaletteBiasSlider";
+    slider.min = "0";
+    slider.max = "1";
+    slider.step = "0.01";
+    slider.value = String(contrastBias);
+    slider.setAttribute("aria-label", "Palette contrast: faithful to expressive");
+    slider.style.cssText = "flex:0 1 240px;max-width:240px;accent-color:#d4af37;";
+    var reapplyRafId = 0;
+    function scheduleReapplyPaletteForBias() {
+      if (reapplyRafId) return;
+      reapplyRafId = requestAnimationFrame(function () {
+        reapplyRafId = 0;
+        try {
+          var acBias = window.activeMohawkCarpet;
+          if (!acBias) return;
+          if (cfg.mohawkPaletteSource === "roles") {
+            if (!acBias.roles) return;
+          } else if (!acBias.rankedColors || !acBias.rankedColors.length) {
+            if (!acBias.roles) return;
+          }
+          applyMohawkCarpetPaletteBridge(acBias, {
+            forceRolesRebuild: cfg.mohawkPaletteSource === "roles"
+          });
+          if (typeof updatePreview === "function") {
+            try { updatePreview(); } catch (_eUp) {}
+          }
+          if (typeof updateRoomMockup === "function") {
+            try { updateRoomMockup(); } catch (_eRm) {}
+          }
+        } catch (eBias) {
+          console.warn("[Mohawk palette bias] reapply failed:", eBias);
+        }
+      });
+    }
+    slider.addEventListener("input", function () {
+      var v = parseFloat(slider.value);
+      if (isNaN(v)) v = 0;
+      v = Math.max(0, Math.min(1, v));
+      cfg.paletteContrastBias = v;
+      scheduleReapplyPaletteForBias();
+    });
+    biasRow.appendChild(leftLab);
+    biasRow.appendChild(slider);
+    biasRow.appendChild(rightLab);
+    wrap.appendChild(biasRow);
+
+    /**
+     * Collapsible Blend sub-panel: per-role tint mode + tint amount, plus
+     * detail-plate opacities for sofa / pillow / trim. Writes directly to
+     * `window.COLORFLEX_MOHAWK_ROOM_CONFIG`; the compositor reads these on the
+     * next `updateRoomMockup()`. Open/closed state persists in `cfg.blendPanelOpen`.
+     */
+    if (typeof cfg.sofaDetailOpacity !== "number" || isNaN(cfg.sofaDetailOpacity)) cfg.sofaDetailOpacity = 1;
+    if (typeof cfg.pillowDetailOpacity !== "number" || isNaN(cfg.pillowDetailOpacity)) cfg.pillowDetailOpacity = 1;
+    if (typeof cfg.trimDetailOpacity !== "number" || isNaN(cfg.trimDetailOpacity)) cfg.trimDetailOpacity = 1;
+    if (typeof cfg.wallPanelShadowOpacity !== "number" || isNaN(cfg.wallPanelShadowOpacity)) cfg.wallPanelShadowOpacity = 0.8;
+    if (typeof cfg.wallpaperSolidBlend !== "number" || isNaN(cfg.wallpaperSolidBlend)) cfg.wallpaperSolidBlend = 0;
+    if (!cfg.semanticBlend || typeof cfg.semanticBlend !== "object") cfg.semanticBlend = {};
+    if (!cfg.semanticOpacity || typeof cfg.semanticOpacity !== "object") cfg.semanticOpacity = {};
+    ["sofa", "pillow", "trim", "panels"].forEach(function (rn) {
+      if (typeof cfg.semanticBlend[rn] !== "string" || !cfg.semanticBlend[rn]) cfg.semanticBlend[rn] = "multiply";
+      if (typeof cfg.semanticOpacity[rn] !== "number" || isNaN(cfg.semanticOpacity[rn])) {
+        cfg.semanticOpacity[rn] = rn === "sofa" ? 0.9 : 1;
+      }
+    });
+
+    var blendPanel = document.createElement("div");
+    blendPanel.id = "mohawkBlendPanel";
+    blendPanel.style.cssText =
+      "flex-basis:100%;width:100%;border:1px solid rgba(212,175,55,0.25);border-radius:6px;background:rgba(0,0,0,0.18);margin:2px 0 0;";
+
+    var blendIsOpen = cfg.blendPanelOpen === true;
+
+    var blendHeader = document.createElement("button");
+    blendHeader.type = "button";
+    blendHeader.id = "mohawkBlendToggle";
+    blendHeader.style.cssText =
+      "width:100%;display:flex;align-items:center;gap:8px;padding:6px 10px;background:transparent;border:none;color:#d4af37;font-family:'Special Elite', monospace;font-size:0.78rem;letter-spacing:0.06em;cursor:pointer;text-align:left;";
+    blendHeader.innerHTML =
+      '<span id="mohawkBlendCaret" style="display:inline-block;width:10px;">' +
+      (blendIsOpen ? "▾" : "▸") +
+      "</span><span>Blend</span><span style=\"margin-left:auto;font-size:0.65rem;color:#7a7a7a;letter-spacing:0;\">composite controls</span>";
+
+    var blendBody = document.createElement("div");
+    blendBody.id = "mohawkBlendBody";
+    blendBody.style.cssText =
+      "display:" +
+      (blendIsOpen ? "grid" : "none") +
+      ";grid-template-columns:1fr 1fr;gap:4px 10px;padding:2px 10px 8px;";
+
+    var blendRafId = 0;
+    var scheduleRoomMockupForBlend = function () {
+      if (blendRafId) return;
+      blendRafId = requestAnimationFrame(function () {
+        blendRafId = 0;
+        if (typeof updateRoomMockup === "function") {
+          try { updateRoomMockup(); } catch (_eRm2) {}
+        }
+      });
+    };
+
+    var makeGroupHeader = function (text) {
+      var h = document.createElement("div");
+      h.textContent = text;
+      h.style.cssText =
+        "grid-column:1 / -1;font-family:'Special Elite',monospace;font-size:0.68rem;color:#d4af37;letter-spacing:0.08em;padding:4px 0 2px;border-bottom:1px solid rgba(212,175,55,0.15);";
+      return h;
+    };
+
+    var makeOpacitySlider = function (label, getter, setter, span) {
+      var row = document.createElement("div");
+      row.style.cssText =
+        "display:flex;align-items:center;gap:6px;font-family:'Special Elite',monospace;font-size:0.7rem;color:#cccccc;" +
+        (span ? "grid-column:1 / -1;" : "");
+      var lab = document.createElement("span");
+      lab.textContent = label;
+      lab.style.cssText = "flex:0 0 auto;min-width:54px;text-align:right;color:#9aa0a6;";
+      var sl = document.createElement("input");
+      sl.type = "range";
+      sl.min = "0";
+      sl.max = "1";
+      sl.step = "0.01";
+      var initial = Math.max(0, Math.min(1, Number(getter())));
+      sl.value = String(initial);
+      sl.style.cssText = "flex:1 1 auto;min-width:60px;accent-color:#d4af37;";
+      var val = document.createElement("span");
+      val.textContent = initial.toFixed(2);
+      val.style.cssText = "flex:0 0 auto;min-width:30px;text-align:right;color:#a0a0a0;font-variant-numeric:tabular-nums;";
+      sl.addEventListener("input", function () {
+        var v = parseFloat(sl.value);
+        if (isNaN(v)) v = 1;
+        v = Math.max(0, Math.min(1, v));
+        val.textContent = v.toFixed(2);
+        setter(v);
+        scheduleRoomMockupForBlend();
+      });
+      row.appendChild(lab);
+      row.appendChild(sl);
+      row.appendChild(val);
+      return row;
+    };
+
+    var makeBlendModeSelect = function (label, role, span) {
+      var row = document.createElement("div");
+      row.style.cssText =
+        "display:flex;align-items:center;gap:6px;font-family:'Special Elite',monospace;font-size:0.7rem;color:#cccccc;" +
+        (span ? "grid-column:1 / -1;" : "");
+      var lab = document.createElement("span");
+      lab.textContent = label;
+      lab.style.cssText = "flex:0 0 auto;min-width:54px;text-align:right;color:#9aa0a6;";
+      var sel = document.createElement("select");
+      sel.style.cssText =
+        "flex:1 1 auto;min-width:60px;padding:2px 4px;background:#1e1e1e;color:#eaeaea;border:1px solid #444;border-radius:4px;font-family:inherit;font-size:0.72rem;";
+      var modes = [
+        ["color", "color (preserve luminance)"],
+        ["multiply", "multiply"],
+        ["overlay", "overlay"],
+        ["soft-light", "soft-light"],
+        ["hard-light", "hard-light"],
+        ["screen", "screen"],
+        ["source-over", "normal (replace)"]
+      ];
+      var current = String(cfg.semanticBlend[role] || "color").toLowerCase();
+      for (var mi = 0; mi < modes.length; mi++) {
+        var op = document.createElement("option");
+        op.value = modes[mi][0];
+        op.textContent = modes[mi][1];
+        if (modes[mi][0] === current) op.selected = true;
+        sel.appendChild(op);
+      }
+      sel.addEventListener("change", function () {
+        cfg.semanticBlend[role] = String(sel.value);
+        scheduleRoomMockupForBlend();
+      });
+      row.appendChild(lab);
+      row.appendChild(sel);
+      return row;
+    };
+
+    blendBody.appendChild(makeGroupHeader("SOFA"));
+    blendBody.appendChild(makeBlendModeSelect("Tint blend", "sofa", true));
+    blendBody.appendChild(makeOpacitySlider(
+      "Tint amt",
+      function () { return cfg.semanticOpacity.sofa; },
+      function (v) { cfg.semanticOpacity.sofa = v; },
+      false
+    ));
+    blendBody.appendChild(makeOpacitySlider(
+      "Detail",
+      function () { return cfg.sofaDetailOpacity; },
+      function (v) { cfg.sofaDetailOpacity = v; },
+      false
+    ));
+
+    blendBody.appendChild(makeGroupHeader("PILLOW"));
+    blendBody.appendChild(makeBlendModeSelect("Tint blend", "pillow", true));
+    blendBody.appendChild(makeOpacitySlider(
+      "Tint amt",
+      function () { return cfg.semanticOpacity.pillow; },
+      function (v) { cfg.semanticOpacity.pillow = v; },
+      false
+    ));
+    blendBody.appendChild(makeOpacitySlider(
+      "Detail",
+      function () { return cfg.pillowDetailOpacity; },
+      function (v) { cfg.pillowDetailOpacity = v; },
+      false
+    ));
+
+    blendBody.appendChild(makeGroupHeader("TRIM"));
+    blendBody.appendChild(makeBlendModeSelect("Tint blend", "trim", true));
+    blendBody.appendChild(makeOpacitySlider(
+      "Tint amt",
+      function () { return cfg.semanticOpacity.trim; },
+      function (v) { cfg.semanticOpacity.trim = v; },
+      false
+    ));
+    blendBody.appendChild(makeOpacitySlider(
+      "Detail",
+      function () { return cfg.trimDetailOpacity; },
+      function (v) { cfg.trimDetailOpacity = v; },
+      false
+    ));
+
+    blendBody.appendChild(makeGroupHeader("PANELS"));
+    blendBody.appendChild(makeBlendModeSelect("Tint blend", "panels", true));
+    blendBody.appendChild(makeOpacitySlider(
+      "Tint amt",
+      function () { return cfg.semanticOpacity.panels; },
+      function (v) { cfg.semanticOpacity.panels = v; },
+      true
+    ));
+
+    /**
+     * WALLPAPER group: fade tiled pattern toward layer index 0 solid color.
+     */
+    blendBody.appendChild(makeGroupHeader("WALLPAPER"));
+    blendBody.appendChild(makeOpacitySlider(
+      "To color 0",
+      function () { return cfg.wallpaperSolidBlend; },
+      function (v) { cfg.wallpaperSolidBlend = v; },
+      true
+    ));
+
+    /**
+     * OVERLAY group: wall-panel-shadow.png (multiply, drawn last).
+     * Re-applied on every compositor invocation, so a wallpaper change always
+     * gets the shadow re-layered on top.
+     */
+    blendBody.appendChild(makeGroupHeader("OVERLAY"));
+    blendBody.appendChild(makeOpacitySlider(
+      "Wall shadow",
+      function () { return cfg.wallPanelShadowOpacity; },
+      function (v) { cfg.wallPanelShadowOpacity = v; },
+      true
+    ));
+
+    blendHeader.addEventListener("click", function () {
+      blendIsOpen = !blendIsOpen;
+      cfg.blendPanelOpen = blendIsOpen;
+      blendBody.style.display = blendIsOpen ? "grid" : "none";
+      var caret = document.getElementById("mohawkBlendCaret");
+      if (caret) caret.textContent = blendIsOpen ? "▾" : "▸";
+    });
+
+    blendPanel.appendChild(blendHeader);
+    blendPanel.appendChild(blendBody);
+    wrap.appendChild(blendPanel);
+  }
+
+  var currentKey = mohawkCarpetThumbKey(cfg.carpetTileUrl || cfg.carpetThumbnailUrl || "");
+
+  for (var i = 0; i < entries.length; i++) {
+    (function (entry) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.style.cssText =
+        "padding:0;border:2px solid transparent;border-radius:6px;background:#111;cursor:pointer;line-height:0;";
+      var tUrl = String(entry.thumbnail || "").trim();
+      var imgSrc = tUrl.indexOf("http://") === 0 || tUrl.indexOf("https://") === 0 ? tUrl : normalizePath(tUrl);
+      var entryKey = mohawkCarpetThumbKey(entry.thumbnail);
+      if (entryKey === currentKey) {
+        btn.style.borderColor = "#d4af37";
+        btn.setAttribute("aria-pressed", "true");
+      } else {
+        btn.style.borderColor = "transparent";
+        btn.setAttribute("aria-pressed", "false");
+      }
+      var img = document.createElement("img");
+      img.src = imgSrc;
+      img.alt = entry.name || entry.id || "Carpet";
+      img.width = 56;
+      img.height = 56;
+      img.style.cssText = "display:block;width:56px;height:56px;object-fit:cover;border-radius:4px;";
+      img.onerror = function () {
+        img.style.opacity = "0.35";
+      };
+      btn.appendChild(img);
+      btn.addEventListener("click", function () {
+        applyMohawkCarpetThumbnailSelection(entry);
+      });
+      wrap.appendChild(btn);
+    })(entries[i]);
+  }
+
+  if (hostedInCoordinates) {
+    coordHost.innerHTML = "";
+    coordHost.appendChild(wrap);
+  } else {
+    colorCtrl.parentElement.insertBefore(wrap, colorCtrl);
+  }
+
+  if (!window.activeMohawkCarpet || (!window.activeMohawkCarpet.roles && !window.activeMohawkCarpet.rankedColors)) {
+    var ck2 = mohawkCarpetThumbKey(cfg.carpetTileUrl || cfg.carpetThumbnailUrl || "");
+    if (ck2) {
+      for (var j = 0; j < entries.length; j++) {
+        var ej = entries[j];
+        if (mohawkCarpetThumbKey(ej.thumbnail) === ck2) {
+          window.activeMohawkCarpet = {
+            id: ej.id,
+            name: ej.name,
+            thumbnail: ej.thumbnail,
+            roles: ej.roles || null,
+            rankedColors: null,
+            paletteSource: null
+          };
+          resolveMohawkCarpetPaletteForEntry(ej)
+            .then(function (resolved) {
+              if (!resolved) return;
+              return applyMohawkCarpetPaletteResolved(resolved);
+            })
+            .catch(function (eSync) {
+              console.warn("[Mohawk carpet] palette sync from config failed:", eSync);
+            });
+          break;
+        }
+      }
+    }
+  }
+}
+
+/**
+ * Mohawk Room mockup (explicit stack; docs/mohawk-room/COMPOSITOR_STACK.md).
+ * Gated by window.COLORFLEX_MOHAWK_ROOM === true. Assets from COLORFLEX_MOHAWK_ROOM_CONFIG.layersBaseUrl (default /cf-data/mockups/mohawk/).
+ */
+async function updateRoomMockupMohawkRoom() {
+  function showMohawkRoomError(message) {
+    if (!dom.roomMockup) return;
+    dom.roomMockup.innerHTML = "";
+    var box = document.createElement("div");
+    box.setAttribute("role", "alert");
+    box.style.cssText =
+      "box-sizing:border-box;width:100%;max-width:960px;min-height:420px;padding:24px;background:#140f0a;border:2px solid #f59e0b;border-radius:12px;color:#fef3c7;font:16px/1.5 system-ui,sans-serif;display:flex;align-items:center;justify-content:center;text-align:left;white-space:pre-wrap;";
+    box.textContent = message;
+    dom.roomMockup.appendChild(box);
+  }
+  try {
+    const isClothingCollection =
+      appState.selectedCollection?.name?.includes("-clo") || appState.selectedCollection?.name?.includes(".clo-");
+    const isClothingMode = window.COLORFLEX_MODE === "CLOTHING";
+    const isFurnitureMode = window.COLORFLEX_MODE === "FURNITURE" || appState.isInFurnitureMode;
+    if (isClothingCollection || isClothingMode || isFurnitureMode) {
+      showMohawkRoomError("MOHAWK ROOM ERROR\nWallpaper mode only.");
+      return;
+    }
+
+    await __updatePreviewQueue;
+    await new Promise(function (r) {
+      requestAnimationFrame(function () {
+        requestAnimationFrame(r);
+      });
+    });
+
+    function mohawkColorToHex(colorSrc, fallbackHex) {
+      if (colorSrc == null || colorSrc === "") return fallbackHex;
+      var c = lookupColor(colorSrc);
+      if (typeof c === "string" && c.indexOf("#") === 0) {
+        var six = c.slice(1).replace(/[^0-9A-Fa-f]/g, "").slice(0, 6);
+        if (six.length === 6) return "#" + six;
+      }
+      if (c && typeof c === "object" && c.r != null) {
+        return (
+          "#" +
+          [c.r, c.g, c.b]
+            .map(function (x) {
+              return ("0" + Math.round(x).toString(16)).slice(-2);
+            })
+            .join("")
+        );
+      }
+      return fallbackHex;
+    }
+
+    /** Layer index 0 hex for wallpaper solid blend (background / first color slot). */
+    function resolveMohawkLayer0Hex(fallbackHex) {
+      var layers = appState.currentLayers || [];
+      var inputs = appState.layerInputs || [];
+      var raw = null;
+      if (layers.length > 0 && layers[0] && layers[0].color != null && String(layers[0].color).trim() !== "") {
+        raw = String(layers[0].color).trim();
+      } else if (inputs.length > 0 && inputs[0]) {
+        var li0 = inputs[0];
+        if (li0.color != null && String(li0.color).trim() !== "") {
+          raw = String(li0.color).trim();
+        } else if (li0.input && li0.input.value && String(li0.input.value).trim()) {
+          raw = String(li0.input.value).trim();
+        }
+      }
+      return mohawkColorToHex(raw, fallbackHex);
+    }
+
+    function mohawkRoleLabel(role) {
+      var m = { sofa: "sofa", pillow: "pillow", trim: "trim", panels: "panels" };
+      return m[role] || String(role || "").toLowerCase();
+    }
+
+    function mohawkLabelMatchesRole(label, role) {
+      var lab = String(label || "").trim().toLowerCase();
+      var needle = mohawkRoleLabel(role);
+      if (lab === needle) return true;
+      if (role === "trim" && (lab.indexOf("trim") !== -1 || lab.indexOf("molding") !== -1 || lab.indexOf("baseboard") !== -1))
+        return true;
+      if (role === "panels" && lab.indexOf("panel") !== -1) return true;
+      if (role === "pillow" && (lab.indexOf("pillow") !== -1 || lab.indexOf("accent") !== -1)) return true;
+      if (role === "sofa" && lab.indexOf("sofa") !== -1) return true;
+      return false;
+    }
+
+    function buildMohawkPatternStack(layers) {
+      var pat = [];
+      for (var pi = 0; pi < layers.length; pi++) {
+        var L = layers[pi];
+        if (!L || L.isBackground || L.isShadow || L.isExtras) continue;
+        pat.push({ pi: pi, L: L });
+      }
+      return pat;
+    }
+
+    /**
+     * Default sofa/pillow/trim/panels map to pattern stack slots 0–3. If another role already claimed a
+     * row index (e.g. semanticLayerInputIndex.trim), pick the nearest free slot so one layer is not
+     * double-used and intermediate layers (e.g. "Berries") are not skipped.
+     */
+    function resolveMohawkPositionalLayerAvoiding(role, layers, usedPi) {
+      var order = ["sofa", "pillow", "trim", "panels"];
+      var pos = order.indexOf(role);
+      if (pos < 0) return null;
+      var pat = buildMohawkPatternStack(layers);
+      if (!pat.length) return null;
+      var tryK = [pos];
+      for (var delta = 1; delta < pat.length; delta++) {
+        if (pos + delta < pat.length) tryK.push(pos + delta);
+        if (pos - delta >= 0) tryK.push(pos - delta);
+      }
+      for (var t = 0; t < tryK.length; t++) {
+        var e = pat[tryK[t]];
+        if (!e || !e.L || !e.L.color) continue;
+        if (usedPi && usedPi.has(e.pi)) continue;
+        return { L: e.L, pi: e.pi };
+      }
+      return null;
+    }
+
+    /**
+     * Mohawk room: when carpet palette is active, sofa/pillow/trim/panels read only semanticLayerInputIndex
+     * (synced from pattern stack). Otherwise (non-Mohawk room), prefer live layerInputs / labels / config / positional.
+     * @param {Set<number>} usedMohawkPi - currentLayers row indices already bound to another room semantic
+     */
+    function resolveMohawkSemanticHex(role, fallbackHex, configLayerIndices, usedMohawkPi) {
+      var roomCfgEarly = (typeof window !== "undefined" && window.COLORFLEX_MOHAWK_ROOM_CONFIG) || {};
+      var mohawkRoom = typeof window !== "undefined" && window.COLORFLEX_MOHAWK_ROOM === true;
+      var carpetPaletteOn = mohawkRoom && roomCfgEarly.mohawkCarpetPaletteActive === true;
+      var slii = roomCfgEarly.semanticLayerInputIndex;
+      if (slii && typeof slii === "object" && typeof slii[role] === "number") {
+        var idxPick = slii[role];
+        var inputsPick = appState.layerInputs || [];
+        if (idxPick >= 0 && idxPick < inputsPick.length) {
+          var liPick = inputsPick[idxPick];
+          if (liPick) {
+            /*
+             * Precedence — keep the compositor on the data layer, not the UI text:
+             *   1. appState.currentLayers[idxPick].color
+             *      Authoritative. applyColorsToLayerInputs writes the post-bridge
+             *      hex (e.g. carpet-diversified slot) into this slot, so it stays
+             *      in sync with carpet swaps. Not affected by the display-only
+             *      hex→name resolver added in this session.
+             *   2. liPick.color
+             *      Frozen-at-populate value (pattern designer paint name). Used
+             *      only when currentLayers is empty/partial mid-update.
+             *   3. liPick.input.value
+             *      Visible text field — last resort. May be a resolved paint
+             *      name (from the display resolver) which lookupColor will
+             *      re-resolve to the SW canonical hex of the nearest neighbour
+             *      rather than the original carpet hex; acceptable as a
+             *      best-effort fallback when no data-layer value exists.
+             */
+            var currentLayersPick = appState.currentLayers || [];
+            var clPickEntry = idxPick >= 0 && idxPick < currentLayersPick.length ? currentLayersPick[idxPick] : null;
+            var rawPick = null;
+            if (clPickEntry && clPickEntry.color != null && String(clPickEntry.color).trim() !== "") {
+              rawPick = String(clPickEntry.color).trim();
+            } else if (liPick.color != null && String(liPick.color).trim() !== "") {
+              rawPick = String(liPick.color).trim();
+            } else if (liPick.input && liPick.input.value && String(liPick.input.value).trim()) {
+              rawPick = String(liPick.input.value).trim();
+            }
+            if (rawPick != null && rawPick !== "") {
+              if (usedMohawkPi) usedMohawkPi.add(idxPick);
+              return {
+                hex: mohawkColorToHex(rawPick, fallbackHex),
+                source: "semanticLayerInputIndex",
+                detail: String(idxPick) + ":" + String(liPick.label || ""),
+              };
+            }
+          }
+        }
+        if (carpetPaletteOn) {
+          return { hex: fallbackHex, source: "mohawkSemanticUnmapped", detail: role };
+        }
+      }
+      if (mohawkRoom && !carpetPaletteOn) {
+        return { hex: fallbackHex, source: "selectMohawkCarpet", detail: role };
+      }
+      if (carpetPaletteOn) {
+        /*
+         * Panels-only carpet-family fallback for low-layer-count patterns.
+         * When the pattern has fewer than 4 colorable layers (e.g. Botan = 3),
+         * syncMohawkSemanticLayerIndicesFromPattern leaves panels with no slii
+         * entry. Borrow the carpet's structure (linework) role hex so panels
+         * stays in the carpet family rather than the static #d8d0c4 beige.
+         * Scope: panels only. Other unmapped roles keep existing behavior.
+         */
+        if (role === "panels") {
+          var acFix = (typeof window !== "undefined" && window.activeMohawkCarpet) || null;
+          var lnFix = acFix && acFix.roles && acFix.roles.linework ? String(acFix.roles.linework).trim() : "";
+          if (lnFix) {
+            return {
+              hex: mohawkColorToHex(lnFix, fallbackHex),
+              source: "carpetRoleLinework",
+              detail: "panels<-linework"
+            };
+          }
+        }
+        return { hex: fallbackHex, source: "mohawkSemanticUnmapped", detail: role };
+      }
+      var inputs = appState.layerInputs || [];
+      var j;
+      for (j = 0; j < inputs.length; j++) {
+        var li = inputs[j];
+        if (!li || !li.label) continue;
+        if (!mohawkLabelMatchesRole(li.label, role)) continue;
+        var raw =
+          li.input && li.input.value && String(li.input.value).trim()
+            ? String(li.input.value).trim()
+            : li.color;
+        if (usedMohawkPi) usedMohawkPi.add(j);
+        return {
+          hex: mohawkColorToHex(raw, fallbackHex),
+          source: "layerInput",
+          detail: String(li.label),
+        };
+      }
+      var layers = appState.currentLayers || [];
+      for (var i = 0; i < layers.length; i++) {
+        var L = layers[i];
+        if (!L || L.isShadow || !L.label) continue;
+        if (!mohawkLabelMatchesRole(L.label, role)) continue;
+        if (usedMohawkPi) usedMohawkPi.add(i);
+        return { hex: mohawkColorToHex(L.color, fallbackHex), source: "currentLayerLabel", detail: String(L.label) };
+      }
+      if (configLayerIndices && typeof configLayerIndices[role] === "number" && configLayerIndices[role] >= 0) {
+        var cfgIx = configLayerIndices[role];
+        var Lc = layers[cfgIx];
+        if (Lc && Lc.color) {
+          if (usedMohawkPi) usedMohawkPi.add(cfgIx);
+          return { hex: mohawkColorToHex(Lc.color, fallbackHex), source: "configLayerIndices", detail: String(cfgIx) };
+        }
+      }
+      var pr = resolveMohawkPositionalLayerAvoiding(role, layers, usedMohawkPi);
+      if (pr && pr.L && pr.L.color) {
+        if (usedMohawkPi) usedMohawkPi.add(pr.pi);
+        return { hex: mohawkColorToHex(pr.L.color, fallbackHex), source: "positional", detail: pr.L.label || "" };
+      }
+      return { hex: fallbackHex, source: "fallback", detail: role };
+    }
+
+    var userCfg = (typeof window !== "undefined" && window.COLORFLEX_MOHAWK_ROOM_CONFIG) || {};
+    var cfgLayerIdx = userCfg.layerIndices && typeof userCfg.layerIndices === "object" ? userCfg.layerIndices : null;
+    var usedMohawkPi = new Set();
+    var rSofa = resolveMohawkSemanticHex("sofa", "#747a4e", cfgLayerIdx, usedMohawkPi);
+    var rPillow = resolveMohawkSemanticHex("pillow", "#c4b8a8", cfgLayerIdx, usedMohawkPi);
+    var rTrim = resolveMohawkSemanticHex("trim", "#e8e2d4", cfgLayerIdx, usedMohawkPi);
+    var rPanels = resolveMohawkSemanticHex("panels", "#d8d0c4", cfgLayerIdx, usedMohawkPi);
+    var colors = {
+      sofa: rSofa.hex,
+      pillow: rPillow.hex,
+      trim: rTrim.hex,
+      panels: rPanels.hex,
+      wallpaperSolid: resolveMohawkLayer0Hex("#888888"),
+    };
+
+    var mohawkSemanticWarn = [];
+    if (typeof window !== "undefined" && window.COLORFLEX_MOHAWK_ROOM === true) {
+      if (!userCfg.mohawkCarpetPaletteActive) {
+        mohawkSemanticWarn.push(
+          "Select a Mohawk carpet thumbnail so sofa/pillow/trim/panels use carpet-driven ColorFlex layer inputs (wallpaper positional mapping is disabled in Mohawk room mode)."
+        );
+      } else {
+        [rSofa, rPillow, rTrim, rPanels].forEach(function (rr) {
+          if (rr && rr.source === "mohawkSemanticUnmapped") {
+            mohawkSemanticWarn.push("Semantic role could not be mapped to a layer input (" + String(rr.detail) + ").");
+          }
+        });
+      }
+    }
+    if (mohawkSemanticWarn.length) {
+      console.warn("[Mohawk room]", mohawkSemanticWarn.join(" "));
+    }
+
+    var patternImg = null;
+    var patternSource = "unresolved";
+    if (dom.preview) {
+      var previewCanvas = dom.preview.querySelector("canvas");
+      if (previewCanvas && previewCanvas.width > 0 && previewCanvas.height > 0) {
+        try {
+          var trimmedCanvas = trimPreviewLetterboxForMohawk(previewCanvas);
+          var srcCanvas = trimmedCanvas || previewCanvas;
+          var dataUrl = srcCanvas.toDataURL("image/png");
+          if (dataUrl && dataUrl.indexOf("data:") === 0) {
+            patternImg = await loadImage(dataUrl);
+            patternSource = trimmedCanvas ? "dom.preview.canvas+letterboxTrim" : "dom.preview.canvas";
+          }
+        } catch (eMohawkPreview) {
+          /* tainted or unsupported */
+        }
+      }
+    }
+    if (!patternImg) {
+      try {
+        if (typeof capturePatternThumbnail === "function") {
+          var trustedPreviewDataUrl = capturePatternThumbnail();
+          if (trustedPreviewDataUrl && trustedPreviewDataUrl.indexOf("data:image") === 0) {
+            patternImg = await loadImage(trustedPreviewDataUrl);
+            patternSource = "capturePatternThumbnail";
+          }
+        }
+      } catch (eMohawkTrustedPreview) {
+        patternSource = "capturePatternThumbnail-error";
+      }
+    }
+    if (!patternImg) {
+      var selectedPatternUrl = appState.currentPattern && appState.currentPattern.thumbnail ? String(appState.currentPattern.thumbnail) : "";
+      if (!selectedPatternUrl) {
+        showMohawkRoomError("MOHAWK ROOM ERROR\nMissing active ColorFlex pattern preview.");
+        return;
+      }
+      try {
+        var pu = selectedPatternUrl.indexOf("http") === 0 ? selectedPatternUrl : normalizePath(selectedPatternUrl);
+        patternImg = await loadImage(pu);
+        patternSource = "currentPattern.thumbnail";
+      } catch (eMohawkPattern) {
+        showMohawkRoomError("MOHAWK ROOM ERROR\nMissing active ColorFlex pattern preview.");
+        return;
+      }
+    }
+    // #region agent log
+    (function () {
+      if (typeof window === 'undefined' || window.COLORFLEX_DEBUG_INGEST !== true) return;
+      var h13Data = {
+        patternSource: patternSource,
+        pattern: {
+          width: patternImg ? patternImg.naturalWidth || patternImg.width || 0 : 0,
+          height: patternImg ? patternImg.naturalHeight || patternImg.height || 0 : 0,
+        },
+        currentPatternThumbnailKind:
+          appState.currentPattern && appState.currentPattern.thumbnail
+            ? String(appState.currentPattern.thumbnail).slice(0, 24)
+            : null,
+        mohawkSemanticHex: colors,
+        semanticResolution: { sofa: rSofa, pillow: rPillow, trim: rTrim, panels: rPanels },
+        layerInputLabels: (appState.layerInputs || []).map(function (x) {
+          return x && x.label ? String(x.label) : null;
+        }),
+        cfgLayerIndices: userCfg.layerIndices || null,
+        semanticLayerInputIndex: userCfg.semanticLayerInputIndex || null,
+        usedMohawkLayerIndices: Array.from(usedMohawkPi),
+        currentLayersBrief: (appState.currentLayers || []).map(function (L, idx) {
+          if (!L) return null;
+          return {
+            idx: idx,
+            label: L.label || null,
+            isBackground: !!L.isBackground,
+            isShadow: !!L.isShadow,
+            isExtras: !!L.isExtras,
+            color: L.color != null ? String(L.color).slice(0, 40) : null,
+          };
+        }),
+      };
+      var h13Body = {
+        sessionId: "0b8664",
+        runId: "semantic-map-1",
+        hypothesisId: "H13",
+        location: "CFM.js:updateRoomMockupMohawkRoom:patternSource",
+        message: "mohawk room pattern + semantic colors",
+        data: h13Data,
+        timestamp: Date.now(),
+      };
+      fetch("http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "0b8664" },
+        body: JSON.stringify(h13Body),
+      }).catch(function () {});
+    })();
+    // #endregion
+
+    var carpetUrl = userCfg.carpetTileUrl || userCfg.carpetThumbnailUrl;
+    if (!carpetUrl || !String(carpetUrl).trim()) {
+      showMohawkRoomError("MOHAWK ROOM ERROR\nMissing selected Mohawk carpet image.");
+      return;
+    }
+    var carpetImg = null;
+    var cu = String(carpetUrl).trim();
+    var carpetLoadUrl =
+      cu.indexOf("http") === 0 ? urlForCorsFetch(cu) : urlForCorsFetch(normalizePath(cu));
+    try {
+      carpetImg = await loadImage(carpetLoadUrl);
+    } catch (eCarpet) {
+      showMohawkRoomError("MOHAWK ROOM ERROR\nMissing selected Mohawk carpet image:\n" + cu);
+      return;
+    }
+
+    function resolveMohawkRoomAssetUrl(relName) {
+      var base =
+        userCfg.layersBaseUrl != null && String(userCfg.layersBaseUrl).trim()
+          ? String(userCfg.layersBaseUrl).trim()
+          : "/cf-data/mockups/mohawk";
+      var f = String(relName).replace(/^\//, "");
+      var resolved;
+      if (base.indexOf("http://") === 0 || base.indexOf("https://") === 0) {
+        resolved = base.replace(/\/?$/, "/") + f;
+      } else if (base.charAt(0) === "/") {
+        var origin =
+          typeof window !== "undefined" && window.location && window.location.origin
+            ? window.location.origin.replace(/\/$/, "")
+            : "";
+        resolved = origin + (base.endsWith("/") ? base : base + "/") + f;
+      } else {
+        var joined = (base.endsWith("/") ? base : base + "/") + f;
+        resolved = normalizePath(joined);
+      }
+      return urlForCorsFetch(resolved);
+    }
+
+    var outW = Number(userCfg.outW) > 0 ? Math.floor(Number(userCfg.outW)) : 2000;
+    var outH = Number(userCfg.outH) > 0 ? Math.floor(Number(userCfg.outH)) : 2000;
+    var canvas = document.createElement("canvas");
+    canvas.width = outW;
+    canvas.height = outH;
+    canvas.dataset.colorflexMohawkRoom = "true";
+
+    await renderMohawkRoomComposite({
+      compCanvas: canvas,
+      resolveAssetUrl: resolveMohawkRoomAssetUrl,
+      loadImage: loadImage,
+      patternImage: patternImg,
+      carpetImage: carpetImg,
+      colors: colors,
+      config: userCfg,
+    });
+
+    dom.roomMockup.innerHTML = "";
+    canvas.style.display = "block";
+    canvas.style.maxWidth = "100%";
+    canvas.style.height = "auto";
+    canvas.style.cursor = "pointer";
+    canvas.title = "Click for full size";
+    canvas.addEventListener("click", function () {
+      openRoomMockupFullscreen(canvas);
+    });
+    closeRoomMockupCustomMenu();
+    var existingMohawkDd = document.getElementById("roomMockupDropdown");
+    if (existingMohawkDd) existingMohawkDd.remove();
+    dom.roomMockup.appendChild(canvas);
+    console.log("[Mohawk room] Room mockup composite updated");
+    return;
+  } catch (eMohawk) {
+    var msg = eMohawk && eMohawk.message ? eMohawk.message : String(eMohawk);
+    console.error("[Mohawk room] Composite failed:", msg);
+    showMohawkRoomError("MOHAWK ROOM ERROR\nMissing asset:\n" + msg);
+    return;
+  }
+}
+
 //  room mockup
 let updateRoomMockup = async () => {
   try {
@@ -15934,6 +17863,11 @@ let updateRoomMockup = async () => {
       return;
     }
     console.log("🔍 ROOM MOCKUP tilingType:", appState.currentPattern?.name, "→", appState.currentPattern?.tilingType);
+
+    if (typeof window !== "undefined" && window.COLORFLEX_MOHAWK_ROOM === true) {
+      await updateRoomMockupMohawkRoom();
+      return;
+    }
 
     // BASSETT: show Bassett result in room mockup (upload or pipeline result)
     if (window.COLORFLEX_MODE === 'BASSETT') {
@@ -18258,6 +20192,71 @@ function toggleColorLock() {
 window.toggleColorLock = toggleColorLock;
 
 /**
+ * Randomly permute color values between visible layer inputs (same set, new order).
+ * Syncs input text, swatch circle, currentLayers.color, and _cfLayerColorPrevNorm, then refresh previews.
+ */
+async function shuffleLayerColors() {
+    try {
+        if (typeof window !== "undefined" && window.COLORFLEX_MOHAWK_ROOM === true) {
+            var mohawkCfg = window.COLORFLEX_MOHAWK_ROOM_CONFIG || {};
+            var mohawkCarpet = window.activeMohawkCarpet;
+            if (
+                mohawkCfg.mohawkCarpetPaletteActive === true
+                && mohawkCarpet
+                && Array.isArray(mohawkCarpet.rankedColors)
+                && mohawkCarpet.rankedColors.length >= 1
+            ) {
+                syncMohawkSemanticLayerIndicesFromPattern();
+                if (randomizeMohawkSemanticColorsFromStoredPalette(mohawkCarpet, mohawkCfg.semanticLayerInputIndex)) {
+                    await updateDisplays();
+                    return;
+                }
+            }
+        }
+
+        const lis = appState.layerInputs;
+        if (!lis || lis.length < 2) {
+            console.warn('shuffleLayerColors: need at least two color layers');
+            return;
+        }
+        const states = lis.map((layer) => {
+            const clIdx = appState.currentLayers.findIndex((l) => l.label === layer.label);
+            const layerColor =
+                clIdx >= 0 && appState.currentLayers[clIdx] && appState.currentLayers[clIdx].color != null
+                    ? String(appState.currentLayers[clIdx].color)
+                    : '';
+            return {
+                inputValue: layer.input ? String(layer.input.value) : '',
+                circleBg: layer.circle ? String(layer.circle.style.backgroundColor) : '#FFFFFF',
+                layerColor: layerColor || (layer.input ? String(layer.input.value) : '')
+            };
+        });
+        for (let i = states.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [states[i], states[j]] = [states[j], states[i]];
+        }
+        lis.forEach((layer, i) => {
+            const s = states[i];
+            const clIdx = appState.currentLayers.findIndex((l) => l.label === layer.label);
+            if (layer.input) {
+                layer.input.value = s.inputValue;
+                layer.input._cfLayerColorPrevNorm = s.inputValue.trim().toLowerCase();
+            }
+            if (layer.circle) {
+                layer.circle.style.backgroundColor = s.circleBg;
+            }
+            if (clIdx >= 0 && appState.currentLayers[clIdx]) {
+                appState.currentLayers[clIdx].color = s.layerColor;
+            }
+        });
+        await updateDisplays();
+    } catch (e) {
+        console.error('shuffleLayerColors:', e);
+    }
+}
+window.shuffleLayerColors = shuffleLayerColors;
+
+/**
  * Toggle visibility of the download proof button based on pattern type
  * Standard patterns (no layers) don't need proof downloads since there's no customization
  * ColorFlex patterns (with layers) show proof button for custom color downloads
@@ -18350,9 +20349,9 @@ const generatePrintPreview = (options = {}) => {
 
         // Source-of-truth path: use the exact visible preview capture when available.
         // This keeps print/save output visually identical to the UI preview.
-        if (options.preferVisibleCapture !== false && typeof window.capturePatternThumbnail === 'function') {
+        if (options.preferVisibleCapture !== false && typeof capturePatternThumbnail === 'function') {
             try {
-                const visibleDataUrl = window.capturePatternThumbnail();
+                const visibleDataUrl = capturePatternThumbnail();
                 if (visibleDataUrl && typeof visibleDataUrl === 'string' && visibleDataUrl.startsWith('data:image')) {
                     await new Promise((resolve) => {
                         const img = new Image();
@@ -18726,8 +20725,9 @@ async function startApp() {
     
     try {
     await initializeApp();
-    // Call this when app starts
-    await loadFurnitureConfig();
+    if (isFurnitureConfigNeeded()) {
+        await loadFurnitureConfig();
+    }
 
     isAppReady = true;
     console.log("✅ App fully initialized and ready.");
@@ -20348,7 +22348,9 @@ async function parseColorEnhanced(colorStr) {
 
                 const candidates = [];
                 if (cfDataColorsUrl) candidates.push(cfDataColorsUrl);
-                if (!cfDataColorsUrl || cfDataColorsUrl !== canonicalB2ColorsUrl) candidates.push(canonicalB2ColorsUrl);
+                if (!isColorFlexDemoOffline() && (!cfDataColorsUrl || cfDataColorsUrl !== canonicalB2ColorsUrl)) {
+                    candidates.push(canonicalB2ColorsUrl);
+                }
                 candidates.push(themeColorsUrl);
 
                 let lastErr = null;
@@ -21176,6 +23178,10 @@ function getMaterialPrice(materialId) {
 // Update cart item via Shopify API
 async function updateCartItemViaAPI(itemData) {
     try {
+        if (isColorFlexDemoOffline()) {
+            console.log('[ColorFlex demo] Cart update API skipped');
+            return { success: false, error: 'Cart updates disabled in offline demo' };
+        }
         console.log('🛒 Attempting cart update via API:', itemData);
 
         // Get current cart to find the item to update

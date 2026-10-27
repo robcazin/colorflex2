@@ -5,11 +5,11 @@
 {% endcomment %}
 <div class="product-form__buttons" {{ block.shopify_attributes }}>
   <button
-    id="{{ product_form_id }}-submit"
+    id="ProductSubmitButton-{{ section_id }}"
     type="submit"
     name="add"
     class="product-form__submit button button--full-width button--primary"
-    aria-labelledby="{{ product_form_id }}-submit title-{{ section_id }}-{{ product.id }}"
+    aria-labelledby="ProductSubmitButton-{{ section_id }} title-{{ section_id }}-{{ product.id }}"
     aria-live="polite"
     data-sold-out-message="true"
     {% if product.selected_or_first_available_variant.available == false %}

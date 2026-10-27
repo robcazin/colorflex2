@@ -542,8 +542,8 @@ console.log('📁 Clothing mode asset URLs configured:', window.ColorFlexAssets)
         <div id="colorControls" style="display: flex; flex-direction: column; width: 100%; margin-left: -1rem;">
           <h3 id="colorLayersHeading" style="text-align: center; color: #4a90e2; font-size: 1.5rem; font-family: 'Special Elite', monospace !important;">Color Layers</h3>
 
-          <!-- Color Lock Toggle -->
-          <div id="colorLockToggle" style="text-align: center; margin: 8px 0 12px 0;">
+          <!-- Color Lock + shuffle layer colors -->
+          <div id="colorLockToggle" style="display: flex; justify-content: center; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0 12px 0;">
             <button id="colorLockBtn" onclick="window.toggleColorLock()" data-tooltip="Keep your colors when switching patterns. Lock on, then pick another pattern." style="
               background: rgba(110, 110, 110, 0.2);
               border: 1px solid #4a90e2;
@@ -560,6 +560,21 @@ console.log('📁 Clothing mode asset URLs configured:', window.ColorFlexAssets)
               <span id="colorLockIcon" style="font-size: 1rem;">🔓</span>
               <span id="colorLockText">Unlocked</span>
             </button>
+            <button id="layerShuffleBtn" type="button" onclick="window.shuffleLayerColors()" data-tooltip="Randomly swap colors between layer swatches" aria-label="Shuffle layer colors" style="
+              background: rgba(110, 110, 110, 0.2);
+              border: 1px solid #4a90e2;
+              border-radius: 4px;
+              padding: 5px 12px;
+              cursor: pointer;
+              color: #4a90e2;
+              font-size: 1.15rem;
+              line-height: 1;
+              transition: all 0.3s ease;
+              display: inline-flex;
+              align-items: center;
+              justify-content: center;
+              min-width: 40px;
+            " title="Shuffle layer colors">🎲</button>
           </div>
 
           <div id="layerInputsContainer" style="width: 100%; min-width: 280px;"></div>

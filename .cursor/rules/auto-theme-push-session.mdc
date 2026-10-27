@@ -17,6 +17,10 @@ After edits **only** under `src/assets/` (and no other theme paths in the same c
 
 Do not skip push solely because minified webpack bundles were not rebuilt; Liquid and standalone assets under `src/assets/` are pushed as source.
 
-**Revert deployments:** use `git revert <commit>` for the change, then run the appropriate push command again to publish the reverted files. The repo remains the source of truth.
+**If `npm run theme:push:changed` reports no files** (everything already committed to `HEAD`), publish the last commit’s theme files with:
+
+`git diff --name-only HEAD~1 HEAD -- src/` → for each listed path under `sections/`, `templates/`, `layout/`, `snippets/`, `assets/`, run `./deploy-shopify-cli.sh only <path-relative-to-src>` (e.g. `sections/main-product.liquid`).
+
+**Revert deployments:** `git revert <commit>` then push again (same commands as above) so Shopify matches the reverted repo. Remove this rule file when the user revokes auto-push.
 
 This is additive to `deploy-after-build.mdc` (production webpack builds still trigger asset push as that rule describes).

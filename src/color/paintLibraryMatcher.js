@@ -122,7 +122,8 @@ function pickCandidate(ranked, avoidHexes) {
  *   matchedCode?: string | null,
  *   usedFallback?: boolean,
  *   warning?: string,
- *   duplicateSlot?: boolean
+ *   duplicateSlot?: boolean,
+ *   nearestNotUsed?: { name: string | null, code: string | null, hex: string, deltaE: number }
  * }}
  */
 export function matchToPaintLibrary(hexColor, paintLibrary, options) {
@@ -180,17 +181,22 @@ export function matchToPaintLibrary(hexColor, paintLibrary, options) {
   }
 
   if (maxDE != null && bestDE > maxDE) {
-    warnings.push(
-      'Nearest library color exceeds fidelity cap for this role; kept ideal hex. (Try a larger catalog or relax caps.)'
-    );
+    const deltaER = Math.round(bestDE * 100) / 100;
+    warnings.push('ΔE exceeds cap for this role; kept ideal hex.');
     return {
       inputHex,
       matchedName,
       matchedCode,
       matchedHex: inputHex,
-      distance: Math.round(bestDE * 100) / 100,
+      distance: deltaER,
       usedFallback: true,
-      warning: warnings.join(' ')
+      warning: warnings.join(' '),
+      nearestNotUsed: {
+        name: matchedName,
+        code: matchedCode,
+        hex: picked.candHex,
+        deltaE: deltaER
+      }
     };
   }
 

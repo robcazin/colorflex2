@@ -47,8 +47,9 @@
     "footer": {
       "type": "footer",
       "custom_css": [
-        "/* For headings */h1, h2, h3 {font-family: 'Special Elite', monospace;}",
-        "/* For body or specific elements */.your-class-here {font-family: 'Island Moments', cursive;}"
+        "/* For headings */h1,h2,h3 {font-family: \"Special Elite\", monospace;}",
+        " /* For body or specific elements */.your-class-here {font-family: \"Island Moments\", cursive;}",
+        ".footer__content-bottom {text-align: center; justify-content: center; align-items: center;}"
       ],
       "settings": {}
     }

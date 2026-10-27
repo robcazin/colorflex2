@@ -154,6 +154,26 @@ function resolveUrl(pathOrUrl, layersBaseUrl) {
   return base ? base + '/' + pathOrUrl : pathOrUrl;
 }
 
+function isDrawableImageSource(value) {
+  return (
+    (typeof HTMLImageElement !== 'undefined' && value instanceof HTMLImageElement) ||
+    (typeof HTMLCanvasElement !== 'undefined' && value instanceof HTMLCanvasElement) ||
+    (typeof ImageBitmap !== 'undefined' && value instanceof ImageBitmap) ||
+    (typeof OffscreenCanvas !== 'undefined' && value instanceof OffscreenCanvas)
+  );
+}
+
+function normalizePinnedSurfaceSource(value, label, layersBaseUrl) {
+  if (!value) return null;
+  if (typeof value === 'string') return resolveUrl(value, layersBaseUrl);
+  if (isDrawableImageSource(value)) return value;
+  console.warn(LOG + ' Unsupported ' + label + ' source', {
+    type: typeof value,
+    value: value
+  });
+  return null;
+}
+
 function clamp01(x) {
   return x < 0 ? 0 : x > 1 ? 1 : x;
 }
@@ -204,6 +224,7 @@ export async function applyPinnedSurfaceComposite(baseCanvas, config, layersBase
   const cw = baseCanvas.width;
   const ch = baseCanvas.height;
   if (cw < 2 || ch < 2) return;
+  const surfaceLabel = config.debugLabel || 'surface';
 
   let corners = config.corners;
   if (!corners && Array.isArray(config.cornersNormalized) && config.cornersNormalized.length === 4) {
@@ -216,22 +237,25 @@ export async function applyPinnedSurfaceComposite(baseCanvas, config, layersBase
     return;
   }
 
-  const matteSrc = config.matteImage || config.mattePath;
-  let tileSrc = config.tileImage || config.tilePath;
+  const sourceBaseUrl = layersBaseUrl || config.layersBaseUrl;
+  const matteInput = config.matteImage || config.mattePath;
+  let tileInput = config.tileImage || config.tilePath;
   const useActivePattern =
-    typeof tileSrc === 'string' && tileSrc === '__ACTIVE_COLORFLEX_PATTERN__';
+    typeof tileInput === 'string' && tileInput === '__ACTIVE_COLORFLEX_PATTERN__';
   if (useActivePattern) {
     var _pti = extras && extras.patternTileImage;
-    var _ptiOk = _pti && (_pti instanceof HTMLImageElement || _pti instanceof HTMLCanvasElement);
+    var _ptiOk = _pti && isDrawableImageSource(_pti);
     if (_ptiOk) {
-      tileSrc = _pti;
+      tileInput = _pti;
     } else if (extras && typeof extras.patternTileUrl === 'string' && extras.patternTileUrl) {
-      tileSrc = extras.patternTileUrl;
+      tileInput = extras.patternTileUrl;
     } else {
       console.warn(LOG + ' __ACTIVE_COLORFLEX_PATTERN__ needs extras.patternTileImage or patternTileUrl');
       return;
     }
   }
+  const matteSrc = normalizePinnedSurfaceSource(matteInput, 'matte', sourceBaseUrl);
+  const tileSrc = normalizePinnedSurfaceSource(tileInput, 'tile', sourceBaseUrl);
 
   const hasMatteAsset = !!matteSrc;
   const hasTileAsset = !!tileSrc;
@@ -253,6 +277,7 @@ export async function applyPinnedSurfaceComposite(baseCanvas, config, layersBase
   matteCanvas.height = ch;
   const mctx = matteCanvas.getContext('2d');
   let matteData;
+  let matteDims = null;
   if (useMatteFromQuad) {
     mctx.clearRect(0, 0, cw, ch);
     mctx.fillStyle = 'rgba(255,255,255,1)';
@@ -263,9 +288,12 @@ export async function applyPinnedSurfaceComposite(baseCanvas, config, layersBase
     mctx.fill();
     matteData = mctx.getImageData(0, 0, cw, ch);
   } else if (hasMatteAsset) {
-    const matteResolved = resolveUrl(matteSrc, layersBaseUrl || config.layersBaseUrl);
     const matteImg =
-      typeof matteSrc === 'string' ? await loadImage(matteResolved, 'pinned-matte') : matteSrc;
+      typeof matteSrc === 'string' ? await loadImage(matteSrc, 'pinned-matte') : matteSrc;
+    matteDims = {
+      width: matteImg.naturalWidth || matteImg.width || 0,
+      height: matteImg.naturalHeight || matteImg.height || 0,
+    };
     mctx.drawImage(matteImg, 0, 0, cw, ch);
     matteData = mctx.getImageData(0, 0, cw, ch);
   } else {
@@ -275,6 +303,7 @@ export async function applyPinnedSurfaceComposite(baseCanvas, config, layersBase
   let tw;
   let th;
   let tileData;
+  let tileDims = null;
   if (useProceduralTile) {
     tw = 64;
     th = 64;
@@ -294,14 +323,14 @@ export async function applyPinnedSurfaceComposite(baseCanvas, config, layersBase
     tileData = tctx.getImageData(0, 0, tw, th).data;
   } else if (hasTileAsset) {
     let tileImg;
-    if (tileSrc instanceof HTMLImageElement || tileSrc instanceof HTMLCanvasElement) {
+    if (isDrawableImageSource(tileSrc)) {
       tileImg = tileSrc;
     } else {
-      const tileResolved = resolveUrl(tileSrc, layersBaseUrl || config.layersBaseUrl);
-      tileImg = await loadImage(tileResolved, 'pinned-tile');
+      tileImg = await loadImage(tileSrc, 'pinned-tile');
     }
     tw = tileImg.naturalWidth || tileImg.width;
     th = tileImg.naturalHeight || tileImg.height;
+    tileDims = { width: tw, height: th };
     if (tw < 2 || th < 2) return;
     const tileCanvas = document.createElement('canvas');
     tileCanvas.width = tw;
@@ -312,6 +341,10 @@ export async function applyPinnedSurfaceComposite(baseCanvas, config, layersBase
   } else {
     return;
   }
+
+  // #region agent log
+  (typeof window !== 'undefined' && window.COLORFLEX_DEBUG_INGEST === true) && fetch('http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0b8664'},body:JSON.stringify({sessionId:'0b8664',runId:'wallpaper-debug-1',hypothesisId:'H8',location:'mohawkPinnedSurface.js:applyPinnedSurfaceComposite:assets',message:'pinned surface assets ready',data:{surfaceLabel:surfaceLabel,tileRepeat:tileRepeat,corners:corners,hasMatteAsset:hasMatteAsset,hasTileAsset:hasTileAsset,useMatteFromQuad:useMatteFromQuad,useProceduralTile:useProceduralTile,matteType:isDrawableImageSource(matteSrc)?'drawable':typeof matteSrc,tileType:isDrawableImageSource(tileSrc)?'drawable':typeof tileSrc,matteDims:matteDims,tileDims:tileDims},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
 
   const H = homographyUnitSquareToQuad(corners);
   if (!H) {
@@ -345,6 +378,9 @@ export async function applyPinnedSurfaceComposite(baseCanvas, config, layersBase
   minY = Math.max(0, minY - 2);
   maxX = Math.min(cw - 1, maxX + 2);
   maxY = Math.min(ch - 1, maxY + 2);
+  let mattePixelCount = 0;
+  let mappedPixelCount = 0;
+  let paintedPixelCount = 0;
 
   for (let py = minY; py <= maxY; py++) {
     for (let px = minX; px <= maxX; px++) {
@@ -357,9 +393,11 @@ export async function applyPinnedSurfaceComposite(baseCanvas, config, layersBase
         mAlpha = (0.299 * r0 + 0.587 * g0 + 0.114 * b0) / 255;
       }
       if (mAlpha < 1 / 255) continue;
+      mattePixelCount++;
 
       const uv = mapInverse(Hinv, px, py);
       if (!uv) continue;
+      mappedPixelCount++;
       let u = uv[0];
       let v = uv[1];
       u *= tileRepeat;
@@ -374,15 +412,26 @@ export async function applyPinnedSurfaceComposite(baseCanvas, config, layersBase
       const tileRgb = sampleBilinear(tileData, tw, th, sx, sy);
 
       const a = mAlpha * (tileRgb[3] / 255);
+      if (a > 1 / 255) paintedPixelCount++;
       const inv = 1 - a;
-      out[mi] = out[mi] * inv + tileRgb[0] * a;
-      out[mi + 1] = out[mi + 1] * inv + tileRgb[1] * a;
-      out[mi + 2] = out[mi + 2] * inv + tileRgb[2] * a;
+      const tR = tileRgb[0] / 255;
+      const tG = tileRgb[1] / 255;
+      const tB = tileRgb[2] / 255;
+      const mulR = out[mi] * tR;
+      const mulG = out[mi + 1] * tG;
+      const mulB = out[mi + 2] * tB;
+      out[mi] = out[mi] * inv + mulR * a;
+      out[mi + 1] = out[mi + 1] * inv + mulG * a;
+      out[mi + 2] = out[mi + 2] * inv + mulB * a;
       out[mi + 3] = 255;
     }
   }
 
   ctx.putImageData(baseData, 0, 0);
+
+  // #region agent log
+  (typeof window !== 'undefined' && window.COLORFLEX_DEBUG_INGEST === true) && fetch('http://127.0.0.1:7744/ingest/9beec9bf-ddf5-40e6-9cf3-482a5094c6aa',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'0b8664'},body:JSON.stringify({sessionId:'0b8664',runId:'wallpaper-debug-1',hypothesisId:'H9',location:'mohawkPinnedSurface.js:applyPinnedSurfaceComposite:summary',message:'pinned surface render summary',data:{surfaceLabel:surfaceLabel,bbox:{minX:minX,minY:minY,maxX:maxX,maxY:maxY},mattePixelCount:mattePixelCount,mappedPixelCount:mappedPixelCount,paintedPixelCount:paintedPixelCount,tileRepeat:tileRepeat},timestamp:Date.now()})}).catch(()=>{});
+  // #endregion
 
   const shadowSrc = config.shadowPassImage || config.shadowPassPath || config.shadowPath || config.lightingPassPath;
   if (shadowSrc) {
